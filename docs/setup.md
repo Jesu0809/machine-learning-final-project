@@ -162,8 +162,11 @@ installation. Do it once per computer.
 
 5. When the terminal says *"Listening on port 5004. Start training by pressing the Play button in
    the Unity Editor"*, press **Play** in Unity.
-6. After a few minutes the *Mean Reward* climbs toward 100. Stop with `Ctrl+C`; the model is saved
-   to `results/3dball_test/3DBall.onnx`.
+6. After a few minutes the *Mean Reward* climbs toward 100 (on our Mac: 1.3 at step 12k, 45 at
+   84k, 87 at 96k, about two minutes). Stop with `Ctrl+C` in the terminal **first**, then press
+   Stop in Unity. The model is saved to `results/3dball_test/3DBall.onnx`. If Unity is stopped
+   first, the terminal waits for it to reconnect and ends with a `UnityTimeOutException`; that is
+   harmless, the model is still exported.
 
 Windows: the first time, Windows Firewall may ask about Python; allow it on private networks
 (Unity and Python talk through port 5004 on your own computer).
