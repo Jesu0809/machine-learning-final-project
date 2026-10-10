@@ -1,0 +1,15 @@
+# Training environment: Python 3.10.12 (conda env "mlagents"), see docs/setup.md.
+# Exact versions so macOS and Windows train with the same stack.
+# Must match the Unity package com.unity.ml-agents 4.1.0.
+mlagents==1.1.0
+mlagents-envs==1.1.0
+# mlagents needs grpcio <= 1.48.2 and tensorboard needs >= 1.48.2.
+# Windows installs it directly; on Apple Silicon it is compiled first (docs/setup.md).
+grpcio==1.48.2
+# Newer torch exports .onnx with an exporter mlagents 1.1.0 does not support.
+torch==2.2.2
+tensorboard==2.20.0
+numpy==1.23.5
+pandas==2.3.3
+# mlagents 1.1.0 imports pkg_resources, which setuptools 70+ no longer ships.
+setuptools==69.5.1
