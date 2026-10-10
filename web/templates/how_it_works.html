@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}How it works · Night Shift ML{% endblock %}
+
+{% block content %}
+<section class="container py-5">
+  <h1 class="fw-bold mb-3">How the monster learns</h1>
+  <p class="lead text-body-secondary col-lg-9">
+    The monster is a reinforcement learning agent. Nobody tells it which room is the right one: it
+    plays thousands of nights against a simulated guard, gets a reward when it reaches the office
+    and a penalty when the night ends, and slowly learns a policy that maximizes its total reward.
+  </p>
+</section>
+
+<section class="container mb-5">
+  <h2 class="h4 section-title">1. The problem as an MDP</h2>
+  <div class="row g-4 align-items-center">
+    <div class="col-lg-6">
+      <table class="table table-sm align-middle">
+        <tbody>
+          <tr><th scope="row">Agent</th><td>The monster</td></tr>
+          <tr><th scope="row">Environment</th><td>Room graph, two doors, power, clock and the guard</td></tr>
+          <tr><th scope="row">Time step</th><td>One decision every 4 seconds</td></tr>
+          <tr><th scope="row">Episode</th><td>One night (about 75 decisions)</td></tr>
+          <tr><th scope="row">Algorithm</th><td>PPO (Proximal Policy Optimization)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col-lg-6">
+      <svg class="room-graph" viewBox="0 0 640 260" role="img"
+           aria-label="Room graph: Stage to Hall; Hall to West Corridor and Kitchen; Kitchen to East Corridor; both corridors to the Office through a door">
+        <g class="edges">
+          <line x1="80" y1="70" x2="230" y2="70"/>
+          <line x1="230" y1="70" x2="400" y2="70"/>
+          <line x1="230" y1="70" x2="230" y2="190"/>
+          <line x1="230" y1="190" x2="400" y2="190"/>
+          <line class="door" x1="400" y1="70" x2="560" y2="130"/>
+          <line class="door" x1="400" y1="190" x2="560" y2="130"/>
+        </g>
+        <text class="door-label" x="485" y="88">left door</text>
+        <text class="door-label" x="485" y="185">right door</text>
+        <g class="nodes">
+          <g><circle cx="80" cy="70" r="34"/><text x="80" y="74">Stage</text></g>
+          <g><circle cx="230" cy="70" r="34"/><text x="230" y="74">Hall</text></g>
+          <g><circle cx="400" cy="70" r="34"/><text x="400" y="74">West</text></g>
+          <g><circle cx="230" cy="190" r="34"/><text x="230" y="194">Kitchen</text></g>
+          <g><circle cx="400" cy="190" r="34"/><text x="400" y="194">East</text></g>
+          <g class="office"><circle cx="560" cy="130" r="40"/><text x="560" y="134">Office</text></g>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <table class="table table-sm mt-3">
+    <thead><tr><th>#</th><th>Room</th><th>Neighbors</th><th>Distance to office</th></tr></thead>
+    <tbody>
+      {% for room in rooms %}
+      <tr><td>{{ room.index }}</td><td>{{ room.name }}</td><td>{{ room.neighbors }}</td><td>{{ room.distance }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="container mb-5">
+  <h2 class="h4 section-title">2. What the monster observes</h2>
+  <p class="text-body-secondary">15 numbers, all scaled to the range 0–1.</p>
+  <table class="table table-sm">
+    <thead><tr><th>Observation</th><th>Size</th><th>Encoding</th></tr></thead>
+    <tbody>
+      {% for obs in observations %}
+      <tr><td>{{ obs.name }}</td><td>{{ obs.size }}</td><td><code>{{ obs.encoding }}</code></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="container mb-5">
+  <h2 class="h4 section-title">3. What the monster can do</h2>
+  <p>
+    Six discrete actions: the index of the room it wants to go to (0–4), or 5 to try to enter the
+    office. Choosing its own room means staying still.
+  </p>
+  <div class="alert alert-secondary">
+    <strong>Action masking.</strong> Before every decision, moves to rooms that are not connected
+    are disabled, and the office can only be tried from the two corridors. The network never wastes
+    experience on impossible moves, so training is faster.
+  </div>
+</section>
+
+<section class="container mb-5">
+  <h2 class="h4 section-title">4. Rewards</h2>
+  <table class="table table-sm">
+    <thead><tr><th>Event</th><th class="text-end">Reward</th><th>Type</th></tr></thead>
+    <tbody>
+      {% for item in rewards %}
+      <tr>
+        <td>{{ item.event }}</td>
+        <td class="text-end font-monospace">{{ item.reward }}</td>
+        <td><span class="badge {{ 'text-bg-danger' if item.kind == 'terminal' else 'text-bg-secondary' }}">{{ item.kind }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="small text-body-secondary">
+    Terminal rewards define the goal. Shaping rewards are small hints that help early exploration;
+    if training stalls, we remove terms instead of adding more.
+  </p>
+</section>
+
+<section class="container mb-5">
+  <h2 class="h4 section-title">5. "It learns where you don't look"</h2>
+  <div class="alert alert-danger">
+    The trained network is <strong>frozen</strong> inside the game: it does not keep learning while
+    you play. What makes it feel adaptive is what it observes. It knows how long ago each camera was
+    checked and whether you are watching it right now, and during training it learned that rooms
+    nobody checks are the safest way in. Against you, it uses that rule with <em>your</em> habits.
+  </div>
+</section>
+
+<section class="container mb-5">
+  <h2 class="h4 section-title">6. Training curves</h2>
+  {% if curves %}
+    <div class="row g-4">
+      <div class="col-lg-6"><div class="chart-box"><canvas id="rewardChart"></canvas></div></div>
+      <div class="col-lg-6"><div class="chart-box"><canvas id="lengthChart"></canvas></div></div>
+    </div>
+  {% else %}
+    <div class="placeholder-box">
+      Training curves (cumulative reward, episode length and policy loss) will appear here after
+      the first training runs.
+    </div>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+{% if curves %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script id="curves-data" type="application/json">{{ curves | tojson }}</script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script>
+  const curves = JSON.parse(document.getElementById("curves-data").textContent);
+  lineChart("rewardChart", curves.step, curves.cumulative_reward, "Mean cumulative reward");
+  lineChart("lengthChart", curves.step, curves.episode_length, "Mean episode length (decisions)");
+</script>
+{% endif %}
+{% endblock %}
