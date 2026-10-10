@@ -104,6 +104,9 @@ namespace NightShift.Core
         /// <summary>Simulated second at which the monster entered, or null if it has not.</summary>
         public float? EnteredAtSeconds { get; private set; }
 
+        /// <summary>The monster's most recent decision this night, or null before the first one.</summary>
+        public MonsterStep? LastMonsterStep { get; private set; }
+
         /// <summary>Simulated second at which the power ran out, or null if it has not.</summary>
         public float? PowerOutageAtSeconds { get; private set; }
 
@@ -127,6 +130,7 @@ namespace NightShift.Core
             IllegalActions = 0;
             EnteredAtSeconds = null;
             PowerOutageAtSeconds = null;
+            LastMonsterStep = null;
         }
 
         /// <summary>
@@ -263,6 +267,7 @@ namespace NightShift.Core
             }
 
             var step = new MonsterStep(action, from, MonsterRoom, result, seen, wasIllegal);
+            LastMonsterStep = step;
 
             if (result == MoveResult.EnteredOffice)
             {
