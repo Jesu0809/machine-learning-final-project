@@ -136,7 +136,7 @@ seen only if the guard is watching the corridor it leaves (the office has no cam
 
 ### Keyboard control (Heuristic)
 
-With Behavior Type = Heuristic Only, keys `0`–`5` (top row or numpad) choose the target room for
+With Behavior Type = Heuristic Only, **Shift + `0`–`5`** (or numpad `0`–`5`) choose the target room for
 the next decision. No key, or an illegal key, means stay. This lets us test the environment and the
 rewards by hand before training.
 

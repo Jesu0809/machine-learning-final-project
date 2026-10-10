@@ -30,6 +30,10 @@ namespace NightShift.Monster
         // True once the current night's episode has been closed, so it is never closed twice.
         private bool episodeClosed;
 
+        // True while OnActionReceived applies an action. A night that ends inside that call is
+        // closed by OnActionReceived itself, after the step reward has been added.
+        private bool applyingAction;
+
         /// <summary>The night this agent plays.</summary>
         public GameState State { get; private set; }
 
@@ -65,7 +69,10 @@ namespace NightShift.Monster
         /// <summary>Gives the terminal reward and closes the episode. Safe to call more than once.</summary>
         public void OnNightEnded(GameState state, NightOutcome outcome)
         {
-            CloseEpisode(outcome);
+            if (!applyingAction)
+            {
+                CloseEpisode(outcome);
+            }
         }
 
         /// <summary>
@@ -118,7 +125,16 @@ namespace NightShift.Monster
                 return;
             }
 
-            MonsterStep step = State.ApplyMonsterAction(actions.DiscreteActions[0]);
+            applyingAction = true;
+            MonsterStep step;
+            try
+            {
+                step = State.ApplyMonsterAction(actions.DiscreteActions[0]);
+            }
+            finally
+            {
+                applyingAction = false;
+            }
             LastStep = step;
             AddReward(MonsterRewards.ForStep(step));
 
@@ -129,8 +145,9 @@ namespace NightShift.Monster
         }
 
         /// <summary>
-        /// Keyboard control for testing the environment: keys 0–5 (or numpad 0–5) choose the
-        /// target room for the next decision. With no key pressed, or an illegal key, the monster stays.
+        /// Keyboard control for testing the environment: Shift + 0–5 (or numpad 0–5) choose the
+        /// target room for the next decision. Shift keeps these keys apart from the guard's camera
+        /// keys 1–5. With no key pressed, or an illegal key, the monster stays.
         /// </summary>
         public override void Heuristic(in ActionBuffers actionsOut)
         {
@@ -186,17 +203,19 @@ namespace NightShift.Monster
             {
                 return -1;
             }
+            bool shift = keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed;
             for (int action = 0; action < MonsterActions.Count; action++)
             {
-                if (keyboard[DigitKeys[action]].wasPressedThisFrame || keyboard[NumpadKeys[action]].wasPressedThisFrame)
+                if ((shift && keyboard[DigitKeys[action]].wasPressedThisFrame) || keyboard[NumpadKeys[action]].wasPressedThisFrame)
                 {
                     return action;
                 }
             }
 #else
+            bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
             for (int action = 0; action < MonsterActions.Count; action++)
             {
-                if (Input.GetKeyDown(DigitKeys[action]) || Input.GetKeyDown(NumpadKeys[action]))
+                if ((shift && Input.GetKeyDown(DigitKeys[action])) || Input.GetKeyDown(NumpadKeys[action]))
                 {
                     return action;
                 }
