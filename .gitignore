@@ -57,3 +57,6 @@ training/results/*
 Thumbs.db
 .idea/
 .vscode/
+
+# Original art (heavy, kept in shared Drive)
+art-source/
