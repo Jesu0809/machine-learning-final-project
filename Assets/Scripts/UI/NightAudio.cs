@@ -25,9 +25,10 @@ namespace NightShift.UI
             var audio = go.AddComponent<NightAudio>();
             audio.night = night;
             audio.art = art;
-            audio.hum = audio.CreateSource("Hum", art.ambientHum, true);
-            audio.monitor = audio.CreateSource("MonitorStatic", art.staticLoop, true);
-            audio.effects = audio.CreateSource("Effects", null, false);
+            // The loops start silent and fade in; effects play at full volume (PlayOneShot scales by it).
+            audio.hum = audio.CreateSource("Hum", art.ambientHum, true, 0f);
+            audio.monitor = audio.CreateSource("MonitorStatic", art.staticLoop, true, 0f);
+            audio.effects = audio.CreateSource("Effects", null, false, 1f);
 
             if (FindAnyObjectByType<AudioListener>() == null)
             {
@@ -36,7 +37,7 @@ namespace NightShift.UI
             return audio;
         }
 
-        private AudioSource CreateSource(string name, AudioClip clip, bool loop)
+        private AudioSource CreateSource(string name, AudioClip clip, bool loop, float volume)
         {
             var go = new GameObject(name);
             go.transform.SetParent(transform, false);
@@ -45,7 +46,7 @@ namespace NightShift.UI
             source.loop = loop;
             source.playOnAwake = false;
             source.spatialBlend = 0f;
-            source.volume = 0f;
+            source.volume = volume;
             return source;
         }
 
