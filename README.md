@@ -63,6 +63,13 @@ Follow [docs/setup.md](docs/setup.md). It covers macOS and Windows step by step:
 - [docs/training-log.md](docs/training-log.md): one entry per training run
 - [docs/setup.md](docs/setup.md): installation, local website, WebGL build and deployment
 
+## Credits
+
+- Font: [VT323](https://fonts.google.com/specimen/VT323) by Peter Hull, SIL Open Font License
+  (`unity/Assets/Art/Fonts/OFL.txt`).
+- Sounds from Pixabay (Pixabay Content License): "Metal Door Slam" by SoundReality and
+  "Jump-Scare_2" by freesound_community. The other sounds were synthesized for this project.
+
 ## Authors
 
 Jesus Nuncira · Miguel Moreno

@@ -154,6 +154,18 @@ The guard (human or `PlayerBot`) can, at any time:
 
 There is no camera in the office. Only one room can be watched at a time.
 
+### What the guard sees without cameras
+
+While the monster stands in a corridor (WestCorridor or EastCorridor) and that door is **open**,
+it is visible peeking into the office through the doorway. A closed door hides it. During a power
+outage the office is dark and only its eyes show at the left door.
+
+This gives the guard a last-moment warning: the monster needs one more tick (4 s) to enter, so a
+guard who looks at the doors has that long to close the right one. The cameras are still needed to
+see it coming earlier and to know which side it will use. `PlayerBot` gets exactly the same
+information (it reacts to a monster in an open doorway with its reaction probability and delay),
+so training and play follow the same rules.
+
 ### Power
 
 `drain per second = 0.12 + 0.25 × closed doors + 0.10 × (camera open)` (*initial*), starting from
