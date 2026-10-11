@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f201ec8c4d1cc4d80ad7711349d81959, type: 3}
+  m_Name: NightArt
+  m_EditorClassIdentifier: 
+  cameraEmpty:
+  - {fileID: 21300000, guid: 8d94bf0c4c04e40f6ac8bc667cc4cc29, type: 3}
+  - {fileID: 21300000, guid: e087c5980e15c47d8958c1fc72114abe, type: 3}
+  - {fileID: 21300000, guid: ddeaad64534884e33b2e776658e801ac, type: 3}
+  - {fileID: 21300000, guid: e5e723b3d03d349a8a9881bf846c3343, type: 3}
+  - {fileID: 21300000, guid: 01acb34618b434726acdaef0855b0921, type: 3}
+  cameraMonster:
+  - {fileID: 21300000, guid: bff46e81e784146b081e4a1a61ad8a53, type: 3}
+  - {fileID: 21300000, guid: ea7ec0fe4202b4c9d8efd8299c74965d, type: 3}
+  - {fileID: 21300000, guid: 3d67b045faf06435a80a3ba6bfd3d588, type: 3}
+  - {fileID: 21300000, guid: cd30a1a1bb99b4c4f8de199783c4cbb1, type: 3}
+  - {fileID: 21300000, guid: d3d4ad3f92510439e8b8378318bac8f5, type: 3}
+  office: {fileID: 21300000, guid: f8aaaf01692b742139f093640bc0bfbe, type: 3}
+  officePowerOut: {fileID: 21300000, guid: dbdb5a75c63624a54b374bc64e03c74a, type: 3}
+  leftDoorClosed: {fileID: 21300000, guid: f5c7a55d9213a43d29d69d334f8c323d, type: 3}
+  rightDoorClosed: {fileID: 21300000, guid: 571ca6e9fe3324caea304c425eed7a7d, type: 3}
+  monsterLeftDoor: {fileID: 21300000, guid: 012e133a75d1949cb8f68810c68d7c84, type: 3}
+  monsterRightDoor: {fileID: 21300000, guid: 14c512e75c9564f33a046123161b956f, type: 3}
+  monsterIdle:
+  - {fileID: 21300000, guid: 80e0966c80d4a4326b27dbed3032c35c, type: 3}
+  - {fileID: 21300000, guid: 0bb5a10bfefa14093be9e7d288f48396, type: 3}
+  - {fileID: 21300000, guid: cec8072dd997f446ba1c4138a25a292c, type: 3}
+  jumpscare:
+  - {fileID: 21300000, guid: 08c3571c3ceb74c58b8a7fc11a76f096, type: 3}
+  - {fileID: 21300000, guid: 74d3caac3a8ab4a479e037c73fa232f6, type: 3}
+  - {fileID: 21300000, guid: 3c56df9a6132041999370d13e209e044, type: 3}
+  font: {fileID: 12800000, guid: 73f6d5c18ea6e439b98e2e2ca4b946d0, type: 3}
+  staticLoop: {fileID: 8300000, guid: 3069bb20a1b634c359c6d0e47f6e02e4, type: 3}
+  cameraSwitch: {fileID: 8300000, guid: 514103f92db8945ecb2c180a82bf51f8, type: 3}
+  ambientHum: {fileID: 8300000, guid: 59b9c568b212745b693f827f2e6471c8, type: 3}
+  doorSlide: {fileID: 8300000, guid: c8cff6787c0f7456493e35aa0fb4c2a5, type: 3}
+  doorSlam: {fileID: 8300000, guid: 617887a14ccd14b41a7f4e7c8aa510d6, type: 3}
+  powerOut: {fileID: 8300000, guid: 7f3ab8a1e32084a39a080ef9b095acc7, type: 3}
+  scream: {fileID: 8300000, guid: eaa6527724c104a50b9f0afaa0123106, type: 3}

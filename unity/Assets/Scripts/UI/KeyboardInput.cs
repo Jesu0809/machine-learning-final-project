@@ -78,6 +78,18 @@ namespace NightShift.UI
 #endif
         }
 
+        /// <summary>Mouse X position from 0 (left edge) to 1 (right edge), or 0.5 without a mouse.</summary>
+        public static float PointerX()
+        {
+            float width = Mathf.Max(1f, Screen.width);
+#if ENABLE_INPUT_SYSTEM
+            Mouse mouse = Mouse.current;
+            return mouse == null ? 0.5f : Mathf.Clamp01(mouse.position.ReadValue().x / width);
+#else
+            return Mathf.Clamp01(Input.mousePosition.x / width);
+#endif
+        }
+
         private static bool ShiftHeld()
         {
 #if ENABLE_INPUT_SYSTEM
