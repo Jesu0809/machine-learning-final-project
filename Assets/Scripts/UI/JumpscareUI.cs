@@ -5,66 +5,66 @@ using UnityEngine.UI;
 namespace NightShift.UI
 {
     /// <summary>
-    /// End of the night: an animated jumpscare when the monster gets in, or the "6 AM" screen when
-    /// the guard survives. Both end with the night's stats and the options to play again.
+    /// End of the night. When the monster gets in: face → beak open → scream in quick succession,
+    /// with zoom, shake and the scream sound, then a burst of static and the summary. When the guard
+    /// survives: the "6 AM" screen and the summary.
     /// </summary>
     public class JumpscareUI : MonoBehaviour
     {
-        private const float ScareSeconds = 1.6f;
+        private const float FrameFace = 0.14f;
+        private const float FrameBeak = 0.28f;
+        private const float ScareEnd = 1.7f;
+        private const float StaticEnd = 2.05f;
 
         private NightController night;
+        private NightArt art;
+        private NightAudio audioPlayer;
         private GameObject content;
-        private GameObject scare;
-        private RectTransform face;
+        private Image scareImage;
+        private RectTransform scareRect;
         private Image redFlash;
-        private GameObject survived;
-        private Text survivedTitle;
+        private RawImage staticNoise;
+        private Text fiveAm;
+        private Text sixAm;
+        private Text amLabel;
         private GameObject summary;
         private Text summaryTitle;
         private Text summaryStats;
+        private bool showing;
+        private bool screamPlayed;
 
-        public static JumpscareUI Create(Transform parent, NightController night)
+        public static JumpscareUI Create(Transform parent, NightController night, NightArt art, NightAudio audioPlayer)
         {
             var holder = UiFactory.CreateArea("EndOfNight", parent, Vector2.zero, Vector2.one);
             var end = holder.gameObject.AddComponent<JumpscareUI>();
             end.night = night;
+            end.art = art;
+            end.audioPlayer = audioPlayer;
 
             var content = UiFactory.CreateFullScreen("Content", holder, Color.black);
             end.content = content.gameObject;
+            Transform c = content.transform;
 
-            // Jumpscare
-            var scare = UiFactory.CreateArea("Scare", content.transform, Vector2.zero, Vector2.one);
-            end.scare = scare.gameObject;
-            end.face = UiFactory.CreateArea("Face", scare, new Vector2(0.25f, 0.05f), new Vector2(0.75f, 0.95f));
-            UiFactory.CreateImage("Head", end.face, NightColors.MonsterBody, new Vector2(0.05f, 0f), new Vector2(0.95f, 0.9f));
-            UiFactory.CreateImage("EarLeft", end.face, NightColors.MonsterBody, new Vector2(0.05f, 0.85f), new Vector2(0.25f, 1f));
-            UiFactory.CreateImage("EarRight", end.face, NightColors.MonsterBody, new Vector2(0.75f, 0.85f), new Vector2(0.95f, 1f));
-            UiFactory.CreateImage("EyeLeft", end.face, NightColors.MonsterEyes, new Vector2(0.2f, 0.58f), new Vector2(0.38f, 0.68f));
-            UiFactory.CreateImage("EyeRight", end.face, NightColors.MonsterEyes, new Vector2(0.62f, 0.58f), new Vector2(0.8f, 0.68f));
-            UiFactory.CreateImage("Mouth", end.face, new Color32(70, 0, 8, 255), new Vector2(0.2f, 0.12f), new Vector2(0.8f, 0.36f));
-            for (int tooth = 0; tooth < 6; tooth++)
-            {
-                float x = 0.22f + tooth * 0.095f;
-                UiFactory.CreateImage("Tooth", end.face, new Color32(230, 226, 210, 255), new Vector2(x, 0.27f), new Vector2(x + 0.06f, 0.36f));
-                UiFactory.CreateImage("Tooth", end.face, new Color32(230, 226, 210, 255), new Vector2(x + 0.03f, 0.12f), new Vector2(x + 0.09f, 0.2f));
-            }
-            end.redFlash = UiFactory.CreateImage("RedFlash", scare, new Color(1f, 0f, 0f, 0f), Vector2.zero, Vector2.one);
+            end.scareImage = UiFactory.CreateSprite("Scare", c, art.jumpscare[0], Vector2.zero, Vector2.one, keepAspect: true);
+            end.scareRect = end.scareImage.rectTransform;
+            end.redFlash = UiFactory.CreateImage("RedFlash", c, new Color(1f, 0f, 0f, 0f), Vector2.zero, Vector2.one);
+            end.staticNoise = UiFactory.CreateRawImage("Static", c, UiFactory.NoiseTexture, new Color(1f, 1f, 1f, 0f), Vector2.zero, Vector2.one);
 
-            // Survived
-            var survived = UiFactory.CreateArea("Survived", content.transform, Vector2.zero, Vector2.one);
-            end.survived = survived.gameObject;
-            end.survivedTitle = UiFactory.CreateLabel("Title", survived, "6 AM", 180, NightColors.Ink, TextAnchor.MiddleCenter,
-                                                      new Vector2(0f, 0.45f), new Vector2(1f, 0.85f), FontStyle.Bold);
+            // The hour digit rolls from 5 to 6 like a mechanical clock; "AM" stays still.
+            var digit = UiFactory.CreateArea("Digit", c, new Vector2(0.3f, 0.5f), new Vector2(0.47f, 0.82f));
+            digit.gameObject.AddComponent<RectMask2D>();
+            end.fiveAm = UiFactory.CreateLabel("Five", digit, "5", 260, NightColors.Ink, TextAnchor.MiddleRight, Vector2.zero, Vector2.one);
+            end.sixAm = UiFactory.CreateLabel("Six", digit, "6", 260, NightColors.Ink, TextAnchor.MiddleRight, Vector2.zero, Vector2.one);
+            end.amLabel = UiFactory.CreateLabel("AM", c, "AM", 260, NightColors.Ink, TextAnchor.MiddleLeft, new Vector2(0.5f, 0.5f), new Vector2(0.75f, 0.82f));
 
-            // Summary shown after either ending
-            var summary = UiFactory.CreateArea("Summary", content.transform, new Vector2(0.25f, 0.08f), new Vector2(0.75f, 0.45f));
+            var summary = UiFactory.CreateArea("Summary", c, new Vector2(0.2f, 0.06f), new Vector2(0.8f, 0.44f));
             end.summary = summary.gameObject;
-            end.summaryTitle = UiFactory.CreateLabel("Title", summary, "", 52, NightColors.Accent, TextAnchor.MiddleCenter,
-                                                     new Vector2(0f, 0.7f), new Vector2(1f, 1f), FontStyle.Bold);
-            end.summaryStats = UiFactory.CreateLabel("Stats", summary, "", 26, NightColors.InkDim, TextAnchor.MiddleCenter,
-                                                     new Vector2(0f, 0.38f), new Vector2(1f, 0.7f));
-            UiFactory.CreateButton("Retry", summary, "PLAY AGAIN  [R]", 28, new Vector2(0.06f, 0.05f), new Vector2(0.48f, 0.28f), night.StartNight);
-            UiFactory.CreateButton("Menu", summary, "MENU  [Esc]", 28, new Vector2(0.52f, 0.05f), new Vector2(0.94f, 0.28f), night.GoToMenu);
+            end.summaryTitle = UiFactory.CreateLabel("Title", summary, "", 72, NightColors.Accent, TextAnchor.MiddleCenter,
+                                                     new Vector2(0f, 0.68f), new Vector2(1f, 1f));
+            end.summaryStats = UiFactory.CreateLabel("Stats", summary, "", 36, NightColors.InkDim, TextAnchor.MiddleCenter,
+                                                     new Vector2(0f, 0.36f), new Vector2(1f, 0.68f));
+            UiFactory.CreateButton("Retry", summary, "PLAY AGAIN  [R]", 40, new Vector2(0.08f, 0.04f), new Vector2(0.48f, 0.26f), night.StartNight);
+            UiFactory.CreateButton("Menu", summary, "MENU  [ESC]", 40, new Vector2(0.52f, 0.04f), new Vector2(0.92f, 0.26f), night.GoToMenu);
 
             end.content.SetActive(false);
             return end;
@@ -72,7 +72,7 @@ namespace NightShift.UI
 
         private void Update()
         {
-            if (night.Phase == NightPhase.Ended && Elapsed() > 0.3f)
+            if (night.Phase == NightPhase.Ended && Elapsed() > 0.4f)
             {
                 if (KeyboardInput.WasPressed(GameKey.Restart))
                 {
@@ -89,50 +89,96 @@ namespace NightShift.UI
         public void Refresh()
         {
             bool visible = night.Phase == NightPhase.Ended;
-            content.SetActive(visible);
             if (!visible)
             {
+                if (showing)
+                {
+                    // Leaving the screen early (Play again / Menu) cuts the scream.
+                    audioPlayer.StopEffects();
+                }
+                showing = false;
+                screamPlayed = false;
+                content.SetActive(false);
                 return;
             }
+            showing = true;
+            content.SetActive(true);
 
             GameState state = night.State;
             float t = Elapsed();
             bool caught = state.Outcome == NightOutcome.MonsterEntered;
 
-            scare.SetActive(caught && t < ScareSeconds);
-            survived.SetActive(!caught);
-            summary.SetActive(!caught || t >= ScareSeconds);
-
-            if (caught && t < ScareSeconds)
+            if (caught)
             {
-                AnimateScare(t);
+                ShowScare(t);
             }
-            if (!caught)
+            else
             {
-                survivedTitle.color = new Color(1f, 1f, 1f, Mathf.Clamp01(t / 1.2f));
+                scareImage.enabled = false;
+                redFlash.color = Color.clear;
+                staticNoise.color = new Color(1f, 1f, 1f, 0.015f);
+                UiFactory.AnimateNoise(staticNoise, 3f);
+                fiveAm.enabled = true;
+                sixAm.enabled = true;
+                amLabel.enabled = true;
+                float roll = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.6f, 1.6f, t));
+                float rowHeight = 345f;
+                fiveAm.rectTransform.anchoredPosition = new Vector2(0f, roll * rowHeight);
+                sixAm.rectTransform.anchoredPosition = new Vector2(0f, (roll - 1f) * rowHeight);
             }
 
-            summaryTitle.text = caught ? "THE MONSTER GOT IN" : "YOU SURVIVED THE NIGHT";
-            summaryTitle.color = caught ? NightColors.Accent : NightColors.Ok;
-            summaryStats.text = BuildStats(state, caught);
+            bool showSummary = caught ? t >= StaticEnd : t >= 1.8f;
+            summary.SetActive(showSummary);
+            if (showSummary)
+            {
+                summaryTitle.text = caught ? "THE MONSTER GOT IN" : "YOU SURVIVED THE NIGHT";
+                summaryTitle.color = caught ? NightColors.Accent : NightColors.Ok;
+                summaryStats.text = BuildStats(state, caught);
+            }
         }
 
-        private void AnimateScare(float t)
+        private void ShowScare(float t)
         {
-            float grow = Mathf.Clamp01(t / 0.25f);
-            face.localScale = Vector3.one * Mathf.Lerp(0.4f, 1.25f, grow);
-            float shake = 30f * (1f - t / ScareSeconds);
-            face.anchoredPosition = new Vector2(Random.Range(-shake, shake), Random.Range(-shake, shake));
-            redFlash.color = new Color(1f, 0f, 0f, Mathf.Repeat(t, 0.16f) < 0.08f ? 0.35f : 0f);
+            fiveAm.enabled = false;
+            sixAm.enabled = false;
+            amLabel.enabled = false;
+
+            if (!screamPlayed)
+            {
+                screamPlayed = true;
+                audioPlayer.PlayScream();
+            }
+
+            bool scaring = t < ScareEnd;
+            scareImage.enabled = scaring;
+            if (scaring)
+            {
+                int frame = t < FrameFace ? 0 : t < FrameBeak ? 1 : 2;
+                scareImage.sprite = art.jumpscare[frame];
+
+                float zoom = Mathf.Lerp(1f, 1.18f, Mathf.Clamp01(t / FrameBeak)) + 0.03f * Mathf.Sin(t * 40f) * (1f - t / ScareEnd);
+                scareRect.localScale = Vector3.one * zoom;
+                float shake = 45f * (1f - t / ScareEnd);
+                scareRect.anchoredPosition = Random.insideUnitCircle * shake;
+                redFlash.color = new Color(1f, 0f, 0f, t < 0.3f && Mathf.Repeat(t, 0.1f) < 0.04f ? 0.1f : 0f);
+            }
+            else
+            {
+                redFlash.color = Color.clear;
+            }
+
+            // A burst of static closes the scare, then it settles to a faint background.
+            float noise = t < ScareEnd ? 0f : t < StaticEnd ? 1f : 0.015f;
+            staticNoise.color = new Color(1f, 1f, 1f, noise);
+            UiFactory.AnimateNoise(staticNoise, 3f);
         }
 
         private string BuildStats(GameState state, bool caught)
         {
             string when = caught && state.EnteredAtSeconds.HasValue
-                ? "Got in at " + UiFactory.FormatHour(HourAt(state, state.EnteredAtSeconds.Value)) + " · "
+                ? "It got in at " + UiFactory.FormatHour(HourAt(state, state.EnteredAtSeconds.Value)) + "   ·   "
                 : "";
-            return when +
-                   "Night " + night.NightNumber + " · " + night.Monster.PolicyName + " monster\n" +
+            return when + "Night " + night.NightNumber + "   ·   " + night.Monster.PolicyName + " monster\n" +
                    "Power left: " + Mathf.CeilToInt(state.Power.Normalized * 100f) + "%   ·   " +
                    "Times a door stopped it: " + state.DoorBlocks;
         }
