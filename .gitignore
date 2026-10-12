@@ -28,6 +28,8 @@ unity/*.unitypackage
 unity/sysinfo.txt
 unity/crashlytics-buildid.txt
 unity/Assets/StreamingAssets/aa/*
+# ML-Agents writes profiling timers here when a scene with agents runs in the editor
+unity/Assets/ML-Agents/
 # Standalone training build of the arena (built locally, never committed)
 training/builds/
 
@@ -60,3 +62,8 @@ Thumbs.db
 
 # Original art (heavy, kept in shared Drive)
 art-source/
+
+# ---------- Angular (web/ml-frontend) ----------
+web/ml-frontend/node_modules/
+web/ml-frontend/dist/
+web/ml-frontend/.angular/

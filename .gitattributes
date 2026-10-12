@@ -45,3 +45,8 @@
 *.wasm   binary
 *.gz     binary
 *.data   binary
+*.m4a    binary
+*.bytes  binary
+
+# Shell scripts must keep LF endings to run in Git Bash on Windows
+*.sh    text eol=lf
