@@ -1,0 +1,66 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+  <div class="container-fluid">
+    <a class="navbar-brand d-flex align-items-center gap-2" routerLink="/">
+      <span class="brand-mark" aria-hidden="true">🐻</span> Night Shift
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="mainNavbar">
+      <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Home</a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/play" routerLinkActive="active">Play</a>
+        </li>
+
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Machine Learning
+          </a>
+          <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-lg-end">
+            <li><h6 class="dropdown-header">Reinforcement Learning (PPO)</h6></li>
+            <li><a class="dropdown-item ps-4" routerLink="/ml/concepts" routerLinkActive="active">Concepts</a></li>
+            <li><a class="dropdown-item ps-4" routerLink="/ml/model" routerLinkActive="active">Freddy's Brain (the model)</a></li>
+            <li><a class="dropdown-item ps-4" routerLink="/ml/training" routerLinkActive="active">Training</a></li>
+            <li><a class="dropdown-item ps-4" routerLink="/ml/metrics" routerLinkActive="active">Evaluation Metrics</a></li>
+            <li><a class="dropdown-item ps-4" routerLink="/ml/application" routerLinkActive="active">Application: try the brain</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><h6 class="dropdown-header">Evidence</h6></li>
+            <li><a class="dropdown-item ps-4" routerLink="/ml/evidence" routerLinkActive="active">Where the ML shows in the game</a></li>
+            <li><a class="dropdown-item ps-4" routerLink="/ml/experiments" routerLinkActive="active">Experiments and findings</a></li>
+          </ul>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/story" routerLinkActive="active">Story</a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/credits" routerLinkActive="active">Credits</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main class="app-main">
+  <router-outlet></router-outlet>
+</main>
+
+<footer class="app-footer">
+  <div class="container py-3 text-center">
+    <p class="small text-muted mb-1">Jesús Nuncira &middot; Miguel Moreno &middot; Machine Learning, Universidad de Cundinamarca</p>
+    <p class="small text-muted mb-0">Fan work, non-commercial. Freddy Fazbear &copy; Scott Cawthon. Freddy model by 2012carlitos17 (CC BY 4.0).</p>
+  </div>
+</footer>
+
+@if (showScrollTop()) {
+  <button type="button" class="scroll-top-btn" (click)="scrollToTop()" aria-label="Back to top">
+    ↑
+  </button>
+}

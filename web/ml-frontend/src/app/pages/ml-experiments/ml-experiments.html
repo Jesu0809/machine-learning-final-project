@@ -1,0 +1,59 @@
+<div class="container py-5">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a routerLink="/">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Experiments</li>
+    </ol>
+  </nav>
+
+  <div class="mb-4">
+    <h1>Experiments</h1>
+    <p class="lead">What we tried, what went wrong, what we changed. Each run is one hypothesis.</p>
+  </div>
+
+  @for (run of runs()?.runs ?? []; track run.id; let i = $index) {
+    <div class="card mb-3"><div class="card-body">
+      <div class="d-flex flex-wrap justify-content-between gap-2">
+        <h2 class="h5 mb-1">Experiment {{ i + 1 }} &middot; {{ run.id }}</h2>
+        <span class="small text-muted">{{ run.date }}</span>
+      </div>
+      <div class="row g-3 mt-1">
+        <div class="col-md-4"><h3 class="h6 text-info">Change</h3><p class="small mb-0">{{ run.change }}</p></div>
+        <div class="col-md-5"><h3 class="h6 text-info">Finding</h3><p class="small mb-0">{{ run.finding }}</p></div>
+        <div class="col-md-3">
+          <h3 class="h6 text-info">Catch rate</h3>
+          <p class="small mb-1">Novice {{ run.catch_rate['Novice'] | percent: '1.0-1' }}</p>
+          <p class="small mb-1">Normal {{ run.catch_rate['Normal'] | percent: '1.0-1' }}</p>
+          <p class="small mb-1">Expert {{ run.catch_rate['Expert'] | percent: '1.0-1' }}</p>
+          <p class="small mb-0"><strong>{{ run.decision }}</strong></p>
+        </div>
+      </div>
+    </div></div>
+  }
+
+  <div class="card mb-3"><div class="card-body">
+    <h2 class="h5">Lesson: a suspiciously good result</h2>
+    <p class="small mb-0">
+      v1 caught the <em>expert</em> survivor more often than the novice. Before trusting it we checked for an
+      information leak (the observations never include the player's position, and the model gives the same
+      rates outside Unity). The real cause was the opponent: the bot froze whenever Freddy was close, and
+      the expert, who read the tracker more, froze more. Freddy learned to exploit the bot, not to hunt. We
+      fixed the bot and retrained. In reinforcement learning, the agent learns whatever the environment rewards.
+    </p>
+  </div></div>
+
+  <div class="card mb-3 border-secondary"><div class="card-body">
+    <div class="d-flex justify-content-between"><h2 class="h5">Next: does he learn where you hide?</h2><span class="badge text-bg-secondary align-self-start">planned</span></div>
+    <p class="small mb-0">
+      The survivor bot has a hiding habit (how often it picks the locker over other spots), randomized every
+      training night. The plan is to evaluate the trained brain against survivors with a fixed strong habit
+      and measure whether it opens the habitual spot first more often, and to compare against an ablation
+      trained without the habit randomization.
+    </p>
+  </div></div>
+
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" routerLink="/ml/evidence">← Evidence</a>
+    <a class="btn btn-primary" routerLink="/play">Play</a>
+  </div>
+</div>

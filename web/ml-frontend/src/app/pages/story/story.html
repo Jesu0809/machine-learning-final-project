@@ -1,0 +1,82 @@
+<div class="container py-5">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a routerLink="/">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Story</li>
+    </ol>
+  </nav>
+
+  <div class="mb-4">
+    <h1>The Story</h1>
+    <p class="lead">
+      The story and the machine learning are the same thing: Nightshift Labs trained Freddy's brain on
+      thousands of simulated nights, and you are the first real test. Every number in the calls and the
+      notes is a real number from the training.
+    </p>
+  </div>
+
+  <div class="card mb-4"><div class="card-body">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+      <h2 class="h5 mb-0">Intro</h2>
+      <button type="button" class="btn btn-sm btn-primary" (click)="playing() ? stop() : play('intro', 0, intro.length, true)">{{ playing() ? '■ Stop' : '▶ Play the intro' }}</button>
+    </div>
+    <p class="small text-muted">
+      A one-minute film when you start a new game: rain over the closed pizzeria, the title cards, then the
+      guard drives there listening to a voicemail, parks, walks to the door under the neon sign and goes in.
+    </p>
+    <p class="font-monospace small mb-3">
+      @for (card of cards; track $index) { <span class="d-block">{{ card }}</span> }
+    </p>
+    @for (line of intro; track $index) {
+      <div class="story-line" [class.active]="playing() === 'intro:' + $index">
+        <button type="button" class="btn btn-sm btn-outline-secondary" [attr.aria-label]="'Play line ' + ($index + 1)" (click)="play('intro', $index, intro.length)">{{ playing() === 'intro:' + $index ? '■' : '▶' }}</button>
+        <p class="mb-0 fst-italic">{{ line }}</p>
+      </div>
+    }
+  </div></div>
+
+  <h2 class="h4 mb-3">The phone calls</h2>
+  <ul class="nav nav-tabs mb-3">
+    @for (call of calls; track $index) {
+      <li class="nav-item">
+        <button type="button" class="nav-link" [class.active]="night() === $index" (click)="selectNight($index)">Night {{ $index + 1 }}</button>
+      </li>
+    }
+  </ul>
+  <div class="card mb-4"><div class="card-body">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <p class="small text-info mb-0">{{ changes[night()] || 'Three fuses, one exit' }}</p>
+      <button type="button" class="btn btn-sm btn-primary" (click)="playing() ? stop() : play('night' + (night() + 1), 0, calls[night()].length, true)">{{ playing() ? '■ Stop' : '▶ Play the whole call' }}</button>
+    </div>
+    @for (line of calls[night()]; track $index) {
+      <div class="story-line" [class.active]="playing() === 'night' + (night() + 1) + ':' + $index">
+        <button type="button" class="btn btn-sm btn-outline-secondary" [attr.aria-label]="'Play line ' + ($index + 1)" (click)="play('night' + (night() + 1), $index, calls[night()].length)">{{ playing() === 'night' + (night() + 1) + ':' + $index ? '■' : '▶' }}</button>
+        <p class="mb-0">{{ line }}</p>
+      </div>
+    }
+    <p class="small text-muted mt-3 mb-0">
+      @if (night() < 4) {
+        During the call Freddy sleeps and the objectives are hidden: use it to learn the building.
+      } @else {
+        On night 5 there is no grace period: Freddy is awake while the phone talks.
+      }
+    </p>
+  </div></div>
+
+  <h2 class="h4 mb-3">Lab notes</h2>
+  <p class="text-muted">Eight notes are hidden around the pizzeria. They quote the real training log.</p>
+  <div class="row g-3 mb-4">
+    @for (note of notes; track $index) {
+      <div class="col-md-6 col-lg-3">
+        <div class="card h-100"><div class="card-body">
+          <h3 class="h6 font-monospace">{{ noteTitle(note) }}</h3>
+          @for (line of noteBody(note); track $index) {
+            <p class="small mb-1">{{ line }}</p>
+          }
+        </div></div>
+      </div>
+    }
+  </div>
+
+  <a class="btn btn-primary" routerLink="/play">Play the five nights</a>
+</div>

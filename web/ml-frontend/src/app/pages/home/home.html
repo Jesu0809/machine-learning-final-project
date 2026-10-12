@@ -1,0 +1,97 @@
+<section class="bg-dark text-white py-5 mb-4">
+  <div class="container">
+    <p class="text-uppercase small fw-semibold text-info mb-2">Unity ML-Agents · Reinforcement Learning · NPC</p>
+    <h1 class="display-5 fw-bold mb-3">Find the fuses. Get out.<br>Freddy has learned to hunt.</h1>
+    <p class="lead col-lg-8 mb-4">
+      A first-person horror game in an abandoned pizzeria. The animatronic that hunts you is not scripted:
+      his brain is a neural network trained with reinforcement learning (PPO) in millions of simulated
+      decisions. He only knows what he hears and sees, and he learned on his own where to look, which
+      lockers to open and when to use his sense.
+    </p>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-primary btn-lg" routerLink="/play">Play in the browser</a>
+      <a class="btn btn-outline-primary btn-lg" routerLink="/ml/model">How his brain works</a>
+      <a class="btn btn-outline-secondary btn-lg" routerLink="/ml/application">Try the brain yourself</a>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+  <div class="row g-3 mb-5">
+    <div class="col-md-4">
+      <div class="card h-100 text-center">
+        <div class="card-body">
+          <div class="display-6 fw-bold text-info">{{ rate('trained') | percent: '1.0-1' }}</div>
+          <p class="mb-0">nights caught by the <strong>trained</strong> Freddy</p>
+          <p class="small text-muted mb-0">against the "Normal" simulated survivor</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card h-100 text-center">
+        <div class="card-body">
+          <div class="display-6 fw-bold">{{ rate('scripted') | percent: '1.0-1' }}</div>
+          <p class="mb-0">by a <strong>hand-written</strong> hunter</p>
+          <p class="small text-muted mb-0">same senses, rules instead of learning</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card h-100 text-center">
+        <div class="card-body">
+          <div class="display-6 fw-bold">{{ rate('random') | percent: '1.0-1' }}</div>
+          <p class="mb-0">by a <strong>random</strong> hunter</p>
+          <p class="small text-muted mb-0">the lower baseline</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="h4 mb-3">Where is the Machine Learning?</h2>
+  <div class="row g-3 mb-5">
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100"><div class="card-body">
+        <div class="fs-2" aria-hidden="true">🧠</div>
+        <h3 class="h6">The NPC's brain</h3>
+        <p class="small text-muted mb-2">A 54 → 256 → 256 → 13 network trained with PPO decides every move of Freddy.</p>
+        <a routerLink="/ml/model" class="small">The model →</a>
+      </div></div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100"><div class="card-body">
+        <div class="fs-2" aria-hidden="true">📈</div>
+        <h3 class="h6">How it learned</h3>
+        <p class="small text-muted mb-2">Three training runs of 3 million steps; the reward climbs from -0.4 to +1.0.</p>
+        <a routerLink="/ml/training" class="small">Training →</a>
+      </div></div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100"><div class="card-body">
+        <div class="fs-2" aria-hidden="true">🎯</div>
+        <h3 class="h6">Proof it works</h3>
+        <p class="small text-muted mb-2">400 nights per cell against two baselines, with 95% confidence intervals.</p>
+        <a routerLink="/ml/metrics" class="small">Metrics →</a>
+      </div></div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100"><div class="card-body">
+        <div class="fs-2" aria-hidden="true">👁️</div>
+        <h3 class="h6">You can see it think</h3>
+        <p class="small text-muted mb-2">In the game, Tab shows his probabilities; the end screen replays his decisions.</p>
+        <a routerLink="/ml/evidence" class="small">Evidence →</a>
+      </div></div>
+    </div>
+  </div>
+
+  <h2 class="h4 mb-3">Screenshots</h2>
+  <div class="row g-3 mb-4">
+    @for (shot of shots; track shot.file) {
+      <div class="col-md-6 col-lg-4">
+        <figure class="mb-0">
+          <img class="img-fluid rounded border" [src]="'img/' + shot.file" [alt]="shot.caption" loading="lazy">
+          <figcaption class="small text-muted mt-1">{{ shot.caption }}</figcaption>
+        </figure>
+      </div>
+    }
+  </div>
+</div>

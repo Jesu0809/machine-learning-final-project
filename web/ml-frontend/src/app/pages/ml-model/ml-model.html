@@ -1,0 +1,134 @@
+<div class="container py-5">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a routerLink="/">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Freddy's Brain &mdash; The Model</li>
+    </ol>
+  </nav>
+
+  <div class="mb-4">
+    <h1>Freddy's Brain: the Model</h1>
+    <p class="lead">
+      A neural network policy trained with PPO in Unity ML-Agents. It does not see the 3D pizzeria: it
+      decides on an abstract map of 9 rooms, and a scripted body carries out each decision in 3D.
+    </p>
+  </div>
+
+  @if (error()) {
+    <div class="alert alert-danger">{{ error() }}</div>
+  }
+
+  @if (info(); as m) {
+    <div class="row g-3 mb-4">
+      <div class="col-md-3"><div class="card h-100 text-center"><div class="card-body">
+        <div class="h3 fw-bold text-info mb-0">{{ m.network.join(' → ') }}</div>
+        <p class="small text-muted mb-0">network layers (Swish activations)</p>
+      </div></div></div>
+      <div class="col-md-3"><div class="card h-100 text-center"><div class="card-body">
+        <div class="h3 fw-bold mb-0">{{ m.settings.seconds_per_decision }} s</div>
+        <p class="small text-muted mb-0">between decisions (night 1)</p>
+      </div></div></div>
+      <div class="col-md-3"><div class="card h-100 text-center"><div class="card-body">
+        <div class="h3 fw-bold mb-0">{{ m.settings.max_decisions }}</div>
+        <p class="small text-muted mb-0">decisions per night (episode length)</p>
+      </div></div></div>
+      <div class="col-md-3"><div class="card h-100 text-center"><div class="card-body">
+        <div class="h6 fw-bold mb-0">{{ m.settings.algorithm }}</div>
+        <p class="small text-muted mb-0">γ = {{ m.settings.gamma }}</p>
+      </div></div></div>
+    </div>
+
+    <div class="card mb-4"><div class="card-body">
+      <h2 class="h5">Brain and body</h2>
+      <div class="row g-3 align-items-center text-center">
+        <div class="col-md-3"><div class="border rounded p-3">
+          <strong>Game events</strong><br><span class="small text-muted">footsteps, fuses, breaker, horns, sightings</span>
+        </div></div>
+        <div class="col-md-1 fs-3">→</div>
+        <div class="col-md-4"><div class="border border-info rounded p-3">
+          <strong class="text-info">Neural network (PPO)</strong><br>
+          <span class="small text-muted">{{ m.network[0] }} observations → {{ m.network[m.network.length - 1] }} action probabilities</span>
+        </div></div>
+        <div class="col-md-1 fs-3">→</div>
+        <div class="col-md-3"><div class="border rounded p-3">
+          <strong>3D body (scripted)</strong><br><span class="small text-muted">walks, opens lockers, breaks doors, chases</span>
+        </div></div>
+      </div>
+      <p class="small text-muted mt-3 mb-0">
+        Splitting brain and body makes training fast (thousands of nights per minute, no 3D) and lets the
+        same trained network drive the 3D animatronic. The body only executes: <em>where</em> to go,
+        <em>which</em> locker to open and <em>when</em> to sense is always the network.
+      </p>
+    </div></div>
+
+    <div class="row g-3 mb-4">
+      <div class="col-lg-7"><div class="card h-100"><div class="card-body">
+        <h2 class="h5">Observations ({{ m.network[0] }} inputs)</h2>
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead><tr><th>#</th><th>What</th><th>Encoding</th></tr></thead>
+            <tbody>
+              @for (row of m.observations; track row.index) {
+                <tr><td class="text-nowrap">{{ row.index }}</td><td>{{ row.name }}</td><td class="small text-muted">{{ row.encoding }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <p class="small text-muted mt-2 mb-0">The player's real position is never an input. He has to infer it.</p>
+      </div></div></div>
+      <div class="col-lg-5"><div class="card h-100"><div class="card-body">
+        <h2 class="h5">Actions ({{ m.network[m.network.length - 1] }} outputs)</h2>
+        <table class="table table-sm">
+          <thead><tr><th>#</th><th>Action</th></tr></thead>
+          <tbody>
+            @for (row of m.actions; track row.index) {
+              <tr><td class="text-nowrap">{{ row.index }}</td><td><strong>{{ row.name }}</strong><br><span class="small text-muted">{{ row.detail }}</span></td></tr>
+            }
+          </tbody>
+        </table>
+        <h3 class="h6 mt-3">The map he decides on</h3>
+        <ul class="small mb-0">
+          @for (room of m.rooms; track room; let i = $index) {
+            <li><strong>{{ room }}</strong>: {{ m.spots[i].join(', ') }} &middot; <span class="text-muted">to {{ neighborNames(i) }}</span></li>
+          }
+        </ul>
+      </div></div></div>
+    </div>
+
+    <div class="row g-3 mb-4">
+      <div class="col-lg-6"><div class="card h-100"><div class="card-body">
+        <h2 class="h5">Reward function</h2>
+        <table class="table table-sm mb-0">
+          <thead><tr><th>Event</th><th>Reward</th></tr></thead>
+          <tbody>
+            @for (row of m.rewards; track row.event) {
+              <tr>
+                <td>{{ row.event }}</td>
+                <td class="text-nowrap"><span class="badge" [class.text-bg-danger]="row.kind === 'terminal'" [class.text-bg-secondary]="row.kind === 'shaping'">{{ row.reward }}</span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div></div></div>
+      <div class="col-lg-6"><div class="card h-100"><div class="card-body">
+        <h2 class="h5">Same brain, five nights</h2>
+        <p class="small text-muted">The network is the same every night; the game gives it more decisions per second and the player harder objectives.</p>
+        <table class="table table-sm mb-0">
+          <thead><tr><th>Night</th><th>Objectives</th><th>Freddy</th><th>Other</th></tr></thead>
+          <tbody>
+            @for (n of m.nights; track n.night) {
+              <tr><td>{{ n.night }}</td><td class="small">{{ n.objectives }}</td><td class="small">{{ n.freddy }}</td><td class="small text-muted">{{ n.other }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div></div></div>
+    </div>
+  } @else if (!error()) {
+    <p class="text-muted">Loading the model…</p>
+  }
+
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" routerLink="/ml/concepts">← Concepts</a>
+    <a class="btn btn-primary" routerLink="/ml/training">Next: Training →</a>
+  </div>
+</div>

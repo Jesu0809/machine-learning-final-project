@@ -1,0 +1,65 @@
+<div class="py-5" [class.container]="!wide()" [class.container-fluid]="wide()" [class.px-lg-5]="wide()">
+  <div class="mb-4">
+    <h1>Play Night Shift</h1>
+    <p class="lead">Five nights, one phone call per night, and an animatronic whose brain is a trained neural network.</p>
+  </div>
+
+  @if (available() === false) {
+    <div class="card mb-4"><div class="card-body">
+      <p class="mb-0">The browser build is not published yet. Meanwhile, look at <a routerLink="/ml/evidence">the evidence</a> or <a routerLink="/ml/application">try the brain</a>.</p>
+    </div></div>
+  } @else {
+    <div class="d-flex flex-wrap justify-content-end gap-2 mb-2">
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="wide.set(!wide())">
+        {{ wide() ? 'Normal size' : 'Wider' }}
+      </button>
+      <button type="button" class="btn btn-sm btn-primary" [disabled]="!loaded()" (click)="fullscreen()">
+        &#x26F6; Full screen
+      </button>
+    </div>
+    <div class="game-frame mx-auto mb-2" [class.game-wide]="wide()">
+      <canvas #canvas id="unity-canvas" tabindex="-1"></canvas>
+      @if (!loaded()) {
+        <div class="game-loading">
+          @if (error()) {
+            <p class="text-danger small mb-0">The game could not load: {{ error() }}</p>
+          } @else {
+            <div class="progress w-100" role="progressbar" aria-label="Loading game">
+              <div class="progress-bar bg-danger" [style.width.%]="progress()"></div>
+            </div>
+            <p class="small text-muted mt-2 mb-0">Unlocking the pizzeria… {{ progress() }}%</p>
+          }
+        </div>
+      }
+    </div>
+    <p class="text-center small text-muted mb-4">Click the game to capture the mouse. Use headphones and play in <strong>full screen</strong> (Esc leaves it). The first visit can take a minute while the server wakes up.</p>
+  }
+
+  <h2 class="h4 mb-3">Controls</h2>
+  <ul class="nav nav-tabs mb-0">
+    <li class="nav-item"><button type="button" class="nav-link" [class.active]="!gamepad()" (click)="gamepad.set(false)">Keyboard + mouse</button></li>
+    <li class="nav-item"><button type="button" class="nav-link" [class.active]="gamepad()" (click)="gamepad.set(true)">Xbox controller</button></li>
+  </ul>
+  <div class="card mb-3 border-top-0 rounded-top-0"><div class="card-body controls-diagram">
+    <img class="img-fluid w-100" [src]="gamepad() ? 'img/controls-gamepad.png' : 'img/controls-keyboard.png'"
+         [alt]="gamepad() ? 'Xbox controller controls' : 'Keyboard and mouse controls'">
+    @if (gamepad()) {
+      <p class="small text-muted mb-0 text-center">
+        Plug in an Xbox (or any standard) controller by USB or Bluetooth, open the game and press any button on it:
+        browsers only report a controller after it is pressed. Chrome, Edge and Firefox are supported.
+      </p>
+    }
+  </div></div>
+
+  <div class="card"><div class="card-body">
+    <h2 class="h5">Tips</h2>
+    <ul class="small mb-0">
+      <li>The objectives appear when the call ends: use the call to learn the building.</li>
+      <li>Doors can be closed behind you (the dim lamp over them turns red); he has to break them down.</li>
+      <li>His brain cannot see through walls. It hears running, fuses, the breaker and the exit panel.</li>
+      <li>Crouched in the dark with the flashlight off, he only sees you up close.</li>
+      <li>If you panic he can <em>sense</em> you. His network decides when.</li>
+      <li>Press Tab (View on a controller): the network's probabilities are right there.</li>
+    </ul>
+  </div></div>
+</div>

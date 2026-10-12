@@ -1,0 +1,56 @@
+{
+  "runs": [
+    {
+      "id": "freddy_v1",
+      "date": "2026-10-11",
+      "steps": 3000015,
+      "minutes": 37,
+      "observations": 43,
+      "actions": 12,
+      "reward_start": -0.46,
+      "reward_end": 1.02,
+      "change": "First run of the hunt.",
+      "catch_rate": {"Novice": 0.965, "Normal": 0.998, "Expert": 1.0},
+      "finding": "It exploited a weakness of the training bot: the bot froze while Freddy was within two rooms, so Freddy learned to patrol the center and the expert survivor, who read the tracker more often, was caught more. No information leak: the same model outside Unity gives the same rates.",
+      "decision": "Keep, but fix the bot (it gets impatient) and retrain."
+    },
+    {
+      "id": "freddy_v2",
+      "date": "2026-10-12",
+      "steps": 3000120,
+      "minutes": 25,
+      "observations": 43,
+      "actions": 12,
+      "reward_start": -0.41,
+      "reward_end": 1.02,
+      "change": "The survivor bot gets impatient: after waiting a few actions for a path next to Freddy, it risks it.",
+      "catch_rate": {"Novice": 0.92, "Normal": 0.975, "Expert": 0.99},
+      "finding": "The impatient bot escapes more often, but the trained policy stays far above both baselines; the confidence intervals never overlap.",
+      "decision": "Keep."
+    },
+    {
+      "id": "freddy_v3",
+      "date": "2026-10-12",
+      "steps": 3000032,
+      "minutes": 45,
+      "observations": 54,
+      "actions": 13,
+      "reward_start": -0.42,
+      "reward_end": 1.03,
+      "change": "New learned action SENSE (from Friday the 13th): it reveals the player's room if their fear is at least 0.5, then recharges. 11 new observations; -0.01 for a sense that finds nothing.",
+      "catch_rate": {"Novice": 0.995, "Normal": 0.985, "Expert": 0.992},
+      "finding": "It uses sense about as often as the scripted hunter, but its senses find the player 77-82% of the time against 62-67%: it learned when sensing pays off.",
+      "decision": "Keep. This is the brain in the game."
+    }
+  ],
+  "sense": [
+    {"survivor": "Novice", "trained_uses": 1.08, "trained_hit": 0.78, "scripted_uses": 1.02, "scripted_hit": 0.65},
+    {"survivor": "Normal", "trained_uses": 1.32, "trained_hit": 0.77, "scripted_uses": 1.63, "scripted_hit": 0.62},
+    {"survivor": "Expert", "trained_uses": 1.66, "trained_hit": 0.82, "scripted_uses": 2.01, "scripted_hit": 0.67}
+  ],
+  "checks": [
+    "The probabilities shown in the game and on this site come from the same weights as the .onnx model: the most likely action matches the model's choice in 7,007 of 7,007 states.",
+    "The trained model gives the same catch rates inside Unity and outside it (ONNX Runtime on the C# simulation).",
+    "Freddy's observations never contain the player's real position; the distance shaping that uses it is only in the reward."
+  ]
+}

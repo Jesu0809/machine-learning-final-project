@@ -1,0 +1,167 @@
+<div class="container py-5">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a routerLink="/">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Application &mdash; Try the Brain</li>
+    </ol>
+  </nav>
+
+  <div class="mb-4">
+    <h1>Application: Try Freddy's Brain</h1>
+    <p class="lead">
+      Describe what Freddy knows and the real trained network answers what it would do. The server runs
+      the same weights as the game, with the same 54 inputs and the same action masking.
+    </p>
+  </div>
+
+  <div class="mb-3 d-flex flex-wrap gap-2">
+    @for (p of presets; track p.label) {
+      <button type="button" class="btn btn-sm btn-outline-info" [title]="p.hint" (click)="applyPreset(p)">{{ p.label }}</button>
+    }
+  </div>
+
+  @if (info(); as m) {
+    <div class="row g-4">
+      <div class="col-lg-5">
+        <div class="card"><div class="card-body">
+          <h2 class="h5 mb-3">What Freddy knows</h2>
+
+          <label class="form-label small" for="room">Freddy is in</label>
+          <select id="room" class="form-select mb-3" [(ngModel)]="freddyRoom" (ngModelChange)="onRoomChange()">
+            @for (room of m.rooms; track room; let i = $index) { <option [ngValue]="i">{{ room }}</option> }
+          </select>
+
+          <label class="form-label small" for="noise">He heard a noise in</label>
+          <div class="input-group mb-1">
+            <select id="noise" class="form-select" [(ngModel)]="noiseRoom" (ngModelChange)="ask()">
+              <option [ngValue]="null">nothing</option>
+              @for (room of m.rooms; track room; let i = $index) { <option [ngValue]="i">{{ room }}</option> }
+            </select>
+            <select class="form-select" aria-label="Noise level" [(ngModel)]="noiseLevel" (ngModelChange)="ask()" [disabled]="noiseRoom === null">
+              <option [ngValue]="1">footsteps</option>
+              <option [ngValue]="2">running / a fuse</option>
+              <option [ngValue]="3">horn / breaker / exit panel</option>
+            </select>
+          </div>
+          <p class="small text-muted mb-3">Noises come from rooms, not exact positions.</p>
+
+          <label class="form-label small" for="seen">He last saw the player in</label>
+          <div class="input-group mb-3">
+            <select id="seen" class="form-select" [(ngModel)]="lastSeenRoom" (ngModelChange)="ask()">
+              <option [ngValue]="null">never seen</option>
+              @for (room of m.rooms; track room; let i = $index) { <option [ngValue]="i">{{ room }}</option> }
+            </select>
+            <input type="number" class="form-control" min="0" max="200" aria-label="Seconds ago" [(ngModel)]="secondsSinceSeen" (ngModelChange)="ask()" [disabled]="lastSeenRoom === null">
+            <span class="input-group-text">s ago</span>
+          </div>
+
+          <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" id="sees" [(ngModel)]="seesPlayer" (ngModelChange)="ask()">
+            <label class="form-check-label" for="sees">He sees the player right now</label>
+          </div>
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="sense" [(ngModel)]="senseReady" (ngModelChange)="ask()">
+            <label class="form-check-label" for="sense">His sense is charged</label>
+          </div>
+
+          <label class="form-label small" for="sensed">His last sense found the player in</label>
+          <select id="sensed" class="form-select mb-3" [(ngModel)]="sensedRoom" (ngModelChange)="ask()">
+            <option [ngValue]="null">nowhere</option>
+            @for (room of m.rooms; track room; let i = $index) { <option [ngValue]="i">{{ room }}</option> }
+          </select>
+
+          <label class="form-label small" for="fuses">Fuses the player has: {{ fuses }}</label>
+          <input id="fuses" type="range" class="form-range mb-2" min="0" max="3" [(ngModel)]="fuses" (ngModelChange)="ask()">
+
+          <label class="form-label small" for="progress">Night progress: {{ nightProgress }}%</label>
+          <input id="progress" type="range" class="form-range mb-2" min="0" max="100" step="5" [(ngModel)]="nightProgress" (ngModelChange)="ask()">
+
+          <p class="form-label small mb-1">Rooms he has <strong>not</strong> checked for a long time</p>
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            @for (room of m.rooms; track room; let i = $index) {
+              @if (i !== freddyRoom) {
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" [id]="'stale' + i" [(ngModel)]="notChecked[i]" (ngModelChange)="ask()">
+                  <label class="form-check-label small" [for]="'stale' + i">{{ room }}</label>
+                </div>
+              }
+            }
+          </div>
+
+          <p class="form-label small mb-1">Hiding spots here he already searched</p>
+          <div class="d-flex flex-wrap gap-3">
+            @for (spot of spotsHere(); track spot; let i = $index) {
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" [id]="'spot' + i" [(ngModel)]="searchedHere[i]" (ngModelChange)="ask()">
+                <label class="form-check-label small" [for]="'spot' + i">{{ spot }}</label>
+              </div>
+            }
+          </div>
+        </div></div>
+      </div>
+
+      <div class="col-lg-7">
+        <div class="card mb-3"><div class="card-body">
+          <h2 class="h5 mb-3">What the network decides</h2>
+          @if (error()) {
+            <div class="alert alert-danger">{{ error() }}</div>
+          }
+          @if (decision(); as d) {
+            <div class="mb-3 p-3 border border-info rounded" [class.opacity-50]="loading()">
+              <div class="small text-muted">Most likely action</div>
+              <div class="h4 mb-0 text-info">{{ d.chosen.name }}</div>
+              <div class="small">{{ d.chosen.probability | percent: '1.1-1' }} sure</div>
+            </div>
+            @for (a of d.actions; track a.index) {
+              <div class="mb-2">
+                <div class="d-flex justify-content-between small">
+                  <span>{{ a.name }}</span><span>{{ a.probability | percent: '1.1-1' }}</span>
+                </div>
+                <div class="progress" role="progressbar" [attr.aria-label]="a.name" style="height: 10px">
+                  <div class="progress-bar" [class.bg-info]="a.index === d.chosen.index" [style.width.%]="a.probability * 100"></div>
+                </div>
+              </div>
+            }
+            <p class="small text-muted mt-3 mb-0">Actions that are impossible here (rooms not connected, spots that do not exist) are masked and never appear.</p>
+          }
+        </div></div>
+
+        @if (decision(); as d) {
+          <div class="card"><div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <h2 class="h6 mb-0">The 54 numbers the network received</h2>
+              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="showInputs.set(!showInputs())">{{ showInputs() ? 'Hide' : 'Show' }}</button>
+            </div>
+            @if (showInputs()) {
+              <div class="d-flex flex-wrap gap-1 mt-3">
+                @for (v of d.inputs; track $index) {
+                  <span class="badge" [class.text-bg-info]="v > 0" [class.text-bg-dark]="v === 0" [title]="'input ' + $index">{{ $index }}: {{ v | number: '1.0-2' }}</span>
+                }
+              </div>
+              <p class="small text-muted mt-2 mb-0">See the observation table on <a routerLink="/ml/model">The model</a> page for what each index means.</p>
+            }
+          </div></div>
+        }
+      </div>
+    </div>
+  } @else if (error()) {
+    <div class="alert alert-danger">{{ error() }}</div>
+  } @else {
+    <p class="text-muted">Waking Freddy up…</p>
+  }
+
+  <div class="card mt-4"><div class="card-body">
+    <h2 class="h6">Things to try</h2>
+    <ul class="small mb-0">
+      <li><em>A horn in the Exit Lobby</em>: the probability splits between East Hall and Arcade, the two rooms that lead there.</li>
+      <li><em>Player vanished in Storage</em>: he opens the locker first. Mark the locker as searched and he moves to a cabinet; mark both and he leaves for the Arcade.</li>
+      <li><em>Lost in the Dining Hall</em>: he senses. Turn his sense off and he walks to the East Hall, the side he has not checked.</li>
+      <li>Uncheck rooms in "not checked for a long time" and watch him lose interest in them. This memory is one of his 54 inputs.</li>
+    </ul>
+  </div></div>
+
+  <div class="d-flex gap-2 mt-4">
+    <a class="btn btn-outline-secondary" routerLink="/ml/metrics">← Metrics</a>
+    <a class="btn btn-primary" routerLink="/ml/evidence">Next: Evidence →</a>
+  </div>
+</div>

@@ -1,0 +1,105 @@
+<div class="container py-5">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a routerLink="/">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Evaluation Metrics</li>
+    </ol>
+  </nav>
+
+  <div class="mb-4">
+    <h1>Evaluation Metrics</h1>
+    <p class="lead">
+      Is the trained brain really better than writing rules by hand? Each Freddy plays
+      {{ results()?.nights_per_run ?? 400 }} nights against each simulated survivor, with no exploration
+      (always the most likely action), on nights it never saw during training.
+    </p>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="card h-100"><div class="card-body">
+      <h2 class="h6 text-info">Trained (PPO)</h2>
+      <p class="small mb-0">The neural network <strong>{{ results()?.model }}</strong>, the same one the game uses.</p>
+    </div></div></div>
+    <div class="col-md-4"><div class="card h-100"><div class="card-body">
+      <h2 class="h6">Scripted rules</h2>
+      <p class="small mb-0">A hand-written hunter with the same senses: goes to the last noise, searches every spot, senses when it has no lead.</p>
+    </div></div></div>
+    <div class="col-md-4"><div class="card h-100"><div class="card-body">
+      <h2 class="h6">Random</h2>
+      <p class="small mb-0">Picks any legal action. The floor every learned policy must beat.</p>
+    </div></div></div>
+  </div>
+
+  <div class="card mb-4"><div class="card-body">
+    <h2 class="h5">Catch rate with 95% confidence intervals</h2>
+    <img class="img-fluid w-100 rounded" src="/api/plots/catch-rate" alt="Catch rate per survivor skill and policy">
+    <p class="small text-muted mt-2 mb-0">Wilson score intervals. The intervals of the trained brain never overlap with the baselines.</p>
+  </div></div>
+
+  <div class="card mb-4"><div class="card-body">
+    <h2 class="h5">Full table</h2>
+    <div class="table-responsive">
+      <table class="table table-sm align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Survivor</th><th>Freddy</th><th>Catch</th><th>95% CI</th><th>Escape</th>
+            <th>Decisions to catch</th><th>Searches / night</th><th>Empty searches</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (run of rows(); track run.survivor + run.policy) {
+            <tr [class.table-active]="run.policy === 'trained'">
+              <td>{{ run.survivor }}</td>
+              <td>{{ policyLabels[run.policy] }}</td>
+              <td><strong>{{ run.catch_rate | percent: '1.1-1' }}</strong></td>
+              <td class="small text-muted">{{ run.catch_ci_low | percent: '1.1-1' }} – {{ run.catch_ci_high | percent: '1.1-1' }}</td>
+              <td>{{ run.escape_rate | percent: '1.1-1' }}</td>
+              <td>{{ run.avg_ticks_to_catch | number: '1.1-1' }}</td>
+              <td>{{ run.avg_searches | number: '1.1-1' }}</td>
+              <td>{{ run.failed_search_rate | percent: '1.0-0' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div></div>
+
+  <div class="card mb-4"><div class="card-body">
+    <h2 class="h5">A learned skill: when to sense</h2>
+    <img class="img-fluid w-100 rounded mb-3" src="/api/plots/sense" alt="Sense hit rate trained vs scripted">
+    <div class="table-responsive">
+      <table class="table table-sm mb-2">
+        <thead><tr><th>Survivor</th><th>Trained: uses / night</th><th>Trained: found the player</th><th>Scripted: uses / night</th><th>Scripted: found the player</th></tr></thead>
+        <tbody>
+          @for (s of runs()?.sense ?? []; track s.survivor) {
+            <tr>
+              <td>{{ s.survivor }}</td>
+              <td>{{ s.trained_uses | number: '1.2-2' }}</td>
+              <td><strong>{{ s.trained_hit | percent: '1.0-0' }}</strong></td>
+              <td>{{ s.scripted_uses | number: '1.2-2' }}</td>
+              <td>{{ s.scripted_hit | percent: '1.0-0' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="small text-muted mb-0">
+      Both hunters sense about as often, but the network waits for the moment the player is afraid
+      (close to him or just seen), so its senses pay off more often. Nobody wrote that rule.
+    </p>
+  </div></div>
+
+  <div class="card mb-4"><div class="card-body">
+    <h2 class="h5">How to read these numbers</h2>
+    <ul class="small mb-0">
+      <li>The simulated survivors are rule-based bots, so these rates measure the brain against a fixed opponent, not against humans. Humans hide in unexpected places and use horns; in the game Freddy is beatable.</li>
+      <li>The game also makes him slower on night 1 (a decision every 3.5 s) and gives the player a head start during the phone call.</li>
+      <li>Reproduce: open the Unity project, menu <em>Night Shift → Build Evaluation</em>, run the build, then <code>python scripts/summarize_eval.py</code>.</li>
+    </ul>
+  </div></div>
+
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" routerLink="/ml/training">← Training</a>
+    <a class="btn btn-primary" routerLink="/ml/application">Next: Try the brain →</a>
+  </div>
+</div>

@@ -1,0 +1,82 @@
+<div class="container py-5">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a routerLink="/">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Training</li>
+    </ol>
+  </nav>
+
+  <div class="mb-4">
+    <h1>Training</h1>
+    <p class="lead">
+      Freddy trains against a simulated survivor that collects fuses, hides and runs. At the start he wanders
+      at random and loses most nights; after 3 million decisions he catches the survivor almost every night.
+    </p>
+  </div>
+
+  <div class="card mb-4"><div class="card-body">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+      <h2 class="h5 mb-0">Reward curve (from TensorBoard)</h2>
+      <div class="btn-group" role="group" aria-label="Training run">
+        @for (run of runs()?.runs ?? []; track run.id) {
+          <button type="button" class="btn btn-sm" [class.btn-primary]="selected() === run.id"
+                  [class.btn-outline-primary]="selected() !== run.id" (click)="selected.set(run.id)">{{ run.id }}</button>
+        }
+      </div>
+    </div>
+    <img class="img-fluid w-100 rounded" [src]="plotUrl()" [alt]="'Reward curve of ' + selected()">
+    <p class="small text-muted mt-2 mb-0">The plot is drawn by the Flask API with matplotlib from the exported TensorBoard scalars.</p>
+  </div></div>
+
+  <h2 class="h4 mb-3">The three runs</h2>
+  <div class="row g-3 mb-4">
+    @for (run of runs()?.runs ?? []; track run.id) {
+      <div class="col-lg-4">
+        <div class="card h-100" [class.border-info]="run.id === 'freddy_v3'">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+              <h3 class="h5">{{ run.id }}</h3>
+              @if (run.id === 'freddy_v3') { <span class="badge text-bg-info">in the game</span> }
+            </div>
+            <p class="small text-muted mb-2">{{ run.date }} · {{ run.steps | number }} steps · {{ run.minutes }} min · {{ run.observations }} obs / {{ run.actions }} actions</p>
+            <p class="mb-2"><strong>Change:</strong> {{ run.change }}</p>
+            <p class="mb-2">Reward <strong>{{ run.reward_start }}</strong> → <strong>{{ run.reward_end }}</strong></p>
+            <p class="small mb-2">Catch rate: Novice {{ run.catch_rate['Novice'] | percent: '1.0-1' }} · Normal {{ run.catch_rate['Normal'] | percent: '1.0-1' }} · Expert {{ run.catch_rate['Expert'] | percent: '1.0-1' }}</p>
+            <p class="small mb-2"><strong>Finding:</strong> {{ run.finding }}</p>
+            <p class="small mb-0"><strong>Decision:</strong> {{ run.decision }}</p>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-lg-6"><div class="card h-100"><div class="card-body">
+      <h2 class="h5">Hyperparameters</h2>
+      <table class="table table-sm mb-0">
+        <tbody>
+          @for (row of config; track row[0]) {
+            <tr><th scope="row" class="fw-normal text-muted">{{ row[0] }}</th><td>{{ row[1] }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </div></div></div>
+    <div class="col-lg-6"><div class="card h-100"><div class="card-body">
+      <h2 class="h5">The training opponent</h2>
+      <p>A rule-based survivor bot plays every training night. It goes for the fuses and the exit, avoiding the room where its tracker last showed Freddy. Every night its personality is random (domain randomization):</p>
+      <ul class="small">
+        <li>How often it reads the motion tracker (50–97%).</li>
+        <li>Whether it hides or runs when he is close (hides 40–80%).</li>
+        <li>How often it runs and makes noise (5–45%).</li>
+        <li>How long it waits before risking a path next to him, and which hiding spot it prefers.</li>
+      </ul>
+      <p class="small text-muted mb-2">Evaluation uses three fixed presets: Novice, Normal and Expert.</p>
+      <p class="small text-muted mb-0">Reproduce: <code>mlagents-learn config/freddy_ppo.yaml --run-id=freddy_v3</code> and press Play on the HuntTraining scene.</p>
+    </div></div></div>
+  </div>
+
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" routerLink="/ml/model">← The model</a>
+    <a class="btn btn-primary" routerLink="/ml/metrics">Next: Metrics →</a>
+  </div>
+</div>
