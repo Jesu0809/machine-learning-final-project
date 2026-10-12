@@ -1,0 +1,5 @@
+Model: "Freddy Fazbear" (https://sketchfab.com/3d-models/freddy-fazbear-e8248c29265544e7b7e686b4c0c09f10)
+by 2012carlitos17 (https://sketchfab.com/2012carlitos17), shown on Sketchfab as "JUAN perez (@Mrcoup_18367)".
+Licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/).
+Changes: converted glTF to FBX, removed original rig and normal maps, textures downscaled to 1024 px, re-rigged and animated with Adobe Mixamo.
+Character Freddy Fazbear (c) Scott Cawthon. Fan work, non-commercial.

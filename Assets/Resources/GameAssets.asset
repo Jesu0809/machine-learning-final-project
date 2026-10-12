@@ -1,0 +1,82 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6aa5287071eb44ca5adb126360f54c31, type: 3}
+  m_Name: GameAssets
+  m_EditorClassIdentifier: 
+  FreddyPrefab: {fileID: 1351803082040418418, guid: 1b569aa87f364446c90cdc3ecc7f2f05, type: 3}
+  FreddyModel: {fileID: 5022602860645237092, guid: 53913bbeb20b145499a99fda1e06c706, type: 3}
+  PolicyWeights: {fileID: 4900000, guid: 11a4bb891940140a9a31c1eff9f03be0, type: 3}
+  MaterialTemplates:
+  - {fileID: 2100000, guid: 522f4d4231d60480eac5a2b678b535b9, type: 2}
+  - {fileID: 2100000, guid: bfd563b69352a44a8bfbfd6302ddb7e3, type: 2}
+  - {fileID: 2100000, guid: a69379d90e2964101b1f56df62e01809, type: 2}
+  - {fileID: 2100000, guid: 4a689b14dbec54bb7b0aa78477d99bb4, type: 2}
+  - {fileID: 2100000, guid: 675440707971441b7b190e841921d89d, type: 2}
+  TrainingCurve: {fileID: 4900000, guid: fdb9e7b94f31c4165bc628bbf5119087, type: 3}
+  EvaluationResults: {fileID: 4900000, guid: da8984d745240434d82711163f23b489, type: 3}
+  Font: {fileID: 12800000, guid: 73f6d5c18ea6e439b98e2e2ca4b946d0, type: 3}
+  ControlsKeyboard: {fileID: 2800000, guid: b6381c0f0bf704058afd67cb73b9b33d, type: 3}
+  ControlsGamepad: {fileID: 2800000, guid: 1754e47bb735345dea6bc17c66f20701, type: 3}
+  SignMain: {fileID: 2800000, guid: 13a23439fab224116ac3092c0e55a81b, type: 3}
+  SignPole: {fileID: 2800000, guid: f8c724f48701c45a1a61843538261810, type: 3}
+  AmbientLoop: {fileID: 8300000, guid: 59b9c568b212745b693f827f2e6471c8, type: 3}
+  MenuMusic: {fileID: 8300000, guid: 56bbb35f5e70b425d938539da2cf086d, type: 3}
+  Scream: {fileID: 8300000, guid: eaa6527724c104a50b9f0afaa0123106, type: 3}
+  LockerDoor: {fileID: 8300000, guid: 617887a14ccd14b41a7f4e7c8aa510d6, type: 3}
+  ExitDoor: {fileID: 8300000, guid: c8cff6787c0f7456493e35aa0fb4c2a5, type: 3}
+  FusePickup: {fileID: 8300000, guid: 7f3ab8a1e32084a39a080ef9b095acc7, type: 3}
+  RainLoop: {fileID: 8300000, guid: 8e2ccdb932b76498bacac1ebb43928eb, type: 3}
+  Thunder: {fileID: 8300000, guid: f4b76ea53df1f49939679892b9c19948, type: 3}
+  CarEngine: {fileID: 8300000, guid: 98ba0283308c64bb1b2f7033c73d5aba, type: 3}
+  VoicemailBeep: {fileID: 8300000, guid: 561c1d0487cdc4b95af88832d93683ae, type: 3}
+  IntroLines:
+  - {fileID: 8300000, guid: ae65984aac8524682aabbf916738aae5, type: 3}
+  - {fileID: 8300000, guid: f336cd0c819c248b09fd55e3378c4c69, type: 3}
+  - {fileID: 8300000, guid: 48c4603113b2a4d409b8ab7334b68f69, type: 3}
+  - {fileID: 8300000, guid: aba8f0422632e4db5b4058bc27f305bc, type: 3}
+  - {fileID: 8300000, guid: 6d45e59741ba7482f8344481483cc12e, type: 3}
+  - {fileID: 8300000, guid: 13c690355a4434c66a979ee144f6a19b, type: 3}
+  Calls:
+  - Lines:
+    - {fileID: 8300000, guid: 0c118b9f7a0f1441b8a0e4d318c6bf30, type: 3}
+    - {fileID: 8300000, guid: 74c2ca3f05b9344cd8c638aa1731c00e, type: 3}
+    - {fileID: 8300000, guid: 8b6fbce6a15cd4ef48cef36696f65b05, type: 3}
+    - {fileID: 8300000, guid: 029ae2dbe09cb486b8cb1fc6421ed1f1, type: 3}
+    - {fileID: 8300000, guid: 6bede5e047b2e498d83bdae22596d560, type: 3}
+    - {fileID: 8300000, guid: 02a4cfee10cab45b8b359437d62f4efe, type: 3}
+    - {fileID: 8300000, guid: 59c9a8cb84c3647ec9ace4748f41711b, type: 3}
+    - {fileID: 8300000, guid: 8fbdb40a8d7c04f859b8ed9d7900197a, type: 3}
+    - {fileID: 8300000, guid: 9d2492b7ac38a45eebc31184df6112d1, type: 3}
+  - Lines:
+    - {fileID: 8300000, guid: 5264a4160d6ad48a3b297ee6a0f8d22c, type: 3}
+    - {fileID: 8300000, guid: e429cef1bd1c147a783963f974dd5415, type: 3}
+    - {fileID: 8300000, guid: 6b12142a3ee22403ab3e24306b7516ad, type: 3}
+    - {fileID: 8300000, guid: e524aae02394447bbb142a02a75ee7ca, type: 3}
+    - {fileID: 8300000, guid: 53c24e9e204d247b58b145fddfdd3785, type: 3}
+    - {fileID: 8300000, guid: 3616dceae829940ca8d0ac63452d5893, type: 3}
+  - Lines:
+    - {fileID: 8300000, guid: 4676710caae7849788c08fc97658bfdf, type: 3}
+    - {fileID: 8300000, guid: 7efb4c9f6d0314cfea2d8bcaa2c193bf, type: 3}
+    - {fileID: 8300000, guid: 0498d60376e91468d95c61c0dee81b81, type: 3}
+    - {fileID: 8300000, guid: 77c9d6d70515d4da2b183be1c4e25b82, type: 3}
+    - {fileID: 8300000, guid: 55a6daa95b8fc4d939e663d84bd7124d, type: 3}
+  - Lines:
+    - {fileID: 8300000, guid: e9b19f9d923bd4a87a517686b42f0460, type: 3}
+    - {fileID: 8300000, guid: 7cab0c17f48ba44d2b8346a10ab77c61, type: 3}
+    - {fileID: 8300000, guid: 2518f4ac956254a6daad9ea50785407f, type: 3}
+    - {fileID: 8300000, guid: 86325e07f7a6f4ddba41eeb411190a41, type: 3}
+    - {fileID: 8300000, guid: 88c2af7d9497644e0a49908a071ff760, type: 3}
+  - Lines:
+    - {fileID: 8300000, guid: 1b156f6c1effb473994dec704c4eb14b, type: 3}
+    - {fileID: 8300000, guid: 46e2a6affcc4a411b8c81705797a0fb2, type: 3}
+    - {fileID: 8300000, guid: c439defed36ed4f31951f87db25c379f, type: 3}
+    - {fileID: 8300000, guid: a2b9f05a77d254c008f96af9812ee82c, type: 3}

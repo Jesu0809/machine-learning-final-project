@@ -1,0 +1,66 @@
+using Unity.InferenceEngine;
+using UnityEngine;
+
+namespace NightShift.Game
+{
+    /// <summary>
+    /// References to the imported assets the game builds itself from. One instance lives in
+    /// Assets/Resources/GameAssets.asset (created by "Night Shift/Create Game Scene").
+    /// </summary>
+    /// <summary>The voice clips of one night's phone call.</summary>
+    [System.Serializable]
+    public class NightCall
+    {
+        public AudioClip[] Lines;
+    }
+
+    [CreateAssetMenu(menuName = "Night Shift/Game Assets")]
+    public class GameAssets : ScriptableObject
+    {
+        public GameObject FreddyPrefab;
+
+        [Tooltip("Trained brain. Without it Freddy uses the scripted baseline.")]
+        public ModelAsset FreddyModel;
+
+        [Tooltip("Weights of the same model, so the AI inspector can show its action probabilities.")]
+        public TextAsset PolicyWeights;
+
+        [Tooltip("Material templates the level copies, so builds keep the shader variants it needs.")]
+        public Material[] MaterialTemplates;
+
+        [Tooltip("Training curve (copied from web/static/data) shown in the menu's ML explanation.")]
+        public TextAsset TrainingCurve;
+
+        [Tooltip("Evaluation results (copied from web/static/data) shown in the menu's ML explanation.")]
+        public TextAsset EvaluationResults;
+
+        public Font Font;
+
+        [Tooltip("Controls diagrams (tools/generate_controls_diagram.py).")]
+        public Texture2D ControlsKeyboard;
+        public Texture2D ControlsGamepad;
+
+        [Tooltip("Neon signs on the front of the pizzeria (tools/generate_exterior_art.py).")]
+        public Texture2D SignMain;
+        public Texture2D SignPole;
+
+        public AudioClip AmbientLoop;
+        public AudioClip MenuMusic;
+        public AudioClip Scream;
+        public AudioClip LockerDoor;
+        public AudioClip ExitDoor;
+        public AudioClip FusePickup;
+        public AudioClip RainLoop;
+        public AudioClip Thunder;
+        public AudioClip CarEngine;
+        public AudioClip VoicemailBeep;
+
+        [Tooltip("Intro narration, one clip per line of StoryData.Intro.")]
+        public AudioClip[] IntroLines;
+
+        [Tooltip("The phone call of each night, one clip per line of StoryData.Calls.")]
+        public NightCall[] Calls;
+
+        public static GameAssets Load() => Resources.Load<GameAssets>("GameAssets");
+    }
+}
