@@ -1,7 +1,7 @@
 """Export the TensorBoard scalars of a training run to a CSV for the website.
 
 Usage (from training/, with the venv active):
-    python scripts/export_tensorboard.py monster_v1
+    python scripts/export_tensorboard.py freddy_v2
 """
 import argparse
 from pathlib import Path
@@ -11,8 +11,8 @@ from tensorboard.backend.event_processing.event_accumulator import EventAccumula
 
 TRAINING_DIR = Path(__file__).resolve().parents[1]
 RESULTS_DIR = TRAINING_DIR / "results"
-DEFAULT_OUTPUT = TRAINING_DIR.parent / "web" / "static" / "data" / "training_curves.csv"
-BEHAVIOR_NAME = "MonsterAgent"
+CURVES_DIR = TRAINING_DIR.parent / "web" / "data" / "curves"
+BEHAVIOR_NAME = "Freddy"
 
 # ML-Agents tag -> CSV column
 SCALARS = {
@@ -33,11 +33,13 @@ def load_scalars(run_dir):
             print(f"Warning: '{tag}' not found in {run_dir}")
             continue
         events = accumulator.Scalars(tag)
-        columns.append(pd.Series(
+        series = pd.Series(
             [event.value for event in events],
             index=[event.step for event in events],
             name=column,
-        ))
+        )
+        # A resumed run (--resume) writes some steps twice; keep the latest value.
+        columns.append(series[~series.index.duplicated(keep="last")])
 
     if not columns:
         raise SystemExit(f"No scalars found in {run_dir}")
@@ -49,8 +51,8 @@ def load_scalars(run_dir):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("run_id", help="ML-Agents run ID, e.g. monster_v1")
-    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("run_id", help="ML-Agents run ID, e.g. freddy_v2")
+    parser.add_argument("--output", type=Path, default=None, help="default: web/data/curves/<run_id>.csv")
     args = parser.parse_args()
 
     run_dir = RESULTS_DIR / args.run_id / BEHAVIOR_NAME
@@ -58,6 +60,8 @@ def main():
         raise SystemExit(f"Run folder not found: {run_dir}")
 
     df = load_scalars(run_dir)
+    if args.output is None:
+        args.output = CURVES_DIR / f"{args.run_id}.csv"
     args.output.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(args.output, float_format="%.5f")
     print(f"Wrote {len(df)} rows to {args.output}")

@@ -13,3 +13,5 @@ numpy==1.23.5
 pandas==2.3.3
 # mlagents 1.1.0 imports pkg_resources, which setuptools 70+ no longer ships.
 setuptools==69.5.1
+# Reads the trained .onnx to export its weights for the AI inspector (scripts/export_policy_weights.py).
+onnx==1.15.0

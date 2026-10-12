@@ -9,10 +9,10 @@ from pathlib import Path
 
 TRAINING_DIR = Path(__file__).resolve().parents[1]
 RESULTS_FILE = TRAINING_DIR / "evaluation" / "results.json"
-WEB_COPY = TRAINING_DIR.parent / "web" / "static" / "data" / "results.json"
+WEB_COPY = TRAINING_DIR.parent / "web" / "data" / "results.json"
 
 POLICY_ORDER = ["trained", "scripted", "random"]
-PRESET_ORDER = ["Easy", "Normal", "Hard"]
+SURVIVOR_ORDER = ["Novice", "Normal", "Expert"]
 
 
 def main():
@@ -21,20 +21,20 @@ def main():
 
     runs = results.get("runs", [])
     if not runs:
-        print("results.json has no runs yet. Run the EvaluationRunner scene first.")
+        print("results.json has no runs yet. Run the Evaluation build first.")
         return
 
-    runs.sort(key=lambda run: (PRESET_ORDER.index(run["bot_preset"]),
+    runs.sort(key=lambda run: (SURVIVOR_ORDER.index(run["survivor"]),
                                POLICY_ORDER.index(run["policy"])))
 
     print(f"Model: {results.get('model')}  |  nights per run: {results.get('nights_per_run')}")
-    header = f"{'Preset':<8}{'Policy':<10}{'Success':>9}{'Time (s)':>10}{'Blocks':>8}{'Power':>8}"
+    header = f"{'Survivor':<10}{'Freddy':<10}{'Catch':>8}{'95% CI':>16}{'Escape':>8}{'To catch':>10}{'Searches':>10}"
     print(header)
     print("-" * len(header))
     for run in runs:
-        print(f"{run['bot_preset']:<8}{run['policy']:<10}"
-              f"{run['success_rate']:>9.1%}{run['avg_time_to_office_s']:>10.1f}"
-              f"{run['avg_door_blocks']:>8.2f}{run['avg_power_remaining']:>8.1f}")
+        ci = f"{run['catch_ci_low']:.1%}-{run['catch_ci_high']:.1%}"
+        print(f"{run['survivor']:<10}{run['policy']:<10}{run['catch_rate']:>8.1%}{ci:>16}"
+              f"{run['escape_rate']:>8.1%}{run['avg_ticks_to_catch']:>10.1f}{run['avg_searches']:>10.1f}")
 
     WEB_COPY.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(RESULTS_FILE, WEB_COPY)

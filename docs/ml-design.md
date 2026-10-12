@@ -1,333 +1,331 @@
 # ML Design
 
-This document defines the learning problem behind the monster and the exact rules of a night. It
-is the reference for the code in `unity/Assets/Scripts/Core/` and `unity/Assets/Scripts/Monster/`
-and for the final report. Values marked *initial* are starting points and may change during
-training; every change is recorded in [training-log.md](training-log.md).
+This document defines the learning problem behind Freddy and the exact rules of a hunt. It is the
+reference for the code in `unity/Assets/Scripts/Hunt/` and for the final report. Values marked
+*initial* are starting points and may change during training; every change is recorded in
+[training-log.md](training-log.md).
 
-## 1. Why reinforcement learning
+## 1. Idea: a learned brain with a scripted body
 
-The monster has no labeled data telling it which move is correct. It only learns whether a night
-ended well (it reached the office) or badly (the night ended, or a door blocked it), and that
-feedback arrives many decisions after the moves that caused it. This is the setting of
-reinforcement learning: an agent interacts with an environment, receives rewards, and learns a
-policy that maximizes the expected cumulative reward.
+Freddy is an NPC built with **Unity ML-Agents**. It is split in two layers, the same split used by
+the alien in *Alien: Isolation* (a "director" that decides and a body that executes):
 
-We use **PPO (Proximal Policy Optimization)**, the default trainer of Unity ML-Agents. PPO trains a
-neural network policy directly and limits how much the policy can change in one update, which
-makes training stable with little tuning.
+| Layer | What it does | How it is made |
+|---|---|---|
+| **Brain** | Decides *where to go* and *which hiding spot to search*, from what Freddy has heard and seen | PPO policy trained with ML-Agents, run in the game as an `.onnx` model |
+| **Body** | Walks to the chosen room, plays the animations, looks and listens in 3D | Unity NavMesh, Animator, raycasts (no learning) |
+
+The brain is trained on an abstract version of the pizzeria: a graph of 9 rooms with hiding spots.
+This makes training fast (millions of decisions in minutes) and the decisions readable for the
+report. In the 3D game the body turns each decision into movement and reports back what Freddy
+perceives.
 
 ## 2. The MDP
 
 | Element | Definition |
 |---|---|
-| Agent | The monster |
-| Environment | Room graph, two doors, power, night clock and the guard (a human when playing, `PlayerBot` during training) |
-| State | Monster room, door states, power, night progress, camera history (section 3) |
-| Action | Which room to go to next (section 4) |
-| Time step | One monster decision per tick (`DecisionIntervalSeconds` = 4 s) |
+| Agent | Freddy's brain |
+| Environment | Room graph, hiding spots, fuses, exit and the player (a human when playing, `SurvivorBot` during training) |
+| State | Freddy's room, noise memory, last sighting, time since each room was visited, fuses, time (section 5) |
+| Action | Go to a neighboring room, stay and listen, or search a hiding spot (section 4) |
+| Time step | One Freddy decision per tick (`DecisionIntervalSeconds` = 3.5 s in the 3D game) |
 | Episode | One night |
-| Discount factor γ | 0.99 (ML-Agents default) |
+| Discount factor γ | 0.99 |
 | Algorithm | PPO |
+
+It is a **partially observable** problem: Freddy never observes where the player is. He only gets
+noises (sometimes placed in the wrong room) and occasional sightings, so he has to remember and
+infer.
 
 ### Room graph
 
 ```
-Stage(0) ── Hall(1) ── WestCorridor(2) ── [Left door] ── Office(5)
-               │
-            Kitchen(3) ── EastCorridor(4) ── [Right door] ── Office(5)
+Office ──── WestHall ──── Storage
+  │            │             │
+Kitchen ─── DiningHall ── Arcade
+  │            │             │
+Stage ───── EastHall ──── ExitLobby
 ```
 
-| Room | Index | Neighbors | Distance to office |
-|---|---|---|---|
-| Stage | 0 | Hall | 3 |
-| Hall | 1 | Stage, WestCorridor, Kitchen | 2 |
-| WestCorridor | 2 | Hall, Office (left door) | 1 |
-| Kitchen | 3 | Hall, EastCorridor | 2 |
-| EastCorridor | 4 | Kitchen, Office (right door) | 1 |
-| Office | 5 | terminal | 0 |
+| Room | Hiding spots | Notes |
+|---|---|---|
+| Office | 2 | Player start |
+| West Hall | 1 | |
+| Storage | 3 | |
+| Kitchen | 3 | |
+| Dining Hall | 3 | Center of the map |
+| Arcade | 2 | |
+| Stage | 2 | Freddy start |
+| East Hall | 1 | |
+| Exit Lobby | 1 | The exit door; needs all fuses |
 
-The monster starts every night in **Stage**. WestCorridor and EastCorridor are the "at the door"
-rooms: only from there can the monster try to enter the office.
+Spot 0 is always a locker; the others are cabinets or places under tables. The map diameter is 4
+moves (Office to Exit Lobby).
 
 ### Episode termination
 
-| Condition | Outcome | Terminal reward | ML-Agents call |
-|---|---|---|---|
-| Monster enters the office through an open door | `MonsterEntered` (agent succeeds) | +1.0 | `EndEpisode()` |
-| Night clock reaches 6 AM | `GuardSurvived` (agent fails) | −0.5 | `EndEpisode()` |
-| `MaxStepsPerEpisode` decisions reached (safety limit, *initial* 100) | `StepLimitReached` | none | `EpisodeInterrupted()` |
+| Outcome | When |
+|---|---|
+| `Caught` | Freddy finds the player (section 3) |
+| `Escaped` | The player finishes the work on the exit panel with all 3 fuses |
+| `TimeUp` | `MaxTicks` = 240 decisions (about 10 minutes) pass with the player still inside |
 
-A 300 s night with one decision every 4 s ends at the 75th tick, before the monster acts in that
-tick, so the monster gets at most 74 decisions and the safety limit never triggers in normal play.
-`EpisodeInterrupted()` tells PPO that the episode was cut, not finished, so the last state is not
-treated as terminal.
+## 3. Rules of a hunt
 
-## 3. Observations
+### Time
 
-15 vector observations, all in [0, 1] (`Space Size = 15` in Behavior Parameters).
+One tick = **2 player actions, then 1 Freddy action** (`PlayerActionsPerTick` = 2). Freddy moves
+one room per tick, the same speed as a walking player. A running player is twice as fast but loud.
+Freddy stays on the stage for the first 6 ticks (`FreddyWakeTicks`), so the player can get going.
 
-| # | Observation | Size | Encoding |
-|---|---|---|---|
-| 0–4 | Current room | 5 | One-hot over rooms 0–4 (the office is terminal, never observed) |
-| 5 | Left door closed | 1 | 0 or 1 |
-| 6 | Right door closed | 1 | 0 or 1 |
-| 7 | Power remaining | 1 | `power / maxPower` |
-| 8 | Night progress | 1 | `elapsed / nightDuration` |
-| 9–13 | Time since each room's camera was last viewed | 5 | `clamp(t / maxWindow, 0, 1)`, *initial* `maxWindow` = 30 s |
-| 14 | Guard is watching the monster's room right now | 1 | 0 or 1 |
+### Player actions
 
-Observations are read at decision time, before the monster moves. Observations 9–14 are what let
-the monster use the guard's blind spots (section 8).
+| Action | Effect | Noise |
+|---|---|---|
+| Wait | Nothing | 0 (silent) |
+| Walk | Moves to a neighboring room in 2 actions | 1 |
+| Run | Moves to a neighboring room in 1 action | 2 |
+| Hide | Enters a hiding spot of the current room | 0 |
+| Pick fuse | Takes the fuse in the room | 2 |
+| Work exit | One of 6 actions on the exit panel (progress is kept if the player leaves) | 3 |
+
+Three fuses are placed in random rooms at the start of each night, never in the Office, the Stage
+or the Exit Lobby.
+
+### What Freddy perceives
+
+| Sense | Rule |
+|---|---|
+| Hearing | Noise level 1 is heard in the same room, 2 up to 1 room away, 3 up to 2 rooms away. With 25% chance a noise from another room is placed in a neighbor of the real room |
+| Sight (same room) | A player who is not hidden in Freddy's room is caught with 75% chance per check (rooms have corners) |
+| Sight (next room) | A player who is not hidden one room away is seen with 20% chance per player action |
+
+### How the player is caught
+
+1. Freddy enters (or stays in) the player's room and spots them (75%).
+2. The player walks into Freddy's room and is spotted (75%).
+3. Freddy searches the exact spot where the player hides: found with 80% chance, otherwise the
+   player held their breath (`SearchFindChance`, as in *Alien: Isolation*).
 
 ## 4. Actions
 
-### Action space
+One discrete branch with 13 actions (12 until `freddy_v2`; "sense" was added in `freddy_v3`):
 
-One discrete branch of size 6. **The action is the index of the target room**:
-
-| Action | Meaning |
+| Index | Action |
 |---|---|
-| 0 | Go to Stage |
-| 1 | Go to Hall |
-| 2 | Go to WestCorridor |
-| 3 | Go to Kitchen |
-| 4 | Go to EastCorridor |
-| 5 | Try to enter the Office |
+| 0–8 | Go to room *i* (if *i* is Freddy's room: stay and listen) |
+| 9, 10, 11 | Search hiding spot 0, 1 or 2 of the current room |
+| 12 | **Sense**: if the player's fear is at least 0.5, reveals their room. Then it recharges for 30 decisions (about 1 min 45 s) |
 
-Choosing the room the monster is already in means **stay** (wait, hide). We chose this encoding
-over a separate "stay" action because it keeps the branch at size 6 with no empty slot, every
-action has exactly one meaning in every room, and masking becomes a plain adjacency check.
+### Sense and fear (from *Friday the 13th*)
 
-### Legal actions per room (action masking)
+The player's fear is computed on the room graph, the same way in training and in the 3D game:
+`fear = 1 − distance/4` (distance in rooms to Freddy), +0.3 if Freddy saw them in the last 4
+decisions, −0.25 if they are hidden two or more rooms away (calm in a hiding spot), clamped to
+[0, 1]. So "sense" finds a player within about two rooms, unless they hide calmly. Using it costs
+the whole decision and a long recharge, and a sense that finds nothing costs −0.01: **when** to use
+it is something the network has to learn.
 
-Before each decision, `WriteDiscreteActionMask` disables every action that is not legal, so the
-policy never wastes experience on impossible moves.
+### Action masking
 
-| Current room | 0 Stage | 1 Hall | 2 West | 3 Kitchen | 4 East | 5 Office |
-|---|---|---|---|---|---|---|
-| Stage | stay | ✔ | ✖ | ✖ | ✖ | ✖ |
-| Hall | ✔ | stay | ✔ | ✔ | ✖ | ✖ |
-| WestCorridor | ✖ | ✔ | stay | ✖ | ✖ | ✔ enter |
-| Kitchen | ✖ | ✔ | ✖ | stay | ✔ | ✖ |
-| EastCorridor | ✖ | ✖ | ✖ | ✔ | stay | ✔ enter |
+Moves to rooms that are not connected and searches of spots that do not exist are masked, so the
+policy only chooses among legal actions (Huang & Ontañón, 2022). For example, in the East Hall the
+legal actions are: stay, go to Dining Hall, Stage or Exit Lobby, search spot 0, and sense if it has
+recharged.
 
-The number of legal actions is 2 in Stage, 4 in Hall and 3 in every other room.
+## 5. Observations
 
-**The door state is not masked.** Trying to enter through a closed door is legal but penalized.
-The door state is in the observations, so learning not to hit a closed door is part of the task.
-Masking it would hide exactly the decision we want the agent to learn.
+54 values, all in [0, 1], built only from what Freddy knows (`FreddyObservations.cs`; 43 until `freddy_v2`):
 
-### What each action does
+| Index | Observation |
+|---|---|
+| 0–8 | Freddy's room, one-hot |
+| 9–17 | Noise memory per room (heard noise level / 3, fades ×0.8 per tick) |
+| 18–26 | Room where the player was last seen, one-hot (zeros if never seen) |
+| 27 | Ticks since the player was seen / 60 |
+| 28–36 | Ticks since Freddy visited each room / 60 |
+| 37 | Player seen this tick |
+| 38 | Fuses collected / 3 (the generators light up the map, so Freddy knows) |
+| 39 | Night progress (tick / 240) |
+| 40–42 | Hiding spots of the current room already searched since arriving |
+| 43 | Sense readiness (1 = ready, 0 right after using it) |
+| 44–52 | Room where sense last found the player, one-hot |
+| 53 | Decisions since that / 60 |
 
-| Situation | Result (`MoveResult`) | Monster ends in |
-|---|---|---|
-| Target = current room | `Stayed` | same room |
-| Target is a neighbor closer to the office | `MovedCloser` | target |
-| Target is a neighbor farther from the office | `MovedAway` | target |
-| Target is a neighbor at the same distance (Hall ↔ Kitchen) | `MovedSideways` | target |
-| Target = Office, that corridor's door is open | `EnteredOffice`, night ends | Office |
-| Target = Office, that corridor's door is closed | `BlockedByDoor` | Hall (pushed back) |
-| Illegal target (only possible without masking) | counted in `IllegalActions`, treated as `Stayed` | same room |
-
-The monster is **seen while moving** when it changes room (any result except `Stayed`) and the
-guard is watching the room it leaves or the room it ends in at that moment. Entering the office is
-seen only if the guard is watching the corridor it leaves (the office has no camera).
-
-### Keyboard control (Heuristic)
-
-With Behavior Type = Heuristic Only, **Shift + `0`–`5`** (or numpad `0`–`5`) choose the target room for
-the next decision. No key, or an illegal key, means stay. This lets us test the environment and the
-rewards by hand before training.
-
-## 5. Rules of a night
-
-### Guard actions
-
-The guard (human or `PlayerBot`) can, at any time:
-
-| Action | Effect | Not allowed when |
-|---|---|---|
-| View camera of room 0–4 | Opens the panel on that room (or switches to it). That room's "time since viewed" stays at 0 while it is on screen | Power is out |
-| Close cameras | Back to the office view | — |
-| Toggle left / right door | Closes or opens that door | Power is out (doors stay open) |
-
-There is no camera in the office. Only one room can be watched at a time.
-
-### What the guard sees without cameras
-
-While the monster stands in a corridor (WestCorridor or EastCorridor) and that door is **open**,
-it is visible peeking into the office through the doorway. A closed door hides it. During a power
-outage the office is dark and only its eyes show at the left door.
-
-This gives the guard a last-moment warning: the monster needs one more tick (4 s) to enter, so a
-guard who looks at the doors has that long to close the right one. The cameras are still needed to
-see it coming earlier and to know which side it will use. `PlayerBot` gets exactly the same
-information (it reacts to a monster in an open doorway with its reaction probability and delay),
-so training and play follow the same rules.
-
-### Power
-
-`drain per second = 0.12 + 0.25 × closed doors + 0.10 × (camera open)` (*initial*), starting from
-100. With both doors closed and the camera open the whole night, power lasts about 139 s of the
-300 s night. When power reaches 0:
-
-1. Both doors open and stay locked open for the rest of the night.
-2. The camera panel closes and cannot be opened again.
-3. The monster can now enter from either corridor.
-
-### Order inside one tick
-
-Every tick (4 s in play mode, one fixed step in training) runs in this order:
-
-1. **Time:** the clock, power drain and camera counters advance by the tick length.
-2. **Power outage:** if power reached 0, apply the outage rules above.
-3. **6 AM:** if the clock reached the end of the night, the guard survives and nothing else
-   happens in this tick.
-4. **Guard:** the bot acts once (a human may have acted at any moment since the last tick).
-5. **Monster:** observes, chooses an action (with masking) and the action is applied.
-6. **Entry:** if the monster entered, the night ends immediately.
-
-Because the guard acts before the monster within a tick, a door closed in step 4 already blocks an
-entry attempt in step 5.
-
-## 6. Reward function (*initial*, `monster_v1`)
+## 6. Reward function (*initial*, `freddy_v1`)
 
 | Event | Reward |
 |---|---|
-| Every decision (time pressure) | −0.005 |
-| `MovedCloser` | +0.05 |
-| `MovedAway` | −0.05 |
-| `BlockedByDoor` (pushed back to Hall) | −0.3 |
-| Seen while moving | −0.05 |
-| `EnteredOffice` | +1.0, episode ends |
-| Night ends without entering | −0.5, episode ends |
+| Player caught | +1 |
+| Player escaped | −1 |
+| Time up | −0.5 |
+| Every step | −0.001 |
+| Search of an empty spot | −0.01 |
+| Search of a spot already searched since arriving | −0.02 extra |
+| Sense that finds nothing (`freddy_v3`) | −0.01 |
+| Distance shaping | 0.1 · (γ·Φ(s′) − Φ(s)), with Φ(s) = −distance(Freddy, player) / 4 |
 
-`Stayed` and `MovedSideways` only receive the time penalty.
+The shaping term is **potential-based** (Ng et al., 1999), so it speeds up learning without
+changing the optimal policy. It uses the player's real room, which Freddy never observes:
+privileged information is used only in the reward, never in the inputs, so the trained policy
+works in the game where that information does not exist.
 
-The terminal rewards (+1.0 / −0.5) define the goal. The small shaping terms only guide early
-exploration so the agent finds the office before the night ends.
+## 7. Training opponent: SurvivorBot
 
-**Why "moved away" is −0.05 and not smaller.** The distance terms are *potential-based shaping*
-(Ng, Harada & Russell, 1999): the bonus for getting one step closer is exactly cancelled by the
-penalty for stepping back, so the sum of shaping along any route only depends on where it starts
-and ends. With an asymmetric pair such as +0.05 / −0.02, going Hall → WestCorridor → Hall would
-earn +0.03 every two steps, and the agent could learn to walk back and forth instead of entering.
-With the symmetric pair, every go-and-come-back loop has a negative total (−0.01 from the time
-penalty), so no loop can be farmed. Being pushed back by a closed door uses only the −0.3
-penalty, which is already larger than any distance term.
+During training the player is `SurvivorBot`, a scripted survivor with a motion tracker, like the
+player in the 3D game:
 
-**Rule for iterations:** if training does not improve after a few runs, *remove* terms instead of
-adding new ones. Simpler rewards are harder to exploit.
+1. It reads the tracker (chance `TrackerUse` per action), which shows Freddy's room up to 2 rooms
+   away, and assumes Freddy may have come one room closer per tick since the last reading.
+2. If Freddy is next to it: it hides (chance `HideChance`), choosing the locker with chance
+   `Spot0Preference`. After a loud action or in a room with a single spot it runs away first.
+3. If Freddy is 2 rooms away it waits in silence for a while (`Patience`).
+4. Otherwise it walks (or runs, chance `RunChance`) to the nearest fuse and then to the exit,
+   never stepping into Freddy's last known room, and not next to it until it has waited
+   `MaxWaitActions` actions (then it risks it: people do not freeze forever).
 
-## 7. Training opponent: PlayerBot
+**Domain randomization:** every training night uses random bot settings (tracker 0.5–0.97, hide
+0.4–0.8, run 0.05–0.45, patience 2–5, max wait 3–10, locker preference 0.1–0.9) so the policy does
+not overfit one play style. Evaluation uses three fixed presets:
 
-During training the human is replaced by `PlayerBot`. If the bot were deterministic, the monster
-would learn to exploit one fixed pattern, so the bot is stochastic and its parameters are
-randomized at the start of every episode (**domain randomization**).
+| Preset | Tracker use | Hide | Run | Patience | Max wait |
+|---|---|---|---|---|---|
+| Novice | 0.55 | 0.75 | 0.40 | 2 | 3 |
+| Normal | 0.80 | 0.60 | 0.20 | 3 | 6 |
+| Expert | 0.95 | 0.45 | 0.08 | 3 | 8 |
 
-| Parameter | Training range (*initial*) |
-|---|---|
-| Reaction probability (closes the door when it sees the monster at it) | 0.4 – 0.9 |
-| Reaction delay | 0 – 2 ticks |
-| Camera check frequency | one check every 1 – 4 ticks |
-| Preferred rooms | random weights, biased toward WestCorridor and EastCorridor |
+### Balance (simulation before training)
 
-Fixed presets for evaluation:
+2,000 simulated nights per cell, run outside Unity on the same C# code (catch rate):
 
-| Preset | Reaction probability | Reaction delay | Check every |
+| Freddy | vs Novice | vs Normal | vs Expert |
 |---|---|---|---|
-| Easy | 0.4 | 2 ticks | 4 ticks |
-| Normal | 0.65 | 1 tick | 2 ticks |
-| Hard | 0.9 | 0 ticks | 1 tick |
+| Random | 34.0% | 30.4% | 22.8% |
+| Scripted | 55.7% | 47.6% | 33.8% |
 
-**Balance warning.** The route to the office is only 3 moves long and a night has 74 decisions. In
-a first simulation against a crude guard (random camera, closes a door 70 % of the times it sees
-the monster at it) the random monster won 98.7 % of nights and the scripted one 100 %. If the bot
-is that weak, there is nothing left for the trained agent to improve. The bot must defend well
-enough that the scripted monster fails often (target: well under 50 % on Hard), so that
-outsmarting the cameras actually matters. Tune the bot and the power numbers before training.
+Difficulty is monotonic (better survivors are caught less) and the scripted hunter is clearly
+better than random but far from perfect, which leaves room for the trained policy.
 
-## 8. "Learns where you don't look": what it really means
+## 8. From the graph to the 3D game
 
-ML-Agents trains **offline**. The exported model (`MonsterAgent.onnx`) is frozen inside the game
-and **does not learn during a match**.
+`HuntDirector` connects the 3D world to the same `HuntState` the brain was trained on
+(`ResolveCatches = false`, because in 3D the body catches the player physically):
 
-The adaptive behavior comes from the **observations**. The policy receives how long ago each camera
-was viewed and whether the guard is watching its room right now. During training against many
-different bots it learns the general strategy "move through the rooms the guard neglects". When a
-human plays, the same frozen policy reacts to *that* player's camera habits in real time.
+1. Every `DecisionIntervalSeconds / 2` it measures the real player: the room under their feet,
+   whether they hide and in which spot, and the loudest noise since the last measurement
+   (crouching 0, walking 1, running, picking up a fuse or gasping 2, the exit panel 3). This goes
+   into `HuntState.ObservePlayer`, so Freddy hears with exactly the training rules.
+2. When the body has finished its action, it puts the brain in the body's real room and asks the
+   policy for the next action (the `.onnx` model through ML-Agents with `BehaviorType.InferenceOnly`).
+3. The body carries the action out. If its eyes (a 120° raycast view cone, longer when the
+   flashlight is on, blocked by walls) see the player, it reports the sighting to the brain and
+   chases until it loses sight for 3 s; then the brain takes over again. If it saw the player get
+   into a spot, it goes straight to that spot.
+4. A search opens the spot; the player inside is caught unless they hold their breath.
 
-The optional `PlayerHabitTracker` (week 4) stores neglect statistics across nights with
-`PlayerPrefs` and biases the monster's starting route. It is a **heuristic, not reinforcement
-learning**, and is labeled that way everywhere.
+### The building is not a grid
 
-## 9. Baselines and evaluation
+The 3D pizzeria keeps exactly the connections of the training graph, but the rooms have different
+sizes and heights and are joined by long halls and short corridors (`PizzeriaLayout.cs`): a large
+Dining Hall in the middle, a tall Show Stage, two narrow halls. Because only the connections
+matter to the brain, the layout can change without retraining. Inside a room Freddy's body walks
+straight lines between the room's hub, its doorways and its hiding spots, and props are only
+placed where they leave those lines free.
 
-Two non-learning monsters implement the same `IMonsterPolicy` interface as the trained agent:
+### Survivor and body rules that are not learned
+
+Inspired by *Friday the 13th: The Game*, the 3D player has **stamina** (a full sprint lasts about
+4.5 s; empty, they are winded and pant) and **fear** (rises when Freddy is near or sees them; it
+drains stamina faster, makes the flashlight sputter and the breathing audible in the room). Freddy's
+body gets a **rage** bonus as the player progresses: +10% walking and +6% chasing speed per fuse,
+and once more when the exit panel starts working. When the brain chooses to stay in a room, or
+sends him to a new one, the body walks to one of the room's hiding spots or its middle at random,
+so he also covers the corners. None of this changes what the brain observes or decides; it changes
+how its decisions play out in 3D, and the panting feeds its hearing like any other noise.
+
+Why Freddy favors the middle of the map: the central rooms are at most two moves from every other
+room, so from there the brain hears more of the building and reaches any room quickly. This
+strategy emerged in training; it was not programmed.
+
+### Things the player can do to the brain
+
+- **Party horns** (from *Alien: Isolation*): thrown with G, they blow where they land, and the
+  brain hears a loud noise in that room (`HuntState.HearNoiseAt`, same hearing rules as the
+  player's noises). The network cannot tell it from the player, so it goes to investigate: the
+  player can watch it take the bait in the AI inspector.
+- **Doors** (from *Friday the 13th*): closing a door blocks the way and the view; Freddy's body has
+  to break it down (three loud blows). The brain does not know about doors.
+- **Crouching in the dark**: crouched with the flashlight off, Freddy's eyes only reach 5 m.
+
+### Nights and the phone call
+
+Night 1 opens with a phone call (as in the original games, voiced with a synthetic voice): while
+it plays Freddy sleeps and the building is free to explore, and the voice explains the rules and
+that Freddy is a trained neural network. Nights 2–5 use the same trained brain at a faster pace:
+one decision every 3.5 s on night 1 down to 2.3 s on night 5, the body 7% faster per night, fewer
+party horns.
+
+### Making the ML visible
+
+- **AI inspector (Tab):** a live map of what the brain knows (noise memory per room, where it last
+  saw the player, rooms it has not checked), the **probability the network gives to each action**
+  at the last decision, and its recent decisions.
+- **AI vision in 3D (Tab):** Freddy's planned route drawn on the floor, his view cone, and a ripple
+  in every room where his brain hears a noise.
+- **End-of-night replay:** Freddy's route and the player's on the map, every decision of the
+  network with the probability it gave to the chosen action, and how the catch happened.
+
+The probabilities come from `PolicyProbe.cs`, which recomputes the policy's forward pass (two
+dense layers with Swish, the output layer, action masking and softmax) from the weights exported by
+`training/scripts/export_policy_weights.py`. It was checked against the `.onnx` model: its most
+likely action equals the model's deterministic action in 13,060 of 13,060 states. The game still
+acts with the `.onnx` model through ML-Agents; the probe is only for display.
+
+## 9. "Learns where you hide": what it really means
+
+ML-Agents trains **offline**. The exported model is frozen inside the game and **does not learn
+during a match**. What it can learn during training is a general strategy against many survivors:
+for example to go where it heard a noise and search the right spots, to check the rooms near fuses
+and the exit late in the night, and to favor the locker when that is where survivors usually hide.
+
+The week 4 experiment trains a second model against survivors that **always** choose the locker
+(`Spot0Preference` = 1) and compares which spot each model searches first. This is reinforcement
+learning adapting to a population of players, not online learning.
+
+## 10. Baselines and evaluation
+
+All three Freddys implement the same `IFreddyPolicy` interface:
 
 | Policy | Behavior |
 |---|---|
-| `RandomMonsterPolicy` | Uniform random legal action each tick ("stay" included) |
-| `ScriptedMonsterPolicy` | Always moves along the shortest path to the office and tries to enter as soon as it reaches a corridor; ignores cameras and doors |
-| `MonsterAgent` (trained) | PPO policy loaded from `MonsterAgent.onnx` |
+| `RandomFreddyPolicy` | Uniform random legal action each tick |
+| `ScriptedFreddyPolicy` | Chases the last sighting, investigates the loudest noise and searches every spot there, otherwise patrols the room it has not visited for the longest time |
+| `FreddyAgent` (trained) | PPO policy loaded from the `.onnx` model |
 
-`EvaluationRunner` plays **200 nights** for each policy against each bot preset (3 policies × 3
-presets = 1,800 nights) and records:
+Evaluation plays a fixed number of nights for each policy against each preset and records the
+catch rate (with a 95% Wilson confidence interval), escape rate, time-up rate, average night
+length and searches per night.
 
-| Metric | Definition |
-|---|---|
-| Success rate | Nights where the monster reached the office / nights played |
-| Average time to office | Mean simulated seconds until entering, over successful nights only |
-| Door blocks | Mean number of times per night the monster tried to enter through a closed door |
-| Power remaining | Mean guard power (0–100) at the end of the night |
+## 11. Training setup (*initial*)
 
-### `results.json` format
+- Scene `HuntTraining` with 32 `HuntEnvironment` copies, no 3D and no UI.
+- Each copy advances with a simulated tick instead of real time.
+- Config: `training/config/freddy_ppo.yaml` (256×2 network, buffer 20,480, 3M steps); run IDs
+  `freddy_v1`, `freddy_v2`, …
 
-Written to `training/evaluation/results.json` and copied to `web/static/data/results.json`:
-
-```json
-{
-  "generated_at": "2026-11-01T18:00:00Z",
-  "model": "monster_v3",
-  "nights_per_run": 200,
-  "runs": [
-    {
-      "policy": "trained",
-      "bot_preset": "Normal",
-      "nights": 200,
-      "success_rate": 0.0,
-      "avg_time_to_office_s": 0.0,
-      "avg_door_blocks": 0.0,
-      "avg_power_remaining": 0.0
-    }
-  ]
-}
-```
-
-`policy` is one of `trained`, `random`, `scripted`; `bot_preset` is one of `Easy`, `Normal`, `Hard`.
-
-### Training curves
-
-`training/scripts/export_tensorboard.py` reads the TensorBoard events of a run and writes
-`training_curves.csv` with the columns `step`, `cumulative_reward`, `episode_length`,
-`policy_loss`. The `/how-it-works` page plots these.
-
-## 10. Training setup (*initial*)
-
-- Scene `TrainingArena` with 16–32 `EnvironmentInstance` copies, no UI.
-- Each instance advances the simulation with a fixed tick instead of real time.
-- Config: `training/config/monster_ppo.yaml`; run IDs `monster_v1`, `monster_v2`, …
-- Output: `MonsterAgent.onnx` → `unity/Assets/ML/Models/`.
-
-## 11. Limitations (for the report)
+## 12. Limitations (for the report)
 
 - The policy is frozen after training; there is no online learning during a match.
-- The bot is an approximation of a human player; a policy that beats the bot may still feel
-  different against real players.
-- Small, discrete world (6 rooms, 2 doors). The scope is a playable alpha, not a full game.
+- The bot approximates a human player; a policy that beats the bot may feel different against
+  people.
+- The brain decides on a graph of rooms; positions inside a room are handled by the scripted body.
+- A policy can exploit weaknesses of the training bot (see freddy_v1 in the training log); the bot
+  is improved and the policy retrained when that happens.
 
 ## References
+
+Huang, S., & Ontañón, S. (2022). A closer look at invalid action masking in policy gradient
+algorithms. *The International FLAIRS Conference Proceedings, 35*.
 
 Ng, A. Y., Harada, D., & Russell, S. (1999). Policy invariance under reward transformations:
 Theory and application to reward shaping. *Proceedings of the Sixteenth International Conference
@@ -335,3 +333,7 @@ on Machine Learning*, 278–287.
 
 Schulman, J., Wolski, F., Dhariwal, P., Radford, A., & Klimov, O. (2017). Proximal policy
 optimization algorithms. *arXiv:1707.06347*.
+
+Tobin, J., Fong, R., Ray, A., Schneider, J., Zaremba, W., & Abbeel, P. (2017). Domain
+randomization for transferring deep neural networks from simulation to the real world. *2017
+IEEE/RSJ International Conference on Intelligent Robots and Systems*, 23–30.
