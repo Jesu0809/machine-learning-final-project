@@ -12,6 +12,7 @@ ML-Agents release.
 | Python for training | **3.10.12**, conda environment `mlagents` |
 | `mlagents` (Python) | 1.1.0, plus the pins in `training/requirements.txt` |
 | Python for the website | 3.11.x (Render uses 3.11.9) |
+| Node.js for the website | 22 or newer (Render uses 24.20.0); Angular 22 |
 
 ---
 
@@ -69,7 +70,8 @@ Do **not** connect the project to Unity Cloud or Unity Version Control, and do n
 
 - Player → Run In Background: **ON** (training pauses without it).
 - Editor → Version Control: **Visible Meta Files**; Asset Serialization: **Force Text**.
-- Player → Active Input Handling: **Both** (the keyboard control of the monster works with either).
+- Player → Active Input Handling: **Both** (the game reads keyboard and mouse with the Input System).
+- Graphics → render pipeline: `Assets/Settings/URP-3D.asset` (created by **Night Shift → Create Game Scene**).
 - Always commit the `.meta` file that Unity creates next to every asset and folder.
 
 ## 4. Python training environment
@@ -173,12 +175,48 @@ Windows: the first time, Windows Firewall may ask about Python; allow it on priv
 
 Afterwards the `ml-agents` folder can be deleted; nothing from it goes into our repository.
 
-## 6. Run the website locally
+## 6. Play the game in the editor
+
+1. In Unity: **Night Shift → Create Game Scene**. It sets up the 3D render pipeline, Freddy
+   (materials, animations, prefab), the trained model and the sounds, and creates
+   `Assets/Scenes/Game.unity`. Run it again after pulling changes to Freddy or the models.
+2. Open `Assets/Scenes/Game.unity` and press **Play**. Everything (the pizzeria, the player,
+   Freddy and the UI) is built by the `HuntDirector` when the scene starts.
+3. Controls: WASD, Shift run, Ctrl/C crouch, F flashlight, E use/hide/doors, G party horn, Space
+   hold breath while hidden, Tab AI inspector, Esc pause. An Xbox (or any standard) controller
+   works too, in the editor, the desktop build and the browser; the full map is in the game's
+   **CONTROLS** screen (`unity/Assets/Art/UI/controls-*.png`).
+4. A standalone build: **Night Shift → Build Game** (`training/builds/`, git-ignored). Adding
+   `-capture <folder>` to the command line plays a screenshot tour and quits.
+
+### Generated art and sound
+
+Some assets are made by scripts in `tools/`, so they can be regenerated after a change (run from
+the repository root; the audio scripts need Python with numpy and soundfile, the art scripts need
+Google Chrome):
+
+| Script | Makes |
+|---|---|
+| `tools/generate_story_audio.py` | The intro voicemail and the five phone calls (macOS `say`), from `StoryData.cs` |
+| `tools/generate_exterior_audio.py` | Rain, thunder, car engine and voicemail beep |
+| `tools/generate_exterior_art.py` | The neon signs on the front of the pizzeria |
+| `tools/generate_controls_diagram.py` | The keyboard and controller diagrams (game and website) |
+
+After regenerating, run **Night Shift → Update Game Assets** in Unity.
+
+## 7. Run the website locally
+
+The website is an Angular app (`web/ml-frontend/`) served by a Flask API (`web/app.py`), the same
+structure as our previous course project. Flask serves the compiled Angular files, the JSON API,
+the matplotlib plots and the WebGL build.
 
 macOS:
 
 ```bash
-cd web
+cd web/ml-frontend
+npm install
+npm run build
+cd ..
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -188,31 +226,48 @@ flask --app app run --debug
 Windows (PowerShell or Command Prompt):
 
 ```bat
-cd web
+cd web\ml-frontend
+npm install
+npm run build
+cd ..
 py -3.11 -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
 flask --app app run --debug
 ```
 
-Open http://127.0.0.1:5000. Until there is a WebGL build in `web/static/game/Build/`, the home
-page shows a placeholder instead of the game. `gunicorn` is only used on Render; it is installed
-on Windows but not used there.
+Open http://127.0.0.1:5000. Run `npm run build` again after changing anything in
+`web/ml-frontend/src/`. `gunicorn` is only used on Render; it is installed on Windows but not
+used there.
 
-## 7. WebGL build (week 5)
+| Path | What it is |
+|---|---|
+| `web/app.py` | Flask: `/api/model/info`, `POST /api/brain/decide`, `/api/results`, `/api/runs`, `/api/plots/*`, `/game/*` |
+| `web/freddy_brain.py` | The trained network run in numpy (same weights as the game) for the "Try the brain" page |
+| `web/data/` | `results.json`, `runs.json`, training curves (`curves/*.csv`) and `FreddyPolicy.bytes` |
+| `web/ml-frontend/src/app/pages/` | One folder per page: home, play, ml-concepts, ml-model, ml-training, ml-metrics, ml-application, ml-evidence, ml-experiments, story, credits |
+| `web/ml-frontend/public/` | Screenshots (`img/`) and the story voice clips (`audio/`) |
+| `web/game/` | The Unity WebGL build |
 
-1. **File → Build Profiles → Web → Switch Platform.**
-2. **Player Settings → Publishing Settings:**
-   - Compression Format: **Gzip**
-   - Decompression Fallback: **ON** (the game then loads on any server, including Render,
-     without special headers)
-3. Build into a temporary folder, then copy the `Build/` folder into `web/static/game/`.
-4. The build name must match `GAME_BUILD_NAME` in `web/app.py` (default `game`), so the files
-   are `web/static/game/Build/game.loader.js`, `game.data.unityweb`, and so on.
-5. Keep the build small: GitHub rejects files larger than 100 MB. If a file gets close, use
-   Git LFS.
+Updating the data after a new training run or evaluation (from `training/`):
 
-## 8. Deploy on Render
+```bash
+python scripts/export_tensorboard.py freddy_v3     # writes web/data/curves/freddy_v3.csv
+python scripts/summarize_eval.py                  # copies results.json to web/data/
+python scripts/export_policy_weights.py ../unity/Assets/ML/Models/freddy_v3.onnx
+# FreddyPolicy.bytes goes to Unity Resources; copy it to web/data/ as well
+```
+
+## 8. WebGL build
+
+1. Close any other Unity window on the project.
+2. In Unity: **Night Shift → Build WebGL (website)**. It switches to the Web platform, builds
+   with Gzip compression (no decompression fallback) and writes straight into `web/game/Build/`
+   (`game.loader.js`, `game.data.gz`, `game.framework.js.gz`, `game.wasm.gz`).
+3. Flask adds the `Content-Encoding: gzip` headers those files need, locally and on Render.
+4. Keep the build small: GitHub rejects files larger than 100 MB.
+
+## 9. Deploy on Render
 
 Render cannot run Unity, so the WebGL build is committed and Render only serves files.
 
@@ -221,10 +276,10 @@ Render cannot run Unity, so the WebGL build is committed and Render only serves 
 3. Settings:
    - Root Directory: `web`
    - Runtime: Python 3
-   - Build Command: `pip install -r requirements.txt`
-   - Start Command: `gunicorn app:app`
+   - Build Command: `cd ml-frontend && npm install && npm run build && cd .. && pip install -r requirements.txt`
+   - Start Command: `gunicorn app:app --timeout 300`
    - Instance type: Free
-   - Environment variable: `PYTHON_VERSION` = `3.11.9`
+   - Environment variables: `PYTHON_VERSION` = `3.11.9`, `NODE_VERSION` = `24.20.0`
 4. Alternatively use **New → Blueprint** and set the Blueprint path to `web/render.yaml`.
 5. The free tier sleeps after inactivity, and the first request can take about a minute. Open the
    site a few minutes before any demo.
