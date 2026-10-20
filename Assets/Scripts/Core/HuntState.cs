@@ -119,6 +119,12 @@ namespace NightShift.Hunt
         /// <summary>False during the first <see cref="HuntSettings.FreddyWakeTicks"/>: Freddy does not act yet.</summary>
         public bool FreddyAwake => Tick >= Settings.FreddyWakeTicks;
 
+        /// <summary>Decisions Freddy still spends walking a long connection (he cannot act meanwhile).</summary>
+        public int FreddyTravelLeft { get; private set; }
+
+        /// <summary>True when the policy should decide this tick: awake and not in the middle of a long walk.</summary>
+        public bool FreddyCanDecide => FreddyAwake && FreddyTravelLeft == 0;
+
         // ---- Ground truth (Freddy's observations never read these directly) ----
 
         public Room FreddyRoom { get; private set; }
@@ -208,6 +214,7 @@ namespace NightShift.Hunt
             PlayerWalkProgress = 0;
             PlayerCrawlingTo = null;
             PlayerCrawlProgress = 0;
+            FreddyTravelLeft = 0;
             FusesCollected = 0;
             ExitProgress = 0;
             PlayerNoise = 0;
@@ -336,16 +343,7 @@ namespace NightShift.Hunt
                     }
                     LeaveHidingSpot();
                     PlayerNoise = 1;
-                    if (PlayerWalkingTo != action.Target)
-                    {
-                        PlayerWalkingTo = action.Target;
-                        PlayerWalkProgress = 0;
-                    }
-                    PlayerWalkProgress++;
-                    if (PlayerWalkProgress >= Settings.WalkTicks)
-                    {
-                        MovePlayer(action.Target);
-                    }
+                    Advance(action.Target, 1);
                     break;
 
                 case PlayerActionKind.Run:
@@ -355,7 +353,8 @@ namespace NightShift.Hunt
                     }
                     LeaveHidingSpot();
                     PlayerNoise = 2;
-                    MovePlayer(action.Target);
+                    // Running covers ground twice as fast as walking.
+                    Advance(action.Target, Settings.WalkTicks);
                     break;
 
                 case PlayerActionKind.Hide:
@@ -388,7 +387,7 @@ namespace NightShift.Hunt
                     break;
             }
 
-            if (action.Kind != PlayerActionKind.Walk)
+            if (action.Kind != PlayerActionKind.Walk && action.Kind != PlayerActionKind.Run)
             {
                 PlayerWalkingTo = null;
                 PlayerWalkProgress = 0;
@@ -408,6 +407,22 @@ namespace NightShift.Hunt
             }
 
             Sense();
+        }
+
+        /// <summary>Progress toward a neighboring room; the player arrives when the connection's length is covered.</summary>
+        private void Advance(Room target, int steps)
+        {
+            if (PlayerWalkingTo != target)
+            {
+                PlayerWalkingTo = target;
+                PlayerWalkProgress = 0;
+            }
+            PlayerWalkProgress += steps;
+            int length = Settings.WalkTicks * (Settings.TravelTime ? HuntMap.Cost(PlayerRoom, target) : 1);
+            if (PlayerWalkProgress >= length)
+            {
+                MovePlayer(target);
+            }
         }
 
         private void LeaveHidingSpot()
@@ -574,6 +589,10 @@ namespace NightShift.Hunt
         {
             if (!IsOver)
             {
+                if (FreddyTravelLeft > 0)
+                {
+                    FreddyTravelLeft--;
+                }
                 AdvanceClock();
             }
         }
@@ -620,6 +639,8 @@ namespace NightShift.Hunt
                 var target = (Room)action;
                 if (target != FreddyRoom)
                 {
+                    // A long connection keeps him walking for its extra decisions (see FreddyCanDecide).
+                    FreddyTravelLeft = Settings.TravelTime ? HuntMap.Cost(FreddyRoom, target) - 1 : 0;
                     FreddyRoom = target;
                     Array.Clear(SearchedHere, 0, SearchedHere.Length);
                 }
