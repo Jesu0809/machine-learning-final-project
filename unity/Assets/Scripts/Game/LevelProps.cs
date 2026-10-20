@@ -21,15 +21,18 @@ namespace NightShift.Game
             switch (room)
             {
                 case Room.Office: Office(root, random); break;
-                case Room.WestHall:
-                case Room.EastHall: Hall(room, root, random); break;
+                case Room.Parts: Parts(root, random); break;
+                case Room.Restrooms: Restrooms(root, random); break;
+                case Room.BackHall: BackHall(root, random); break;
                 case Room.Storage: Storage(root, random); break;
                 case Room.Kitchen: Kitchen(root, random); break;
                 case Room.DiningHall: Dining(root, random); break;
+                case Room.MainHall: MainHall(root, random); break;
+                case Room.PartyRoom: PartyRoom(root, random); break;
                 case Room.Arcade: Arcade(root, random); break;
-                case Room.Stage: Stage(root, random); break;
                 case Room.ExitLobby: Lobby(root, random); break;
             }
+            ExitSign(room, root);
             WallDecor(room, root, random);
         }
 
@@ -38,25 +41,72 @@ namespace NightShift.Game
         private static void Office(Transform root, System.Random random)
         {
             Material wood = Wood();
-            Place(Room.Office, new Vector2(-14.2f, 9.6f), 1.3f, () =>
+            // The guard's desk in the corner by the west wall, under the camera monitors.
+            PlaceNear(Room.Office, new Vector2(-21f, -10.25f), 0.6f, p =>
             {
-                BuildKit.Box("Desk", root, new Vector3(-14.2f, 0.4f, 9.2f), new Vector3(2.4f, 0.8f, 0.9f), wood);
+                BuildKit.Box("Desk", root, new Vector3(p.x, 0.4f, p.y), new Vector3(0.9f, 0.8f, 1.8f), wood);
                 for (int i = 0; i < 2; i++)
                 {
-                    var monitor = BuildKit.Box("Monitor", root, new Vector3(-14.8f + i * 1.0f, 1.05f, 9.0f), new Vector3(0.55f, 0.45f, 0.45f), BuildKit.Plain("crt", new Color(0.18f, 0.17f, 0.15f), 0.3f));
-                    BuildKit.Quad("Screen", monitor.transform, new Vector3(0f, 0.02f, 0.505f), new Vector2(0.8f, 0.75f), 0f, BuildKit.Glow("screenGreen", new Color(0.2f, 0.9f, 0.5f), 1.2f));
+                    var monitor = BuildKit.Box("Monitor", root, new Vector3(p.x - 0.2f, 1.05f, p.y - 0.45f + i * 0.9f), new Vector3(0.45f, 0.45f, 0.55f), BuildKit.Plain("crt", new Color(0.18f, 0.17f, 0.15f), 0.3f));
+                    BuildKit.Quad("Screen", monitor.transform, new Vector3(0.505f, 0.02f, 0f), new Vector2(0.75f, 0.8f), 90f, BuildKit.Glow("screenGreen", new Color(0.2f, 0.9f, 0.5f), 1.2f));
                 }
-                Chair(root, new Vector2(-14.2f, 10.3f), 180f);
-                BuildKit.Box("Papers", root, new Vector3(-13.6f, 0.81f, 9.4f), new Vector3(0.4f, 0.02f, 0.3f), BuildKit.Plain("paper", new Color(0.85f, 0.83f, 0.75f)), 1f, false);
+                Chair(root, new Vector2(p.x + 0.8f, p.y), 270f);
+                BuildKit.Box("Papers", root, new Vector3(p.x + 0.1f, 0.81f, p.y + 0.6f), new Vector3(0.3f, 0.02f, 0.4f), BuildKit.Plain("paper", new Color(0.85f, 0.83f, 0.75f)), 1f, false);
             });
-            Place(Room.Office, new Vector2(-15.5f, 11.8f), 0.6f, () =>
-                BuildKit.Box("FilingCabinet", root, new Vector3(-15.55f, 0.7f, 11.8f), new Vector3(0.5f, 1.4f, 0.7f), Metal(new Color(0.35f, 0.38f, 0.36f))));
-            Sign(root, new Vector3(-12f, 2.5f, 14.77f), 180f, "SECURITY", new Color(0.8f, 0.8f, 0.7f), new Color(0.12f, 0.15f, 0.25f), 1.8f);
+            PlaceNear(Room.Office, new Vector2(-21.2f, -12.8f), 0.5f, p =>
+                BuildKit.Box("FilingCabinet", root, new Vector3(p.x, 0.7f, p.y), new Vector3(0.5f, 1.4f, 0.7f), Metal(new Color(0.35f, 0.38f, 0.36f))));
+            Sign(root, new Vector3(-19f, 2.3f, -15.77f), 0f, "SECURITY", new Color(0.8f, 0.8f, 0.7f), new Color(0.12f, 0.15f, 0.25f), 1.8f);
         }
 
-        private static void Hall(Room room, Transform root, System.Random random)
+        private static void Parts(Transform root, System.Random random)
         {
-            Rect area = PizzeriaLayout.Area(room);
+            Material wood = Wood();
+            // Workbenches with animatronic parts: an endoskeleton, rows of empty heads.
+            PlaceNear(Room.Parts, new Vector2(-12.9f, -8.9f), 0.6f, p =>
+            {
+                BuildKit.Box("Workbench", root, new Vector3(p.x, 0.45f, p.y), new Vector3(0.9f, 0.9f, 1.6f), wood);
+                Endoskeleton(root, new Vector3(p.x, 0.9f, p.y - 0.3f));
+            });
+            PlaceNear(Room.Parts, new Vector2(-11.25f, -13.3f), 0.6f, p =>
+            {
+                BuildKit.Box("Workbench", root, new Vector3(p.x, 0.45f, p.y), new Vector3(1.8f, 0.9f, 0.7f), wood);
+                for (int i = 0; i < 3; i++)
+                {
+                    SpareHead(root, new Vector3(p.x - 0.6f + i * 0.6f, 1.15f, p.y), (i - 1) * 20f, 0.6f);
+                }
+            });
+            for (int i = 0; i < 3; i++)
+            {
+                BuildKit.Box("HeadShelf", root, new Vector3(-13.65f, 1.6f + (i % 2) * 0.6f, -8.8f + i * 0.45f), new Vector3(0.35f, 0.04f, 0.6f), Metal(new Color(0.3f, 0.32f, 0.33f)), 1f, false);
+            }
+            Sign(root, new Vector3(-11f, 2.4f, -13.77f), 0f, "PARTS & SERVICE", new Color(0.85f, 0.85f, 0.8f), new Color(0.2f, 0.22f, 0.2f), 2.6f);
+        }
+
+        private static void Restrooms(Transform root, System.Random random)
+        {
+            Material porcelain = BuildKit.Plain("porcelain", new Color(0.85f, 0.86f, 0.84f), 0.7f);
+            Material mirror = BuildKit.Plain("mirror", new Color(0.25f, 0.28f, 0.3f), 0.95f, 0.9f);
+            // Sinks and mirrors along the east wall, a row of stall doors along the west.
+            for (int i = 0; i < 2; i++)
+            {
+                float z = -8.4f - i * 1.3f;
+                Place(Room.Restrooms, new Vector2(-2.5f, z), 0.3f, () =>
+                {
+                    BuildKit.Box("Sink", root, new Vector3(-2.45f, 0.85f, z), new Vector3(0.5f, 0.15f, 0.6f), porcelain);
+                    BuildKit.Box("Mirror", root, new Vector3(-2.22f, 1.6f, z), new Vector3(0.02f, 0.7f, 0.55f), mirror, 1f, false);
+                });
+            }
+            Material stall = BuildKit.Plain("stall", new Color(0.32f, 0.4f, 0.42f), 0.4f, 0.3f);
+            for (int i = 0; i < 3; i++)
+            {
+                BuildKit.Box("StallWall", root, new Vector3(-6.4f, 1.05f, -11.4f + i * 1.0f), new Vector3(1.0f, 1.9f, 0.05f), stall, 1f, false);
+            }
+            Sign(root, new Vector3(-2.23f, 2.3f, -10.5f), 270f, "OUT OF ORDER", new Color(0.9f, 0.9f, 0.85f), new Color(0.35f, 0.05f, 0.05f), 1.8f);
+        }
+
+        private static void BackHall(Transform root, System.Random random)
+        {
+            Rect area = PizzeriaLayout.Area(Room.BackHall);
             // Garland of little flags along the top of the walls.
             for (float x = area.xMin + 0.5f; x < area.xMax - 0.5f; x += 0.6f)
             {
@@ -64,78 +114,116 @@ namespace NightShift.Game
                 BuildKit.Box("Flag", root, new Vector3(x, 2.55f + Mathf.Sin(x * 2f) * 0.05f, area.yMax - 0.15f), new Vector3(0.25f, 0.25f, 0.01f), flag, 1f, false).transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
                 BuildKit.Box("Flag", root, new Vector3(x, 2.55f + Mathf.Sin(x * 2f) * 0.05f, area.yMin + 0.15f), new Vector3(0.25f, 0.25f, 0.01f), flag, 1f, false).transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
             }
-            if (room == Room.EastHall)
+            // A wet floor sign nobody picked up.
+            Place(Room.BackHall, new Vector2(-13f, -0.6f), 0.3f, () =>
             {
-                // A wet floor sign nobody picked up.
-                Place(room, new Vector2(-6f, -10.2f), 0.4f, () =>
-                {
-                    var sign = BuildKit.Box("WetFloor", root, new Vector3(-6f, 0.3f, -10.2f), new Vector3(0.35f, 0.6f, 0.05f), BuildKit.Plain("yellow", new Color(0.9f, 0.75f, 0.1f), 0.5f), 1f, false);
-                    sign.transform.localRotation = Quaternion.Euler(10f, 30f, 0f);
-                });
-            }
+                var sign = BuildKit.Box("WetFloor", root, new Vector3(-13f, 0.3f, -0.6f), new Vector3(0.35f, 0.6f, 0.05f), BuildKit.Plain("yellow", new Color(0.9f, 0.75f, 0.1f), 0.5f), 1f, false);
+                sign.transform.localRotation = Quaternion.Euler(10f, 30f, 0f);
+            });
+            Sign(root, new Vector3(-21.77f, 2.6f, -1.5f), 90f, "STAFF ONLY", new Color(0.9f, 0.9f, 0.85f), new Color(0.15f, 0.15f, 0.18f), 1.8f);
         }
 
         private static void Storage(Transform root, System.Random random)
         {
-            for (int i = 0; i < 3; i++)
+            // Racks along the west wall, crates in the corners.
+            for (int i = 0; i < 2; i++)
             {
-                float z = 14f - i * 2.2f;
-                Shelf(root, random, new Vector2(8.6f, z + 0.2f), 90f, Room.Storage);
+                Shelf(root, random, new Vector2(-21.2f, 5.0f + i * 1.7f), 90f, Room.Storage);
             }
-            Place(Room.Storage, new Vector2(10.2f, 9.2f), 0.7f, () => Crate(root, new Vector3(10.2f, 0f, 9.2f), 15f));
-            Place(Room.Storage, new Vector2(14.8f, 14.2f), 0.6f, () => Crate(root, new Vector3(14.8f, 0f, 14.2f), -10f));
+            PlaceNear(Room.Storage, new Vector2(-16.75f, 3.75f), 0.5f, p => Crate(root, new Vector3(p.x, 0f, p.y), 15f));
+            Sign(root, new Vector3(-21.77f, 2.6f, 4.5f), 90f, "STORAGE", new Color(0.9f, 0.9f, 0.85f), new Color(0.2f, 0.2f, 0.22f), 2.0f);
         }
 
         private static void Kitchen(Transform root, System.Random random)
         {
             Material steel = Metal(new Color(0.55f, 0.57f, 0.6f));
-            Place(Room.Kitchen, new Vector2(-16f, 5.55f), 1.4f, () =>
+            PlaceNear(Room.Kitchen, new Vector2(-12.6f, 9.3f), 0.6f, p =>
             {
-                BuildKit.Box("Counter", root, new Vector3(-16f, 0.45f, 5.55f), new Vector3(2.6f, 0.9f, 0.7f), steel);
-                for (int i = 0; i < 3; i++)
+                BuildKit.Box("Stove", root, new Vector3(p.x, 0.45f, p.y), new Vector3(1.4f, 0.9f, 0.7f), BuildKit.Plain("stove", new Color(0.1f, 0.1f, 0.1f), 0.5f));
+                BuildKit.Box("Hood", root, new Vector3(p.x, 2.3f, p.y - 0.05f), new Vector3(1.5f, 0.5f, 0.6f), steel, 1f, false);
+                for (int i = 0; i < 2; i++)
                 {
-                    BuildKit.Cylinder("Pan", root, new Vector3(-17f + i * 0.9f, 2.0f, 5.85f), 0.35f, 0.04f, BuildKit.Plain("pan", new Color(0.12f, 0.12f, 0.12f), 0.6f, 0.8f)).transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                    BuildKit.Cylinder("Pan", root, new Vector3(p.x - 0.35f + i * 0.7f, 0.92f, p.y), 0.25f, 0.04f, BuildKit.Plain("pan", new Color(0.12f, 0.12f, 0.12f), 0.6f, 0.8f));
                 }
-                PizzaBoxes(root, new Vector3(-15.4f, 0.9f, 5.55f), 4);
             });
-            Place(Room.Kitchen, new Vector2(-10.2f, 5.5f), 0.6f, () =>
+            PlaceNear(Room.Kitchen, new Vector2(-12.4f, 7.6f), 0.5f, p =>
+                BuildKit.Box("Fridge", root, new Vector3(p.x, 1.0f, p.y), new Vector3(0.75f, 2.0f, 0.8f), Metal(new Color(0.75f, 0.75f, 0.72f))));
+            PlaceNear(Room.Kitchen, new Vector2(-7.75f, 9.3f), 0.6f, p =>
             {
-                BuildKit.Box("Fridge", root, new Vector3(-10.2f, 1.0f, 5.5f), new Vector3(0.8f, 2.0f, 0.75f), Metal(new Color(0.75f, 0.75f, 0.72f)));
-            });
-            Place(Room.Kitchen, new Vector2(-11f, -4.3f), 1.0f, () =>
-            {
-                BuildKit.Box("Stove", root, new Vector3(-11f, 0.45f, -4.4f), new Vector3(1.4f, 0.9f, 0.7f), BuildKit.Plain("stove", new Color(0.1f, 0.1f, 0.1f), 0.5f));
-                BuildKit.Box("Hood", root, new Vector3(-11f, 2.3f, -4.5f), new Vector3(1.5f, 0.5f, 0.6f), steel, 1f, false);
-            });
-            Place(Room.Kitchen, new Vector2(-14.5f, 0.5f), 1.2f, () =>
-            {
-                BuildKit.Box("Island", root, new Vector3(-14.5f, 0.45f, 0.5f), new Vector3(1.8f, 0.9f, 0.9f), steel);
-                PizzaBoxes(root, new Vector3(-14.2f, 0.9f, 0.5f), 2);
+                BuildKit.Box("Counter", root, new Vector3(p.x, 0.45f, p.y), new Vector3(1.6f, 0.9f, 0.7f), steel);
+                PizzaBoxes(root, new Vector3(p.x + 0.3f, 0.9f, p.y), 4);
             });
         }
 
         private static void Dining(Transform root, System.Random random)
         {
-            var tables = new[]
+            foreach (Vector2 table in new[] { new Vector2(4.25f, 8.25f), new Vector2(8.25f, 3.4f) })
             {
-                new Vector2(-4.5f, 3.2f), new Vector2(4.5f, 3.2f), new Vector2(-4.5f, -2.6f), new Vector2(4.5f, -2.6f),
-                new Vector2(-6.2f, 0.4f), new Vector2(6.2f, 0.4f)
-            };
-            foreach (Vector2 table in tables)
-            {
-                Place(Room.DiningHall, table, 1.3f, () => PartyTable(root, random, table));
+                PlaceNear(Room.DiningHall, table, 1.1f, p => PartyTable(root, random, p), 2.0f);
             }
-            // Balloons drifting under the high ceiling, and streamers between the lamps.
+            Stage(root);
+            // Balloons drifting under the ceiling, streamers across the room.
             for (int i = 0; i < 14; i++)
             {
-                var position = new Vector3(-8f + (float)random.NextDouble() * 16f, 3.3f + (float)random.NextDouble() * 0.6f, -6f + (float)random.NextDouble() * 12f);
+                var position = new Vector3(2.8f + (float)random.NextDouble() * 9.4f, 3.3f + (float)random.NextDouble() * 0.7f, 2.8f + (float)random.NextDouble() * 6.5f);
                 Balloon(root, position, PartyColors[i % PartyColors.Length]);
             }
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 3; i++)
             {
-                Streamer(root, new Vector3(-8.5f, 4.0f, -5f + i * 3.3f), new Vector3(8.5f, 4.0f, -5f + i * 3.3f), PartyColors[i % PartyColors.Length]);
+                Streamer(root, new Vector3(2.2f, 4.1f, 3.5f + i * 2.5f), new Vector3(12.8f, 4.1f, 3.5f + i * 2.5f), PartyColors[i % PartyColors.Length]);
             }
-            Sign(root, new Vector3(-4.5f, 3.2f, 6.77f), 180f, "LET'S PARTY!", new Color(1f, 0.85f, 0.2f), new Color(0.5f, 0.05f, 0.1f), 4.2f);
+            Sign(root, new Vector3(7.5f, 3.6f, 2.23f), 0f, "LET'S PARTY!", new Color(1f, 0.85f, 0.2f), new Color(0.5f, 0.05f, 0.1f), 3.4f);
+        }
+
+        /// <summary>The show stage along the north wall of the dining hall, where Freddy sleeps.</summary>
+        private static void Stage(Transform root)
+        {
+            Rect stage = PizzeriaLayout.StageArea;
+            float top = PizzeriaLayout.StageHeight;
+            Material planks = BuildKit.Surface("stagePlanks", () => ProceduralTextures.Planks(new Color(0.45f, 0.28f, 0.15f)), 0.35f);
+            BuildKit.Box("Stage", root, new Vector3(stage.center.x, top * 0.5f, stage.center.y), new Vector3(stage.width, top, stage.height), planks, 1f);
+            BuildKit.Box("Skirt", root, new Vector3(stage.center.x, top * 0.5f, stage.yMin - 0.03f), new Vector3(stage.width, top, 0.06f), BuildKit.Plain("skirt", new Color(0.35f, 0.05f, 0.08f)), 1f, false);
+            // Folded curtains drawn to both sides (overlapping folds), open in the middle.
+            Material curtain = BuildKit.Surface("curtain", () => ProceduralTextures.Grimy(new Color(0.42f, 0.05f, 0.2f)), 0.15f);
+            float height = PizzeriaLayout.Height(Room.DiningHall);
+            for (int i = 0; i < 16; i++)
+            {
+                float x = stage.xMin + 0.2f + i * 0.45f;
+                if (x > stage.center.x - 2.2f && x < stage.center.x + 2.2f)
+                {
+                    continue;
+                }
+                BuildKit.Box("Curtain", root, new Vector3(x, (height - 0.1f) * 0.5f, stage.yMax - 0.35f - (i % 2) * 0.12f), new Vector3(0.55f, height - 0.1f, 0.18f), curtain, 1f, false);
+            }
+            BuildKit.Box("Valance", root, new Vector3(stage.center.x, height - 0.4f, stage.yMax - 0.3f), new Vector3(stage.width + 0.6f, 0.7f, 0.3f), curtain, 1f, false);
+            Sign(root, new Vector3(stage.center.x, height - 0.4f, stage.yMax - 0.47f), 180f, "SHOWTIME", new Color(1f, 0.85f, 0.25f), new Color(0.2f, 0.02f, 0.12f), 2.6f);
+            BuildKit.Cone("Star", root, new Vector3(stage.center.x, 2.9f, stage.yMax - 0.22f), 0.4f, 0.01f, BuildKit.Glow("star", new Color(1f, 0.8f, 0.2f), 1.5f)).transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+            // Two theatre spots on the ceiling aimed at Freddy, with hard shadows.
+            Vector3 freddy = PizzeriaLayout.FreddyStart;
+            StageSpot(root, new Vector3(4.2f, height - 0.3f, 4.5f), freddy, new Color(1f, 0.75f, 0.45f));
+            StageSpot(root, new Vector3(10.8f, height - 0.3f, 4.5f), freddy, new Color(0.8f, 0.45f, 1f));
+        }
+
+        private static void MainHall(Transform root, System.Random random)
+        {
+            Rect area = PizzeriaLayout.Area(Room.MainHall);
+            // A strip of carpet down the hall and a bench by the wall.
+            BuildKit.Box("Runner", root, new Vector3(area.center.x, 0.005f, area.center.y), new Vector3(area.width - 1f, 0.01f, 1.2f),
+                         BuildKit.Surface("carpet", () => ProceduralTextures.Carpet(), 0.05f), 2f, false);
+            PlaceNear(Room.MainHall, new Vector2(22.3f, -1.5f), 0.4f, p =>
+                BuildKit.Box("Bench", root, new Vector3(p.x, 0.25f, p.y), new Vector3(0.5f, 0.5f, 1.6f), Wood()), 1.5f);
+            Sign(root, new Vector3(22.77f, 2.2f, -1.5f), 270f, "WELCOME", new Color(1f, 0.85f, 0.2f), new Color(0.5f, 0.05f, 0.1f), 2.0f);
+        }
+
+        private static void PartyRoom(Transform root, System.Random random)
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                var position = new Vector3(4.6f + (float)random.NextDouble() * 4.8f, 2.6f + (float)random.NextDouble() * 0.5f, -13.4f + (float)random.NextDouble() * 5.8f);
+                Balloon(root, position, PartyColors[i % PartyColors.Length]);
+            }
+            Streamer(root, new Vector3(4.2f, 3.1f, -10.5f), new Vector3(9.8f, 3.1f, -10.5f), PartyColors[2]);
+            Sign(root, new Vector3(7f, 2.4f, -13.77f), 0f, "PARTY ROOM", new Color(1f, 0.85f, 0.2f), new Color(0.5f, 0.05f, 0.1f), 2.6f);
         }
 
         private static void Arcade(Transform root, System.Random random)
@@ -143,69 +231,65 @@ namespace NightShift.Game
             Color[] screens = { new Color(0.1f, 0.8f, 1f), new Color(1f, 0.2f, 0.7f), new Color(0.3f, 1f, 0.3f), new Color(1f, 0.8f, 0.1f) };
             for (int i = 0; i < 4; i++)
             {
-                var position = new Vector2(10.6f + i * 1.15f, 5.4f);
+                var position = new Vector2(17.6f + i * 1.1f, 9.4f);
                 Color color = screens[i % screens.Length];
-                Place(Room.Arcade, position, 0.6f, () => ArcadeCabinet(root, position, 180f, color));
+                PlaceNear(Room.Arcade, position, 0.5f, p => ArcadeCabinet(root, p, 180f, color), 1.5f);
             }
-            for (int i = 0; i < 3; i++)
-            {
-                var position = new Vector2(13f + i * 1.15f, -5.4f);
-                Color color = screens[(i + 2) % screens.Length];
-                Place(Room.Arcade, position, 0.6f, () => ArcadeCabinet(root, position, 0f, color));
-            }
-            // Neon strips along the walls, the only colorful light in the building.
-            NeonStrip(root, new Vector3(14f, 3.1f, 5.74f), new Vector3(9f, 0.06f, 0.06f), new Color(1f, 0.15f, 0.7f));
-            NeonStrip(root, new Vector3(18.74f, 3.1f, 0f), new Vector3(0.06f, 0.06f, 11f), new Color(0.1f, 0.85f, 1f));
-            Sign(root, new Vector3(18.77f, 2.3f, -1.5f), 270f, "PRIZES", new Color(0.2f, 1f, 1f), new Color(0.1f, 0.02f, 0.15f), 1.8f);
-            Place(Room.Arcade, new Vector2(17.8f, -1.5f), 0.9f, () =>
-                BuildKit.Box("PrizeCounter", root, new Vector3(17.8f, 0.55f, -1.5f), new Vector3(0.8f, 1.1f, 2.4f), BuildKit.Plain("counter", new Color(0.25f, 0.08f, 0.3f), 0.4f)));
-        }
-
-        private static void Stage(Transform root, System.Random random)
-        {
-            Material planks = BuildKit.Surface("stagePlanks", () => ProceduralTextures.Planks(new Color(0.45f, 0.28f, 0.15f)), 0.35f);
-            // The show stage along the west wall, with a skirt, curtains and a star.
-            BuildKit.Box("Stage", root, new Vector3(-19f, 0.35f, -13.5f), new Vector3(4f, 0.7f, 8f), planks, 1f);
-            BuildKit.Box("Skirt", root, new Vector3(-16.97f, 0.35f, -13.5f), new Vector3(0.06f, 0.7f, 8f), BuildKit.Plain("skirt", new Color(0.35f, 0.05f, 0.08f)), 1f, false);
-            Material curtain = BuildKit.Surface("curtain", () => ProceduralTextures.Grimy(new Color(0.42f, 0.05f, 0.2f)), 0.15f);
-            // Folded curtains drawn to both sides (overlapping folds, no gaps), open in the middle.
-            for (int i = 0; i < 16; i++)
-            {
-                float z = -18.7f + i * 0.45f;
-                if (z > -16.2f && z < -10.8f)
-                {
-                    continue;
-                }
-                BuildKit.Box("Curtain", root, new Vector3(-17.3f + (i % 2) * 0.12f, 2.55f, z), new Vector3(0.18f, 4.5f, 0.55f), curtain, 1f, false);
-            }
-            BuildKit.Box("Valance", root, new Vector3(-17.3f, 4.65f, -13.5f), new Vector3(0.3f, 0.8f, 10.6f), curtain, 1f, false);
-            Sign(root, new Vector3(-17.13f, 4.65f, -13.5f), 90f, "SHOWTIME", new Color(1f, 0.85f, 0.25f), new Color(0.2f, 0.02f, 0.12f), 2.6f);
-            BuildKit.Cone("Star", root, new Vector3(-20.76f, 4.2f, -13.5f), 0.4f, 0.01f, BuildKit.Glow("star", new Color(1f, 0.8f, 0.2f), 1.5f)).transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
-
-            // Two theatre spots aimed at the stage, with hard shadows.
-            StageSpot(root, new Vector3(-12f, 5f, -16.5f), new Vector3(-19f, 0.7f, -13.5f), new Color(1f, 0.75f, 0.45f));
-            StageSpot(root, new Vector3(-12f, 5f, -10.5f), new Vector3(-19f, 0.7f, -13.5f), new Color(0.8f, 0.45f, 1f));
-
-            // Rows of chairs facing the stage (skipping Freddy's paths).
-            for (int row = 0; row < 3; row++)
-            {
-                for (int seat = 0; seat < 6; seat++)
-                {
-                    var position = new Vector2(-14.5f + row * 1.4f, -17.4f + seat * 1.15f);
-                    Place(Room.Stage, position, 0.35f, () => Chair(root, position, 270f));
-                }
-            }
+            PlaceNear(Room.Arcade, new Vector2(21f, 2.7f), 0.5f, p => ArcadeCabinet(root, p, 0f, screens[2]), 1f);
+            // Neon strips along the walls, the most colorful light in the building.
+            NeonStrip(root, new Vector3(19f, 3.1f, 9.74f), new Vector3(7f, 0.06f, 0.06f), new Color(1f, 0.15f, 0.7f));
+            NeonStrip(root, new Vector3(22.74f, 3.1f, 6f), new Vector3(0.06f, 0.06f, 7f), new Color(0.1f, 0.85f, 1f));
+            Sign(root, new Vector3(22.77f, 2.3f, 5.4f), 270f, "PRIZES", new Color(0.2f, 1f, 1f), new Color(0.1f, 0.02f, 0.15f), 1.8f);
         }
 
         private static void Lobby(Transform root, System.Random random)
         {
-            Place(Room.ExitLobby, new Vector2(9.2f, -15.5f), 1.0f, () =>
+            PlaceNear(Room.ExitLobby, new Vector2(13.2f, -9.9f), 0.9f, p =>
             {
-                BuildKit.Box("TicketBooth", root, new Vector3(9.2f, 0.6f, -15.5f), new Vector3(1.2f, 1.2f, 2.2f), BuildKit.Plain("booth", new Color(0.4f, 0.1f, 0.1f), 0.4f));
-                BuildKit.Box("Glass", root, new Vector3(9.2f, 1.6f, -15.5f), new Vector3(1.2f, 0.8f, 0.05f), BuildKit.Plain("glass", new Color(0.3f, 0.35f, 0.4f), 0.9f), 1f, false);
+                BuildKit.Box("TicketBooth", root, new Vector3(p.x, 0.6f, p.y), new Vector3(2.0f, 1.2f, 1.0f), BuildKit.Plain("booth", new Color(0.4f, 0.1f, 0.1f), 0.4f));
+                BuildKit.Box("Glass", root, new Vector3(p.x, 1.6f, p.y - 0.45f), new Vector3(2.0f, 0.8f, 0.05f), BuildKit.Plain("glass", new Color(0.3f, 0.35f, 0.4f), 0.9f), 1f, false);
             });
-            Place(Room.ExitLobby, new Vector2(16.8f, -14f), 0.8f, () =>
-                BuildKit.Box("Bench", root, new Vector3(17.4f, 0.25f, -14f), new Vector3(0.5f, 0.5f, 1.8f), Wood()));
+            PlaceNear(Room.ExitLobby, new Vector2(19.5f, -13.5f), 0.6f, p =>
+                BuildKit.Box("Bench", root, new Vector3(p.x, 0.25f, p.y), new Vector3(0.5f, 0.5f, 1.8f), Wood()));
+        }
+
+        /// <summary>
+        /// A green EXIT sign with its own light over the door that leads one room closer to the
+        /// way out, so the escape route reads from anywhere in the building.
+        /// </summary>
+        private static void ExitSign(Room room, Transform root)
+        {
+            if (room == HuntMap.Exit)
+            {
+                return;
+            }
+            Room next = HuntMap.NextStep(room, HuntMap.Exit);
+            Vector3 door = PizzeriaLayout.DoorOf(room, next);
+            Vector3 into = -PizzeriaLayout.Outward(room, door);
+            float facing = Mathf.Atan2(into.x, into.z) * Mathf.Rad2Deg;
+            // Beside the door at eye level, on the side toward the middle of the wall.
+            Vector3 along = Vector3.Cross(Vector3.up, into);
+            Vector2 middle = PizzeriaLayout.Area(room).center;
+            if (Vector3.Dot(along, new Vector3(middle.x - door.x, 0f, middle.y - door.z)) < 0f)
+            {
+                along = -along;
+            }
+            Vector3 position = door + into * (PizzeriaLayout.WallThickness + 0.05f) + along * (PizzeriaLayout.DoorWidth * 0.5f + 0.7f) + Vector3.up * 2.2f;
+            ExitLamp(root, position, facing);
+        }
+
+        /// <summary>A glowing EXIT box sign facing <paramref name="facing"/>, with a green light under it.</summary>
+        public static void ExitLamp(Transform root, Vector3 position, float facing)
+        {
+            Texture2D texture = ProceduralTextures.Sign("EXIT", new Color(0.55f, 1f, 0.6f), new Color(0.02f, 0.25f, 0.08f));
+            var sign = BuildKit.Quad("ExitSign", root, position, new Vector2(0.9f, 0.9f * texture.height / texture.width), facing, BuildKit.Picture("exitGreen", texture, 3f));
+            var light = new GameObject("ExitLight").AddComponent<Light>();
+            light.transform.SetParent(sign.transform, false);
+            light.transform.localPosition = new Vector3(0f, -0.3f, -0.5f);
+            light.type = LightType.Point;
+            light.range = 4f;
+            light.intensity = 0.8f;
+            light.color = new Color(0.3f, 1f, 0.45f);
         }
 
         // ------------------------------------------------------------------ pieces
@@ -321,11 +405,11 @@ namespace NightShift.Game
 
         private static void Shelf(Transform root, System.Random random, Vector2 position, float yaw, Room room)
         {
-            Place(room, position, 0.8f, () =>
+            PlaceNear(room, position, 0.8f, p =>
             {
                 var shelf = new GameObject("Shelf").transform;
                 shelf.SetParent(root, false);
-                shelf.localPosition = new Vector3(position.x, 0f, position.y);
+                shelf.localPosition = new Vector3(p.x, 0f, p.y);
                 shelf.localRotation = Quaternion.Euler(0f, yaw, 0f);
                 Material metal = Metal(new Color(0.3f, 0.32f, 0.33f));
                 for (int level = 0; level < 4; level++)
@@ -358,6 +442,9 @@ namespace NightShift.Game
         }
 
         /// <summary>A spare animatronic head: the kind of thing you should not find in a storage room.</summary>
+        /// <summary>A bare endoskeleton lying on a bench.</summary>
+        public static void Endoskeleton(Transform root, Vector3 bench) => LevelClutter.Endoskeleton(root, bench);
+
         public static void SpareHead(Transform root, Vector3 position, float yaw, float scale = 1f)
         {
             var head = new GameObject("SpareHead").transform;
@@ -407,7 +494,7 @@ namespace NightShift.Game
                     BuildKit.Quad("Drawing", root, position, new Vector2(0.55f, 0.55f), facing, BuildKit.Picture("drawing" + index % 4, ProceduralTextures.Drawing(index % 4)))
                         .transform.localRotation *= Quaternion.Euler(0f, 0f, (float)random.NextDouble() * 10f - 5f);
                 }
-                else if (room == Room.Kitchen || room == Room.Storage)
+                else if (room == Room.Kitchen || room == Room.Storage || room == Room.Parts || room == Room.Restrooms)
                 {
                     continue;
                 }
@@ -448,17 +535,69 @@ namespace NightShift.Game
 
         // ------------------------------------------------------------------ placement rules
 
+        /// <summary>Props already placed in the room being built (so they do not overlap).</summary>
+        private static readonly List<(Vector2 center, float radius)> Occupied = new List<(Vector2, float)>();
+
+        /// <summary>Starts a new room: forgets the props of the previous one.</summary>
+        public static void BeginRoom() => Occupied.Clear();
+
         public static void Place(Room room, Vector2 center, float radius, System.Action build)
         {
             if (Clear(room, center, radius))
             {
+                Occupied.Add((center, radius));
                 build();
+            }
+            else if (radius >= 0.6f && System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture") >= 0)
+            {
+                Debug.Log("CAPTURE prop skipped in " + room + " at " + center + " (radius " + radius + ")");
             }
         }
 
-        /// <summary>True if a prop of this radius at <paramref name="center"/> leaves Freddy's lines, doors and spots free.</summary>
+        /// <summary>
+        /// Places a prop at <paramref name="desired"/>, or at the nearest free point within
+        /// <paramref name="maxShift"/> meters (rings around it), and builds it there. Rooms are cut by
+        /// Freddy's walking lines, so big furniture needs to find its gap.
+        /// </summary>
+        public static void PlaceNear(Room room, Vector2 desired, float radius, System.Action<Vector2> build, float maxShift = 3.5f)
+        {
+            Rect area = PizzeriaLayout.Area(room);
+            for (float ring = 0f; ring <= maxShift; ring += 0.35f)
+            {
+                int steps = ring < 0.01f ? 1 : Mathf.Max(8, Mathf.RoundToInt(ring * 6f));
+                for (int i = 0; i < steps; i++)
+                {
+                    float angle = i * Mathf.PI * 2f / steps;
+                    var point = desired + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * ring;
+                    float margin = radius * 0.7f + PizzeriaLayout.WallThickness;
+                    if (point.x < area.xMin + margin || point.x > area.xMax - margin || point.y < area.yMin + margin || point.y > area.yMax - margin)
+                    {
+                        continue;
+                    }
+                    if (Clear(room, point, radius))
+                    {
+                        Occupied.Add((point, radius));
+                        build(point);
+                        return;
+                    }
+                }
+            }
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture") >= 0)
+            {
+                Debug.Log("CAPTURE prop has no room in " + room + " near " + desired + " (radius " + radius + ")");
+            }
+        }
+
+        /// <summary>True if a prop of this radius at <paramref name="center"/> leaves Freddy's lines, doors, spots and other props free.</summary>
         private static bool Clear(Room room, Vector2 center, float radius)
         {
+            foreach ((Vector2 other, float otherRadius) in Occupied)
+            {
+                if (Vector2.Distance(center, other) < radius + otherRadius)
+                {
+                    return false;
+                }
+            }
             foreach ((Vector2 a, Vector2 b) in PizzeriaLayout.WalkLines(room))
             {
                 if (DistanceToSegment(center, a, b) < radius + 0.6f)

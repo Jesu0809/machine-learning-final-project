@@ -173,6 +173,9 @@ namespace NightShift.Game
         /// <summary>True while the browser has not captured the mouse yet (the HUD asks for a click).</summary>
         public bool NeedsClickToLook { get; private set; }
 
+        /// <summary>Editor only: when true, pressing Play goes straight into night 1 (no menu, no intro). Set to false for the normal flow.</summary>
+        public static readonly bool QuickStartInEditor = true;
+
         public void SkipCall() => call.Skip();
 
         public void SkipIntro() => intro.Skip();
@@ -185,11 +188,17 @@ namespace NightShift.Game
                 Assets = ScriptableObject.CreateInstance<GameAssets>();
                 Debug.LogWarning("Resources/GameAssets.asset is missing: run Night Shift/Create Game Scene.");
             }
-            settings = new HuntSettings { ResolveCatches = false };
+            // In 3D the body really walks; the brain decides again when he arrives.
+            settings = new HuntSettings { ResolveCatches = false, TravelTime = false };
             State = new HuntState(settings, System.Environment.TickCount);
             if (Assets.PolicyWeights != null)
             {
                 probe = PolicyProbe.FromBytes(Assets.PolicyWeights.bytes);
+                if (probe.InputSize != FreddyObservations.Size || probe.OutputSize != FreddyActions.Count)
+                {
+                    // Weights of a brain trained on another map: no probabilities rather than wrong ones.
+                    probe = null;
+                }
             }
 
             SetUpAtmosphere();
@@ -197,28 +206,40 @@ namespace NightShift.Game
             Level = LevelBuilder.Build(transform, Assets);
             Player = PlayerController.Create(this, PizzeriaLayout.PlayerStart, PizzeriaLayout.PlayerFacing);
             Freddy = FreddyBody.Create(this, Assets.FreddyPrefab, PizzeriaLayout.FreddyStart, PizzeriaLayout.FreddyFacing);
-            Material doorWood = BuildKit.Surface("doorWood", () => ProceduralTextures.Planks(new Color(0.42f, 0.16f, 0.12f)), 0.35f);
-            foreach ((Room _, Room _, Vector3 door, bool alongX) in PizzeriaLayout.Doorways())
+            Material doorSteel = BuildKit.Surface("doorSteel", () => ProceduralTextures.SteelPanel(new Color(0.42f, 0.09f, 0.08f)), 0.4f, 0.35f);
+            foreach ((Room _, Room _, Vector3 door, bool alongX, Vector3 corridor) in PizzeriaLayout.Doorways())
             {
-                Door.Create(this, Level.Root, door, alongX, doorWood);
+                Door.Create(this, Level.Root, door, alongX, corridor, doorSteel);
             }
             AiVision.Create(this);
             call = PhoneCall.Create(transform, Audio, Assets);
             Exterior = Exterior.Build(transform, Assets);
             intro = IntroCinematic.Create(this, Exterior);
-            // Objective objects: the breaker in the storage room, the keycard lockbox and the tape in the office.
-            breaker = ObjectiveItem.Create(this, ObjectiveStep.Breaker, Level.Root, new Vector3(13.2f, 1.4f, 15.68f), 180f, 3f);
-            keycard = ObjectiveItem.Create(this, ObjectiveStep.Keycard, Level.Root, new Vector3(-9.9f, 1.3f, 8.33f), 0f, 0f);
-            tape = ObjectiveItem.Create(this, ObjectiveStep.Tape, Level.Root, new Vector3(-13.4f, 0.92f, 14.4f), 20f, 0f);
+            // Objective objects: the breaker on the storage's south wall, the keycard lockbox on the
+            // office's north wall and the tape on the office table.
+            breaker = ObjectiveItem.Create(this, ObjectiveStep.Breaker, Level.Root, new Vector3(-20.4f, 1.4f, 2.32f), 0f, 3f);
+            keycard = ObjectiveItem.Create(this, ObjectiveStep.Keycard, Level.Root, new Vector3(-17f, 1.3f, -9.32f), 180f, 0f);
+            tape = ObjectiveItem.Create(this, ObjectiveStep.Tape, Level.Root, PizzeriaLayout.SpotPosition(Room.Office, 1) + new Vector3(0.4f, 0.86f, 0.1f), 20f, 0f);
             CreateBrain();
             UI = GameUI.Create(this);
+#if UNITY_EDITOR
+            if (QuickStartInEditor)
+            {
+                // Testing shortcut: skip the menu and the intro and drop straight into night 1.
+                StartNight(1);
+                CaptureMode.AttachIfRequested(this);
+                return;
+            }
+#endif
             ShowMenu();
             CaptureMode.AttachIfRequested(this);
         }
 
         private void CreateBrain()
         {
-            if (Assets.FreddyModel != null)
+            // The exported weights travel with the model: if they do not fit this map, neither does the model.
+            bool modelFits = Assets.PolicyWeights == null || probe != null;
+            if (Assets.FreddyModel != null && modelFits)
             {
                 var brain = new GameObject("FreddyBrain");
                 brain.transform.SetParent(transform, false);
@@ -229,7 +250,9 @@ namespace NightShift.Game
             else
             {
                 Policy = new ScriptedFreddyPolicy(System.Environment.TickCount);
-                BrainDescription = "scripted baseline (no trained model found)";
+                BrainDescription = Assets.FreddyModel != null
+                    ? "scripted baseline (the model " + Assets.FreddyModel.name + " was trained on another map)"
+                    : "scripted baseline (no trained model found)";
                 probe = null;
             }
         }
@@ -246,9 +269,9 @@ namespace NightShift.Game
             Player.CameraLocked = true;
             // The menu looks at Freddy, asleep on the stage, from the audience.
             Freddy.ResetTo(PizzeriaLayout.FreddyStart, PizzeriaLayout.FreddyFacing);
-            Player.Head.position = new Vector3(-12.2f, 1.55f, -12.3f);
+            Player.Head.position = new Vector3(5.4f, 1.55f, 4.2f);
             // Aim a little to his side so he stands right of the menu buttons.
-            Player.Head.LookAt(PizzeriaLayout.FreddyStart + new Vector3(0f, 1.5f, -2.2f));
+            Player.Head.LookAt(PizzeriaLayout.FreddyStart + new Vector3(-1.8f, 1.3f, 0f));
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
             Audio.PlayMenuMusic(true);
@@ -323,6 +346,13 @@ namespace NightShift.Game
             if (!InCall)
             {
                 RevealItems();
+            }
+            if (State.FreddyAwake && !InCall)
+            {
+                // Night 5: awake from the first second. Without this his body stayed asleep on the
+                // stage (it was only woken when the sleeping ticks ran out, and there were none).
+                Freddy.WakeUp();
+                LastDecision = "awake";
             }
 
             LastSenseAt = -100f;
@@ -459,6 +489,12 @@ namespace NightShift.Game
                         Audio.Sting();
                         UI.Toast("Something on the stage just moved.");
                     }
+                }
+                else if (Freddy.IsAsleep)
+                {
+                    // The brain is awake but the body is not (safety net): wake it, decide next turn.
+                    Freddy.WakeUp();
+                    State.SkipFreddyTurn();
                 }
                 else if (Freddy.Ready)
                 {
@@ -609,10 +645,20 @@ namespace NightShift.Game
 
         private void SamplePlayer()
         {
-            Room room = PizzeriaLayout.RoomAt(Player.transform.position);
             HidingSpot spot = Player.HiddenIn;
             int noise = Player.ConsumeNoise();
-            State.ObservePlayer(spot != null ? spot.Room : room, spot != null, spot != null ? spot.Index : -1, noise);
+            if (Player.Crawling)
+            {
+                // In a duct: out of sight and out of reach, like in the simulation; the brain
+                // keeps the room the player crawled in from until they come out.
+                Room inside = PizzeriaLayout.RoomAt(Player.HeadPosition);
+                State.ObservePlayer(inside, true, -1, noise);
+            }
+            else
+            {
+                Room room = PizzeriaLayout.RoomAt(Player.transform.position);
+                State.ObservePlayer(spot != null ? spot.Room : room, spot != null, spot != null ? spot.Index : -1, noise);
+            }
             if (State.HeardRoom.HasValue)
             {
                 LastHeard = State.HeardRoom;
@@ -720,7 +766,11 @@ namespace NightShift.Game
             }
             notes.Clear();
             int first = (Night - 1) * 2;
-            var rooms = new List<Room> { Room.Office, Room.WestHall, Room.Storage, Room.Kitchen, Room.DiningHall, Room.Arcade, Room.EastHall };
+            var rooms = new List<Room>
+            {
+                Room.Office, Room.Parts, Room.Restrooms, Room.BackHall, Room.Kitchen,
+                Room.DiningHall, Room.MainHall, Room.Arcade, Room.Storage, Room.PartyRoom
+            };
             for (int i = first; i < first + 2 && i < StoryData.Notes.Length; i++)
             {
                 Room room = rooms[Random.Range(0, rooms.Count)];
@@ -913,7 +963,7 @@ namespace NightShift.Game
             // The camera falls to the floor and everything goes dark.
             Vector3 start = Player.Head.position;
             Quaternion startRotation = Player.Head.rotation;
-            Vector3 floor = new Vector3(start.x, 0.25f, start.z) - Freddy.transform.forward * 0.6f;
+            Vector3 floor = new Vector3(start.x, Player.transform.position.y + 0.25f, start.z) - Freddy.transform.forward * 0.6f;
             t = 0f;
             while (t < 0.9f)
             {
@@ -955,11 +1005,14 @@ namespace NightShift.Game
         private void SetUpAtmosphere()
         {
             RenderSettings.ambientMode = AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.07f, 0.065f, 0.08f);
+            // Next to no ambient light and no grey sky reflection: away from the few working lamps,
+            // without the flashlight, you see nothing.
+            RenderSettings.ambientLight = new Color(0.008f, 0.008f, 0.011f);
+            RenderSettings.reflectionIntensity = 0.15f;
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Exponential;
             RenderSettings.fogDensity = 0.03f;
-            RenderSettings.fogColor = new Color(0.012f, 0.01f, 0.014f);
+            RenderSettings.fogColor = new Color(0.004f, 0.004f, 0.006f);
             RenderSettings.skybox = null;
 
             var volumeObject = new GameObject("PostProcessing");
@@ -980,7 +1033,7 @@ namespace NightShift.Game
             ColorAdjustments color = profile.Add<ColorAdjustments>(true);
             color.saturation.Override(-20f);
             color.contrast.Override(18f);
-            color.postExposure.Override(0.75f);
+            color.postExposure.Override(0.9f);
             color.colorFilter.Override(new Color(1f, 0.96f, 0.9f));
             ShadowsMidtonesHighlights tones = profile.Add<ShadowsMidtonesHighlights>(true);
             tones.shadows.Override(new Vector4(0.9f, 1f, 1.1f, 0f));

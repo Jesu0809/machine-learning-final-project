@@ -59,7 +59,7 @@ namespace NightShift.Hunt.Training
                 return;
             }
 
-            if (State.FreddyAwake)
+            if (State.FreddyCanDecide)
             {
                 agent.Decide(State);
             }

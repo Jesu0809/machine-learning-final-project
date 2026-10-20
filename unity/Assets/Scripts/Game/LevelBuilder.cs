@@ -12,6 +12,7 @@ namespace NightShift.Game
         public readonly FusePickup[] Fuses = new FusePickup[HuntMap.RoomCount];
         public readonly List<FlickerLight>[] Lamps = new List<FlickerLight>[HuntMap.RoomCount];
         public ExitPanel Exit;
+        public readonly List<VentGrate> Vents = new List<VentGrate>();
 
         public HidingSpot Spot(Room room, int index) => Spots[(int)room][index];
     }
@@ -51,6 +52,7 @@ namespace NightShift.Game
 
                 BuildShell(room, roomRoot, style);
                 level.Lamps[i] = BuildLamps(room, roomRoot, random);
+                LevelProps.BeginRoom();
                 LevelProps.Decorate(room, roomRoot, random);
                 LevelClutter.Add(room, roomRoot, random);
 
@@ -64,7 +66,8 @@ namespace NightShift.Game
                     level.Fuses[i] = BuildFuse(room, roomRoot);
                 }
             }
-            BuildCorridors(level.Root);
+            BuildCorridors(level, random);
+            BuildDucts(level);
             level.Exit = BuildExit(level.Root);
             return level;
         }
@@ -76,6 +79,10 @@ namespace NightShift.Game
             Material checkerFloor = BuildKit.Surface("floorChecker", () => ProceduralTextures.Tiles(new Color(0.82f, 0.8f, 0.74f), new Color(0.07f, 0.07f, 0.08f), 8, true, 0.35f), 0.45f);
             Material redBand = BuildKit.Surface("wainscotRed", () => ProceduralTextures.Tiles(new Color(0.55f, 0.07f, 0.08f), new Color(0.08f, 0.08f, 0.09f), 8, true), 0.3f);
             Material ceiling = BuildKit.Surface("ceiling", () => ProceduralTextures.CeilingTiles(), 0.05f);
+            Material officeFloor = BuildKit.Surface("officeFloor", () => ProceduralTextures.Tiles(new Color(0.45f, 0.43f, 0.38f), new Color(0.35f, 0.33f, 0.3f), 4, true, 0.4f), 0.3f);
+            Material officeBand = BuildKit.Surface("officeBand", () => ProceduralTextures.Grimy(new Color(0.25f, 0.28f, 0.3f)), 0.2f);
+            Material concrete = BuildKit.Surface("concrete", () => ProceduralTextures.Concrete(new Color(0.42f, 0.42f, 0.4f)), 0.1f);
+            Material concreteWall = BuildKit.Surface("concreteWall", () => ProceduralTextures.Concrete(new Color(0.36f, 0.37f, 0.38f)), 0.05f);
             switch (room)
             {
                 case Room.Kitchen:
@@ -85,9 +92,24 @@ namespace NightShift.Game
                         Floor = BuildKit.Surface("kitchenFloor", () => ProceduralTextures.Tiles(new Color(0.6f, 0.1f, 0.1f), new Color(0.85f, 0.83f, 0.78f), 8, true, 0.5f), 0.4f),
                         Wainscot = white, Wall = white, Ceiling = ceiling
                     };
+                case Room.Restrooms:
+                    Material blue = BuildKit.Surface("restroomTiles", () => ProceduralTextures.Tiles(new Color(0.55f, 0.68f, 0.72f), new Color(0.8f, 0.84f, 0.84f), 16, false, 0.4f), 0.6f);
+                    return new RoomStyle
+                    {
+                        Floor = BuildKit.Surface("restroomFloor", () => ProceduralTextures.Tiles(new Color(0.75f, 0.76f, 0.74f), new Color(0.3f, 0.4f, 0.45f), 12, true, 0.5f), 0.5f),
+                        Wainscot = blue, Wall = BuildKit.Surface("restroomWall", () => ProceduralTextures.Grimy(new Color(0.62f, 0.66f, 0.64f), 0.8f), 0.2f), Ceiling = ceiling
+                    };
                 case Room.Storage:
-                    Material concrete = BuildKit.Surface("concrete", () => ProceduralTextures.Concrete(new Color(0.42f, 0.42f, 0.4f)), 0.1f);
-                    return new RoomStyle { Floor = concrete, Wainscot = concrete, Wall = BuildKit.Surface("concreteWall", () => ProceduralTextures.Concrete(new Color(0.36f, 0.37f, 0.38f)), 0.05f), Ceiling = concrete };
+                    return new RoomStyle { Floor = concrete, Wainscot = concrete, Wall = concreteWall, Ceiling = concrete };
+                case Room.Parts:
+                    // Staff-only workroom: bare concrete, steel-grey walls.
+                    return new RoomStyle
+                    {
+                        Floor = concrete,
+                        Wainscot = BuildKit.Surface("workBand", () => ProceduralTextures.Grimy(new Color(0.3f, 0.32f, 0.3f), 1.2f), 0.25f, 0.2f),
+                        Wall = concreteWall,
+                        Ceiling = concrete
+                    };
                 case Room.Arcade:
                     return new RoomStyle
                     {
@@ -96,23 +118,18 @@ namespace NightShift.Game
                         Wall = BuildKit.Surface("arcadeWall", () => ProceduralTextures.Wallpaper(new Color(0.1f, 0.08f, 0.16f), new Color(0.2f, 0.12f, 0.32f)), 0.1f),
                         Ceiling = ceiling
                     };
-                case Room.Stage:
-                    return new RoomStyle
-                    {
-                        Floor = BuildKit.Surface("planks", () => ProceduralTextures.Planks(new Color(0.32f, 0.2f, 0.12f)), 0.35f),
-                        Wainscot = redBand,
-                        Wall = BuildKit.Surface("stageWall", () => ProceduralTextures.Wallpaper(new Color(0.18f, 0.06f, 0.14f), new Color(0.3f, 0.1f, 0.22f)), 0.1f),
-                        Ceiling = BuildKit.Plain("stageCeiling", new Color(0.05f, 0.04f, 0.05f))
-                    };
                 case Room.Office:
+                case Room.BackHall:
+                    // The staff wing: grey-green offices and halls, so it never looks like the restaurant.
                     return new RoomStyle
                     {
-                        Floor = BuildKit.Surface("officeFloor", () => ProceduralTextures.Tiles(new Color(0.45f, 0.43f, 0.38f), new Color(0.35f, 0.33f, 0.3f), 4, true, 0.4f), 0.3f),
-                        Wainscot = BuildKit.Surface("officeBand", () => ProceduralTextures.Grimy(new Color(0.25f, 0.28f, 0.3f)), 0.2f),
+                        Floor = officeFloor,
+                        Wainscot = officeBand,
                         Wall = BuildKit.Surface("officeWall", () => ProceduralTextures.Wallpaper(new Color(0.42f, 0.42f, 0.36f), new Color(0.36f, 0.38f, 0.32f)), 0.1f),
                         Ceiling = ceiling
                     };
                 default:
+                    // The public wing: checkered floor, red band, party wallpaper.
                     return new RoomStyle
                     {
                         Floor = checkerFloor,
@@ -135,10 +152,6 @@ namespace NightShift.Game
             BuildKit.Box("Ceiling", root, center + new Vector3(0f, height + 0.05f, 0f), new Vector3(area.width, 0.1f, area.height), style.Ceiling, 2.5f, false);
 
             var doors = new List<Vector2>(PizzeriaLayout.DoorwaysOf(room));
-            if (room == HuntMap.Exit)
-            {
-                doors.Add(new Vector2(PizzeriaLayout.ExitDoor.x, PizzeriaLayout.ExitDoor.z));
-            }
 
             float t = PizzeriaLayout.WallThickness;
             // North and south walls run along x; west and east along z. Each sits just inside the room.
@@ -167,8 +180,7 @@ namespace NightShift.Game
             float start = from;
             foreach (float opening in openings)
             {
-                float doorStart = opening - PizzeriaLayout.DoorWidth * 0.5f;
-                WallRun(root, style, height, start, doorStart, at, alongX);
+                WallRun(root, style, height, start, opening - PizzeriaLayout.DoorWidth * 0.5f, at, alongX);
                 Doorway(root, style, height, opening, at, alongX);
                 start = opening + PizzeriaLayout.DoorWidth * 0.5f;
             }
@@ -199,48 +211,173 @@ namespace NightShift.Game
         private static void Doorway(Transform root, RoomStyle style, float height, float along, float at, bool alongX)
         {
             float t = PizzeriaLayout.WallThickness;
-            float lintel = height - PizzeriaLayout.DoorHeight;
+            float top = PizzeriaLayout.DoorHeight;
+            float lintel = height - top;
             Vector3 Position(float offset, float y) => alongX ? new Vector3(along + offset, y, at) : new Vector3(at, y, along + offset);
             Vector3 Size(float length, float h, float depth) => alongX ? new Vector3(length, h, depth) : new Vector3(depth, h, length);
 
             if (lintel > 0.01f)
             {
-                BuildKit.Box("Lintel", root, Position(0f, PizzeriaLayout.DoorHeight + lintel * 0.5f), Size(PizzeriaLayout.DoorWidth, lintel, t), style.Wall, 1.6f);
+                BuildKit.Box("Lintel", root, Position(0f, top + lintel * 0.5f), Size(PizzeriaLayout.DoorWidth, lintel, t), style.Wall, 1.6f);
             }
             Material frame = BuildKit.Plain("doorFrame", new Color(0.12f, 0.08f, 0.06f), 0.35f);
             float half = PizzeriaLayout.DoorWidth * 0.5f;
-            BuildKit.Box("Frame", root, Position(-half + 0.05f, PizzeriaLayout.DoorHeight * 0.5f), Size(0.1f, PizzeriaLayout.DoorHeight, t + 0.1f), frame, 1f, false);
-            BuildKit.Box("Frame", root, Position(half - 0.05f, PizzeriaLayout.DoorHeight * 0.5f), Size(0.1f, PizzeriaLayout.DoorHeight, t + 0.1f), frame, 1f, false);
-            BuildKit.Box("Frame", root, Position(0f, PizzeriaLayout.DoorHeight - 0.05f), Size(PizzeriaLayout.DoorWidth, 0.1f, t + 0.1f), frame, 1f, false);
+            float mid = PizzeriaLayout.DoorHeight * 0.5f;
+            BuildKit.Box("Frame", root, Position(-half + 0.05f, mid), Size(0.1f, PizzeriaLayout.DoorHeight, t + 0.1f), frame, 1f, false);
+            BuildKit.Box("Frame", root, Position(half - 0.05f, mid), Size(0.1f, PizzeriaLayout.DoorHeight, t + 0.1f), frame, 1f, false);
+            BuildKit.Box("Frame", root, Position(0f, top - 0.05f), Size(PizzeriaLayout.DoorWidth, 0.1f, t + 0.1f), frame, 1f, false);
         }
 
-        private static void BuildCorridors(Transform root)
+        /// <summary>
+        /// The corridors between doorways, dressed like the wing they start in, with a ceiling lamp
+        /// in the long ones (it goes dark with the room the corridor starts from).
+        /// </summary>
+        private static void BuildCorridors(Level level, System.Random random)
         {
             Transform corridors = new GameObject("Corridors").transform;
-            corridors.SetParent(root, false);
-            Material floor = BuildKit.Surface("floorChecker", null);
-            Material wall = BuildKit.Surface("wallpaper", null);
-            Material band = BuildKit.Surface("wainscotRed", null);
-            Material ceiling = BuildKit.Surface("ceiling", null);
-            var style = new RoomStyle { Floor = floor, Wall = wall, Wainscot = band, Ceiling = ceiling };
+            corridors.SetParent(level.Root, false);
 
-            foreach ((Vector2 start, Vector2 end, float height) in PizzeriaLayout.Corridors())
+            foreach ((Vector3 start3, Vector3 end3, float height) in PizzeriaLayout.Corridors())
             {
+                Room owner = PizzeriaLayout.RoomAt(start3);
+                RoomStyle style = StyleOf(HuntMap.IsStaffWing(owner) ? Room.BackHall : Room.MainHall);
+                Material floor = style.Floor;
+                Material ceiling = style.Ceiling;
+                Transform segment = new GameObject("Corridor").transform;
+                segment.SetParent(corridors, false);
+                var start = new Vector2(start3.x, start3.z);
+                var end = new Vector2(end3.x, end3.z);
                 Vector2 mid = (start + end) * 0.5f;
                 float length = Vector2.Distance(start, end);
                 bool alongX = Mathf.Abs(end.x - start.x) > Mathf.Abs(end.y - start.y);
                 float width = PizzeriaLayout.CorridorWidth;
                 Vector3 size = alongX ? new Vector3(length, 0.1f, width) : new Vector3(width, 0.1f, length);
-                BuildKit.Box("CorridorFloor", corridors, new Vector3(mid.x, -0.05f, mid.y), size, floor, 2f);
-                BuildKit.Box("CorridorCeiling", corridors, new Vector3(mid.x, height + 0.05f, mid.y), size, ceiling, 2.5f, false);
+                BuildKit.Box("CorridorFloor", segment, new Vector3(mid.x, -0.05f, mid.y), size, floor, 2f);
+                BuildKit.Box("CorridorCeiling", segment, new Vector3(mid.x, height + 0.05f, mid.y), size, ceiling, 2.5f, false);
                 float from = alongX ? Mathf.Min(start.x, end.x) : Mathf.Min(start.y, end.y);
                 float to = alongX ? Mathf.Max(start.x, end.x) : Mathf.Max(start.y, end.y);
                 float side = width * 0.5f + PizzeriaLayout.WallThickness * 0.5f;
                 float across = alongX ? mid.y : mid.x;
-                WallRun(corridors, style, height, from, to, across - side, alongX);
-                WallRun(corridors, style, height, from, to, across + side, alongX);
+                WallRun(segment, style, height, from, to, across - side, alongX);
+                WallRun(segment, style, height, from, to, across + side, alongX);
+                if (length > 4f)
+                {
+                    bool dead = random.NextDouble() < 0.3;
+                    level.Lamps[(int)owner].Add(Lamp(segment, new Vector3(mid.x, height, mid.y), new Color(1f, 0.8f, 0.58f), dead, 0.5f, false, 0.7f));
+                }
             }
         }
+
+        // ------------------------------------------------------------------ air ducts
+
+        /// <summary>
+        /// The air ducts: square metal tubes along each path (segments plus closed corner boxes),
+        /// with a grate at each end that the player can crawl into.
+        /// </summary>
+        private static void BuildDucts(Level level)
+        {
+            Transform parent = new GameObject("Ducts").transform;
+            parent.SetParent(level.Root, false);
+            Material metal = BuildKit.Surface("ductInside", () => ProceduralTextures.Grimy(new Color(0.42f, 0.44f, 0.46f), 2.5f), 0.55f, 0.7f);
+            const float size = PizzeriaLayout.DuctSize;
+            const float skin = 0.06f;
+
+            foreach (DuctPath duct in PizzeriaLayout.Ducts)
+            {
+                Vector3[] p = duct.Points;
+                for (int i = 0; i + 1 < p.Length; i++)
+                {
+                    Vector3 a = p[i];
+                    Vector3 b = p[i + 1];
+                    Vector3 axis = (b - a).normalized;
+                    // Interior joints get their own corner box, so segments stop half a duct short of them.
+                    if (i > 0)
+                    {
+                        a += axis * (size * 0.5f);
+                    }
+                    if (i + 2 < p.Length)
+                    {
+                        b -= axis * (size * 0.5f);
+                    }
+                    float length = Vector3.Distance(a, b);
+                    if (length < 0.01f)
+                    {
+                        continue;
+                    }
+                    Vector3 center = (a + b) * 0.5f;
+                    foreach (Vector3 normal in Perpendiculars(axis))
+                    {
+                        Vector3 slab = Abs(axis) * length + (Vector3.one - Abs(axis) - Abs(normal)) * size + Abs(normal) * skin;
+                        BuildKit.Box("DuctWall", parent, center + normal * (size * 0.5f), slab, metal, 1f, false);
+                    }
+                }
+                for (int i = 1; i + 1 < p.Length; i++)
+                {
+                    Vector3 comeFrom = (p[i - 1] - p[i]).normalized;
+                    Vector3 goTo = (p[i + 1] - p[i]).normalized;
+                    foreach (Vector3 normal in new[] { Vector3.right, Vector3.left, Vector3.up, Vector3.down, Vector3.forward, Vector3.back })
+                    {
+                        if (Vector3.Dot(normal, comeFrom) > 0.9f || Vector3.Dot(normal, goTo) > 0.9f)
+                        {
+                            continue;
+                        }
+                        Vector3 slab = (Vector3.one - Abs(normal)) * size + Abs(normal) * skin;
+                        BuildKit.Box("DuctCorner", parent, p[i] + normal * (size * 0.5f), slab, metal, 1f, false);
+                    }
+                }
+                level.Vents.Add(Grate(parent, duct, true));
+                level.Vents.Add(Grate(parent, duct, false));
+            }
+        }
+
+        /// <summary>The grate at one end of a duct, facing the room, and the trigger the player uses.</summary>
+        private static VentGrate Grate(Transform parent, DuctPath duct, bool endA)
+        {
+            Vector3[] p = duct.Points;
+            Vector3 point = endA ? p[0] : p[p.Length - 1];
+            Vector3 inward = ((endA ? p[1] : p[p.Length - 2]) - point).normalized;   // from the room into the duct
+            bool floor = endA ? duct.FloorGrateA : duct.FloorGrateB;
+            bool open = !endA && duct.OpenGrateB;
+            Vector3 face = floor ? point + Vector3.up * 0.035f
+                         : open ? point - inward * 0.03f
+                         : point - inward * (PizzeriaLayout.WallThickness + 0.03f);
+            Quaternion rotation = Quaternion.LookRotation(-inward, floor ? Vector3.forward : Vector3.up);
+
+            var grate = new GameObject("VentGrate");
+            grate.transform.SetParent(parent, false);
+            grate.transform.SetPositionAndRotation(face, rotation);
+            Material frame = BuildKit.Plain("grateFrame", new Color(0.25f, 0.26f, 0.27f), 0.5f, 0.8f);
+            const float size = PizzeriaLayout.DuctSize;
+            BuildKit.Box("Hole", grate.transform, new Vector3(0f, 0f, -0.02f), new Vector3(size - 0.1f, size - 0.1f, 0.01f), BuildKit.Plain("black", Color.black), 1f, false);
+            BuildKit.Box("FrameTop", grate.transform, new Vector3(0f, size * 0.5f - 0.04f, 0f), new Vector3(size, 0.08f, 0.04f), frame, 1f, false);
+            BuildKit.Box("FrameBottom", grate.transform, new Vector3(0f, -size * 0.5f + 0.04f, 0f), new Vector3(size, 0.08f, 0.04f), frame, 1f, false);
+            BuildKit.Box("FrameLeft", grate.transform, new Vector3(-size * 0.5f + 0.04f, 0f, 0f), new Vector3(0.08f, size, 0.04f), frame, 1f, false);
+            BuildKit.Box("FrameRight", grate.transform, new Vector3(size * 0.5f - 0.04f, 0f, 0f), new Vector3(0.08f, size, 0.04f), frame, 1f, false);
+            for (int i = 0; i < 7; i++)
+            {
+                var slat = BuildKit.Box("Slat", grate.transform, new Vector3(0f, -size * 0.38f + i * size * 0.127f, 0f), new Vector3(size - 0.12f, 0.025f, 0.05f), frame, 1f, false);
+                slat.transform.localRotation = Quaternion.Euler(-30f, 0f, 0f);
+            }
+            var trigger = grate.AddComponent<BoxCollider>();
+            trigger.isTrigger = true;
+            trigger.center = new Vector3(0f, 0f, 0.3f);
+            trigger.size = new Vector3(size + 0.3f, size + 0.3f, 0.6f);
+            return VentGrate.Attach(grate, duct, endA);
+        }
+
+        /// <summary>The four directions across a duct running along <paramref name="axis"/>.</summary>
+        private static IEnumerable<Vector3> Perpendiculars(Vector3 axis)
+        {
+            foreach (Vector3 normal in new[] { Vector3.right, Vector3.left, Vector3.up, Vector3.down, Vector3.forward, Vector3.back })
+            {
+                if (Mathf.Abs(Vector3.Dot(normal, axis)) < 0.1f)
+                {
+                    yield return normal;
+                }
+            }
+        }
+
+        private static Vector3 Abs(Vector3 v) => new Vector3(Mathf.Abs(v.x), Mathf.Abs(v.y), Mathf.Abs(v.z));
 
         // ------------------------------------------------------------------ light
 
@@ -253,7 +390,7 @@ namespace NightShift.Game
             int columns = Mathf.Max(1, Mathf.RoundToInt(area.width / 7f));
             int rows = Mathf.Max(1, Mathf.RoundToInt(area.height / 7f));
             Color warm = room == HuntMap.Exit ? new Color(1f, 0.55f, 0.45f) : new Color(1f, 0.8f, 0.58f);
-            bool shadows = room == Room.DiningHall || room == Room.Stage || room == Room.Office;
+            bool shadows = room == Room.DiningHall || room == Room.Office || room == Room.Storage || room == Room.MainHall;
 
             for (int c = 0; c < columns; c++)
             {
@@ -261,13 +398,13 @@ namespace NightShift.Game
                 {
                     var position = new Vector3(area.xMin + area.width * (c + 0.5f) / columns, height, area.yMin + area.height * (r + 0.5f) / rows);
                     double roll = random.NextDouble();
-                    bool dead = roll < 0.18 && columns * rows > 1;
+                    bool dead = roll < 0.28 && columns * rows > 1;   // more than a quarter of the bulbs are gone
                     float flicker = roll < 0.45 ? 0.6f : 0.15f;
                     lamps.Add(Lamp(root, position, warm, dead, flicker, shadows && (c + r) % 2 == 0, hall ? 0.8f : 1f));
                 }
             }
 
-            if (room == Room.WestHall || room == Room.EastHall)
+            if (room == Room.BackHall || room == Room.MainHall)
             {
                 // A red emergency light at one end of each hall.
                 var emergency = new GameObject("EmergencyLight").AddComponent<Light>();
@@ -295,7 +432,7 @@ namespace NightShift.Game
             light.spotAngle = 140f;
             light.innerSpotAngle = 50f;
             light.range = ceilingPoint.y + 6f;
-            light.intensity = (dead ? 0f : 8f) * strength;
+            light.intensity = (dead ? 0f : 7f) * strength;
             light.color = color;
             light.shadows = shadows && !dead ? LightShadows.Soft : LightShadows.None;
             light.shadowStrength = 0.85f;
@@ -440,12 +577,32 @@ namespace NightShift.Game
             var box = BuildKit.Box("FuseBox", roomRoot, position + Vector3.up * 0.55f - facing * Vector3.forward * 0.02f, new Vector3(0.5f, 0.6f, 0.15f), BuildKit.Surface("fuseBox", () => ProceduralTextures.Grimy(new Color(0.5f, 0.45f, 0.2f), 1f), 0.3f, 0.3f), 1f, false);
             box.transform.rotation = facing;
 
+            // The fuse: a heavy power cell, its amber core glowing through the casing, terminals on top,
+            // a hazard band, a pulsing ring of light on the shelf and sparks rising from it. In the dark
+            // it is the brightest thing in the room.
             var fuse = new GameObject("Fuse");
             fuse.transform.SetParent(roomRoot, false);
             fuse.transform.position = position;
-            BuildKit.Box("Body", fuse.transform, Vector3.zero, new Vector3(0.12f, 0.22f, 0.12f), BuildKit.Glow("fuse", new Color(1f, 0.72f, 0.15f), 2.5f), 1f, false);
-            BuildKit.Box("CapTop", fuse.transform, new Vector3(0f, 0.13f, 0f), new Vector3(0.14f, 0.04f, 0.14f), metal, 1f, false);
-            BuildKit.Box("CapBottom", fuse.transform, new Vector3(0f, -0.13f, 0f), new Vector3(0.14f, 0.04f, 0.14f), metal, 1f, false);
+            Material casing = BuildKit.Plain("cellCasing", new Color(0.12f, 0.12f, 0.13f), 0.75f, 0.9f);
+            Material core = BuildKit.Glow("cellCore", new Color(1f, 0.62f, 0.12f), 6f);
+            Material chrome = BuildKit.Plain("chrome", new Color(0.7f, 0.7f, 0.72f), 0.8f, 1f);
+            Material hazard = BuildKit.Picture("cellHazard", ProceduralTextures.HazardStripes(), 0f);
+            BuildKit.Cylinder("Core", fuse.transform, Vector3.zero, 0.15f, 0.3f, core);
+            for (int i = 0; i < 4; i++)
+            {
+                // Four casing ribs; the core shows between them.
+                var rib = BuildKit.Box("Rib", fuse.transform, Quaternion.Euler(0f, i * 90f, 0f) * new Vector3(0f, 0f, 0.075f), new Vector3(0.06f, 0.3f, 0.03f), casing, 1f, false);
+                rib.transform.localRotation = Quaternion.Euler(0f, i * 90f, 0f);
+            }
+            BuildKit.Cylinder("CapTop", fuse.transform, new Vector3(0f, 0.17f, 0f), 0.18f, 0.05f, casing);
+            BuildKit.Cylinder("CapBottom", fuse.transform, new Vector3(0f, -0.17f, 0f), 0.18f, 0.05f, casing);
+            BuildKit.Cylinder("Hazard", fuse.transform, new Vector3(0f, -0.12f, 0f), 0.165f, 0.04f, hazard);
+            BuildKit.Cylinder("TerminalPlus", fuse.transform, new Vector3(0.035f, 0.21f, 0f), 0.035f, 0.04f, chrome);
+            BuildKit.Cylinder("TerminalMinus", fuse.transform, new Vector3(-0.035f, 0.205f, 0f), 0.03f, 0.03f, chrome);
+            var halo = BuildKit.Quad("Halo", roomRoot, position - Vector3.up * 0.17f + facing * Vector3.forward * 0.1f, new Vector2(0.7f, 0.7f), 0f,
+                                     BuildKit.Additive("cellHalo", ProceduralTextures.Ring(128, 0.12f), new Color(1f, 0.6f, 0.15f, 0.8f)));
+            halo.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            Sparks(fuse.transform);
             var collider = fuse.AddComponent<BoxCollider>();
             collider.size = new Vector3(0.4f, 0.5f, 0.4f);
             collider.isTrigger = true;
@@ -453,12 +610,37 @@ namespace NightShift.Game
             var glow = new GameObject("Glow").AddComponent<Light>();
             glow.transform.SetParent(fuse.transform, false);
             glow.type = LightType.Point;
-            glow.range = 2.5f;
-            glow.color = new Color(1f, 0.75f, 0.2f);
-            glow.intensity = 0.8f;
+            glow.range = 4f;
+            glow.color = new Color(1f, 0.62f, 0.18f);
+            glow.intensity = 1.6f;
             FusePickup pickup = FusePickup.Attach(fuse, room, glow);
             fuse.SetActive(false);
             return pickup;
+        }
+
+        /// <summary>A few sparks drifting up from a power cell.</summary>
+        private static void Sparks(Transform parent)
+        {
+            var go = new GameObject("Sparks");
+            go.transform.SetParent(parent, false);
+            var sparks = go.AddComponent<ParticleSystem>();
+            sparks.Stop();
+            ParticleSystem.MainModule main = sparks.main;
+            main.loop = true;
+            main.startLifetime = 1.2f;
+            main.startSpeed = 0.25f;
+            main.startSize = 0.02f;
+            main.startColor = new Color(1f, 0.75f, 0.3f, 0.9f);
+            main.maxParticles = 30;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            ParticleSystem.EmissionModule emission = sparks.emission;
+            emission.rateOverTime = 12f;
+            ParticleSystem.ShapeModule shape = sparks.shape;
+            shape.shapeType = ParticleSystemShapeType.Circle;
+            shape.radius = 0.1f;
+            shape.rotation = new Vector3(-90f, 0f, 0f);
+            go.GetComponent<ParticleSystemRenderer>().sharedMaterial = BuildKit.Additive("spark", ProceduralTextures.Disc(16), new Color(1f, 0.7f, 0.3f, 1f));
+            sparks.Play();
         }
 
         private static ExitPanel BuildExit(Transform root)

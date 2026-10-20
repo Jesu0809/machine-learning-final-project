@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: GameAssets
   m_EditorClassIdentifier: 
   FreddyPrefab: {fileID: 1351803082040418418, guid: 1b569aa87f364446c90cdc3ecc7f2f05, type: 3}
-  FreddyModel: {fileID: 5022602860645237092, guid: 53913bbeb20b145499a99fda1e06c706, type: 3}
+  FreddyModel: {fileID: 5022602860645237092, guid: a9031e45207354e39854c10cfef94be2, type: 3}
   PolicyWeights: {fileID: 4900000, guid: 11a4bb891940140a9a31c1eff9f03be0, type: 3}
   MaterialTemplates:
   - {fileID: 2100000, guid: 522f4d4231d60480eac5a2b678b535b9, type: 2}
@@ -56,6 +56,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 59c9a8cb84c3647ec9ace4748f41711b, type: 3}
     - {fileID: 8300000, guid: 8fbdb40a8d7c04f859b8ed9d7900197a, type: 3}
     - {fileID: 8300000, guid: 9d2492b7ac38a45eebc31184df6112d1, type: 3}
+    - {fileID: 8300000, guid: f1d3d9c03e6274632be934d191e23e95, type: 3}
   - Lines:
     - {fileID: 8300000, guid: 5264a4160d6ad48a3b297ee6a0f8d22c, type: 3}
     - {fileID: 8300000, guid: e429cef1bd1c147a783963f974dd5415, type: 3}

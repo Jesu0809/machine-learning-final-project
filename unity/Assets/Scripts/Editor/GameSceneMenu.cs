@@ -26,7 +26,7 @@ namespace NightShift.EditorTools
         public const string ModelsFolder = "Assets/ML/Models";
 
         /// <summary>Model used by the game; the newest freddy_v*.onnx if this one does not exist.</summary>
-        public const string PreferredModel = "freddy_v3";
+        public const string PreferredModel = "freddy_v5";
 
         [MenuItem("Night Shift/Create Game Scene")]
         public static void CreateGameScene()
@@ -155,21 +155,9 @@ namespace NightShift.EditorTools
 
         private static ModelAsset FindModel()
         {
-            var preferred = AssetDatabase.LoadAssetAtPath<ModelAsset>(ModelsFolder + "/" + PreferredModel + ".onnx");
-            if (preferred != null)
-            {
-                return preferred;
-            }
-            ModelAsset newest = null;
-            foreach (string guid in AssetDatabase.FindAssets("freddy_v t:ModelAsset", new[] { ModelsFolder }))
-            {
-                var model = AssetDatabase.LoadAssetAtPath<ModelAsset>(AssetDatabase.GUIDToAssetPath(guid));
-                if (newest == null || string.CompareOrdinal(model.name, newest.name) > 0)
-                {
-                    newest = model;
-                }
-            }
-            return newest;
+            // Only a brain trained on the current map: v1–v3 learned the old one-floor, 9-room graph
+            // (54 inputs) and cannot drive Freddy here. Without it the game uses the scripted hunter.
+            return AssetDatabase.LoadAssetAtPath<ModelAsset>(ModelsFolder + "/" + PreferredModel + ".onnx");
         }
 
         /// <summary>Assets/Audio/Story/{prefix}01.wav, 02.wav … in order, until one is missing.</summary>
@@ -260,13 +248,31 @@ namespace NightShift.EditorTools
         /// decompression fallback; the Flask app adds the Content-Encoding headers.
         /// </summary>
         [MenuItem("Night Shift/Build WebGL (website)")]
+        /// <summary>
+        /// Where the WebGL build goes: "-webglOut path" on the command line, else the website's
+        /// web/game in the full project repository, else Builds/WebGL in a stand-alone checkout.
+        /// </summary>
+        private static string WebGLOutput()
+        {
+            string[] args = System.Environment.GetCommandLineArgs();
+            int index = System.Array.IndexOf(args, "-webglOut");
+            if (index >= 0 && index + 1 < args.Length)
+            {
+                return Path.GetFullPath(args[index + 1]);
+            }
+            string web = Path.GetFullPath(Path.Combine(Application.dataPath, "../../web"));
+            return Directory.Exists(web)
+                ? Path.Combine(web, "game")
+                : Path.GetFullPath(Path.Combine(Application.dataPath, "../Builds/WebGL"));
+        }
+
         public static void BuildWebGL()
         {
             if (!File.Exists(ScenePath))
             {
                 CreateGameScene();
             }
-            string output = Path.GetFullPath(Path.Combine(Application.dataPath, "../../web/game"));
+            string output = WebGLOutput();
             if (Directory.Exists(output))
             {
                 Directory.Delete(output, true);
@@ -299,7 +305,7 @@ namespace NightShift.EditorTools
                 CreateGameScene();
             }
             bool windows = Application.platform == RuntimePlatform.WindowsEditor;
-            string folder = Path.GetFullPath(Path.Combine(Application.dataPath, "../../training/builds"));
+            string folder = HuntTrainingMenu.BuildsFolder();
             string output = Path.Combine(folder, windows ? "NightShift/NightShift.exe" : "NightShift.app");
             BuildReport report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
             {

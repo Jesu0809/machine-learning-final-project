@@ -127,7 +127,8 @@ namespace NightShift.Game
             }
         }
 
-        private static Vector3 Flat(Vector3 point) => new Vector3(point.x, 0.07f, point.z);
+        /// <summary>Just above the floor under the point.</summary>
+        private static Vector3 Flat(Vector3 point) => point + Vector3.up * 0.07f;
 
         /// <summary>A flat fan on the floor, one unit long, opening <paramref name="halfAngle"/> to each side.</summary>
         private static Mesh FanMesh(float halfAngle, int segments)

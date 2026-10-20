@@ -214,7 +214,7 @@ namespace NightShift.Evaluation
                 {
                     return;
                 }
-                if (state.FreddyAwake)
+                if (state.FreddyCanDecide)
                 {
                     policy.Decide(state);
                 }

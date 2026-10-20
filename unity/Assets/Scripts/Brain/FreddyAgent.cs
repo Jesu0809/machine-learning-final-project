@@ -11,7 +11,7 @@ namespace NightShift.Hunt.Brain
     /// </summary>
     /// <remarks>
     /// Behavior Parameters (set in code by <see cref="FreddyBrain"/>): Behavior Name = "Freddy",
-    /// 54 vector observations, one discrete branch of 13 actions (see FreddyObservations and FreddyActions). No DecisionRequester: decisions
+    /// 79 vector observations, one discrete branch of 18 actions (see FreddyObservations and FreddyActions). No DecisionRequester: decisions
     /// are requested from <see cref="Decide"/>. The hunt is reset by its owner, not here.
     /// </remarks>
     public class FreddyAgent : Agent, IFreddyPolicy

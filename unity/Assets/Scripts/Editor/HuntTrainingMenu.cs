@@ -43,6 +43,18 @@ namespace NightShift.EditorTools
             Debug.Log("Hunt training scene created at " + ScenePath);
         }
 
+        /// <summary>
+        /// Where builds go: training/builds next to the Unity project in the full project repository,
+        /// or Builds/ inside the project when it is checked out on its own (both git-ignored).
+        /// </summary>
+        public static string BuildsFolder()
+        {
+            string training = Path.GetFullPath(Path.Combine(Application.dataPath, "../../training"));
+            return Directory.Exists(training)
+                ? Path.Combine(training, "builds")
+                : Path.GetFullPath(Path.Combine(Application.dataPath, "../Builds"));
+        }
+
         [MenuItem("Night Shift/Build Hunt Training")]
         public static void Build()
         {
@@ -52,7 +64,7 @@ namespace NightShift.EditorTools
             }
 
             bool windows = Application.platform == RuntimePlatform.WindowsEditor;
-            string folder = Path.GetFullPath(Path.Combine(Application.dataPath, "../../training/builds"));
+            string folder = HuntTrainingMenu.BuildsFolder();
             string output = Path.Combine(folder, windows ? "HuntTraining/HuntTraining.exe" : "HuntTraining.app");
 
             var options = new BuildPlayerOptions

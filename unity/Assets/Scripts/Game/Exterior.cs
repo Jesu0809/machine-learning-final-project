@@ -13,13 +13,14 @@ namespace NightShift.Game
     {
         // The front of the building (see PizzeriaLayout): the stage and halls face the street at
         // z = -19, the exit lobby (the entrance) is set back at z = -17.
-        private const float FrontZ = -19.35f;
+        private const float FrontZ = -16.35f;
         private const float LobbyFrontZ = -17.35f;
-        private const float FrontHeight = 6.6f;
-        private const float WestX = -21.75f;
-        private const float EastX = 19.75f;
-        private const float LobbyWestX = 8f;
-        private const float SidewalkZ = -21.6f;
+        private const float FrontHeight = 7.2f;   // one tall storey with a false front for the sign
+        private const float WestX = -22.35f;
+        private const float EastX = 23.35f;
+        private const float LobbyWestX = 12f;
+        private const float BackZ = 12.35f;
+        private const float SidewalkZ = -19.6f;
         public const float RoadZ = -29f;
 
         private static readonly Color NightSky = new Color(0.018f, 0.022f, 0.036f);
@@ -139,9 +140,10 @@ namespace NightShift.Game
             Wall(root, "EntranceRight", doorX + half, EastX, LobbyFrontZ, brick);
             BuildKit.Box("EntranceLintel", root, new Vector3(doorX, (doorTop + FrontHeight) * 0.5f, LobbyFrontZ), new Vector3(half * 2f, FrontHeight - doorTop, 0.3f), brick, 2f);
             BuildKit.Box("Step", root, new Vector3(LobbyWestX, FrontHeight * 0.5f, (FrontZ + LobbyFrontZ) * 0.5f), new Vector3(0.3f, FrontHeight, LobbyFrontZ - FrontZ + 0.3f), brick, 2f);
-            BuildKit.Box("SideWest", root, new Vector3(WestX, FrontHeight * 0.5f, -1.5f), new Vector3(0.3f, FrontHeight, 36f), brick, 2f);
-            BuildKit.Box("SideEast", root, new Vector3(EastX, FrontHeight * 0.5f, -0.5f), new Vector3(0.3f, FrontHeight, 34f), brick, 2f);
-            BuildKit.Box("Roof", root, new Vector3((WestX + EastX) * 0.5f, FrontHeight - 0.3f, -1.5f), new Vector3(EastX - WestX, 0.2f, 36f), roof, 4f, false);
+            BuildKit.Box("SideWest", root, new Vector3(WestX, FrontHeight * 0.5f, (FrontZ + BackZ) * 0.5f), new Vector3(0.3f, FrontHeight, BackZ - FrontZ), brick, 2f);
+            BuildKit.Box("SideEast", root, new Vector3(EastX, FrontHeight * 0.5f, (LobbyFrontZ + BackZ) * 0.5f), new Vector3(0.3f, FrontHeight, BackZ - LobbyFrontZ), brick, 2f);
+            Wall(root, "Back", WestX, EastX, BackZ, brick);
+            BuildKit.Box("Roof", root, new Vector3((WestX + EastX) * 0.5f, FrontHeight - 0.3f, (LobbyFrontZ + BackZ) * 0.5f), new Vector3(EastX - WestX, 0.2f, BackZ - LobbyFrontZ), roof, 4f, false);
 
             // Cornice along the top, and a base course.
             BuildKit.Box("Cornice", root, new Vector3((WestX + LobbyWestX) * 0.5f, FrontHeight + 0.15f, FrontZ - 0.1f), new Vector3(LobbyWestX - WestX + 0.6f, 0.35f, 0.6f), trim, 2f, false);
@@ -149,7 +151,7 @@ namespace NightShift.Game
             BuildKit.Box("Base", root, new Vector3((WestX + LobbyWestX) * 0.5f, 0.45f, FrontZ - 0.18f), new Vector3(LobbyWestX - WestX, 0.6f, 0.08f), trim, 2f, false);
 
             // Big windows of the old dining room: dark glass, some boarded up.
-            float[] windows = { -17f, -11.5f, -6f, 3.5f };
+            float[] windows = { -19f, -11f, -4.5f, 7f };
             for (int i = 0; i < windows.Length; i++)
             {
                 var center = new Vector3(windows[i], 2.15f, FrontZ - 0.17f);

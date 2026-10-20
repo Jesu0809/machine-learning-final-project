@@ -1,0 +1,52 @@
+# Normalize line endings so macOS and Windows produce the same files.
+* text=auto
+
+# Unity serializes these as YAML; keep LF everywhere to avoid whole-file diffs.
+*.unity          text eol=lf
+*.prefab         text eol=lf
+*.asset          text eol=lf
+*.meta           text eol=lf
+*.mat            text eol=lf
+*.anim           text eol=lf
+*.controller     text eol=lf
+*.overrideController text eol=lf
+*.physicMaterial text eol=lf
+*.physicsMaterial2D text eol=lf
+*.inputactions   text eol=lf
+*.scenetemplate  text eol=lf
+*.shadergraph    text eol=lf
+*.json           text eol=lf
+
+# Source and config
+*.cs    text eol=lf
+*.py    text eol=lf
+*.yaml  text eol=lf
+*.yml   text eol=lf
+*.md    text eol=lf
+*.html  text eol=lf
+*.css   text eol=lf
+*.js    text eol=lf
+*.txt   text eol=lf
+
+# Binary assets
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.psd    binary
+*.wav    binary
+*.mp3    binary
+*.ogg    binary
+*.ttf    binary
+*.otf    binary
+*.onnx   binary
+*.fbx    binary
+*.unityweb binary
+*.wasm   binary
+*.gz     binary
+*.data   binary
+*.m4a    binary
+*.bytes  binary
+
+# Shell scripts must keep LF endings to run in Git Bash on Windows
+*.sh    text eol=lf

@@ -133,6 +133,41 @@ namespace NightShift.Game
             return Build(color, height, 2f);
         }
 
+        /// <summary>Painted steel door panel: recessed seams with rivets, brushed streaks, worn paint
+        /// that chips down to bare steel (more along the seams and rivets), and rust.</summary>
+        public static Surface SteelPanel(Color paint)
+        {
+            Color steel = new Color(0.4f, 0.42f, 0.43f);
+            var color = new Color[Size * Size];
+            var height = new float[Size * Size];
+            const int panel = 128;
+            for (int y = 0; y < Size; y++)
+            {
+                for (int x = 0; x < Size; x++)
+                {
+                    int px = x % panel;
+                    int py = y % panel;
+                    bool seam = px < 3 || py < 3;
+                    int rx = Mathf.Min(px, panel - 1 - px) - 10;
+                    int ry = Mathf.Min(py, panel - 1 - py) - 10;
+                    bool rivet = rx >= -2 && rx <= 2 && ry >= -2 && ry <= 2 && rx * rx + ry * ry <= 5;
+                    float brushed = Mathf.PerlinNoise(x * 0.02f, y * 0.7f);
+                    float rust = Mathf.Clamp01(Fbm(x + 300, y, 0.02f) - 0.55f) * 2.2f;
+                    float shade = 0.8f + brushed * 0.3f + (Hash(x, y) - 0.5f) * 0.05f;
+                    float edge = seam || px < 8 || py < 8 ? 0.25f : 0f;
+                    float wear = Fbm(x + 700, y, 0.035f) + edge + (rivet ? 0.3f : 0f);
+                    float chip = Mathf.Clamp01((wear - 0.68f) * 6f);
+                    Color c = paint * shade;
+                    c = Color.Lerp(c, steel * (0.8f + brushed * 0.4f), chip);
+                    c = Color.Lerp(c, new Color(0.3f, 0.16f, 0.08f), rust * 0.6f);
+                    c = seam ? c * 0.35f : c;
+                    color[y * Size + x] = c;
+                    height[y * Size + x] = seam ? 0f : rivet ? 1.4f : 1f - rust * 0.2f + brushed * 0.05f;
+                }
+            }
+            return Build(color, height, 2f);
+        }
+
         public static Surface CeilingTiles()
         {
             var color = new Color[Size * Size];
@@ -307,6 +342,54 @@ namespace NightShift.Game
             }
             texture.SetPixels(pixels);
             DrawText(texture, text, padding, padding, foreground, scale);
+            texture.Apply();
+            return texture;
+        }
+
+        /// <summary>
+        /// The flashlight's lens pattern (a spot light cookie): a hot center, a darker ring, a soft
+        /// outer halo and a few smudges on the glass, like a cheap real torch.
+        /// </summary>
+        public static Texture2D FlashlightCookie(int size = 256)
+        {
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+            var pixels = new Color[size * size];
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = (x + 0.5f) / size * 2f - 1f;
+                    float dy = (y + 0.5f) / size * 2f - 1f;
+                    float r = Mathf.Sqrt(dx * dx + dy * dy);
+                    float hot = Mathf.Exp(-r * r * 7f);
+                    float ring = Mathf.Exp(-Mathf.Pow((r - 0.42f) / 0.06f, 2f)) * 0.35f;
+                    float halo = Mathf.Clamp01(1f - r * r) * 0.6f;
+                    float dip = 1f - Mathf.Exp(-Mathf.Pow((r - 0.3f) / 0.07f, 2f)) * 0.25f;
+                    float smudge = 0.88f + 0.12f * Mathf.PerlinNoise(x * 0.05f + 3f, y * 0.05f + 7f);
+                    float value = Mathf.Clamp01((hot + ring + halo) * dip * smudge) * (r < 1f ? 1f : 0f);
+                    pixels[y * size + x] = new Color(value, value, value, value);
+                }
+            }
+            texture.SetPixels(pixels);
+            texture.Apply();
+            return texture;
+        }
+
+        /// <summary>Yellow and black diagonal hazard stripes.</summary>
+        public static Texture2D HazardStripes()
+        {
+            const int size = 64;
+            var texture = New(size, size, TextureWrapMode.Repeat);
+            var pixels = new Color[size * size];
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    bool yellow = ((x + y) / 8) % 2 == 0;
+                    pixels[y * size + x] = yellow ? new Color(0.95f, 0.75f, 0.1f) : new Color(0.06f, 0.06f, 0.06f);
+                }
+            }
+            texture.SetPixels(pixels);
             texture.Apply();
             return texture;
         }
@@ -555,6 +638,9 @@ namespace NightShift.Game
             { '\'', new[] { "..#..", "..#..", ".....", ".....", ".....", ".....", "....." } },
             { '-', new[] { ".....", ".....", ".....", "#####", ".....", ".....", "....." } },
             { '.', new[] { ".....", ".....", ".....", ".....", ".....", ".....", "..#.." } },
+            { '&', new[] { ".##..", "#..#.", "#.#..", ".#...", "#.#.#", "#..#.", ".##.#" } },
+            { '>', new[] { ".#...", "..#..", "...#.", "....#", "...#.", "..#..", ".#..." } },
+            { '<', new[] { "...#.", "..#..", ".#...", "#....", ".#...", "..#..", "...#." } },
             { ' ', new[] { ".....", ".....", ".....", ".....", ".....", ".....", "....." } }
         };
 

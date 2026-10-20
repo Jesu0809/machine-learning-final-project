@@ -150,6 +150,9 @@ namespace NightShift.Game
             }
         }
 
+        /// <summary>True while he sleeps on the stage (the brain's decisions wait until he wakes).</summary>
+        public bool IsAsleep => mode == Mode.Asleep;
+
         public void WakeUp()
         {
             if (mode == Mode.Asleep)
@@ -283,8 +286,9 @@ namespace NightShift.Game
                 // Crouched in the dark you are a shadow among the tables (Alien: Isolation).
                 range = player.Flashlight.enabled ? range * 0.7f : StealthRange;
             }
-            if (distance > range)
+            if (distance > range || player.Crawling)
             {
+                // Nobody sees into the air ducts.
                 return false;
             }
             if (player.HiddenIn != null)
@@ -388,7 +392,7 @@ namespace NightShift.Game
             int spots = HuntMap.SpotCount(room);
             int pick = Random.Range(0, spots + 1);
             Vector3 point = pick < spots ? PizzeriaLayout.SpotApproach(room, pick) : PizzeriaLayout.Center(room);
-            if (Vector3.Distance(Flat(transform.position), point) < 1f)
+            if (Vector3.Distance(transform.position, point) < 1f)
             {
                 point = PizzeriaLayout.Center(room);
             }
@@ -501,16 +505,17 @@ namespace NightShift.Game
                 path.AddRange(PizzeriaLayout.PassageBetween(from, next));
                 from = next;
             }
-            if (Vector3.Distance(Flat(target), PizzeriaLayout.Center(to)) > 0.5f && !chasing)
+            Vector3 goal = Grounded(target);
+            if (Vector3.Distance(goal, PizzeriaLayout.Center(to)) > 0.5f && !chasing)
             {
                 path.Add(PizzeriaLayout.Center(to));
             }
-            path.Add(Flat(target));
+            path.Add(goal);
 
             // Drop waypoints Freddy has already passed: one that is behind him (the next one is
             // closer to him than to it) or that he is standing on. The path is rebuilt every frame
             // during a chase, so without this he would step back and forth in doorways.
-            Vector3 here = Flat(transform.position);
+            Vector3 here = transform.position;
             while (path.Count > 1)
             {
                 bool onIt = Vector3.Distance(here, path[0]) < 0.3f;
@@ -525,6 +530,13 @@ namespace NightShift.Game
 
         private static Vector3 Flat(Vector3 point) => new Vector3(point.x, 0f, point.z);
 
+        /// <summary>The point on the floor, or on top of the show stage.</summary>
+        private static Vector3 Grounded(Vector3 point)
+        {
+            bool onStage = PizzeriaLayout.StageArea.Contains(new Vector2(point.x, point.z));
+            return new Vector3(point.x, onStage ? PizzeriaLayout.StageHeight : 0f, point.z);
+        }
+
         /// <summary>The points Freddy is about to walk through (for the AI vision overlay).</summary>
         public IReadOnlyList<Vector3> PlannedPath => path;
 
@@ -537,8 +549,8 @@ namespace NightShift.Game
                 return true;
             }
             Vector3 position = transform.position;
+            // Waypoints carry their height: Freddy steps down from the stage.
             Vector3 waypoint = path[0];
-            waypoint.y = 0f; // Also steps down from the stage on the first move.
             Vector3 offset = waypoint - position;
             float step = speed * Time.deltaTime;
             if (offset.magnitude <= step + 0.05f)

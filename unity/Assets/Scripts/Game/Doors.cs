@@ -24,6 +24,7 @@ namespace NightShift.Game
         private readonly List<Renderer> lamps = new List<Renderer>();
         private bool lampsClosed;
         private float axisYaw;
+        private float openSign = 1f;
         private float swing;   // 0 closed, 1 open (folded against the wall)
         private HuntDirector director;
 
@@ -32,7 +33,7 @@ namespace NightShift.Game
         public bool HoldToUse => false;
 
         /// <summary>Double doors in a doorway; <paramref name="alongX"/> if the wall runs along x.</summary>
-        public static Door Create(HuntDirector director, Transform parent, Vector3 doorway, bool alongX, Material material)
+        public static Door Create(HuntDirector director, Transform parent, Vector3 doorway, bool alongX, Vector3 corridor, Material material)
         {
             var go = new GameObject("Door");
             go.transform.SetParent(parent, false);
@@ -40,6 +41,8 @@ namespace NightShift.Game
             var door = go.AddComponent<Door>();
             door.director = director;
             door.axisYaw = alongX ? 0f : 90f;
+            // Open, the leaves rest against the corridor's walls, not in the room or across the doorway.
+            door.openSign = Vector3.Dot(corridor, Quaternion.Euler(0f, door.axisYaw, 0f) * Vector3.forward) >= 0f ? 1f : -1f;
             float leaf = PizzeriaLayout.DoorWidth * 0.5f - 0.06f;
             for (int i = 0; i < 2; i++)
             {
@@ -89,7 +92,7 @@ namespace NightShift.Game
         {
             foreach (Door door in All)
             {
-                if (!door.Broken && Vector3.Distance(Flat(door.transform.position), Flat(point)) < distance)
+                if (!door.Broken && SameFloor(door, point) && Vector3.Distance(Flat(door.transform.position), Flat(point)) < distance)
                 {
                     return door;
                 }
@@ -115,7 +118,7 @@ namespace NightShift.Game
         {
             foreach (Door door in All)
             {
-                if (door.Closed && !door.Broken && Vector3.Distance(Flat(door.transform.position), Flat(point)) < distance)
+                if (door.Closed && !door.Broken && SameFloor(door, point) && Vector3.Distance(Flat(door.transform.position), Flat(point)) < distance)
                 {
                     return door;
                 }
@@ -141,6 +144,19 @@ namespace NightShift.Game
             Closed = !Closed;
             player.MakeNoise(Closed ? 2 : 1);
             director.Audio.PlayAt(director.Assets.LockerDoor, transform.position, Closed ? 0.9f : 0.5f, 0.7f);
+        }
+
+        /// <summary>The player crashes into the closed door (running or sliding): it is pushed open, loudly. True if it was.</summary>
+        public bool Bump(PlayerController player)
+        {
+            if (Broken || !Closed)
+            {
+                return false;
+            }
+            Closed = false;
+            player.MakeNoise(3);
+            director.Audio.PlayAt(director.Assets.LockerDoor, transform.position, 1f, 0.6f);
+            return true;
         }
 
         /// <summary>One of Freddy's blows; the last one breaks the door.</summary>
@@ -178,10 +194,13 @@ namespace NightShift.Game
             {
                 float side = i == 0 ? -1f : 1f;
                 // Open, the leaves rest ajar at an angle: seen from both sides of the doorway, still wide enough to run through.
-                hinges[i].localRotation = Quaternion.Euler(0f, axisYaw + side * 75f * swing, 0f);
+                hinges[i].localRotation = Quaternion.Euler(0f, axisYaw + side * openSign * 100f * swing, 0f);
             }
         }
 
         private static Vector3 Flat(Vector3 p) => new Vector3(p.x, 0f, p.z);
+
+        /// <summary>Doors on the two floors can stand one above the other; only the one on this floor counts.</summary>
+        private static bool SameFloor(Door door, Vector3 point) => Mathf.Abs(point.y - door.transform.position.y) < 2f;
     }
 }
