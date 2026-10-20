@@ -20,6 +20,11 @@ namespace NightShift.Hunt
         public const float RepeatedSearch = -0.02f;
         /// <summary>Using "sense" when the player is calm finds nothing.</summary>
         public const float WastedSense = -0.01f;
+        /// <summary>
+        /// Staying or sensing in the room where the player hides instead of searching: camping a
+        /// hiding spot is dull to play against, so he should open the spots or move on.
+        /// </summary>
+        public const float WaitedOutsideHiding = -0.05f;
         public const float ShapingScale = 0.1f;
         public const float Gamma = 0.99f;
 
@@ -38,6 +43,10 @@ namespace NightShift.Hunt
             if (step.SenseUsed && !step.SenseFound)
             {
                 reward += WastedSense;
+            }
+            if (step.WaitedOutsideHiding)
+            {
+                reward += WaitedOutsideHiding;
             }
             if (step.Outcome == HuntOutcome.InProgress)
             {

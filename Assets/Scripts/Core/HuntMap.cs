@@ -35,7 +35,9 @@ namespace NightShift.Hunt
     ///      │          │                              │                   │
     ///   ══ BackHall ══╪══════════ door ═════════ MainHall ═══════════════╡
     ///      │       │       │                         │                   │
-    ///   Office ─ Parts  Restrooms                PartyRoom ────────── ExitLobby (exit)
+    ///   Office ─ Parts  Restrooms                PartyRoom ────────── ExitLobby (front exit)
+    ///
+    ///   Exits: the front doors (Exit Lobby) or the loading door (Storage), one of them each night.
     ///
     ///   Ducts (player only): Office–Storage, Restrooms–PartyRoom, Kitchen–Arcade, Parts–DiningHall.
     /// </code>
@@ -49,7 +51,11 @@ namespace NightShift.Hunt
 
         public const Room PlayerStart = Room.Office;
         public const Room FreddyStart = Room.DiningHall;
+        /// <summary>The front doors. Each night the way out is this one or the loading door (<see cref="Exits"/>).</summary>
         public const Room Exit = Room.ExitLobby;
+
+        /// <summary>Rooms with a door out of the building; <see cref="HuntState.ExitRoom"/> picks tonight's.</summary>
+        public static IReadOnlyList<Room> Exits { get; } = new[] { Room.ExitLobby, Room.Storage };
 
         private static readonly Room[][] Neighbors =
         {

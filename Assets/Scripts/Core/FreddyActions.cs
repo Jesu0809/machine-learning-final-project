@@ -1,9 +1,9 @@
 namespace NightShift.Hunt
 {
     /// <summary>
-    /// Freddy's discrete actions, one branch of <see cref="Count"/> (18). Actions 0–13 mean "go to
-    /// that room" (choosing the current room means stay and listen); 14–16 search hiding spot 0, 1
-    /// or 2 of the current room; 17 is "sense", which reveals the player's room if they are afraid
+    /// Freddy's discrete actions, one branch of <see cref="Count"/> (15). Actions 0–10 mean "go to
+    /// that room" (choosing the current room means stay and listen); 11–13 search hiding spot 0, 1
+    /// or 2 of the current room; 14 is "sense", which reveals the player's room if they are afraid
     /// (it has a long cooldown). Illegal actions are masked. See docs/ml-design.md, section 4.
     /// </summary>
     public static class FreddyActions

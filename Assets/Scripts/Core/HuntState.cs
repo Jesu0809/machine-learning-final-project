@@ -84,9 +84,14 @@ namespace NightShift.Hunt
         public readonly bool SenseFound;
         public readonly HuntOutcome Outcome;
 
+        /// <summary>He stayed or sensed in the room where the player hides, instead of searching (privileged; reward only).</summary>
+        public readonly bool WaitedOutsideHiding;
+
         public FreddyStep(int action, Room from, Room to, int distanceBefore, int distanceAfter,
-                          bool failedSearch, bool repeatedSearch, HuntOutcome outcome, bool senseUsed = false, bool senseFound = false)
+                          bool failedSearch, bool repeatedSearch, HuntOutcome outcome, bool senseUsed = false, bool senseFound = false,
+                          bool waitedOutsideHiding = false)
         {
+            WaitedOutsideHiding = waitedOutsideHiding;
             SenseUsed = senseUsed;
             SenseFound = senseFound;
             Action = action;
@@ -128,6 +133,9 @@ namespace NightShift.Hunt
         // ---- Ground truth (Freddy's observations never read these directly) ----
 
         public Room FreddyRoom { get; private set; }
+
+        /// <summary>Tonight's way out (the player knows it; Freddy does not observe it).</summary>
+        public Room ExitRoom { get; private set; } = HuntMap.Exit;
         public Room PlayerRoom { get; private set; }
         public bool PlayerHidden { get; private set; }
         /// <summary>Spot the player hides in, or -1.</summary>
@@ -208,6 +216,7 @@ namespace NightShift.Hunt
             LastFreddyAction = -1;
             FreddyRoom = HuntMap.FreddyStart;
             PlayerRoom = HuntMap.PlayerStart;
+            ExitRoom = Settings.RandomExit ? HuntMap.Exits[random.Next(HuntMap.Exits.Count)] : HuntMap.Exit;
             PlayerHidden = false;
             PlayerSpot = -1;
             PlayerWalkingTo = null;
@@ -241,14 +250,14 @@ namespace NightShift.Hunt
         private void PlaceFuses()
         {
             Array.Clear(fuseInRoom, 0, fuseInRoom.Length);
-            // Only rooms with a fuse shelf (never the start rooms or the exit), so the player always
-            // has to cross the map.
+            // Only rooms with a fuse shelf (never the start rooms or tonight's exit), so the player
+            // always has to cross the map.
             var candidates = HuntMap.FuseRooms;
             int placed = 0;
-            while (placed < Math.Min(Settings.FuseCount, candidates.Count))
+            while (placed < Math.Min(Settings.FuseCount, candidates.Count - 1))
             {
                 Room room = candidates[random.Next(candidates.Count)];
-                if (fuseInRoom[(int)room])
+                if (fuseInRoom[(int)room] || room == ExitRoom)
                 {
                     continue;
                 }
@@ -265,6 +274,12 @@ namespace NightShift.Hunt
             {
                 fuseInRoom[(int)room] = true;
             }
+        }
+
+        /// <summary>Sets tonight's way out (tests and the 3D game, which picks it with the night).</summary>
+        public void SetExit(Room exit)
+        {
+            ExitRoom = exit;
         }
 
         /// <summary>Puts the player and Freddy in given rooms (tests and the 3D game's sync).</summary>
@@ -378,7 +393,7 @@ namespace NightShift.Hunt
                     break;
 
                 case PlayerActionKind.WorkExit:
-                    if (PlayerRoom == HuntMap.Exit && FusesCollected >= Settings.FuseCount)
+                    if (PlayerRoom == ExitRoom && FusesCollected >= Settings.FuseCount)
                     {
                         LeaveHidingSpot();
                         ExitProgress++;
@@ -619,6 +634,9 @@ namespace NightShift.Hunt
             bool repeatedSearch = false;
             bool senseUsed = false;
             bool senseFound = false;
+            // Standing (or sensing) next to the spot the player hides in, instead of opening it.
+            bool waitedOutsideHiding = PlayerHidden && PlayerRoom == FreddyRoom
+                                       && (FreddyActions.IsSense(action) || action == FreddyActions.GoTo(FreddyRoom));
 
             if (FreddyActions.IsSense(action))
             {
@@ -669,7 +687,7 @@ namespace NightShift.Hunt
 
             AdvanceClock();
             int distanceAfter = HuntMap.Distance(FreddyRoom, PlayerRoom);
-            return new FreddyStep(action, from, FreddyRoom, distanceBefore, distanceAfter, failedSearch, repeatedSearch, Outcome, senseUsed, senseFound);
+            return new FreddyStep(action, from, FreddyRoom, distanceBefore, distanceAfter, failedSearch, repeatedSearch, Outcome, senseUsed, senseFound, waitedOutsideHiding);
         }
 
         private void AdvanceClock()
