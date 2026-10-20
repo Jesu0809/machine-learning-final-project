@@ -202,20 +202,28 @@ namespace NightShift.Game
                 (float opening, float sill) = openings[i];
                 float doorStart = opening - PizzeriaLayout.DoorWidth * 0.5f;
                 float doorEnd = opening + PizzeriaLayout.DoorWidth * 0.5f;
-                // Two doors stacked on the same wall (one per floor) share the same gap.
-                bool stacked = i + 1 < openings.Count && Mathf.Abs(openings[i + 1].along - opening) < 0.05f;
                 WallRun(root, style, height, start, doorStart, at, alongX);
-                if (sill > 0.01f)
-                {
-                    // A doorway up on the wall (the top of a staircase): solid wall below it.
-                    WallRun(root, style, sill, doorStart, doorEnd, at, alongX);
-                }
-                Doorway(root, style, height, opening, at, alongX, sill);
-                start = doorEnd;
+                // Two doors stacked on the same spot of the wall (one per floor): the lower one's
+                // lintel stops at the upper one's sill, and nothing is built across either.
+                bool stacked = i + 1 < openings.Count && Mathf.Abs(openings[i + 1].along - opening) < 0.05f;
                 if (stacked)
                 {
+                    float upperSill = Mathf.Max(sill, openings[i + 1].sill);
+                    float lowerSill = Mathf.Min(sill, openings[i + 1].sill);
+                    Doorway(root, style, upperSill, opening, at, alongX, lowerSill);
+                    Doorway(root, style, height, opening, at, alongX, upperSill);
                     i++;
                 }
+                else
+                {
+                    if (sill > 0.01f)
+                    {
+                        // A doorway up on the wall (the top of a staircase): solid wall below it.
+                        WallRun(root, style, sill, doorStart, doorEnd, at, alongX);
+                    }
+                    Doorway(root, style, height, opening, at, alongX, sill);
+                }
+                start = doorEnd;
             }
             WallRun(root, style, height, start, to, at, alongX);
         }

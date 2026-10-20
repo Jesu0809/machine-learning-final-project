@@ -24,6 +24,7 @@ namespace NightShift.Game
         private readonly List<Renderer> lamps = new List<Renderer>();
         private bool lampsClosed;
         private float axisYaw;
+        private float openSign = 1f;
         private float swing;   // 0 closed, 1 open (folded against the wall)
         private HuntDirector director;
 
@@ -32,7 +33,7 @@ namespace NightShift.Game
         public bool HoldToUse => false;
 
         /// <summary>Double doors in a doorway; <paramref name="alongX"/> if the wall runs along x.</summary>
-        public static Door Create(HuntDirector director, Transform parent, Vector3 doorway, bool alongX, Material material)
+        public static Door Create(HuntDirector director, Transform parent, Vector3 doorway, bool alongX, Vector3 corridor, Material material)
         {
             var go = new GameObject("Door");
             go.transform.SetParent(parent, false);
@@ -40,6 +41,8 @@ namespace NightShift.Game
             var door = go.AddComponent<Door>();
             door.director = director;
             door.axisYaw = alongX ? 0f : 90f;
+            // Open, the leaves rest against the corridor's walls, not in the room or across the doorway.
+            door.openSign = Vector3.Dot(corridor, Quaternion.Euler(0f, door.axisYaw, 0f) * Vector3.forward) >= 0f ? 1f : -1f;
             float leaf = PizzeriaLayout.DoorWidth * 0.5f - 0.06f;
             for (int i = 0; i < 2; i++)
             {
@@ -191,7 +194,7 @@ namespace NightShift.Game
             {
                 float side = i == 0 ? -1f : 1f;
                 // Open, the leaves rest ajar at an angle: seen from both sides of the doorway, still wide enough to run through.
-                hinges[i].localRotation = Quaternion.Euler(0f, axisYaw + side * 75f * swing, 0f);
+                hinges[i].localRotation = Quaternion.Euler(0f, axisYaw + side * openSign * 100f * swing, 0f);
             }
         }
 

@@ -324,19 +324,27 @@ namespace NightShift.Game
             return Center(room);
         }
 
-        /// <summary>One door per connection (at its first doorway), with the axis of its wall.</summary>
-        public static IEnumerable<(Room from, Room to, Vector3 door, bool alongX)> Doorways()
+        /// <summary>
+        /// One door per connection (at its first doorway), with the axis of its wall and the
+        /// direction from the doorway into its corridor (the side the open leaves rest on).
+        /// </summary>
+        public static IEnumerable<(Room from, Room to, Vector3 door, bool alongX, Vector3 corridor)> Doorways()
         {
             foreach (Passage passage in Passages)
             {
-                foreach (Vector3 point in passage.Points)
+                for (int i = 0; i < passage.Points.Length; i++)
                 {
+                    Vector3 point = passage.Points[i];
                     Room owner = OnWall(passage.From, point) ? passage.From : OnWall(passage.To, point) ? passage.To : (Room)(-1);
                     if ((int)owner < 0)
                     {
                         continue;
                     }
-                    yield return (passage.From, passage.To, point, AlongX(owner, point));
+                    // Into the corridor: away from the room whose wall the door is on.
+                    Vector2 center = Area(owner).center;
+                    var outward = new Vector3(point.x - center.x, 0f, point.z - center.y);
+                    outward = AlongX(owner, point) ? new Vector3(0f, 0f, Mathf.Sign(outward.z)) : new Vector3(Mathf.Sign(outward.x), 0f, 0f);
+                    yield return (passage.From, passage.To, point, AlongX(owner, point), outward);
                     break;
                 }
             }

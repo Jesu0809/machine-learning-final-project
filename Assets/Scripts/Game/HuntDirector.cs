@@ -206,9 +206,9 @@ namespace NightShift.Game
             Player = PlayerController.Create(this, PizzeriaLayout.PlayerStart, PizzeriaLayout.PlayerFacing);
             Freddy = FreddyBody.Create(this, Assets.FreddyPrefab, PizzeriaLayout.FreddyStart, PizzeriaLayout.FreddyFacing);
             Material doorSteel = BuildKit.Surface("doorSteel", () => ProceduralTextures.SteelPanel(new Color(0.42f, 0.09f, 0.08f)), 0.4f, 0.35f);
-            foreach ((Room _, Room _, Vector3 door, bool alongX) in PizzeriaLayout.Doorways())
+            foreach ((Room _, Room _, Vector3 door, bool alongX, Vector3 corridor) in PizzeriaLayout.Doorways())
             {
-                Door.Create(this, Level.Root, door, alongX, doorSteel);
+                Door.Create(this, Level.Root, door, alongX, corridor, doorSteel);
             }
             AiVision.Create(this);
             call = PhoneCall.Create(transform, Audio, Assets);
