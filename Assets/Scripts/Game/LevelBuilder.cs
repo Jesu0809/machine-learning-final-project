@@ -46,10 +46,8 @@ namespace NightShift.Game
             for (int i = 0; i < HuntMap.RoomCount; i++)
             {
                 var room = (Room)i;
-                // Each room is built in its own space with the floor at y = 0, then lifted to its floor.
                 Transform roomRoot = new GameObject(HuntMap.DisplayName(room)).transform;
                 roomRoot.SetParent(level.Root, false);
-                roomRoot.localPosition = new Vector3(0f, PizzeriaLayout.Elevation(room), 0f);
                 RoomStyle style = StyleOf(room);
 
                 BuildShell(room, roomRoot, style);
@@ -68,8 +66,7 @@ namespace NightShift.Game
                     level.Fuses[i] = BuildFuse(room, roomRoot);
                 }
             }
-            BuildCorridors(level.Root);
-            BuildStairs(level.Root);
+            BuildCorridors(level, random);
             BuildDucts(level);
             level.Exit = BuildExit(level.Root);
             return level;
@@ -95,11 +92,17 @@ namespace NightShift.Game
                         Floor = BuildKit.Surface("kitchenFloor", () => ProceduralTextures.Tiles(new Color(0.6f, 0.1f, 0.1f), new Color(0.85f, 0.83f, 0.78f), 8, true, 0.5f), 0.4f),
                         Wainscot = white, Wall = white, Ceiling = ceiling
                     };
+                case Room.Restrooms:
+                    Material blue = BuildKit.Surface("restroomTiles", () => ProceduralTextures.Tiles(new Color(0.55f, 0.68f, 0.72f), new Color(0.8f, 0.84f, 0.84f), 16, false, 0.4f), 0.6f);
+                    return new RoomStyle
+                    {
+                        Floor = BuildKit.Surface("restroomFloor", () => ProceduralTextures.Tiles(new Color(0.75f, 0.76f, 0.74f), new Color(0.3f, 0.4f, 0.45f), 12, true, 0.5f), 0.5f),
+                        Wainscot = blue, Wall = BuildKit.Surface("restroomWall", () => ProceduralTextures.Grimy(new Color(0.62f, 0.66f, 0.64f), 0.8f), 0.2f), Ceiling = ceiling
+                    };
                 case Room.Storage:
                     return new RoomStyle { Floor = concrete, Wainscot = concrete, Wall = concreteWall, Ceiling = concrete };
                 case Room.Parts:
-                case Room.Maintenance:
-                    // Staff-only workrooms: bare concrete, steel-grey walls.
+                    // Staff-only workroom: bare concrete, steel-grey walls.
                     return new RoomStyle
                     {
                         Floor = concrete,
@@ -115,16 +118,9 @@ namespace NightShift.Game
                         Wall = BuildKit.Surface("arcadeWall", () => ProceduralTextures.Wallpaper(new Color(0.1f, 0.08f, 0.16f), new Color(0.2f, 0.12f, 0.32f)), 0.1f),
                         Ceiling = ceiling
                     };
-                case Room.Stage:
-                    return new RoomStyle
-                    {
-                        Floor = BuildKit.Surface("planks", () => ProceduralTextures.Planks(new Color(0.32f, 0.2f, 0.12f)), 0.35f),
-                        Wainscot = redBand,
-                        Wall = BuildKit.Surface("stageWall", () => ProceduralTextures.Wallpaper(new Color(0.18f, 0.06f, 0.14f), new Color(0.3f, 0.1f, 0.22f)), 0.1f),
-                        Ceiling = BuildKit.Plain("stageCeiling", new Color(0.05f, 0.04f, 0.05f))
-                    };
                 case Room.Office:
-                case Room.Manager:
+                case Room.BackHall:
+                    // The staff wing: grey-green offices and halls, so it never looks like the restaurant.
                     return new RoomStyle
                     {
                         Floor = officeFloor,
@@ -132,23 +128,8 @@ namespace NightShift.Game
                         Wall = BuildKit.Surface("officeWall", () => ProceduralTextures.Wallpaper(new Color(0.42f, 0.42f, 0.36f), new Color(0.36f, 0.38f, 0.32f)), 0.1f),
                         Ceiling = ceiling
                     };
-                case Room.Lounge:
-                    return new RoomStyle
-                    {
-                        Floor = BuildKit.Surface("loungeFloor", () => ProceduralTextures.Planks(new Color(0.3f, 0.2f, 0.13f)), 0.3f),
-                        Wainscot = officeBand,
-                        Wall = BuildKit.Surface("loungeWall", () => ProceduralTextures.Wallpaper(new Color(0.35f, 0.28f, 0.2f), new Color(0.42f, 0.3f, 0.18f)), 0.1f),
-                        Ceiling = ceiling
-                    };
-                case Room.UpperHall:
-                    return new RoomStyle
-                    {
-                        Floor = officeFloor,
-                        Wainscot = officeBand,
-                        Wall = BuildKit.Surface("officeWall", null),
-                        Ceiling = ceiling
-                    };
                 default:
+                    // The public wing: checkered floor, red band, party wallpaper.
                     return new RoomStyle
                     {
                         Floor = checkerFloor,
@@ -170,7 +151,7 @@ namespace NightShift.Game
             BuildKit.Box("Floor", root, center + new Vector3(0f, -0.05f, 0f), new Vector3(area.width, 0.1f, area.height), style.Floor, 2f);
             BuildKit.Box("Ceiling", root, center + new Vector3(0f, height + 0.05f, 0f), new Vector3(area.width, 0.1f, area.height), style.Ceiling, 2.5f, false);
 
-            var doors = new List<(Vector2 point, float sill)>(PizzeriaLayout.DoorOpeningsOf(room));
+            var doors = new List<Vector2>(PizzeriaLayout.DoorwaysOf(room));
 
             float t = PizzeriaLayout.WallThickness;
             // North and south walls run along x; west and east along z. Each sits just inside the room.
@@ -181,49 +162,27 @@ namespace NightShift.Game
         }
 
         /// <summary>One wall from <paramref name="from"/> to <paramref name="to"/> with openings at the doorways on it.</summary>
-        private static void Side(Transform root, RoomStyle style, float height, List<(Vector2 point, float sill)> doors,
+        private static void Side(Transform root, RoomStyle style, float height, List<Vector2> doors,
                                  float from, float to, float at, bool alongX, float boundary)
         {
-            var openings = new List<(float along, float sill)>();
-            foreach ((Vector2 door, float sill) in doors)
+            var openings = new List<float>();
+            foreach (Vector2 door in doors)
             {
                 float across = alongX ? door.y : door.x;
                 float along = alongX ? door.x : door.y;
                 if (Mathf.Abs(across - boundary) < 0.05f && along > from && along < to)
                 {
-                    openings.Add((along, sill));
+                    openings.Add(along);
                 }
             }
-            openings.Sort((a, b) => a.along.CompareTo(b.along));
+            openings.Sort();
 
             float start = from;
-            for (int i = 0; i < openings.Count; i++)
+            foreach (float opening in openings)
             {
-                (float opening, float sill) = openings[i];
-                float doorStart = opening - PizzeriaLayout.DoorWidth * 0.5f;
-                float doorEnd = opening + PizzeriaLayout.DoorWidth * 0.5f;
-                WallRun(root, style, height, start, doorStart, at, alongX);
-                // Two doors stacked on the same spot of the wall (one per floor): the lower one's
-                // lintel stops at the upper one's sill, and nothing is built across either.
-                bool stacked = i + 1 < openings.Count && Mathf.Abs(openings[i + 1].along - opening) < 0.05f;
-                if (stacked)
-                {
-                    float upperSill = Mathf.Max(sill, openings[i + 1].sill);
-                    float lowerSill = Mathf.Min(sill, openings[i + 1].sill);
-                    Doorway(root, style, upperSill, opening, at, alongX, lowerSill);
-                    Doorway(root, style, height, opening, at, alongX, upperSill);
-                    i++;
-                }
-                else
-                {
-                    if (sill > 0.01f)
-                    {
-                        // A doorway up on the wall (the top of a staircase): solid wall below it.
-                        WallRun(root, style, sill, doorStart, doorEnd, at, alongX);
-                    }
-                    Doorway(root, style, height, opening, at, alongX, sill);
-                }
-                start = doorEnd;
+                WallRun(root, style, height, start, opening - PizzeriaLayout.DoorWidth * 0.5f, at, alongX);
+                Doorway(root, style, height, opening, at, alongX);
+                start = opening + PizzeriaLayout.DoorWidth * 0.5f;
             }
             WallRun(root, style, height, start, to, at, alongX);
         }
@@ -249,10 +208,10 @@ namespace NightShift.Game
             BuildKit.Box("Baseboard", root, Position(0.07f), baseboard, BuildKit.Plain("baseboard", new Color(0.06f, 0.05f, 0.05f), 0.3f), 1f, false);
         }
 
-        private static void Doorway(Transform root, RoomStyle style, float height, float along, float at, bool alongX, float sill = 0f)
+        private static void Doorway(Transform root, RoomStyle style, float height, float along, float at, bool alongX)
         {
             float t = PizzeriaLayout.WallThickness;
-            float top = sill + PizzeriaLayout.DoorHeight;
+            float top = PizzeriaLayout.DoorHeight;
             float lintel = height - top;
             Vector3 Position(float offset, float y) => alongX ? new Vector3(along + offset, y, at) : new Vector3(at, y, along + offset);
             Vector3 Size(float length, float h, float depth) => alongX ? new Vector3(length, h, depth) : new Vector3(depth, h, length);
@@ -263,28 +222,29 @@ namespace NightShift.Game
             }
             Material frame = BuildKit.Plain("doorFrame", new Color(0.12f, 0.08f, 0.06f), 0.35f);
             float half = PizzeriaLayout.DoorWidth * 0.5f;
-            float mid = sill + PizzeriaLayout.DoorHeight * 0.5f;
+            float mid = PizzeriaLayout.DoorHeight * 0.5f;
             BuildKit.Box("Frame", root, Position(-half + 0.05f, mid), Size(0.1f, PizzeriaLayout.DoorHeight, t + 0.1f), frame, 1f, false);
             BuildKit.Box("Frame", root, Position(half - 0.05f, mid), Size(0.1f, PizzeriaLayout.DoorHeight, t + 0.1f), frame, 1f, false);
             BuildKit.Box("Frame", root, Position(0f, top - 0.05f), Size(PizzeriaLayout.DoorWidth, 0.1f, t + 0.1f), frame, 1f, false);
         }
 
-        private static void BuildCorridors(Transform root)
+        /// <summary>
+        /// The corridors between doorways, dressed like the wing they start in, with a ceiling lamp
+        /// in the long ones (it goes dark with the room the corridor starts from).
+        /// </summary>
+        private static void BuildCorridors(Level level, System.Random random)
         {
             Transform corridors = new GameObject("Corridors").transform;
-            corridors.SetParent(root, false);
-            Material floor = BuildKit.Surface("floorChecker", null);
-            Material wall = BuildKit.Surface("wallpaper", null);
-            Material band = BuildKit.Surface("wainscotRed", null);
-            Material ceiling = BuildKit.Surface("ceiling", null);
-            var style = new RoomStyle { Floor = floor, Wall = wall, Wainscot = band, Ceiling = ceiling };
+            corridors.SetParent(level.Root, false);
 
             foreach ((Vector3 start3, Vector3 end3, float height) in PizzeriaLayout.Corridors())
             {
-                // Each corridor is built in its own space at its floor's height.
+                Room owner = PizzeriaLayout.RoomAt(start3);
+                RoomStyle style = StyleOf(HuntMap.IsStaffWing(owner) ? Room.BackHall : Room.MainHall);
+                Material floor = style.Floor;
+                Material ceiling = style.Ceiling;
                 Transform segment = new GameObject("Corridor").transform;
                 segment.SetParent(corridors, false);
-                segment.localPosition = new Vector3(0f, start3.y, 0f);
                 var start = new Vector2(start3.x, start3.z);
                 var end = new Vector2(end3.x, end3.z);
                 Vector2 mid = (start + end) * 0.5f;
@@ -300,161 +260,11 @@ namespace NightShift.Game
                 float across = alongX ? mid.y : mid.x;
                 WallRun(segment, style, height, from, to, across - side, alongX);
                 WallRun(segment, style, height, from, to, across + side, alongX);
-            }
-        }
-
-        // ------------------------------------------------------------------ stairs
-
-        /// <summary>
-        /// The staircases: visible steps (no colliders), one invisible ramp to walk on, a landing at
-        /// the top with a railing on its open sides, and posts holding the landing up.
-        /// </summary>
-        private static void BuildStairs(Transform root)
-        {
-            Transform parent = new GameObject("Stairs").transform;
-            parent.SetParent(root, false);
-            Material treads = BuildKit.Surface("stairTreads", () => ProceduralTextures.Planks(new Color(0.28f, 0.17f, 0.1f)), 0.35f);
-            Material steel = BuildKit.Plain("stairSteel", new Color(0.2f, 0.2f, 0.21f), 0.5f, 0.8f);
-            Material rail = BuildKit.Plain("railBrass", new Color(0.55f, 0.42f, 0.22f), 0.7f, 0.9f);
-
-            foreach (Staircase stairs in PizzeriaLayout.Stairs)
-            {
-                bool metal = stairs.Room == Room.Storage;
-                Material step = metal ? steel : treads;
-                Vector3 run = stairs.Top - stairs.Bottom;
-                var flat = new Vector3(run.x, 0f, run.z);
-                float length = flat.magnitude;
-                float rise = run.y;
-                Vector3 forward = flat / length;
-                Vector3 side = Vector3.Cross(Vector3.up, forward);   // to the right going up
-                Quaternion facing = Quaternion.LookRotation(forward);
-                int count = Mathf.Max(4, Mathf.RoundToInt(length / 0.28f));
-                float tread = length / count;
-                float riser = rise / count;
-
-                for (int i = 0; i < count; i++)
+                if (length > 4f)
                 {
-                    Vector3 center = stairs.Bottom + forward * (tread * (i + 0.5f)) + Vector3.up * (riser * (i + 1) - (metal ? 0.03f : riser * 0.5f));
-                    var block = BuildKit.Box("Step", parent, center, new Vector3(stairs.Width, metal ? 0.06f : riser, tread + 0.02f), step, 1f, false);
-                    block.transform.localRotation = facing;
+                    bool dead = random.NextDouble() < 0.3;
+                    level.Lamps[(int)owner].Add(Lamp(segment, new Vector3(mid.x, height, mid.y), new Color(1f, 0.8f, 0.58f), dead, 0.5f, false, 0.7f));
                 }
-                // The slab under the steps (stringers for the metal ones).
-                Vector3 mid = (stairs.Bottom + stairs.Top) * 0.5f;
-                float slope = Mathf.Atan2(rise, length) * Mathf.Rad2Deg;
-                Quaternion along = facing * Quaternion.Euler(-slope, 0f, 0f);
-                float hypotenuse = Mathf.Sqrt(length * length + rise * rise);
-                if (metal)
-                {
-                    for (int s = -1; s <= 1; s += 2)
-                    {
-                        var stringer = BuildKit.Box("Stringer", parent, mid + side * (s * stairs.Width * 0.5f) - Vector3.up * 0.05f, new Vector3(0.06f, 0.3f, hypotenuse), steel, 1f, false);
-                        stringer.transform.localRotation = along;
-                    }
-                }
-                else
-                {
-                    var slab = BuildKit.Box("StairSlab", parent, mid - Vector3.up * 0.25f, new Vector3(stairs.Width, 0.3f, hypotenuse), BuildKit.Surface("wallpaper", null), 1f, false);
-                    slab.transform.localRotation = along;
-                }
-                // What the player actually walks on.
-                var ramp = new GameObject("Ramp");
-                ramp.transform.SetParent(parent, false);
-                ramp.transform.localPosition = mid - (along * Vector3.up) * 0.05f;
-                ramp.transform.localRotation = along;
-                ramp.AddComponent<BoxCollider>().size = new Vector3(stairs.Width, 0.1f, hypotenuse + 0.3f);
-
-                // Handrail on the open side (the other side runs along the wall).
-                Vector3 open = OpenSide(stairs, side);
-                for (float d = 0.3f; d < length; d += 1.2f)
-                {
-                    Vector3 foot = stairs.Bottom + forward * d + Vector3.up * (rise * d / length) + open * (stairs.Width * 0.5f - 0.05f);
-                    BuildKit.Box("Baluster", parent, foot + Vector3.up * 0.5f, new Vector3(0.04f, 1f, 0.04f), rail, 1f, false);
-                }
-                var handrail = BuildKit.Box("Handrail", parent, mid + open * (stairs.Width * 0.5f - 0.05f) + Vector3.up * 1f, new Vector3(0.06f, 0.06f, hypotenuse), rail, 1f, false);
-                handrail.transform.localRotation = along;
-
-                // The landing, with a railing on the sides that are not against a wall or where the stairs arrive.
-                Rect landing = stairs.Landing;
-                float top = stairs.Top.y;
-                BuildKit.Box("Landing", parent, new Vector3(landing.center.x, top - 0.1f, landing.center.y), new Vector3(landing.width, 0.2f, landing.height), step, 1f);
-                Rect room = PizzeriaLayout.Area(stairs.Room);
-                float inner = PizzeriaLayout.WallThickness + 0.15f;
-                LandingRail(parent, rail, landing, top, stairs, room, inner);
-                // Posts down to the floor at the open corners.
-                foreach (Vector2 corner in new[] { new Vector2(landing.xMin, landing.yMin), new Vector2(landing.xMax, landing.yMin), new Vector2(landing.xMin, landing.yMax), new Vector2(landing.xMax, landing.yMax) })
-                {
-                    bool againstWall = corner.x - room.xMin < inner || room.xMax - corner.x < inner || corner.y - room.yMin < inner || room.yMax - corner.y < inner;
-                    if (!againstWall)
-                    {
-                        BuildKit.Box("Post", parent, new Vector3(corner.x, stairs.Bottom.y + (top - 0.2f) * 0.5f, corner.y), new Vector3(0.2f, top - 0.2f, 0.2f), steel);
-                    }
-                }
-            }
-        }
-
-        /// <summary>The side of the stairs away from the room's nearest wall.</summary>
-        private static Vector3 OpenSide(Staircase stairs, Vector3 right)
-        {
-            Rect room = PizzeriaLayout.Area(stairs.Room);
-            Vector3 probe = (stairs.Bottom + stairs.Top) * 0.5f + right * 1.5f;
-            bool rightInside = probe.x > room.xMin + 0.3f && probe.x < room.xMax - 0.3f && probe.z > room.yMin + 0.3f && probe.z < room.yMax - 0.3f;
-            return rightInside ? right : -right;
-        }
-
-        private static void LandingRail(Transform parent, Material rail, Rect landing, float top, Staircase stairs, Rect room, float inner)
-        {
-            // Edges as (from, to) on the floor.
-            var edges = new[]
-            {
-                (new Vector2(landing.xMin, landing.yMin), new Vector2(landing.xMax, landing.yMin)),
-                (new Vector2(landing.xMin, landing.yMax), new Vector2(landing.xMax, landing.yMax)),
-                (new Vector2(landing.xMin, landing.yMin), new Vector2(landing.xMin, landing.yMax)),
-                (new Vector2(landing.xMax, landing.yMin), new Vector2(landing.xMax, landing.yMax))
-            };
-            var stairsTop = new Vector2(stairs.Top.x, stairs.Top.z);
-            foreach ((Vector2 a, Vector2 b) in edges)
-            {
-                Vector2 middle = (a + b) * 0.5f;
-                bool alongX = Mathf.Abs(a.y - b.y) < 0.01f;
-                bool againstWall = alongX ? (middle.y - room.yMin < inner || room.yMax - middle.y < inner)
-                                          : (middle.x - room.xMin < inner || room.xMax - middle.x < inner);
-                if (againstWall)
-                {
-                    continue;
-                }
-                // Leave the gap where the stairs come up.
-                float onEdge = alongX ? Mathf.Abs(stairsTop.y - a.y) : Mathf.Abs(stairsTop.x - a.x);
-                float from = alongX ? a.x : a.y;
-                float to = alongX ? b.x : b.y;
-                float gapCenter = alongX ? stairsTop.x : stairsTop.y;
-                if (onEdge < 0.05f)
-                {
-                    RailRun(parent, rail, alongX, from, gapCenter - stairs.Width * 0.5f, alongX ? a.y : a.x, top);
-                    RailRun(parent, rail, alongX, gapCenter + stairs.Width * 0.5f, to, alongX ? a.y : a.x, top);
-                }
-                else
-                {
-                    RailRun(parent, rail, alongX, from, to, alongX ? a.y : a.x, top);
-                }
-            }
-        }
-
-        private static void RailRun(Transform parent, Material rail, bool alongX, float from, float to, float at, float floor)
-        {
-            float length = to - from;
-            if (length < 0.1f)
-            {
-                return;
-            }
-            float mid = (from + to) * 0.5f;
-            Vector3 Pos(float along, float y) => alongX ? new Vector3(along, y, at) : new Vector3(at, y, along);
-            Vector3 Size(float l, float h) => alongX ? new Vector3(l, h, 0.06f) : new Vector3(0.06f, h, l);
-            BuildKit.Box("Railing", parent, Pos(mid, floor + 1f), Size(length, 0.06f), rail, 1f, false);
-            // An invisible barrier so nobody falls off the landing.
-            BuildKit.Box("RailingBlock", parent, Pos(mid, floor + 0.55f), Size(length, 1.1f), rail, 1f, true).GetComponent<Renderer>().enabled = false;
-            for (float d = from; d <= to + 0.01f; d += 0.9f)
-            {
-                BuildKit.Box("Baluster", parent, Pos(d, floor + 0.5f), new Vector3(0.04f, 1f, 0.04f), rail, 1f, false);
             }
         }
 
@@ -580,7 +390,7 @@ namespace NightShift.Game
             int columns = Mathf.Max(1, Mathf.RoundToInt(area.width / 7f));
             int rows = Mathf.Max(1, Mathf.RoundToInt(area.height / 7f));
             Color warm = room == HuntMap.Exit ? new Color(1f, 0.55f, 0.45f) : new Color(1f, 0.8f, 0.58f);
-            bool shadows = room == Room.DiningHall || room == Room.Stage || room == Room.Office || room == Room.Storage;
+            bool shadows = room == Room.DiningHall || room == Room.Office || room == Room.Storage || room == Room.MainHall;
 
             for (int c = 0; c < columns; c++)
             {
@@ -594,7 +404,7 @@ namespace NightShift.Game
                 }
             }
 
-            if (room == Room.BackHall || room == Room.UpperHall)
+            if (room == Room.BackHall || room == Room.MainHall)
             {
                 // A red emergency light at one end of each hall.
                 var emergency = new GameObject("EmergencyLight").AddComponent<Light>();
@@ -789,7 +599,7 @@ namespace NightShift.Game
             BuildKit.Cylinder("Hazard", fuse.transform, new Vector3(0f, -0.12f, 0f), 0.165f, 0.04f, hazard);
             BuildKit.Cylinder("TerminalPlus", fuse.transform, new Vector3(0.035f, 0.21f, 0f), 0.035f, 0.04f, chrome);
             BuildKit.Cylinder("TerminalMinus", fuse.transform, new Vector3(-0.035f, 0.205f, 0f), 0.03f, 0.03f, chrome);
-            var halo = BuildKit.Quad("Halo", roomRoot, PizzeriaLayout.Local(room, position) - Vector3.up * 0.17f + facing * Vector3.forward * 0.1f, new Vector2(0.7f, 0.7f), 0f,
+            var halo = BuildKit.Quad("Halo", roomRoot, position - Vector3.up * 0.17f + facing * Vector3.forward * 0.1f, new Vector2(0.7f, 0.7f), 0f,
                                      BuildKit.Additive("cellHalo", ProceduralTextures.Ring(128, 0.12f), new Color(1f, 0.6f, 0.15f, 0.8f)));
             halo.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
             Sparks(fuse.transform);

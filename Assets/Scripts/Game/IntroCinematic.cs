@@ -228,7 +228,7 @@ namespace NightShift.Game
                     // 1. The closed pizzeria in the rain, seen from above the road.
                     float k = Mathf.SmoothStep(0f, 1f, t / 9.5f);
                     eye = Vector3.Lerp(new Vector3(-36f, 13f, -52f), new Vector3(-22f, 6.5f, -43f), k);
-                    look = Vector3.Lerp(new Vector3(-5f, 4.5f, -19f), new Vector3(-3f, 2.5f, -24f), k);
+                    look = Vector3.Lerp(new Vector3(-5f, 4.5f, -16f), new Vector3(-3f, 2.5f, -21f), k);
                     Card(t, 0.8f, 3.2f, StoryData.IntroCards[0], 110, ref card, ref cardAlpha, ref cardSize);
                     Card(t, 3.5f, 6.6f, StoryData.IntroCards[1], 44, ref card, ref cardAlpha, ref cardSize);
                     Card(t, 6.9f, 9.3f, StoryData.IntroCards[2], 52, ref card, ref cardAlpha, ref cardSize);
@@ -259,7 +259,7 @@ namespace NightShift.Game
                     fov = 60f;
                     float k = Mathf.SmoothStep(0f, 1f, (t - ArrivalTime - 1.4f) / Mathf.Max(1f, getOutAt - ArrivalTime - 1.4f));
                     eye = carPosition + Quaternion.Euler(0f, carYaw, 0f) * Car.DriverEyes + Vector3.up * Mathf.Sin(t * 1.1f) * 0.006f;
-                    look = Vector3.Lerp(new Vector3(-2f, 2.2f, -19.5f), new Vector3(-6.5f, 4.6f, -19.5f), k);
+                    look = Vector3.Lerp(new Vector3(-2f, 2.2f, -16.5f), new Vector3(-6.5f, 4.6f, -16.5f), k);
                     fade = Mathf.Clamp01(1f - (t - ArrivalTime - 1.4f) / 0.4f);
                 }
                 else
@@ -278,7 +278,7 @@ namespace NightShift.Game
                     }
                     Vector3 seat = carPosition + carTurn * Car.DriverEyes;
                     Vector3 standing = WalkStart + Vector3.up * EyeHeight;
-                    Vector3 signTarget = new Vector3(-6.5f, 5f, -19.5f);
+                    Vector3 signTarget = new Vector3(-6.5f, 5f, -16.5f);
                     Vector3 doorTarget = new Vector3(PizzeriaLayout.ExitDoor.x, 1.5f, -17.3f);
                     Vector3 carDoor = carPosition + carTurn * new Vector3(-0.95f, 0.8f, -0.1f);
                     Vector3 ground = carPosition + carTurn * new Vector3(-2.2f, 0f, 1.6f);
@@ -286,7 +286,7 @@ namespace NightShift.Game
                     {
                         eye = Vector3.Lerp(seat, standing, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((g - 0.3f) / 1.3f)));
                         // Out, looking down at the wet ground; back at the car door as it slams; then at the pizzeria.
-                        look = Vector3.Lerp(new Vector3(-6.5f, 4.6f, -19.5f), ground, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(g / 1.2f)));
+                        look = Vector3.Lerp(new Vector3(-6.5f, 4.6f, -16.5f), ground, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(g / 1.2f)));
                         look = Vector3.Lerp(look, carDoor, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((g - 1.3f) / 0.8f)));
                         look = Vector3.Lerp(look, doorTarget, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((g - 2.8f) / 1.3f)));
                     }
@@ -347,9 +347,9 @@ namespace NightShift.Game
 
             // 7–8. Inside: Freddy on his stage, then his face and the title.
             yield return Interior(player,
-                                  new Vector3(-10.5f, 1.5f, -12f), new Vector3(-14.8f, 1.75f, -13.1f), new Vector3(-19f, 1.9f, -13.5f), 5.5f, "", 0);
+                                  new Vector3(9.0f, 1.5f, 2.3f), new Vector3(7.9f, 1.75f, 6.6f), new Vector3(7.5f, 1.9f, 10.8f), 5.5f, "", 0);
             yield return Interior(player,
-                                  new Vector3(-16.3f, 2.25f, -12.7f), new Vector3(-17.4f, 2.15f, -13.1f), new Vector3(-19f, 2.0f, -13.5f), 4.5f, "NIGHT SHIFT", 130);
+                                  new Vector3(8.3f, 2.25f, 8.1f), new Vector3(7.9f, 2.15f, 9.2f), new Vector3(7.5f, 2.0f, 10.8f), 4.5f, "NIGHT SHIFT", 130);
 
             Finish(player);
             director.StartNight(1);

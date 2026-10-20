@@ -530,8 +530,12 @@ namespace NightShift.Game
 
         private static Vector3 Flat(Vector3 point) => new Vector3(point.x, 0f, point.z);
 
-        /// <summary>The point on the floor of the room it is in (the floors are at different heights).</summary>
-        private static Vector3 Grounded(Vector3 point) => new Vector3(point.x, PizzeriaLayout.Elevation(PizzeriaLayout.RoomAt(point)), point.z);
+        /// <summary>The point on the floor, or on top of the show stage.</summary>
+        private static Vector3 Grounded(Vector3 point)
+        {
+            bool onStage = PizzeriaLayout.StageArea.Contains(new Vector2(point.x, point.z));
+            return new Vector3(point.x, onStage ? PizzeriaLayout.StageHeight : 0f, point.z);
+        }
 
         /// <summary>The points Freddy is about to walk through (for the AI vision overlay).</summary>
         public IReadOnlyList<Vector3> PlannedPath => path;
@@ -545,7 +549,7 @@ namespace NightShift.Game
                 return true;
             }
             Vector3 position = transform.position;
-            // Waypoints carry their floor's height: Freddy climbs the stairs and steps down from the stage.
+            // Waypoints carry their height: Freddy steps down from the stage.
             Vector3 waypoint = path[0];
             Vector3 offset = waypoint - position;
             float step = speed * Time.deltaTime;

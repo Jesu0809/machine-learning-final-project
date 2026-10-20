@@ -34,8 +34,7 @@ namespace NightShift.Game
             Rect area = PizzeriaLayout.Area(room);
             foreach (Room neighbor in HuntMap.GetNeighbors(room))
             {
-                // Local to the room (its floor is y = 0): the doorway up on the dining hall's wall keeps its height.
-                Vector3 door = PizzeriaLayout.Local(room, PizzeriaLayout.DoorOf(room, neighbor));
+                Vector3 door = PizzeriaLayout.DoorOf(room, neighbor);
                 // Direction from the doorway into this room (doorways sit on one of the four walls).
                 Vector3 into;
                 if (Mathf.Abs(door.z - area.yMax) < 0.05f) into = Vector3.back;
@@ -124,7 +123,7 @@ namespace NightShift.Game
                 BuildKit.Box("Warning", root, new Vector3(area.xMin + inset + 0.055f, 1.75f, panelPoint.y), new Vector3(0.01f, 0.12f, 0.2f), BuildKit.Plain("yellow", new Color(0.9f, 0.75f, 0.1f), 0.5f), 1f, false);
             }
             // A cork board with notes in staff rooms.
-            if (room == Room.Office || room == Room.Kitchen || room == Room.Manager || room == Room.Parts || room == Room.Lounge)
+            if (room == Room.Office || room == Room.Kitchen || room == Room.Parts)
             {
                 var board = new Vector2(area.xMax - 0.3f, area.yMin + area.height * 0.5f);
                 if (LevelProps.ClearOfOpenings(room, board, 0.7f))
@@ -258,39 +257,39 @@ namespace NightShift.Game
                     {
                         for (int c = 0; c < 3; c++)
                         {
-                            var position = new Vector3(-17.65f, 1.55f + r * 0.5f, 15.2f + c * 0.55f);
+                            var position = new Vector3(-21.65f, 1.55f + r * 0.5f, -11.3f + c * 0.55f);
                             BuildKit.Box("Monitor", root, position, new Vector3(0.45f, 0.45f, 0.5f), frame, 1f, false);
                             BuildKit.Quad("Screen", root, position + Vector3.right * 0.23f, new Vector2(0.38f, 0.3f), 90f, screen);
                         }
                     }
-                    BuildKit.Box("MonitorShelf", root, new Vector3(-17.65f, 1.3f, 15.75f), new Vector3(0.6f, 0.05f, 1.8f), frame, 1f, false);
+                    BuildKit.Box("MonitorShelf", root, new Vector3(-21.65f, 1.3f, -10.75f), new Vector3(0.6f, 0.05f, 1.8f), frame, 1f, false);
                     break;
 
                 case Room.PartyRoom:
-                    // The birthday cake on the first party table.
-                    LevelProps.PlaceNear(room, new Vector2(4.6f, -13f), 0.4f, p => Cake(root, new Vector3(p.x, 0.78f, p.y)), 4f);
+                    // The birthday cake on the table by the south wall.
+                    Cake(root, PizzeriaLayout.SpotPosition(room, 1) + new Vector3(0.45f, 0.83f, -0.2f));
                     for (int i = 0; i < 4; i++)
                     {
-                        var gift = new Vector2(-5.4f + (i % 2) * 0.55f, -18.4f + (i / 2) * 0.55f);
+                        var gift = new Vector2(9.3f + (i % 2) * 0.45f, -7.7f - (i / 2) * 0.45f);
                         LevelProps.Place(room, gift, 0.3f, () =>
                             BuildKit.Box("Gift", root, new Vector3(gift.x, 0.2f, gift.y), new Vector3(0.4f, 0.4f, 0.4f), BuildKit.Plain("gift" + i, Party[i % Party.Length], 0.4f), 1f, false, i * 17f));
                     }
-                    LevelProps.Sign(root, new Vector3(-3f, 2.4f, -12.23f), 180f, "HAPPY BIRTHDAY", new Color(0.3f, 0.85f, 1f), new Color(0.08f, 0.05f, 0.25f), 3.4f);
+                    LevelProps.Sign(root, new Vector3(4.23f, 2.5f, -11f), 90f, "HAPPY BIRTHDAY", new Color(0.3f, 0.85f, 1f), new Color(0.08f, 0.05f, 0.25f), 3.4f);
                     break;
 
                 case Room.Storage:
-                    // A row of spare masks watching the stairs.
+                    // A row of spare masks watching the door.
                     for (int i = 0; i < 3; i++)
                     {
-                        float z = 14f + i * 0.7f;
-                        BuildKit.Box("MaskShelf", root, new Vector3(21.6f, 1.85f, z), new Vector3(0.35f, 0.04f, 0.65f), BuildKit.Plain("pipe", new Color(0.32f, 0.3f, 0.27f), 0.5f, 0.6f), 1f, false);
-                        LevelProps.SpareHead(root, new Vector3(21.55f, 2.15f, z), 270f + (i - 1) * 15f);
+                        float z = 2.9f + i * 0.7f;
+                        BuildKit.Box("MaskShelf", root, new Vector3(-16.4f, 1.85f, z), new Vector3(0.35f, 0.04f, 0.65f), BuildKit.Plain("pipe", new Color(0.32f, 0.3f, 0.27f), 0.5f, 0.6f), 1f, false);
+                        LevelProps.SpareHead(root, new Vector3(-16.45f, 2.15f, z), 270f + (i - 1) * 15f);
                     }
                     break;
 
                 case Room.Arcade:
                     // Ball pit in the corner and a claw machine full of little Freddys.
-                    LevelProps.PlaceNear(room, new Vector2(11.2f, -3.9f), 1.0f, p =>
+                    LevelProps.PlaceNear(room, new Vector2(16.6f, 3.4f), 1.0f, p =>
                     {
                         Material rim = BuildKit.Plain("pitRim", new Color(0.15f, 0.35f, 0.75f), 0.4f);
                         BuildKit.Box("PitWall", root, new Vector3(p.x, 0.3f, p.y + 1f), new Vector3(2f, 0.6f, 0.1f), rim);
@@ -301,7 +300,7 @@ namespace NightShift.Game
                             BuildKit.Sphere("Ball", root, ball, 0.14f, BuildKit.Plain("ball" + i % 5, Party[i % Party.Length], 0.5f));
                         }
                     });
-                    LevelProps.PlaceNear(room, new Vector2(18.9f, 3.3f), 0.5f, p =>
+                    LevelProps.PlaceNear(room, new Vector2(22.1f, 9.3f), 0.5f, p =>
                     {
                         BuildKit.Box("ClawBase", root, new Vector3(p.x, 0.5f, p.y), new Vector3(0.8f, 1f, 0.8f), BuildKit.Plain("clawBase", new Color(0.7f, 0.1f, 0.4f), 0.4f));
                         BuildKit.Box("ClawGlass", root, new Vector3(p.x, 1.45f, p.y), new Vector3(0.78f, 0.9f, 0.78f), BuildKit.Plain("glass", new Color(0.3f, 0.35f, 0.4f), 0.9f), 1f, false);
@@ -312,24 +311,27 @@ namespace NightShift.Game
                     });
                     break;
 
-                case Room.Stage:
+                case Room.DiningHall:
+                    // Speakers at both ends of the stage and Freddy's microphone.
+                    Rect stage = PizzeriaLayout.StageArea;
+                    float top = PizzeriaLayout.StageHeight;
                     Material speaker = BuildKit.Plain("speaker", new Color(0.05f, 0.05f, 0.05f), 0.3f);
-                    BuildKit.Box("Speaker", root, new Vector3(-17.6f, 1.3f, -17.9f), new Vector3(0.6f, 1.2f, 0.6f), speaker);
-                    BuildKit.Box("Speaker", root, new Vector3(-17.6f, 1.3f, -10.4f), new Vector3(0.6f, 1.2f, 0.6f), speaker);
-                    BuildKit.Cylinder("MicStand", root, new Vector3(-17.7f, 1.3f, -13.5f), 0.03f, 1.2f, BuildKit.Plain("chrome", new Color(0.7f, 0.7f, 0.72f), 0.8f, 1f));
-                    BuildKit.Sphere("Mic", root, new Vector3(-17.7f, 1.95f, -13.5f), 0.08f, BuildKit.Plain("black", Color.black));
+                    BuildKit.Box("Speaker", root, new Vector3(stage.xMin + 0.4f, top + 0.6f, stage.yMax - 0.9f), new Vector3(0.6f, 1.2f, 0.6f), speaker);
+                    BuildKit.Box("Speaker", root, new Vector3(stage.xMax - 0.4f, top + 0.6f, stage.yMax - 0.9f), new Vector3(0.6f, 1.2f, 0.6f), speaker);
+                    BuildKit.Cylinder("MicStand", root, new Vector3(stage.center.x - 0.9f, top + 0.6f, stage.yMin + 0.4f), 0.03f, 1.2f, BuildKit.Plain("chrome", new Color(0.7f, 0.7f, 0.72f), 0.8f, 1f));
+                    BuildKit.Sphere("Mic", root, new Vector3(stage.center.x - 0.9f, top + 1.25f, stage.yMin + 0.4f), 0.08f, BuildKit.Plain("black", Color.black));
                     break;
 
                 case Room.ExitLobby:
                     for (int i = 0; i < 3; i++)
                     {
-                        var post = new Vector2(10.5f + i * 1.2f, -12.2f);
+                        var post = new Vector2(13.4f + i * 1.2f, -14.6f);
                         LevelProps.Place(room, post, 0.2f, () => BuildKit.Cylinder("Stanchion", root, new Vector3(post.x, 0.45f, post.y), 0.08f, 0.9f, BuildKit.Plain("brass", new Color(0.8f, 0.6f, 0.25f), 0.7f, 0.9f)));
                     }
-                    LevelProps.Place(room, new Vector2(17.3f, -16.3f), 0.5f, () =>
+                    LevelProps.Place(room, new Vector2(19.4f, -16.4f), 0.5f, () =>
                     {
-                        BuildKit.Box("LostAndFound", root, new Vector3(17.3f, 0.3f, -16.3f), new Vector3(0.7f, 0.6f, 0.5f), BuildKit.Surface("cardboard", () => ProceduralTextures.Grimy(new Color(0.55f, 0.42f, 0.25f), 0.2f), 0.1f));
-                        LevelProps.SpareHead(root, new Vector3(17.3f, 0.75f, -16.3f), 200f, 0.35f);
+                        BuildKit.Box("LostAndFound", root, new Vector3(19.4f, 0.3f, -16.4f), new Vector3(0.7f, 0.6f, 0.5f), BuildKit.Surface("cardboard", () => ProceduralTextures.Grimy(new Color(0.55f, 0.42f, 0.25f), 0.2f), 0.1f));
+                        LevelProps.SpareHead(root, new Vector3(19.4f, 0.75f, -16.4f), 200f, 0.35f);
                     });
                     break;
             }

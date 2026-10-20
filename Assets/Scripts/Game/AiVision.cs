@@ -127,7 +127,7 @@ namespace NightShift.Game
             }
         }
 
-        /// <summary>Just above the floor under the point (the floors and the stairs are at different heights).</summary>
+        /// <summary>Just above the floor under the point.</summary>
         private static Vector3 Flat(Vector3 point) => point + Vector3.up * 0.07f;
 
         /// <summary>A flat fan on the floor, one unit long, opening <paramref name="halfAngle"/> to each side.</summary>

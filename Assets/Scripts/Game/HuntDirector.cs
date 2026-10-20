@@ -188,7 +188,8 @@ namespace NightShift.Game
                 Assets = ScriptableObject.CreateInstance<GameAssets>();
                 Debug.LogWarning("Resources/GameAssets.asset is missing: run Night Shift/Create Game Scene.");
             }
-            settings = new HuntSettings { ResolveCatches = false };
+            // In 3D the body really walks; the brain decides again when he arrives.
+            settings = new HuntSettings { ResolveCatches = false, TravelTime = false };
             State = new HuntState(settings, System.Environment.TickCount);
             if (Assets.PolicyWeights != null)
             {
@@ -214,12 +215,11 @@ namespace NightShift.Game
             call = PhoneCall.Create(transform, Audio, Assets);
             Exterior = Exterior.Build(transform, Assets);
             intro = IntroCinematic.Create(this, Exterior);
-            // Objective objects: the breaker in the storage room, the keycard lockbox and the tape in the office.
-            // The breaker on the storage's back wall; the keycard lockbox and the tape upstairs in the security office.
-            const float upstairs = PizzeriaLayout.UpperFloor;
-            breaker = ObjectiveItem.Create(this, ObjectiveStep.Breaker, Level.Root, new Vector3(19.2f, 1.4f, 18.68f), 180f, 3f);
-            keycard = ObjectiveItem.Create(this, ObjectiveStep.Keycard, Level.Root, new Vector3(-15.6f, upstairs + 1.3f, 18.68f), 180f, 0f);
-            tape = ObjectiveItem.Create(this, ObjectiveStep.Tape, Level.Root, new Vector3(-17.1f, upstairs + 0.83f, 15f), 20f, 0f);
+            // Objective objects: the breaker on the storage's south wall, the keycard lockbox on the
+            // office's north wall and the tape on the office table.
+            breaker = ObjectiveItem.Create(this, ObjectiveStep.Breaker, Level.Root, new Vector3(-20.4f, 1.4f, 2.32f), 0f, 3f);
+            keycard = ObjectiveItem.Create(this, ObjectiveStep.Keycard, Level.Root, new Vector3(-17f, 1.3f, -9.32f), 180f, 0f);
+            tape = ObjectiveItem.Create(this, ObjectiveStep.Tape, Level.Root, PizzeriaLayout.SpotPosition(Room.Office, 1) + new Vector3(0.4f, 0.86f, 0.1f), 20f, 0f);
             CreateBrain();
             UI = GameUI.Create(this);
 #if UNITY_EDITOR
@@ -237,7 +237,9 @@ namespace NightShift.Game
 
         private void CreateBrain()
         {
-            if (Assets.FreddyModel != null)
+            // The exported weights travel with the model: if they do not fit this map, neither does the model.
+            bool modelFits = Assets.PolicyWeights == null || probe != null;
+            if (Assets.FreddyModel != null && modelFits)
             {
                 var brain = new GameObject("FreddyBrain");
                 brain.transform.SetParent(transform, false);
@@ -248,7 +250,9 @@ namespace NightShift.Game
             else
             {
                 Policy = new ScriptedFreddyPolicy(System.Environment.TickCount);
-                BrainDescription = "scripted baseline (no trained model found)";
+                BrainDescription = Assets.FreddyModel != null
+                    ? "scripted baseline (the model " + Assets.FreddyModel.name + " was trained on another map)"
+                    : "scripted baseline (no trained model found)";
                 probe = null;
             }
         }
@@ -265,9 +269,9 @@ namespace NightShift.Game
             Player.CameraLocked = true;
             // The menu looks at Freddy, asleep on the stage, from the audience.
             Freddy.ResetTo(PizzeriaLayout.FreddyStart, PizzeriaLayout.FreddyFacing);
-            Player.Head.position = new Vector3(-12.2f, 1.55f, -12.3f);
+            Player.Head.position = new Vector3(5.4f, 1.55f, 4.2f);
             // Aim a little to his side so he stands right of the menu buttons.
-            Player.Head.LookAt(PizzeriaLayout.FreddyStart + new Vector3(0f, 1.5f, -2.2f));
+            Player.Head.LookAt(PizzeriaLayout.FreddyStart + new Vector3(-1.8f, 1.3f, 0f));
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
             Audio.PlayMenuMusic(true);
@@ -764,8 +768,8 @@ namespace NightShift.Game
             int first = (Night - 1) * 2;
             var rooms = new List<Room>
             {
-                Room.Office, Room.Manager, Room.Lounge, Room.Parts, Room.Maintenance, Room.UpperHall,
-                Room.BackHall, Room.Kitchen, Room.DiningHall, Room.Arcade, Room.Storage, Room.PartyRoom
+                Room.Office, Room.Parts, Room.Restrooms, Room.BackHall, Room.Kitchen,
+                Room.DiningHall, Room.MainHall, Room.Arcade, Room.Storage, Room.PartyRoom
             };
             for (int i = first; i < first + 2 && i < StoryData.Notes.Length; i++)
             {

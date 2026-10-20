@@ -91,7 +91,6 @@ namespace NightShift.Game
 
             director.StartNight();
             yield return new WaitForSeconds(1f);
-            const float up = PizzeriaLayout.UpperFloor;
             Teleport(PizzeriaLayout.PlayerStart, new Vector3(-1f, 0f, 0.2f));
             yield return new WaitForSeconds(7f);
             yield return Shot("02b-call");
@@ -108,7 +107,7 @@ namespace NightShift.Game
                 {
                     Quaternion shelf = PizzeriaLayout.FuseFacing((Room)room);
                     Vector3 stand = fuse.transform.position + shelf * Vector3.forward * 1.6f;
-                    Teleport(new Vector3(stand.x, PizzeriaLayout.Elevation((Room)room), stand.z), -(shelf * Vector3.forward));
+                    Teleport(new Vector3(stand.x, 0f, stand.z), -(shelf * Vector3.forward));
                     director.Player.Flashlight.enabled = false;
                     yield return new WaitForSeconds(0.8f);
                     yield return Shot("02f-fuse-dark");
@@ -118,26 +117,25 @@ namespace NightShift.Game
                     break;
                 }
             }
-            // Upstairs.
-            yield return Pose(new Vector3(-11f, up, 15f), new Vector3(-1f, 0f, 0.2f), "02-office");
-            yield return Pose(new Vector3(-1f, up, 14f), new Vector3(-1f, 0f, 1f), "02d-manager");
-            yield return Pose(new Vector3(3f, up, 14f), new Vector3(1f, 0f, 1f), "02e-lounge");
-            yield return Pose(new Vector3(-12f, up, 9.5f), new Vector3(1f, 0f, 0f), "07-upper-hall");
-            yield return Pose(new Vector3(-11f, up, 4.5f), new Vector3(-1f, 0f, -0.6f), "07b-parts");
-            yield return Pose(new Vector3(11.5f, up, 4.5f), new Vector3(1f, 0f, -0.8f), "07c-maintenance");
-            // The dining hall from the top of its stairs, then from the floor.
-            yield return Pose(new Vector3(5.2f, up, 4.6f), new Vector3(-0.6f, -0.45f, -1f), "03-dining-balcony");
-            yield return Pose(new Vector3(2f, 0f, -7f), new Vector3(-0.3f, 0.25f, 1f), "03b-dining-stairs");
-            // Ground floor.
-            yield return Pose(new Vector3(11f, 0f, -4f), new Vector3(1f, 0f, 1.2f), "04-arcade");
-            yield return Pose(new Vector3(-9.5f, 0f, -9.5f), new Vector3(-1f, 0.05f, -0.35f), "05-stage");
-            yield return Pose(new Vector3(-11f, 0f, 3f), new Vector3(-1f, 0f, -0.6f), "06-kitchen");
-            yield return Pose(new Vector3(-12f, 0f, 9.5f), new Vector3(1f, 0f, 0f), "06b-back-hall");
-            yield return Pose(new Vector3(16.5f, 0f, -9f), new Vector3(-0.6f, 0f, -1f), "08-exit");
-            yield return Pose(new Vector3(13f, 0f, -14.2f), new Vector3(0f, 0f, -1f), "08b-front-doors");
-            yield return Pose(new Vector3(-5f, 0f, -18f), new Vector3(1f, 0f, 0.8f), "08c-party-room");
-            yield return Pose(new Vector3(21f, 0f, 9f), new Vector3(-1f, 0.35f, 1f), "09-storage");
-            yield return Pose(new Vector3(-6f, up, 16f), new Vector3(-1f, 0f, 0f), "09b-door");
+            // Staff wing.
+            yield return Pose(new Vector3(-17f, 0f, -14.5f), new Vector3(-0.5f, 0f, 1f), "02-office");
+            yield return Pose(new Vector3(-17f, 0f, -11.5f), new Vector3(1f, 0f, 0f), "09b-door");
+            yield return Pose(new Vector3(-9f, 0f, -13f), new Vector3(-1f, 0f, 1f), "07b-parts");
+            yield return Pose(new Vector3(-3f, 0f, -8f), new Vector3(-0.5f, 0f, -1f), "07c-restrooms");
+            yield return Pose(new Vector3(-21f, 0f, -1.5f), new Vector3(1f, 0f, 0f), "06b-back-hall");
+            yield return Pose(new Vector3(-6f, 0f, 3f), new Vector3(-1f, 0f, 0.6f), "06-kitchen");
+            yield return Pose(new Vector3(-17f, 0f, 3f), new Vector3(-1f, 0.2f, 1f), "09-storage");
+            // Between the wings.
+            yield return Pose(new Vector3(-4.5f, 0f, 6f), new Vector3(1f, 0f, 0f), "03b-kitchen-pass");
+            yield return Pose(new Vector3(-2.5f, 0f, -1.5f), new Vector3(1f, 0f, 0f), "07d-service-corridor");
+            // Public wing.
+            yield return Pose(new Vector3(3f, 0f, 3f), new Vector3(0.6f, 0.1f, 1f), "03-dining");
+            yield return Pose(new Vector3(7.5f, 0f, 5f), new Vector3(0f, 0.1f, 1f), "05-stage");
+            yield return Pose(new Vector3(16f, 0f, 3f), new Vector3(1f, 0f, 1f), "04-arcade");
+            yield return Pose(new Vector3(5f, 0f, -1.5f), new Vector3(1f, 0f, 0f), "07-main-hall");
+            yield return Pose(new Vector3(9f, 0f, -8f), new Vector3(-1f, 0f, -1f), "08c-party-room");
+            yield return Pose(new Vector3(13f, 0f, -10f), new Vector3(0.5f, 0f, -1f), "08-exit");
+            yield return Pose(new Vector3(16f, 0f, -15.8f), new Vector3(0f, 0f, -1f), "08b-front-doors");
             director.Player.EnterHidingSpot(director.Level.Spot(Room.Storage, 1));
             yield return new WaitForSeconds(1.5f);
             yield return Shot("09c-inside-cabinet");
@@ -153,7 +151,7 @@ namespace NightShift.Game
             yield return Shot("10-inside-locker");
             director.Player.LeaveHidingSpot();
 
-            // Air ducts: from the office into the Parts room, then down the shaft onto the stage.
+            // Air ducts: from the office into the storage, and from the parts room into the dining hall.
             foreach (VentGrate vent in director.Level.Vents)
             {
                 if (vent.EndA && (vent.Duct.A == Room.Office || vent.Duct.A == Room.Parts))
@@ -177,23 +175,23 @@ namespace NightShift.Game
 
             // Lure test: throw a party horn into the dining hall and see whether the brain goes there.
             director.Player.AddLure();
-            Teleport(new Vector3(-3f, 0f, -6f), new Vector3(0f, 0.2f, 1f));
+            Teleport(new Vector3(0f, 0f, 6f), new Vector3(1f, 0.2f, 0f));
             yield return null;
-            ThrownLure.Throw(director, new Vector3(-3f, 1.5f, -5.5f), new Vector3(0f, 0f, 1f));
+            ThrownLure.Throw(director, new Vector3(1f, 1.5f, 6f), new Vector3(1f, 0f, 0f));
             yield return new WaitForSeconds(1f);
             Debug.Log("CAPTURE lure: heard=" + (director.LastHeard.HasValue ? director.LastHeard.Value.ToString() : "-"));
 
-            // Door test: close the door between the Manager's office and the security office.
+            // Door test: close the door between the security office and the parts room.
             foreach (Door door in Object.FindObjectsByType<Door>(FindObjectsSortMode.None))
             {
-                if (Vector3.Distance(door.transform.position, new Vector3(-8f, up, 16f)) < 0.5f)
+                if (Vector3.Distance(door.transform.position, new Vector3(-16f, 0f, -11.5f)) < 0.5f)
                 {
                     door.Use(director.Player);
                 }
             }
 
             // Stand in the Storage and watch the brain work, with the AI inspector open.
-            Teleport(new Vector3(19.5f, 0f, 12f), new Vector3(-1f, 0f, -0.3f));
+            Teleport(new Vector3(-19f, 0f, 6f), new Vector3(1f, 0f, -0.3f));
             director.UI.ToggleInspector();
             string last = "";
             int decisions = 0;
@@ -225,12 +223,12 @@ namespace NightShift.Game
             }
 
             // Chase test (the case that used to get stuck in doorways): the player waits in the
-            // Storage and Freddy stands in the Arcade looking up the corridor at them.
+            // Arcade and Freddy stands in the Main Hall looking up the corridor at them.
             if (director.Phase != GamePhase.Caught)
             {
                 director.UI.ToggleInspector();
-                Teleport(new Vector3(18f, 0f, 11f), new Vector3(0f, 0f, -1f));
-                director.Freddy.ResetTo(new Vector3(16f, 0f, 2f), 0f);
+                Teleport(new Vector3(19f, 0f, 5f), new Vector3(0f, 0f, -1f));
+                director.Freddy.ResetTo(new Vector3(19f, 0f, -1.5f), 0f);
                 director.Freddy.WakeUp();
                 float start = Time.time;
                 while (director.Phase != GamePhase.Caught && Time.time < start + 12f)
@@ -277,7 +275,7 @@ namespace NightShift.Game
 
         /// <summary>
         /// Bug audit of the map: the player's real body walks every connection of the room graph
-        /// (both ways: doorways, corridors, stairs) and crawls every duct; anything that blocks it is
+        /// (both ways: doorways and corridors) and crawls every duct; anything that blocks it is
         /// logged with a screenshot. Run with "-capture folder -audit".
         /// </summary>
         private IEnumerator WalkAudit()
