@@ -173,6 +173,9 @@ namespace NightShift.Game
         /// <summary>True while the browser has not captured the mouse yet (the HUD asks for a click).</summary>
         public bool NeedsClickToLook { get; private set; }
 
+        /// <summary>Editor only: when true, pressing Play goes straight into night 1 (no menu, no intro). Set to false for the normal flow.</summary>
+        public static readonly bool QuickStartInEditor = true;
+
         public void SkipCall() => call.Skip();
 
         public void SkipIntro() => intro.Skip();
@@ -197,10 +200,10 @@ namespace NightShift.Game
             Level = LevelBuilder.Build(transform, Assets);
             Player = PlayerController.Create(this, PizzeriaLayout.PlayerStart, PizzeriaLayout.PlayerFacing);
             Freddy = FreddyBody.Create(this, Assets.FreddyPrefab, PizzeriaLayout.FreddyStart, PizzeriaLayout.FreddyFacing);
-            Material doorWood = BuildKit.Surface("doorWood", () => ProceduralTextures.Planks(new Color(0.42f, 0.16f, 0.12f)), 0.35f);
+            Material doorSteel = BuildKit.Surface("doorSteel", () => ProceduralTextures.SteelPanel(new Color(0.42f, 0.09f, 0.08f)), 0.4f, 0.35f);
             foreach ((Room _, Room _, Vector3 door, bool alongX) in PizzeriaLayout.Doorways())
             {
-                Door.Create(this, Level.Root, door, alongX, doorWood);
+                Door.Create(this, Level.Root, door, alongX, doorSteel);
             }
             AiVision.Create(this);
             call = PhoneCall.Create(transform, Audio, Assets);
@@ -212,6 +215,15 @@ namespace NightShift.Game
             tape = ObjectiveItem.Create(this, ObjectiveStep.Tape, Level.Root, new Vector3(-13.4f, 0.92f, 14.4f), 20f, 0f);
             CreateBrain();
             UI = GameUI.Create(this);
+#if UNITY_EDITOR
+            if (QuickStartInEditor)
+            {
+                // Testing shortcut: skip the menu and the intro and drop straight into night 1.
+                StartNight(1);
+                CaptureMode.AttachIfRequested(this);
+                return;
+            }
+#endif
             ShowMenu();
             CaptureMode.AttachIfRequested(this);
         }

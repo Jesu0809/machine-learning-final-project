@@ -133,6 +133,41 @@ namespace NightShift.Game
             return Build(color, height, 2f);
         }
 
+        /// <summary>Painted steel door panel: recessed seams with rivets, brushed streaks, worn paint
+        /// that chips down to bare steel (more along the seams and rivets), and rust.</summary>
+        public static Surface SteelPanel(Color paint)
+        {
+            Color steel = new Color(0.4f, 0.42f, 0.43f);
+            var color = new Color[Size * Size];
+            var height = new float[Size * Size];
+            const int panel = 128;
+            for (int y = 0; y < Size; y++)
+            {
+                for (int x = 0; x < Size; x++)
+                {
+                    int px = x % panel;
+                    int py = y % panel;
+                    bool seam = px < 3 || py < 3;
+                    int rx = Mathf.Min(px, panel - 1 - px) - 10;
+                    int ry = Mathf.Min(py, panel - 1 - py) - 10;
+                    bool rivet = rx >= -2 && rx <= 2 && ry >= -2 && ry <= 2 && rx * rx + ry * ry <= 5;
+                    float brushed = Mathf.PerlinNoise(x * 0.02f, y * 0.7f);
+                    float rust = Mathf.Clamp01(Fbm(x + 300, y, 0.02f) - 0.55f) * 2.2f;
+                    float shade = 0.8f + brushed * 0.3f + (Hash(x, y) - 0.5f) * 0.05f;
+                    float edge = seam || px < 8 || py < 8 ? 0.25f : 0f;
+                    float wear = Fbm(x + 700, y, 0.035f) + edge + (rivet ? 0.3f : 0f);
+                    float chip = Mathf.Clamp01((wear - 0.68f) * 6f);
+                    Color c = paint * shade;
+                    c = Color.Lerp(c, steel * (0.8f + brushed * 0.4f), chip);
+                    c = Color.Lerp(c, new Color(0.3f, 0.16f, 0.08f), rust * 0.6f);
+                    c = seam ? c * 0.35f : c;
+                    color[y * Size + x] = c;
+                    height[y * Size + x] = seam ? 0f : rivet ? 1.4f : 1f - rust * 0.2f + brushed * 0.05f;
+                }
+            }
+            return Build(color, height, 2f);
+        }
+
         public static Surface CeilingTiles()
         {
             var color = new Color[Size * Size];

@@ -18,6 +18,16 @@ namespace NightShift.Game
         public const float CrouchHeight = 1.1f;
         public const float InteractDistance = 2.3f;
 
+        /// <summary>Crouching while running slides: a fast burst that fades into crouch speed.</summary>
+        public const float SlideDuration = 1f;
+        public const float SlideStartSpeed = 11f;
+        public const float SlideCooldown = 0.6f;
+        /// <summary>Stamina (0 to 1) spent shoving a closed door open at speed: 5% of the maximum.</summary>
+        public const float DoorBumpStamina = 0.05f;
+        /// <summary>Shoving a door open also slows the player: 25% less speed for half a second.</summary>
+        public const float DoorBumpSlow = 0.25f;
+        public const float DoorBumpSlowSeconds = 0.5f;
+
         /// <summary>Wider view while hidden, so the room outside the vents stays readable.</summary>
         private const float HiddenFieldOfView = 82f;
         private const float FieldOfView = 70f;
@@ -37,6 +47,13 @@ namespace NightShift.Game
         private int noiseSinceSample;
         private float breathBlockedUntil;
 
+        // Sliding: direction is locked when the slide starts.
+        private float slideTimer;
+        private Vector3 slideDirection;
+        private float slideCooldownUntil;
+        private bool wasRunning;
+        private float doorSlowUntil;
+
         // Hiding: the camera sits inside the spot and can only look around a little.
         private float hideYaw;
         private float hidePitch;
@@ -54,6 +71,7 @@ namespace NightShift.Game
         public Transform Head => head;
         public bool Running { get; private set; }
         public bool Crouching { get; private set; }
+        public bool Sliding { get; private set; }
         public bool Moving { get; private set; }
         public HidingSpot HiddenIn { get; private set; }
 
@@ -155,6 +173,7 @@ namespace NightShift.Game
             HiddenIn = spot;
             spot.Occupied = true;
             body.enabled = false;
+            Sliding = false;
             // Nobody hides with the flashlight on; it comes back on when leaving.
             flashlightBeforeHiding = Flashlight.enabled;
             Flashlight.enabled = false;
@@ -198,6 +217,8 @@ namespace NightShift.Game
             yaw = facing;
             pitch = 0f;
             Crouching = false;
+            Sliding = false;
+            wasRunning = false;
             Controls.ResetToggles();
             Flashlight.enabled = true;
             noiseSinceSample = 0;
@@ -254,27 +275,63 @@ namespace NightShift.Game
             HoldingBreath = false;
             Breath = Mathf.MoveTowards(Breath, 1f, Time.deltaTime * 0.15f);
 
-            Crouching = Controls.Crouch;
+            Vector2 input = Controls.Move;
+
+            // Crouch pressed while running: slide in the current direction.
+            if (!Sliding && wasRunning && Controls.CrouchPressed && body.isGrounded && Time.time >= slideCooldownUntil)
+            {
+                Sliding = true;
+                slideTimer = SlideDuration;
+                Vector3 dir = Quaternion.Euler(0f, yaw, 0f) * new Vector3(input.x, 0f, input.y);
+                slideDirection = dir.sqrMagnitude > 0.001f ? dir.normalized : transform.forward;
+            }
+            if (Sliding)
+            {
+                slideTimer -= Time.deltaTime;
+                if (slideTimer <= 0f || !body.isGrounded)
+                {
+                    Sliding = false;
+                    slideCooldownUntil = Time.time + SlideCooldown;
+                }
+            }
+
+            // Crashing into a closed door while running or sliding shoves it open (the slide goes on) and costs a little stamina.
+            if (Sliding || wasRunning)
+            {
+                Vector3 heading = Sliding ? slideDirection : Quaternion.Euler(0f, yaw, 0f) * new Vector3(input.x, 0f, input.y);
+                Door bumped = heading.sqrMagnitude > 0.001f ? Door.ClosedNear(transform.position + heading.normalized * 0.6f, 0.5f) : null;
+                if (bumped != null && bumped.Bump(this))
+                {
+                    Stamina = Mathf.Max(0f, Stamina - DoorBumpStamina);
+                    doorSlowUntil = Time.time + DoorBumpSlowSeconds;
+                }
+            }
+
+            Crouching = Controls.Crouch || Sliding;
             float targetHeight = Crouching ? CrouchHeight : StandHeight;
             body.height = Mathf.MoveTowards(body.height, targetHeight, Time.deltaTime * 4f);
             body.center = new Vector3(0f, body.height * 0.5f, 0f);
 
-            Vector2 input = Controls.Move;
-
             Running = !Crouching && !Winded && Stamina > 0f && Controls.Sprint && input.y > 0.1f;
+            wasRunning = Running;
             UpdateStamina();
-            float speed = Crouching ? CrouchSpeed : Running ? RunSpeed : WalkSpeed;
+            float speed = Sliding ? Mathf.Lerp(CrouchSpeed, SlideStartSpeed, slideTimer / SlideDuration)
+                        : Crouching ? CrouchSpeed : Running ? RunSpeed : WalkSpeed;
+            if (Time.time < doorSlowUntil)
+            {
+                speed *= 1f - DoorBumpSlow;
+            }
             Quaternion facing = Quaternion.Euler(0f, yaw, 0f);
-            Vector3 move = facing * new Vector3(input.x, 0f, input.y) * speed;
+            Vector3 move = Sliding ? slideDirection * speed : facing * new Vector3(input.x, 0f, input.y) * speed;
 
             verticalSpeed = body.isGrounded ? -1f : verticalSpeed - 9.81f * Time.deltaTime;
             move.y = verticalSpeed;
             body.Move(move * Time.deltaTime);
 
-            Moving = input.sqrMagnitude > 0.01f;
+            Moving = input.sqrMagnitude > 0.01f || Sliding;
             if (Moving)
             {
-                MakeNoise(Crouching ? 0 : Running ? 2 : 1);
+                MakeNoise(Sliding ? 2 : Crouching ? 0 : Running ? 2 : 1);
                 bobPhase += Time.deltaTime * speed * 2.2f;
                 stepDistance += speed * Time.deltaTime;
                 float stride = Running ? 2.0f : 1.6f;

@@ -112,6 +112,10 @@ namespace NightShift.Game
 
         public static bool Crouch => (Keys != null && (Keys.leftCtrlKey.isPressed || Keys.cKey.isPressed)) || crouchToggled;
 
+        /// <summary>True only on the frame crouch is pressed (used to start a slide).</summary>
+        public static bool CrouchPressed => (Keys != null && (Keys.leftCtrlKey.wasPressedThisFrame || Keys.cKey.wasPressedThisFrame))
+                                            || (Pad != null && Pad.buttonEast.wasPressedThisFrame);
+
         public static bool UsePressed => (Keys != null && Keys.eKey.wasPressedThisFrame) || (Pad != null && Pad.buttonSouth.wasPressedThisFrame);
 
         public static bool UseHeld => (Keys != null && Keys.eKey.isPressed) || (Pad != null && Pad.buttonSouth.isPressed);

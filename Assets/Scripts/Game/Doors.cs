@@ -143,6 +143,19 @@ namespace NightShift.Game
             director.Audio.PlayAt(director.Assets.LockerDoor, transform.position, Closed ? 0.9f : 0.5f, 0.7f);
         }
 
+        /// <summary>The player crashes into the closed door (running or sliding): it is pushed open, loudly. True if it was.</summary>
+        public bool Bump(PlayerController player)
+        {
+            if (Broken || !Closed)
+            {
+                return false;
+            }
+            Closed = false;
+            player.MakeNoise(3);
+            director.Audio.PlayAt(director.Assets.LockerDoor, transform.position, 1f, 0.6f);
+            return true;
+        }
+
         /// <summary>One of Freddy's blows; the last one breaks the door.</summary>
         public void Hit(bool last)
         {
