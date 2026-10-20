@@ -405,7 +405,7 @@ namespace NightShift.Game
         /// </summary>
         private float RageScale(bool chasing)
         {
-            int level = director.FusesCollected + (director.Level.Exit.Progress > 0f ? 1 : 0);
+            int level = director.FusesCollected + (director.ActiveExit.Progress > 0f ? 1 : 0);
             return (1f + level * (chasing ? 0.06f : 0.1f)) * NightSpeed;
         }
 

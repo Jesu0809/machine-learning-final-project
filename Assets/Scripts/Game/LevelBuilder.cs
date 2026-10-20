@@ -11,7 +11,14 @@ namespace NightShift.Game
         public readonly HidingSpot[][] Spots = new HidingSpot[HuntMap.RoomCount][];
         public readonly FusePickup[] Fuses = new FusePickup[HuntMap.RoomCount];
         public readonly List<FlickerLight>[] Lamps = new List<FlickerLight>[HuntMap.RoomCount];
+        /// <summary>The front doors' panel (the intro opens these doors).</summary>
         public ExitPanel Exit;
+        /// <summary>The loading door's panel, in the storage.</summary>
+        public ExitPanel BackExit;
+        /// <summary>EXIT signs along the way to each exit; only tonight's are switched on.</summary>
+        public readonly List<(Room exit, GameObject sign)> ExitSigns = new List<(Room, GameObject)>();
+
+        public ExitPanel ExitOf(Room exit) => exit == HuntMap.Exit ? Exit : BackExit;
         public readonly List<VentGrate> Vents = new List<VentGrate>();
 
         public HidingSpot Spot(Room room, int index) => Spots[(int)room][index];
@@ -42,6 +49,7 @@ namespace NightShift.Game
             var level = new Level { Root = new GameObject("Pizzeria").transform };
             level.Root.SetParent(parent, false);
             var random = new System.Random(1987);
+            LevelProps.ExitSigns.Clear();
 
             for (int i = 0; i < HuntMap.RoomCount; i++)
             {
@@ -68,7 +76,9 @@ namespace NightShift.Game
             }
             BuildCorridors(level, random);
             BuildDucts(level);
-            level.Exit = BuildExit(level.Root);
+            level.Exit = BuildExit(level.Root, HuntMap.Exit);
+            level.BackExit = BuildExit(level.Root, Room.Storage);
+            level.ExitSigns.AddRange(LevelProps.ExitSigns);
             return level;
         }
 
@@ -643,14 +653,25 @@ namespace NightShift.Game
             sparks.Play();
         }
 
-        private static ExitPanel BuildExit(Transform root)
+        /// <summary>
+        /// A door out of the building with its EXIT sign and power panel, built in the door's own
+        /// frame (x along the wall, z into the building). The front doors of an old family
+        /// restaurant are glass in red frames with the logo and a CLOSED sign; the loading door in
+        /// the storage is plain steel. Both swing out when the power comes back.
+        /// </summary>
+        private static ExitPanel BuildExit(Transform root, Room exit)
         {
-            Vector3 door = PizzeriaLayout.ExitDoor;
-            // The front doors of an old family restaurant: two glass doors in red frames, a brass
-            // push bar, the logo on the glass and a CLOSED sign hanging inside. They swing out
-            // when the power comes back.
-            Material frameRed = BuildKit.Plain("frontDoorFrame", new Color(0.45f, 0.05f, 0.05f), 0.55f, 0.3f);
-            Material glass = BuildKit.Stain("frontDoorGlass", Texture2D.whiteTexture, new Color(0.08f, 0.1f, 0.12f, 0.42f));
+            bool front = exit == HuntMap.Exit;
+            Vector3 inward = PizzeriaLayout.ExitInward(exit);
+            var frame = new GameObject(front ? "FrontDoors" : "LoadingDoor").transform;
+            frame.SetParent(root, false);
+            frame.localPosition = PizzeriaLayout.ExitDoorOf(exit);
+            frame.localRotation = Quaternion.LookRotation(inward);
+
+            Material frameRed = front ? BuildKit.Plain("frontDoorFrame", new Color(0.45f, 0.05f, 0.05f), 0.55f, 0.3f)
+                                      : BuildKit.Plain("loadingDoorFrame", new Color(0.22f, 0.24f, 0.25f), 0.5f, 0.6f);
+            Material glass = front ? BuildKit.Stain("frontDoorGlass", Texture2D.whiteTexture, new Color(0.08f, 0.1f, 0.12f, 0.42f))
+                                   : BuildKit.Surface("doorSteel", () => ProceduralTextures.SteelPanel(new Color(0.42f, 0.09f, 0.08f)), 0.4f, 0.35f);
             Material brass = BuildKit.Plain("brass", new Color(0.62f, 0.48f, 0.24f), 0.75f, 1f);
             Material logo = BuildKit.Picture("doorLogo", ProceduralTextures.Sign("FREDDY'S", new Color(1f, 0.85f, 0.4f), new Color(0.35f, 0.04f, 0.04f)), 0f);
             Material closed = BuildKit.Picture("closedSign", ProceduralTextures.Sign("CLOSED", new Color(0.8f, 0.05f, 0.05f), new Color(0.92f, 0.9f, 0.84f)), 0f);
@@ -660,27 +681,30 @@ namespace NightShift.Game
             for (int i = 0; i < 2; i++)
             {
                 float side = i == 0 ? -1f : 1f;
-                hinges[i] = new GameObject("FrontDoorHinge").transform;
-                hinges[i].SetParent(root, false);
-                hinges[i].localPosition = new Vector3(door.x + side * leafWidth, 0f, door.z);
+                hinges[i] = new GameObject("DoorHinge").transform;
+                hinges[i].SetParent(frame, false);
+                hinges[i].localPosition = new Vector3(side * leafWidth, 0f, 0f);
                 Transform h = hinges[i];
                 float c = -side * leafWidth * 0.5f;   // leaf center, from the hinge
                 BuildKit.Box("StileHinge", h, new Vector3(-side * 0.05f, height * 0.5f, 0f), new Vector3(0.1f, height, 0.07f), frameRed);
                 BuildKit.Box("StileLock", h, new Vector3(-side * (leafWidth - 0.05f), height * 0.5f, 0f), new Vector3(0.1f, height, 0.07f), frameRed);
                 BuildKit.Box("RailTop", h, new Vector3(c, height - 0.06f, 0f), new Vector3(leafWidth, 0.12f, 0.07f), frameRed);
                 BuildKit.Box("RailBottom", h, new Vector3(c, 0.16f, 0f), new Vector3(leafWidth, 0.32f, 0.07f), frameRed);
-                BuildKit.Box("Glass", h, new Vector3(c, height * 0.5f + 0.1f, 0f), new Vector3(leafWidth - 0.2f, height - 0.44f, 0.02f), glass);
+                BuildKit.Box("Glass", h, new Vector3(c, height * 0.5f + 0.1f, 0f), new Vector3(leafWidth - 0.2f, height - 0.44f, front ? 0.02f : 0.05f), glass);
                 BuildKit.Box("PushBar", h, new Vector3(c, 1.05f, 0f), new Vector3(leafWidth - 0.3f, 0.05f, 0.16f), brass, 1f, false);
-                BuildKit.Quad("LogoOut", h, new Vector3(c, 1.62f, -0.02f), new Vector2(0.62f, 0.12f), 180f, logo);
-                BuildKit.Quad("LogoIn", h, new Vector3(c, 1.62f, 0.02f), new Vector2(0.62f, 0.12f), 0f, logo);
-                if (i == 1)
+                if (front)
                 {
-                    BuildKit.Quad("ClosedIn", h, new Vector3(c, 1.95f, 0.05f), new Vector2(0.5f, 0.16f), 0f, closed);
-                    BuildKit.Quad("ClosedOut", h, new Vector3(c, 1.95f, 0.045f), new Vector2(0.5f, 0.16f), 180f, closed);
+                    BuildKit.Quad("LogoOut", h, new Vector3(c, 1.62f, -0.02f), new Vector2(0.62f, 0.12f), 180f, logo);
+                    BuildKit.Quad("LogoIn", h, new Vector3(c, 1.62f, 0.02f), new Vector2(0.62f, 0.12f), 0f, logo);
+                    if (i == 1)
+                    {
+                        BuildKit.Quad("ClosedIn", h, new Vector3(c, 1.95f, 0.05f), new Vector2(0.5f, 0.16f), 0f, closed);
+                        BuildKit.Quad("ClosedOut", h, new Vector3(c, 1.95f, 0.045f), new Vector2(0.5f, 0.16f), 180f, closed);
+                    }
                 }
             }
 
-            var sign = BuildKit.Quad("ExitSign", root, new Vector3(door.x, PizzeriaLayout.DoorHeight + 0.35f, door.z + 0.13f), new Vector2(1.2f, 0.35f), 0f,
+            var sign = BuildKit.Quad("ExitSign", frame, new Vector3(0f, PizzeriaLayout.DoorHeight + 0.35f, 0.13f), new Vector2(1.2f, 0.35f), 0f,
                                      BuildKit.Picture("exitSign", ProceduralTextures.Sign("EXIT", new Color(1f, 0.15f, 0.1f), new Color(0.08f, 0f, 0f)), 3f));
             var signLight = new GameObject("SignLight").AddComponent<Light>();
             signLight.transform.SetParent(sign.transform, false);
@@ -690,7 +714,7 @@ namespace NightShift.Game
             signLight.intensity = 1.5f;
             signLight.color = new Color(1f, 0.12f, 0.08f);
 
-            var panel = BuildKit.Box("ExitPanel", root, new Vector3(door.x + 2.2f, 1.35f, door.z + 0.15f), new Vector3(0.5f, 0.65f, 0.12f),
+            var panel = BuildKit.Box("ExitPanel", frame, new Vector3(2.2f, 1.35f, 0.15f), new Vector3(0.5f, 0.65f, 0.12f),
                                      BuildKit.Surface("fuseBox", null), 1f);
             var lamp = BuildKit.Box("PanelLamp", panel.transform, new Vector3(0f, 0.22f, 0.08f), new Vector3(0.3f, 0.08f, 0.04f), BuildKit.Glow("panelLamp", new Color(0.7f, 0f, 0f), 2f), 1f, false);
             lamp.GetComponent<Renderer>().material = new Material(lamp.GetComponent<Renderer>().sharedMaterial);
@@ -698,7 +722,7 @@ namespace NightShift.Game
             {
                 BuildKit.Box("Socket", panel.transform, new Vector3(-0.15f + i * 0.15f, -0.05f, 0.07f), new Vector3(0.08f, 0.16f, 0.03f), BuildKit.Plain("black", Color.black), 1f, false);
             }
-            return ExitPanel.Attach(panel, hinges, lamp.GetComponent<Renderer>());
+            return ExitPanel.Attach(panel, exit, hinges, lamp.GetComponent<Renderer>());
         }
     }
 }

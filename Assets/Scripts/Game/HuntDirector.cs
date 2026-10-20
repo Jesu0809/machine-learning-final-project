@@ -324,7 +324,16 @@ namespace NightShift.Game
                     Level.Fuses[room].gameObject.SetActive(false);
                 }
             }
-            Level.Exit.ResetPanel();
+            TonightExit = State.ExitRoom;
+            foreach (ExitPanel panel in new[] { Level.Exit, Level.BackExit })
+            {
+                panel.ResetPanel();
+                panel.Active = panel.Room == State.ExitRoom;
+            }
+            foreach ((Room exit, GameObject sign) in Level.ExitSigns)
+            {
+                sign.SetActive(exit == State.ExitRoom);
+            }
             ObjectiveList.Begin(Night);
             breaker.ResetItem();
             keycard.ResetItem();
@@ -630,6 +639,12 @@ namespace NightShift.Game
             return room == DecisionRoom ? "stay and listen" : "go to " + HuntMap.DisplayName(room);
         }
 
+        /// <summary>Tonight's way out (the front doors or the loading door), for the texts.</summary>
+        public static Room TonightExit { get; private set; } = HuntMap.Exit;
+
+        /// <summary>The panel of tonight's exit.</summary>
+        public ExitPanel ActiveExit => Level.ExitOf(State.ExitRoom);
+
         /// <summary>A step of the objectives, in words.</summary>
         public static string Describe(ObjectiveStep step)
         {
@@ -639,7 +654,7 @@ namespace NightShift.Game
                 case ObjectiveStep.Breaker: return "restore the breaker in the Storage";
                 case ObjectiveStep.Keycard: return "take the keycard from the Office lockbox";
                 case ObjectiveStep.Tape: return "take the tape from the Office";
-                default: return "open the exit in the Exit Lobby";
+                default: return TonightExit == HuntMap.Exit ? "open the front doors in the Exit Lobby" : "open the loading door in the Storage";
             }
         }
 
@@ -668,7 +683,7 @@ namespace NightShift.Game
 
         private void CheckEnd()
         {
-            if (Level.Exit.Open && Player.transform.position.z < PizzeriaLayout.ExitLineZ)
+            if (ActiveExit.Open && PizzeriaLayout.IsOutside(State.ExitRoom, Player.transform.position))
             {
                 EndReason = Night >= LastNight ? "You got out with the tape." : "You powered the exit and got out.";
                 Finish(HuntOutcome.Escaped);
@@ -851,7 +866,7 @@ namespace NightShift.Game
 
         public void OnExitOpened()
         {
-            Audio.PlayAt(Assets.ExitDoor, Level.Exit.transform.position, 1f);
+            Audio.PlayAt(Assets.ExitDoor, ActiveExit.transform.position, 1f);
             UI.Toast("The door is open. RUN!");
         }
 
