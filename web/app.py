@@ -23,25 +23,33 @@ POLICY_COLORS = {"trained": "#e0313b", "scripted": "#f2a33a", "random": "#7b8399
 POLICY_LABELS = {"trained": "Trained (PPO)", "scripted": "Scripted rules", "random": "Random"}
 SURVIVORS = ["Novice", "Normal", "Expert"]
 
+R = freddy_brain.ROOM_COUNT
+S = freddy_brain.MAX_SPOTS
+
+
+def _span(first, count):
+    return str(first) if count == 1 else f"{first}-{first + count - 1}"
+
+
 OBSERVATIONS = [
-    {"index": "0-8", "name": "Freddy's room", "encoding": "one-hot"},
-    {"index": "9-17", "name": "Noise memory per room", "encoding": "heard level / 3, fades x0.8 per decision"},
-    {"index": "18-26", "name": "Room where he last saw the player", "encoding": "one-hot (all 0 if never)"},
-    {"index": "27", "name": "Time since he saw the player", "encoding": "decisions / 60"},
-    {"index": "28-36", "name": "Time since he checked each room", "encoding": "decisions / 60"},
-    {"index": "37", "name": "Sees the player right now", "encoding": "0 or 1"},
-    {"index": "38", "name": "Fuses the player has", "encoding": "fuses / 3"},
-    {"index": "39", "name": "Night progress", "encoding": "decision / 240"},
-    {"index": "40-42", "name": "Hiding spots here already searched", "encoding": "0 or 1 each"},
-    {"index": "43", "name": "Sense readiness", "encoding": "1 - cooldown / 30"},
-    {"index": "44-52", "name": "Room where sense last found the player", "encoding": "one-hot"},
-    {"index": "53", "name": "Time since that", "encoding": "decisions / 60"},
+    {"index": _span(0, R), "name": "Freddy's room", "encoding": "one-hot"},
+    {"index": _span(freddy_brain.NOISE, R), "name": "Noise memory per room", "encoding": "heard level / 3, fades x0.8 per decision"},
+    {"index": _span(freddy_brain.LAST_SEEN, R), "name": "Room where he last saw the player", "encoding": "one-hot (all 0 if never)"},
+    {"index": _span(freddy_brain.SINCE_SEEN, 1), "name": "Time since he saw the player", "encoding": "decisions / 60"},
+    {"index": _span(freddy_brain.VISITED, R), "name": "Time since he checked each room", "encoding": "decisions / 60"},
+    {"index": _span(freddy_brain.SEEN_NOW, 1), "name": "Sees the player right now", "encoding": "0 or 1"},
+    {"index": _span(freddy_brain.FUSES_INDEX, 1), "name": "Fuses the player has", "encoding": "fuses / 3"},
+    {"index": _span(freddy_brain.PROGRESS, 1), "name": "Night progress", "encoding": "decision / 240"},
+    {"index": _span(freddy_brain.SEARCHED, S), "name": "Hiding spots here already searched", "encoding": "0 or 1 each"},
+    {"index": _span(freddy_brain.SENSE_READY, 1), "name": "Sense readiness", "encoding": "1 - cooldown / 30"},
+    {"index": _span(freddy_brain.SENSED, R), "name": "Room where sense last found the player", "encoding": "one-hot"},
+    {"index": _span(freddy_brain.SINCE_SENSED, 1), "name": "Time since that", "encoding": "decisions / 60"},
 ]
 
 ACTIONS = [
-    {"index": "0-8", "name": "Go to room i", "detail": "Only connected rooms (action masking). His own room means stay and listen."},
-    {"index": "9-11", "name": "Search hiding spot 0, 1 or 2", "detail": "Only spots that exist in his room. 80% chance to find a hidden player in that spot."},
-    {"index": "12", "name": "Sense", "detail": "Reveals the player's room if their fear is at least 0.5. Recharges for 30 decisions."},
+    {"index": _span(0, R), "name": "Go to room i", "detail": "Only connected rooms (action masking). His own room means stay and listen. A long corridor takes two decisions to walk."},
+    {"index": _span(R, S), "name": "Search hiding spot 0, 1 or 2", "detail": "Only spots that exist in his room. 80% chance to find a hidden player in that spot."},
+    {"index": str(freddy_brain.SENSE), "name": "Sense", "detail": "Reveals the player's room if their fear is at least 0.5. Recharges for 30 decisions."},
 ]
 
 REWARDS = [
@@ -123,11 +131,11 @@ def model_info():
 def brain_decide():
     state = request.get_json(silent=True) or {}
     try:
-        room = int(state.get("freddy_room", 6))
+        room = int(state.get("freddy_room", freddy_brain.FREDDY_START))
         if not 0 <= room < freddy_brain.ROOM_COUNT:
             raise ValueError
     except (TypeError, ValueError):
-        return jsonify({"error": "freddy_room must be a room index 0-8."}), 400
+        return jsonify({"error": f"freddy_room must be a room index 0-{freddy_brain.ROOM_COUNT - 1}."}), 400
     try:
         return jsonify(freddy_brain.decide(state))
     except RuntimeError as error:
@@ -148,7 +156,7 @@ def runs():
 
 @app.route("/api/plots/training")
 def training_plot():
-    run = request.args.get("run", "freddy_v3")
+    run = request.args.get("run", "freddy_v5")
     path = os.path.join(DATA_DIR, "curves", os.path.basename(run) + ".csv")
     if not os.path.isfile(path):
         return jsonify({"error": "Unknown run."}), 404
@@ -207,7 +215,7 @@ def sense_plot():
     axes.set_xticklabels([s["survivor"] for s in sense])
     axes.set_ylim(0, 100)
     axes.set_ylabel("Senses that found the player (%)")
-    axes.set_title("When to use SENSE: learned vs hand-written")
+    axes.set_title("When to use SENSE: learned vs hand-written (measured on freddy_v3)")
     styled_legend(axes)
     return png(figure)
 

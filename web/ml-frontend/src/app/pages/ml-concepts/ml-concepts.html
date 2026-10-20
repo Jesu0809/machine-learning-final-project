@@ -37,8 +37,8 @@
     <h2 class="h5">The agent–environment loop</h2>
     <p class="text-muted mb-3">Every 3.5 seconds of game time, the same cycle:</p>
     <ol class="mb-0">
-      <li><strong>Observe:</strong> Freddy's brain receives 54 numbers: the noises it heard and from which room, where it last saw the player, how long since it checked each room, whether its sense is ready…</li>
-      <li><strong>Decide:</strong> the network outputs a probability for each of the 13 actions and one is chosen.</li>
+      <li><strong>Observe:</strong> Freddy's brain receives 64 numbers: the noises it heard and from which room, where it last saw the player, how long since it checked each room, whether its sense is ready…</li>
+      <li><strong>Decide:</strong> the network outputs a probability for each of the 15 actions and one is chosen.</li>
       <li><strong>Act:</strong> his 3D body walks to the room, searches the hiding spot or uses its sense.</li>
       <li><strong>Reward:</strong> during training, the result is scored (+1 catch, −1 escape, small penalties for wasted searches).</li>
     </ol>
@@ -49,8 +49,8 @@
       <h2 class="h5">Markov Decision Process</h2>
       <table class="table table-sm mb-0">
         <tbody>
-          <tr><th scope="row">States</th><td>What Freddy knows (54 values)</td></tr>
-          <tr><th scope="row">Actions</th><td>13: move to a room, stay, search spot 0–2, sense</td></tr>
+          <tr><th scope="row">States</th><td>What Freddy knows (64 values)</td></tr>
+          <tr><th scope="row">Actions</th><td>15: move to one of 11 rooms or stay, search spot 0–2, sense</td></tr>
           <tr><th scope="row">Transitions</th><td>The rules of the hunt (hearing, sight, hiding)</td></tr>
           <tr><th scope="row">Reward</th><td>Catch, escape, time, wasted searches</td></tr>
           <tr><th scope="row">Discount γ</th><td>0.99</td></tr>

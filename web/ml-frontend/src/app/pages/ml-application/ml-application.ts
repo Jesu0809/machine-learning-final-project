@@ -5,6 +5,11 @@ import { RouterLink } from '@angular/router';
 import { BrainService } from '../../services/brain.service';
 import { BrainDecision, BrainState, ModelInfo } from '../../models/brain.model';
 
+// Rooms of the map (HuntMap.cs): 0 Office, 1 Parts & Service, 2 Restrooms, 3 Back Hall, 4 Storage,
+// 5 Kitchen, 6 Dining Hall (stage), 7 Main Hall, 8 Party Room, 9 Arcade, 10 Exit Lobby.
+const ROOM_COUNT = 11;
+const ALL_BUT_STAGE = [0, 1, 2, 3, 4, 5, 7, 8, 9, 10];
+
 interface Preset {
   label: string;
   hint: string;
@@ -37,33 +42,33 @@ export class MlApplication {
   protected searchedHere: boolean[] = [false, false, false];
   protected senseReady = true;
   protected sensedRoom: number | null = null;
-  protected notChecked: boolean[] = Array(9).fill(true);
+  protected notChecked: boolean[] = Array(ROOM_COUNT).fill(true);
 
   protected readonly presets: Preset[] = [
     {
       label: 'Just woke up',
       hint: 'On the stage at the start of the night: no clues, every room unchecked.',
-      state: { freddy_room: 6, rooms_not_checked: [0, 1, 2, 3, 4, 5, 7, 8] },
+      state: { freddy_room: 6, rooms_not_checked: ALL_BUT_STAGE },
     },
     {
       label: 'Heard a fuse in the kitchen',
       hint: 'Someone took a fuse next door, right after he woke up.',
-      state: { freddy_room: 6, noises: { '3': 2 }, rooms_not_checked: [0, 1, 2, 3, 4, 5, 7, 8] },
+      state: { freddy_room: 6, noises: { '5': 2 }, rooms_not_checked: ALL_BUT_STAGE },
     },
     {
       label: 'Player vanished in Storage',
       hint: 'He saw you go into Storage a moment ago and now he is there.',
-      state: { freddy_room: 2, last_seen_room: 2, seconds_since_seen: 4, rooms_not_checked: [] },
+      state: { freddy_room: 4, last_seen_room: 4, seconds_since_seen: 4, rooms_not_checked: [] },
     },
     {
-      label: 'Lost in the Dining Hall',
-      hint: 'No clues for a while; he has not checked the east side.',
-      state: { freddy_room: 4, night_progress: 0.4, rooms_not_checked: [6, 7, 8] },
+      label: 'Lost in the Main Hall',
+      hint: 'No clues for a while; he has not checked the staff wing.',
+      state: { freddy_room: 7, night_progress: 0.4, rooms_not_checked: [0, 1, 2, 4] },
     },
     {
-      label: 'A horn in the Exit Lobby',
-      hint: 'A party horn goes off two rooms away.',
-      state: { freddy_room: 4, noises: { '8': 3 }, rooms_not_checked: [] },
+      label: 'The exit panel in the Exit Lobby',
+      hint: 'Someone is working the front doors\' panel, two rooms away.',
+      state: { freddy_room: 7, noises: { '10': 3 }, fuses: 3, rooms_not_checked: [] },
     },
   ];
 
@@ -96,7 +101,7 @@ export class MlApplication {
     this.senseReady = s.sense_ready ?? true;
     this.sensedRoom = s.sensed_room ?? null;
     const stale = s.rooms_not_checked ?? [];
-    this.notChecked = Array.from({ length: 9 }, (_, i) => stale.includes(i));
+    this.notChecked = Array.from({ length: ROOM_COUNT }, (_, i) => stale.includes(i));
     this.ask();
   }
 

@@ -16,7 +16,7 @@ export class MlEvidence {
     {
       image: 'inspector.jpg',
       title: 'AI inspector (Tab)',
-      text: 'In the middle of the game, Tab opens the network\'s live view: the probability of each of the 13 actions, what he heard, where he is going and why. The bars are computed by a C# forward pass of the same weights.',
+      text: 'In the middle of the game, Tab opens the network\'s live view: the probability of each of the 15 actions, what he heard, where he is going and why. The bars are computed by a C# forward pass of the same weights.',
     },
     {
       image: 'replay.jpg',
@@ -36,12 +36,12 @@ export class MlEvidence {
   ];
 
   protected readonly files = [
-    ['unity/Assets/Scripts/Core/FreddyObservations.cs', 'The 54 observations'],
-    ['unity/Assets/Scripts/Core/FreddyActions.cs', 'The 13 actions and the action mask'],
+    ['unity/Assets/Scripts/Core/FreddyObservations.cs', 'The 64 observations'],
+    ['unity/Assets/Scripts/Core/FreddyActions.cs', 'The 15 actions and the action mask'],
     ['unity/Assets/Scripts/Core/FreddyRewards.cs', 'The reward function'],
     ['unity/Assets/Scripts/Brain/FreddyAgent.cs', 'The ML-Agents Agent'],
     ['unity/Assets/Scripts/Core/PolicyProbe.cs', 'Forward pass for the inspector'],
-    ['unity/Assets/ML/Models/freddy_v3.onnx', 'The trained model used in the game'],
+    ['unity/Assets/ML/Models/freddy_v6.onnx', 'The trained model used in the game'],
     ['training/config/freddy_ppo.yaml', 'PPO hyperparameters'],
     ['training/evaluation/results.json', 'Evaluation results'],
     ['docs/ml-design.md', 'Full design of the learning problem'],

@@ -12,7 +12,7 @@ import { Runs } from '../../models/results.model';
 export class MlTraining {
   private readonly resultsService = inject(ResultsService);
   protected readonly runs = signal<Runs | null>(null);
-  protected readonly selected = signal('freddy_v3');
+  protected readonly selected = signal('freddy_v6');
 
   protected readonly config = [
     ['Trainer', 'PPO'],
@@ -22,7 +22,7 @@ export class MlTraining {
     ['β (entropy) / ε (clip)', '0.005 / 0.2'],
     ['γ / λ (GAE)', '0.99 / 0.95'],
     ['Epochs per update', '3'],
-    ['Max steps', '3,000,000'],
+    ['Max steps', '5,000,000 (3,000,000 for v1 to v3)'],
     ['Parallel environments', '32 hunts in one Unity scene, no graphics'],
   ];
 

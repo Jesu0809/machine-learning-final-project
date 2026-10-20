@@ -19,10 +19,11 @@ export const INTRO: string[] = [
 export const CALLS: string[][] = [
   [
     "Hello? Hello, hello! Uh, welcome to your first night at the pizzeria. They asked me to walk you through it, since the last guy... well. Let's not get into that.",
-    "So. The power is out, and three fuses are missing. Find them, put them in the panel in the exit lobby, and the door opens. That is your way out.",
+    "So. The power is out, and three fuses are missing. Find them, put them in the exit panel, and the door opens. Some nights it is the front doors, some nights the loading door in the storage. Your list tells you which.",
     "Now, about Freddy. Management installed a new brain in him. A neural network. They trained it on thousands of nights against people like you. It does not follow a script. It learned.",
     "It cannot see through walls, but it listens. Running, picking up a fuse, working that exit panel. All loud. Walk when you can, and crouch when you really need to be quiet.",
     "If he gets close, hide. Lockers, cabinets, under the tables. And if he opens your locker, hold your breath with the space bar. Not for too long.",
+    "Oh, and the air vents. There are grates all over the building, in the floor and in the walls. Crawl in and you come out in another room. He is too big for them, so in there he cannot reach you.",
     "Sprinting will not save you for long, you will run out of breath. And every fuse you take makes him angrier. Faster.",
     "One more thing. If you panic, he can sense it. The engineers added that. He decides on his own when to use it. So, stay calm.",
     "If you want to see what it is thinking, press TAB. They left their debug screen in. It shows what he heard, where he is going, and how sure the network is about every move. Use that.",

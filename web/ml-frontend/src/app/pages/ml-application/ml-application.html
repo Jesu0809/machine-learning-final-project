@@ -10,7 +10,7 @@
     <h1>Application: Try Freddy's Brain</h1>
     <p class="lead">
       Describe what Freddy knows and the real trained network answers what it would do. The server runs
-      the same weights as the game, with the same 54 inputs and the same action masking.
+      the same weights as the game, with the same 64 inputs and the same action masking.
     </p>
   </div>
 
@@ -129,7 +129,7 @@
         @if (decision(); as d) {
           <div class="card"><div class="card-body">
             <div class="d-flex justify-content-between align-items-center">
-              <h2 class="h6 mb-0">The 54 numbers the network received</h2>
+              <h2 class="h6 mb-0">The 64 numbers the network received</h2>
               <button type="button" class="btn btn-sm btn-outline-secondary" (click)="showInputs.set(!showInputs())">{{ showInputs() ? 'Hide' : 'Show' }}</button>
             </div>
             @if (showInputs()) {
@@ -153,10 +153,11 @@
   <div class="card mt-4"><div class="card-body">
     <h2 class="h6">Things to try</h2>
     <ul class="small mb-0">
-      <li><em>A horn in the Exit Lobby</em>: the probability splits between East Hall and Arcade, the two rooms that lead there.</li>
-      <li><em>Player vanished in Storage</em>: he opens the locker first. Mark the locker as searched and he moves to a cabinet; mark both and he leaves for the Arcade.</li>
-      <li><em>Lost in the Dining Hall</em>: he senses. Turn his sense off and he walks to the East Hall, the side he has not checked.</li>
-      <li>Uncheck rooms in "not checked for a long time" and watch him lose interest in them. This memory is one of his 54 inputs.</li>
+      <li><em>Heard a fuse in the kitchen</em>: he goes straight to the Kitchen. Noises in the staff wing pull him hard.</li>
+      <li><em>Player vanished in Storage</em>: he hesitates between going back to the Kitchen, opening the locker and listening. Mark the locker as searched and he leaves for the Kitchen.</li>
+      <li><em>Lost in the Main Hall</em>: he walks to the Back Hall, toward the staff wing he has not checked.</li>
+      <li><em>The exit panel in the Exit Lobby</em>: a known weakness. He still heads for the staff wing, where most nights start, instead of the panel two rooms away.</li>
+      <li>Uncheck rooms in "not checked for a long time" and watch him lose interest in them. This memory is one of his 64 inputs.</li>
     </ul>
   </div></div>
 

@@ -40,6 +40,48 @@
       "change": "New learned action SENSE (from Friday the 13th): it reveals the player's room if their fear is at least 0.5, then recharges. 11 new observations; -0.01 for a sense that finds nothing.",
       "catch_rate": {"Novice": 0.995, "Normal": 0.985, "Expert": 0.992},
       "finding": "It uses sense about as often as the scripted hunter, but its senses find the player 77-82% of the time against 62-67%: it learned when sensing pays off.",
+      "decision": "Keep (replaced by v4 when the map grew)."
+    },
+    {
+      "id": "freddy_v4",
+      "date": "2026-10-19",
+      "steps": 5000000,
+      "minutes": 78,
+      "observations": 79,
+      "actions": 18,
+      "reward_start": -0.68,
+      "reward_end": 0.97,
+      "change": "Bigger map for the 3D game: 14 rooms on two floors joined by stairs, and air ducts only the player fits through. The survivor bot learned to crawl through ducts. 5M steps instead of 3M for the larger state space.",
+      "catch_rate": {"Novice": 0.9975, "Normal": 1.0, "Expert": 0.955},
+      "finding": "Still far above the scripted hunter (46-62%), but in the playtest the map felt confusing and Freddy too slow: one move in the simulation was a 16 m walk in 3D, so the brain planned as if rooms were next door.",
+      "decision": "Replace: redesign the map and make the simulation count corridor length."
+    },
+    {
+      "id": "freddy_v5",
+      "date": "2026-10-20",
+      "steps": 5000000,
+      "minutes": 84,
+      "observations": 64,
+      "actions": 15,
+      "reward_start": -0.56,
+      "reward_end": 0.99,
+      "change": "One floor in two wings (11 rooms): the staff wing and the public wing joined by a long service corridor and the kitchen pass, ducts crossing between them. Travel time: a long corridor costs two decisions for Freddy and the survivor, so the simulation runs at the pace of the 3D building.",
+      "catch_rate": {"Novice": 0.9925, "Normal": 1.0, "Expert": 0.9975},
+      "finding": "99-100% against every survivor, but probing the network showed a degenerate strategy: it walks to the Party Room, the only way into the Exit Lobby, and patrols there. It ignores far noises and searches only 0.1-0.5 spots per night (v4: 1.8-8.5). Camping the only door to the exit wins in the simulation and is dull to play against.",
+      "decision": "Discard. Next: a random exit each night and a penalty for waiting next to a hidden player."
+    },
+    {
+      "id": "freddy_v6",
+      "date": "2026-10-20",
+      "steps": 5000000,
+      "minutes": 39,
+      "observations": 64,
+      "actions": 15,
+      "reward_start": -0.52,
+      "reward_end": 0.85,
+      "change": "Two exits: each night the way out is the front doors or the loading door in the Storage, at random, and Freddy does not observe which. New reward term: -0.05 for staying or sensing in the room where the player hides instead of searching.",
+      "catch_rate": {"Novice": 0.9225, "Normal": 0.915, "Expert": 0.8175},
+      "finding": "No more exit camping: lower catch rates (82-92%), but still well above the scripted hunter (48-84%), and he searches 1-5 spots per night again. Probing shows a new bias: he heads for the staff wing, where the player starts, and often ignores noises in the public wing.",
       "decision": "Keep. This is the brain in the game."
     }
   ],
