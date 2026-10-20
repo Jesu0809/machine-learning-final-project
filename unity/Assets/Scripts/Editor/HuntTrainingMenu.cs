@@ -49,8 +49,10 @@ namespace NightShift.EditorTools
         /// </summary>
         public static string BuildsFolder()
         {
+            // Inside the main repository (unity/ next to training/config) builds go to training/builds;
+            // in the standalone game repository they stay in its own Builds folder.
             string training = Path.GetFullPath(Path.Combine(Application.dataPath, "../../training"));
-            return Directory.Exists(training)
+            return Directory.Exists(Path.Combine(training, "config"))
                 ? Path.Combine(training, "builds")
                 : Path.GetFullPath(Path.Combine(Application.dataPath, "../Builds"));
         }

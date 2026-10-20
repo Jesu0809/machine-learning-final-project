@@ -36,7 +36,7 @@ namespace NightShift.Game
             new[]
             {
                 "Hello? Hello, hello! Uh, welcome to your first night at the pizzeria. They asked me to walk you through it, since the last guy... well. Let's not get into that.",
-                "So. The power is out, and three fuses are missing. Find them, put them in the panel in the exit lobby, and the door opens. That is your way out.",
+                "So. The power is out, and three fuses are missing. Find them, put them in the exit panel, and the door opens. Some nights it is the front doors, some nights the loading door in the storage. Your list tells you which.",
                 "Now, about Freddy. Management installed a new brain in him. A neural network. They trained it on thousands of nights against people like you. It does not follow a script. It learned.",
                 "It cannot see through walls, but it listens. Running, picking up a fuse, working that exit panel. All loud. Walk when you can, and crouch when you really need to be quiet.",
                 "If he gets close, hide. Lockers, cabinets, under the tables. And if he opens your locker, hold your breath with the space bar. Not for too long.",

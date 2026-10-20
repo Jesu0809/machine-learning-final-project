@@ -207,12 +207,12 @@ namespace NightShift.Hunt.Survivor
                 return PlayerAction.PickFuse();
             }
             bool allFuses = state.FusesCollected >= state.Settings.FuseCount;
-            if (allFuses && here == HuntMap.Exit)
+            if (allFuses && here == state.ExitRoom)
             {
                 return PlayerAction.WorkExit();
             }
 
-            Room goal = allFuses ? HuntMap.Exit : NearestFuse(state);
+            Room goal = allFuses ? state.ExitRoom : NearestFuse(state);
             // A duct that saves at least two rooms of walking, if it does not come out next to Freddy.
             foreach (Room exit in HuntMap.DuctsFrom(here))
             {
@@ -316,7 +316,7 @@ namespace NightShift.Hunt.Survivor
 
         private Room NearestFuse(HuntState state)
         {
-            Room best = HuntMap.Exit;
+            Room best = state.ExitRoom;
             int bestDistance = int.MaxValue;
             for (int room = 0; room < HuntMap.RoomCount; room++)
             {

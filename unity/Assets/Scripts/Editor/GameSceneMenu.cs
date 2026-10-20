@@ -26,7 +26,7 @@ namespace NightShift.EditorTools
         public const string ModelsFolder = "Assets/ML/Models";
 
         /// <summary>Model used by the game; the newest freddy_v*.onnx if this one does not exist.</summary>
-        public const string PreferredModel = "freddy_v5";
+        public const string PreferredModel = "freddy_v6";
 
         [MenuItem("Night Shift/Create Game Scene")]
         public static void CreateGameScene()

@@ -7,7 +7,7 @@ namespace NightShift.Hunt
     /// hiding spot. Every value is in [0, 1]. See docs/ml-design.md, section 5.
     /// </summary>
     /// <remarks>
-    /// Layout (R = <see cref="HuntMap.RoomCount"/> = 14, so 5R + 9 = 79 values):
+    /// Layout (R = <see cref="HuntMap.RoomCount"/> = 11, so 5R + 9 = 64 values):
     ///   own room, one-hot (R)
     ///   noise memory per room (R)
     ///   last room where the player was seen, one-hot, all zero if never seen (R)

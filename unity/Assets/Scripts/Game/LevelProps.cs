@@ -32,7 +32,10 @@ namespace NightShift.Game
                 case Room.Arcade: Arcade(root, random); break;
                 case Room.ExitLobby: Lobby(root, random); break;
             }
-            ExitSign(room, root);
+            foreach (Room exit in HuntMap.Exits)
+            {
+                ExitSign(room, exit, root);
+            }
             WallDecor(room, root, random);
         }
 
@@ -125,10 +128,21 @@ namespace NightShift.Game
 
         private static void Storage(Transform root, System.Random random)
         {
-            // Racks along the west wall, crates in the corners.
-            for (int i = 0; i < 2; i++)
+            // Wall shelves of boxes above the cabinet (the floor is taken by the loading door's way in).
+            Material metal = Metal(new Color(0.3f, 0.32f, 0.33f));
+            for (int level = 0; level < 2; level++)
             {
-                Shelf(root, random, new Vector2(-21.2f, 5.0f + i * 1.7f), 90f, Room.Storage);
+                float y = 1.8f + level * 0.6f;
+                BuildKit.Box("WallShelf", root, new Vector3(-18.2f, y, 2.42f), new Vector3(2.6f, 0.04f, 0.4f), metal, 1f, false);
+                for (int b = 0; b < 4; b++)
+                {
+                    if (random.NextDouble() < 0.3)
+                    {
+                        continue;
+                    }
+                    float w = 0.3f + (float)random.NextDouble() * 0.15f;
+                    BuildKit.Box("Box", root, new Vector3(-19.2f + b * 0.65f, y + 0.02f + w * 0.5f, 2.45f), new Vector3(w, w, 0.32f), Cardboard(), 1f, false);
+                }
             }
             PlaceNear(Room.Storage, new Vector2(-16.75f, 3.75f), 0.5f, p => Crate(root, new Vector3(p.x, 0f, p.y), 15f));
             Sign(root, new Vector3(-21.77f, 2.6f, 4.5f), 90f, "STORAGE", new Color(0.9f, 0.9f, 0.85f), new Color(0.2f, 0.2f, 0.22f), 2.0f);
@@ -253,17 +267,20 @@ namespace NightShift.Game
                 BuildKit.Box("Bench", root, new Vector3(p.x, 0.25f, p.y), new Vector3(0.5f, 0.5f, 1.8f), Wood()));
         }
 
+        /// <summary>EXIT signs built for each exit; the director switches on tonight's.</summary>
+        public static readonly List<(Room exit, GameObject sign)> ExitSigns = new List<(Room, GameObject)>();
+
         /// <summary>
-        /// A green EXIT sign with its own light over the door that leads one room closer to the
-        /// way out, so the escape route reads from anywhere in the building.
+        /// A green EXIT sign with its own light beside the door that leads one room closer to
+        /// <paramref name="exit"/>, so the escape route reads from anywhere in the building.
         /// </summary>
-        private static void ExitSign(Room room, Transform root)
+        private static void ExitSign(Room room, Room exit, Transform root)
         {
-            if (room == HuntMap.Exit)
+            if (room == exit)
             {
                 return;
             }
-            Room next = HuntMap.NextStep(room, HuntMap.Exit);
+            Room next = HuntMap.NextStep(room, exit);
             Vector3 door = PizzeriaLayout.DoorOf(room, next);
             Vector3 into = -PizzeriaLayout.Outward(room, door);
             float facing = Mathf.Atan2(into.x, into.z) * Mathf.Rad2Deg;
@@ -275,11 +292,11 @@ namespace NightShift.Game
                 along = -along;
             }
             Vector3 position = door + into * (PizzeriaLayout.WallThickness + 0.05f) + along * (PizzeriaLayout.DoorWidth * 0.5f + 0.7f) + Vector3.up * 2.2f;
-            ExitLamp(root, position, facing);
+            ExitSigns.Add((exit, ExitLamp(root, position, facing)));
         }
 
         /// <summary>A glowing EXIT box sign facing <paramref name="facing"/>, with a green light under it.</summary>
-        public static void ExitLamp(Transform root, Vector3 position, float facing)
+        public static GameObject ExitLamp(Transform root, Vector3 position, float facing)
         {
             Texture2D texture = ProceduralTextures.Sign("EXIT", new Color(0.55f, 1f, 0.6f), new Color(0.02f, 0.25f, 0.08f));
             var sign = BuildKit.Quad("ExitSign", root, position, new Vector2(0.9f, 0.9f * texture.height / texture.width), facing, BuildKit.Picture("exitGreen", texture, 3f));
@@ -290,6 +307,7 @@ namespace NightShift.Game
             light.range = 4f;
             light.intensity = 0.8f;
             light.color = new Color(0.3f, 1f, 0.45f);
+            return sign;
         }
 
         // ------------------------------------------------------------------ pieces
@@ -401,38 +419,6 @@ namespace NightShift.Game
             spot.intensity = 9f;
             spot.color = color;
             spot.shadows = LightShadows.Soft;
-        }
-
-        private static void Shelf(Transform root, System.Random random, Vector2 position, float yaw, Room room)
-        {
-            PlaceNear(room, position, 0.8f, p =>
-            {
-                var shelf = new GameObject("Shelf").transform;
-                shelf.SetParent(root, false);
-                shelf.localPosition = new Vector3(p.x, 0f, p.y);
-                shelf.localRotation = Quaternion.Euler(0f, yaw, 0f);
-                Material metal = Metal(new Color(0.3f, 0.32f, 0.33f));
-                for (int level = 0; level < 4; level++)
-                {
-                    BuildKit.Box("Board", shelf, new Vector3(0f, 0.15f + level * 0.6f, 0f), new Vector3(1.6f, 0.04f, 0.5f), metal, 1f, level == 0);
-                    for (int b = 0; b < 3; b++)
-                    {
-                        if (random.NextDouble() < 0.35)
-                        {
-                            continue;
-                        }
-                        float w = 0.3f + (float)random.NextDouble() * 0.2f;
-                        BuildKit.Box("Box", shelf, new Vector3(-0.5f + b * 0.5f, 0.17f + level * 0.6f + w * 0.5f, 0f), new Vector3(w, w, 0.4f), Cardboard(), 1f, false);
-                    }
-                }
-                foreach (float x in new[] { -0.78f, 0.78f })
-                {
-                    foreach (float z in new[] { -0.23f, 0.23f })
-                    {
-                        BuildKit.Box("Post", shelf, new Vector3(x, 1.0f, z), new Vector3(0.04f, 2.0f, 0.04f), metal, 1f, false);
-                    }
-                }
-            });
         }
 
         private static void Crate(Transform root, Vector3 position, float yaw)
@@ -633,9 +619,13 @@ namespace NightShift.Game
                     return false;
                 }
             }
-            if (room == HuntMap.Exit && Vector2.Distance(point, new Vector2(PizzeriaLayout.ExitDoor.x + 1.2f, PizzeriaLayout.ExitDoor.z)) < distance + 1.6f)
+            foreach (Room exit in HuntMap.Exits)
             {
-                return false;
+                Vector3 panel = PizzeriaLayout.ExitPanelOf(exit);
+                if (room == exit && Vector2.Distance(point, new Vector2(panel.x, panel.z)) < distance + 0.8f)
+                {
+                    return false;
+                }
             }
             return true;
         }

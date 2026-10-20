@@ -125,6 +125,7 @@ namespace NightShift.Game
             yield return Pose(new Vector3(-21f, 0f, -1.5f), new Vector3(1f, 0f, 0f), "06b-back-hall");
             yield return Pose(new Vector3(-6f, 0f, 3f), new Vector3(-1f, 0f, 0.6f), "06-kitchen");
             yield return Pose(new Vector3(-17f, 0f, 3f), new Vector3(-1f, 0.2f, 1f), "09-storage");
+            yield return Pose(new Vector3(-18.5f, 0f, 6.5f), new Vector3(-1f, 0.05f, 0f), "09e-loading-door");
             // Between the wings.
             yield return Pose(new Vector3(-4.5f, 0f, 6f), new Vector3(1f, 0f, 0f), "03b-kitchen-pass");
             yield return Pose(new Vector3(-2.5f, 0f, -1.5f), new Vector3(1f, 0f, 0f), "07d-service-corridor");

@@ -1,3 +1,4 @@
+using NightShift.Hunt;
 using UnityEngine;
 
 namespace NightShift.Game
@@ -167,14 +168,22 @@ namespace NightShift.Game
         }
     }
 
-    /// <summary>The panel next to the exit: hold E with every fuse to open the door. Loud.</summary>
+    /// <summary>
+    /// The panel next to an exit: hold E with every fuse to open the door. Loud. Only tonight's
+    /// exit works; the other door stays chained.
+    /// </summary>
     public class ExitPanel : MonoBehaviour, IInteractable
     {
         public const float WorkSeconds = 6f;
 
-        private Transform[] doors;   // the two front doors' hinges
+        private Transform[] doors;   // the two door leaves' hinges
         private Renderer lamp;
         private float doorOpen;
+
+        public Room Room { get; private set; }
+
+        /// <summary>True on the night this is the way out.</summary>
+        public bool Active { get; set; }
 
         public float Progress { get; private set; }
         public bool Open => Progress >= 1f;
@@ -187,7 +196,7 @@ namespace NightShift.Game
             SetLift(0f);
         }
 
-        /// <summary>Swings the front doors (0 shut, 1 open outward), also used by the intro.</summary>
+        /// <summary>Swings the doors (0 shut, 1 open outward), also used by the intro.</summary>
         public void SetLift(float open)
         {
             doorOpen = open;
@@ -201,9 +210,10 @@ namespace NightShift.Game
             }
         }
 
-        public static ExitPanel Attach(GameObject go, Transform[] doors, Renderer lamp)
+        public static ExitPanel Attach(GameObject go, Room room, Transform[] doors, Renderer lamp)
         {
             var panel = go.AddComponent<ExitPanel>();
+            panel.Room = room;
             panel.doors = doors;
             panel.lamp = lamp;
             return panel;
@@ -215,6 +225,10 @@ namespace NightShift.Game
             {
                 return "";
             }
+            if (!Active)
+            {
+                return "Chained shut tonight. The way out is " + HuntDirector.Describe(ObjectiveStep.Exit).Replace("open ", "");
+            }
             if (!player.Director.ObjectiveList.ExitUnlocked)
             {
                 return "The exit is locked. Still to do: " + HuntDirector.Describe(player.Director.ObjectiveList.Current);
@@ -224,7 +238,7 @@ namespace NightShift.Game
 
         public void Use(PlayerController player)
         {
-            if (Open || !player.Director.ObjectiveList.ExitUnlocked)
+            if (Open || !Active || !player.Director.ObjectiveList.ExitUnlocked)
             {
                 return;
             }
@@ -241,7 +255,7 @@ namespace NightShift.Game
             if (lamp != null)
             {
                 bool ready = Progress > 0f;
-                Color color = Open ? Color.green : ready ? Color.Lerp(Color.red, Color.yellow, Progress) : new Color(0.6f, 0f, 0f);
+                Color color = !Active ? new Color(0.05f, 0.05f, 0.05f) : Open ? Color.green : ready ? Color.Lerp(Color.red, Color.yellow, Progress) : new Color(0.6f, 0f, 0f);
                 lamp.material.SetColor("_EmissionColor", color * 2f);
             }
             if (Open && doorOpen < 1f)

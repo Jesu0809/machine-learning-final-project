@@ -17,6 +17,7 @@ namespace NightShift.UI
         private readonly Image[] rooms = new Image[HuntMap.RoomCount];
         private readonly Text[] labels = new Text[HuntMap.RoomCount];
         private readonly Dictionary<string, List<Image>> dotGroups = new Dictionary<string, List<Image>>();
+        private readonly List<(Room exit, Image mark)> exits = new List<(Room, Image)>();
         private static Sprite disc;
 
         public static MapView Create(string name, Transform parent, Vector2 min, Vector2 max)
@@ -50,11 +51,18 @@ namespace NightShift.UI
                                             TextAnchor.UpperLeft, new Vector2(0.04f, 0f), new Vector2(1f, 0.96f));
             }
 
-            // The way out: a green mark on the exit door.
-            Vector3 exit = PizzeriaLayout.ExitDoor;
-            Image door = UiKit.Panel("Exit", map.area, Normalize(new Vector2(exit.x - 1.1f, exit.z - 0.6f)), Normalize(new Vector2(exit.x + 1.1f, exit.z + 0.3f)), new Color(0.2f, 0.85f, 0.35f, 0.9f));
-            door.raycastTarget = false;
-            UiKit.Label("ExitLabel", door.transform, "EXIT", 11, Color.black, TextAnchor.MiddleCenter, Vector2.zero, Vector2.one);
+            // The two doors out: tonight's is green, the chained one grey (see Update).
+            foreach (Room exitRoom in HuntMap.Exits)
+            {
+                Vector3 exit = PizzeriaLayout.ExitDoorOf(exitRoom);
+                Vector3 inward = PizzeriaLayout.ExitInward(exitRoom);
+                Vector2 half = inward.z != 0f ? new Vector2(1.1f, 0.45f) : new Vector2(0.45f, 1.1f);
+                var center = new Vector2(exit.x - inward.x * 0.15f, exit.z - inward.z * 0.15f);
+                Image door = UiKit.Panel("Exit", map.area, Normalize(center - half), Normalize(center + half), new Color(0.2f, 0.85f, 0.35f, 0.9f));
+                door.raycastTarget = false;
+                UiKit.Label("ExitLabel", door.transform, "EXIT", 11, Color.black, TextAnchor.MiddleCenter, Vector2.zero, Vector2.one);
+                map.exits.Add((exitRoom, door));
+            }
 
             // Air ducts: dotted.
             var ductColor = new Color(0.3f, 0.8f, 0.85f, 0.65f);
@@ -74,6 +82,14 @@ namespace NightShift.UI
                 map.Dots("duct" + duct.A + duct.B, points, ductColor, 4f);
             }
             return map;
+        }
+
+        private void Update()
+        {
+            foreach ((Room exit, Image mark) in exits)
+            {
+                mark.color = exit == HuntDirector.TonightExit ? new Color(0.2f, 0.85f, 0.35f, 0.9f) : new Color(0.3f, 0.3f, 0.3f, 0.6f);
+            }
         }
 
         public void SetRoom(Room room, Color fill, string label, Color outline)

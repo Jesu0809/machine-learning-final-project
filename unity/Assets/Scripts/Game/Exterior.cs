@@ -140,7 +140,16 @@ namespace NightShift.Game
             Wall(root, "EntranceRight", doorX + half, EastX, LobbyFrontZ, brick);
             BuildKit.Box("EntranceLintel", root, new Vector3(doorX, (doorTop + FrontHeight) * 0.5f, LobbyFrontZ), new Vector3(half * 2f, FrontHeight - doorTop, 0.3f), brick, 2f);
             BuildKit.Box("Step", root, new Vector3(LobbyWestX, FrontHeight * 0.5f, (FrontZ + LobbyFrontZ) * 0.5f), new Vector3(0.3f, FrontHeight, LobbyFrontZ - FrontZ + 0.3f), brick, 2f);
-            BuildKit.Box("SideWest", root, new Vector3(WestX, FrontHeight * 0.5f, (FrontZ + BackZ) * 0.5f), new Vector3(0.3f, FrontHeight, BackZ - FrontZ), brick, 2f);
+            // The west side, with the storage's loading door (the other way out) and a concrete pad outside it.
+            Vector3 loading = PizzeriaLayout.BackExitDoor;
+            float gapSouth = loading.z - half;
+            float gapNorth = loading.z + half;
+            BuildKit.Box("SideWest", root, new Vector3(WestX, FrontHeight * 0.5f, (FrontZ + gapSouth) * 0.5f), new Vector3(0.3f, FrontHeight, gapSouth - FrontZ), brick, 2f);
+            BuildKit.Box("SideWest", root, new Vector3(WestX, FrontHeight * 0.5f, (gapNorth + BackZ) * 0.5f), new Vector3(0.3f, FrontHeight, BackZ - gapNorth), brick, 2f);
+            BuildKit.Box("LoadingLintel", root, new Vector3(WestX, (doorTop + FrontHeight) * 0.5f, loading.z), new Vector3(0.3f, FrontHeight - doorTop, half * 2f), brick, 2f);
+            BuildKit.Box("LoadingPad", root, new Vector3(WestX - 2.2f, 0.02f, loading.z), new Vector3(4f, 0.1f, 5f), trim, 2f);
+            var dockLamp = Lamp(root, new Vector3(WestX - 0.5f, doorTop + 0.4f, loading.z), new Color(1f, 0.75f, 0.45f), 7f, 5f);
+            dockLamp.shadows = LightShadows.None;
             BuildKit.Box("SideEast", root, new Vector3(EastX, FrontHeight * 0.5f, (LobbyFrontZ + BackZ) * 0.5f), new Vector3(0.3f, FrontHeight, BackZ - LobbyFrontZ), brick, 2f);
             Wall(root, "Back", WestX, EastX, BackZ, brick);
             BuildKit.Box("Roof", root, new Vector3((WestX + EastX) * 0.5f, FrontHeight - 0.3f, (LobbyFrontZ + BackZ) * 0.5f), new Vector3(EastX - WestX, 0.2f, BackZ - LobbyFrontZ), roof, 4f, false);

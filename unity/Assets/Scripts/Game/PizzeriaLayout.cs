@@ -195,11 +195,32 @@ namespace NightShift.Game
         public static readonly Rect StageArea = Rect.MinMaxRect(4f, 9.8f, 11f, 12f);
         public const float StageHeight = 0.7f;
 
-        /// <summary>The exit door, in the south wall of the Exit Lobby.</summary>
+        /// <summary>The front doors, in the south wall of the Exit Lobby.</summary>
         public static readonly Vector3 ExitDoor = new Vector3(16f, 0f, -17f);
 
-        /// <summary>The player has escaped once south of this line.</summary>
-        public const float ExitLineZ = -17.8f;
+        /// <summary>The loading door, in the west wall of the Storage (the other possible way out).</summary>
+        public static readonly Vector3 BackExitDoor = new Vector3(-22f, 0f, 6.5f);
+
+        /// <summary>The door out of the building in an exit room (<see cref="HuntMap.Exits"/>).</summary>
+        public static Vector3 ExitDoorOf(Room exit) => exit == Room.Storage ? BackExitDoor : ExitDoor;
+
+        /// <summary>Unit vector from that door into the building.</summary>
+        public static Vector3 ExitInward(Room exit) => exit == Room.Storage ? Vector3.right : Vector3.forward;
+
+        /// <summary>Where the exit panel hangs on the wall next to the door.</summary>
+        public static Vector3 ExitPanelOf(Room exit)
+        {
+            Vector3 inward = ExitInward(exit);
+            Vector3 side = Vector3.Cross(Vector3.up, inward);
+            return ExitDoorOf(exit) + side * 2.2f + inward * 0.15f + Vector3.up * 1.35f;
+        }
+
+        /// <summary>True once the player is outside, past the door of <paramref name="exit"/>.</summary>
+        public static bool IsOutside(Room exit, Vector3 position)
+        {
+            Vector3 door = ExitDoorOf(exit);
+            return Vector3.Dot(position - door, ExitInward(exit)) < -0.8f;
+        }
 
         /// <summary>Area that contains the whole building (for the maps in the UI).</summary>
         public static readonly Rect Bounds = new Rect(-23f, -19f, 47f, 32f);
@@ -297,9 +318,13 @@ namespace NightShift.Game
                     }
                 }
             }
-            if (room == HuntMap.Exit)
+            foreach (Room exit in HuntMap.Exits)
             {
-                yield return new Vector2(ExitDoor.x, ExitDoor.z);
+                if (room == exit)
+                {
+                    Vector3 door = ExitDoorOf(exit);
+                    yield return new Vector2(door.x, door.z);
+                }
             }
         }
 

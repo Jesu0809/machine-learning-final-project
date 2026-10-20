@@ -33,6 +33,9 @@ namespace NightShift.Hunt
         /// <summary>Fuses the player must collect before the exit can be opened.</summary>
         public int FuseCount = 3;
 
+        /// <summary>True: each night the way out is a random one of <see cref="HuntMap.Exits"/>; false: always the front doors.</summary>
+        public bool RandomExit = true;
+
         /// <summary>Player actions of loud work at the exit panel to open the door.</summary>
         public int ExitWorkTicks = 6;
 
