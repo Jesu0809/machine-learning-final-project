@@ -38,6 +38,12 @@ namespace NightShift.Game
 
         private IEnumerator Start()
         {
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-audit") >= 0)
+            {
+                yield return WalkAudit();
+                Application.Quit();
+                yield break;
+            }
             Debug.Log("CAPTURE start, brain: " + director.BrainDescription);
             yield return new WaitForSeconds(2f);
             yield return Shot("01-menu");
@@ -267,6 +273,101 @@ namespace NightShift.Game
             Debug.Log("CAPTURE average fps=" + (Time.frameCount / Time.realtimeSinceStartup).ToString("0"));
             Debug.Log("CAPTURE done. outcome=" + director.State.Outcome + " reason=" + director.EndReason + " decisions=" + director.Decisions.Count);
             Application.Quit();
+        }
+
+        /// <summary>
+        /// Bug audit of the map: the player's real body walks every connection of the room graph
+        /// (both ways: doorways, corridors, stairs) and crawls every duct; anything that blocks it is
+        /// logged with a screenshot. Run with "-capture folder -audit".
+        /// </summary>
+        private IEnumerator WalkAudit()
+        {
+            yield return new WaitForSeconds(2f);
+            director.StartNight(1);
+            director.SkipCall();
+            director.Freddy.gameObject.SetActive(false);   // nobody gets caught during the audit
+            int blocked = 0;
+            int tested = 0;
+            for (int a = 0; a < HuntMap.RoomCount; a++)
+            {
+                foreach (Room b in HuntMap.GetNeighbors((Room)a))
+                {
+                    var from = (Room)a;
+                    var path = new System.Collections.Generic.List<Vector3> { PizzeriaLayout.Center(from) };
+                    path.AddRange(PizzeriaLayout.PassageBetween(from, b));
+                    // Like a player: through the last doorway first, then turn toward the middle of the room.
+                    Vector3 door = path[path.Count - 1];
+                    Vector3 hub = PizzeriaLayout.Center(b);
+                    Rect area = PizzeriaLayout.Area(b);
+                    bool onZWall = Mathf.Abs(door.z - area.yMin) < 0.05f || Mathf.Abs(door.z - area.yMax) < 0.05f;
+                    path.Add(door + (onZWall ? new Vector3(0f, 0f, Mathf.Sign(hub.z - door.z)) : new Vector3(Mathf.Sign(hub.x - door.x), 0f, 0f)) * 1.2f);
+                    path.Add(hub);
+                    Teleport(path[0] + Vector3.up * 0.1f, path[1] - path[0]);
+                    director.Player.Controllable = false;
+                    yield return null;
+                    bool ok = true;
+                    for (int i = 1; i < path.Count && ok; i++)
+                    {
+                        float start = Time.time;
+                        float lastProgressAt = Time.time;
+                        float best = float.MaxValue;
+                        while (true)
+                        {
+                            Vector3 here = director.Player.transform.position;
+                            var flat = new Vector2(path[i].x - here.x, path[i].z - here.z);
+                            if (flat.magnitude < 0.35f)
+                            {
+                                break;
+                            }
+                            if (flat.magnitude < best - 0.05f)
+                            {
+                                best = flat.magnitude;
+                                lastProgressAt = Time.time;
+                            }
+                            if (Time.time - lastProgressAt > 1.5f || Time.time - start > 25f)
+                            {
+                                ok = false;
+                                blocked++;
+                                Debug.Log("CAPTURE AUDIT BLOCKED " + from + " -> " + b + " before waypoint " + i + " " + path[i] +
+                                          ", stuck at " + here + " (" + PizzeriaLayout.RoomAt(here) + ")");
+                                yield return Shot("audit-" + from + "-" + b);
+                                break;
+                            }
+                            director.Player.DriveToward(path[i], 4f);
+                            yield return null;
+                        }
+                    }
+                    tested++;
+                    if (ok)
+                    {
+                        Room reached = PizzeriaLayout.RoomAt(director.Player.transform.position);
+                        float height = director.Player.transform.position.y;
+                        Debug.Log("CAPTURE AUDIT ok " + from + " -> " + b + " (ended in " + reached + " at y " + height.ToString("0.0") + ")");
+                        if (reached != b)
+                        {
+                            Debug.Log("CAPTURE AUDIT WRONG-ROOM " + from + " -> " + b + ": RoomAt says " + reached);
+                        }
+                    }
+                }
+            }
+            foreach (VentGrate vent in director.Level.Vents)
+            {
+                Room start = vent.EndA ? vent.Duct.A : vent.Duct.B;
+                Room end = vent.EndA ? vent.Duct.B : vent.Duct.A;
+                Teleport(vent.EndA ? vent.Duct.StandA : vent.Duct.StandB, Vector3.forward);
+                yield return null;
+                vent.Use(director.Player);
+                float t0 = Time.time;
+                while (director.Player.Crawling && Time.time < t0 + 40f)
+                {
+                    yield return null;
+                }
+                yield return new WaitForSeconds(0.3f);
+                Room reached = PizzeriaLayout.RoomAt(director.Player.transform.position);
+                Debug.Log("CAPTURE AUDIT duct " + start + " -> " + end + ": " + (reached == end ? "ok" : "ENDED IN " + reached) +
+                          " after " + (Time.time - t0).ToString("0.0") + " s, standing " + (director.Player.transform.position.y).ToString("0.00"));
+            }
+            Debug.Log("CAPTURE AUDIT done: " + tested + " walks, " + blocked + " blocked");
         }
 
         private IEnumerator Pose(Vector3 position, Vector3 look, string name)

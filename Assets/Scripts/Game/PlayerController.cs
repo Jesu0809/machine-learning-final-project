@@ -222,6 +222,24 @@ namespace NightShift.Game
             Director.Audio.PlayAt(Director.Assets.LockerDoor, spot.transform.position, 0.5f);
         }
 
+        /// <summary>
+        /// Test helper (the capture tour's walk audit): walks the real body one frame toward
+        /// <paramref name="target"/>, with collisions and gravity, as if the player held forward.
+        /// </summary>
+        public void DriveToward(Vector3 target, float speed)
+        {
+            Vector3 flat = target - transform.position;
+            flat.y = 0f;
+            if (flat.sqrMagnitude > 0.0001f)
+            {
+                yaw = Mathf.Atan2(flat.x, flat.z) * Mathf.Rad2Deg;
+            }
+            Vector3 move = flat.normalized * speed;
+            move.y = body.isGrounded ? -1f : -9.81f;
+            body.Move(move * Time.deltaTime);
+            PlaceCamera();
+        }
+
         /// <summary>Into an air duct: the eyes follow <paramref name="path"/> to the room at its far end.</summary>
         public void StartCrawl(List<Vector3> path, Hunt.Room target)
         {
