@@ -19,7 +19,7 @@ mlagents-learn config/freddy_ppo.yaml --run-id=freddy_vN --env=builds/HuntTraini
 tensorboard --logdir results
 ```
 
-The arena runs about 1,400 steps per second on an M-series Mac, so 3M steps take ~40 minutes.
+The arena runs about 1,000–1,400 steps per second on an M-series Mac, so 5M steps take 80–90 minutes.
 After a run:
 
 1. Copy `results/freddy_vN/Freddy.onnx` to `unity/Assets/ML/Models/freddy_vN.onnx`, update
@@ -130,3 +130,85 @@ After a run:
 - **Checks:** PolicyProbe (inspector probabilities) matches the model's deterministic action in
   7,007 of 7,007 states.
 - **Decision:** keep. `unity/Assets/ML/Models/freddy_v3.onnx` is the game's brain.
+
+### freddy_v4 — 2026-10-19
+
+- **Changed from previous run:** a bigger map for the 3D game: 14 rooms on two floors joined by two
+  staircases, and four air ducts only the player fits through. SurvivorBot learned to crawl
+  (`Crawl` action, 4 actions per duct, `DuctUse` randomized 0.1–0.9). 79 observations (5R + 9),
+  18 actions. Same rewards.
+- **Config changes:** `max_steps` 3M → 5M for the larger state space.
+- **Steps trained / wall time:** 5,000,000 steps in 78 min.
+- **Final mean cumulative reward:** +0.97 (started at −0.68).
+- **Evaluation (400 nights per cell, catch rate with 95% Wilson interval):**
+
+  | Survivor | Trained | Scripted | Random |
+  |---|---|---|---|
+  | Novice | 99.8 % (98.6–100) | 61.8 % (56.9–66.4) | 22.8 % (18.9–27.1) |
+  | Normal | 100 % (99.1–100) | 52.5 % (47.6–57.4) | 23.5 % (19.6–27.9) |
+  | Expert | 95.5 % (93.0–97.1) | 45.5 % (40.7–50.4) | 16.5 % (13.2–20.4) |
+
+- **Observations:** strong in the simulation, but the playtest showed a **sim-to-game gap**: one
+  move on the graph was a 16 m walk in 3D (Freddy walks 2.9 m/s and decides every 3.5 s), so the
+  brain planned as if every room were next door. Players also found the two floors hard to read.
+- **Decision:** replace: redesign the map and make the simulation count corridor length.
+
+### freddy_v5 — 2026-10-20
+
+- **Changed from previous run:** one floor in two wings (11 rooms): the staff wing (Office, Parts,
+  Restrooms, Back Hall, Kitchen, Storage) and the public wing (Dining Hall with the stage, Arcade,
+  Main Hall, Party Room, Exit Lobby), joined by a long service corridor and the kitchen pass.
+  **Travel time:** a long connection costs two decisions (`HuntMap.Cost`, `HuntSettings.TravelTime`)
+  for Freddy and for the survivor, so the simulation runs at the pace of the 3D building. 64
+  observations (5R + 9), 15 actions. Same rewards.
+- **Config changes:** none (5M steps).
+- **Steps trained / wall time:** 5,000,000 steps in 84 min.
+- **Final mean cumulative reward:** +0.99 (started at −0.56).
+- **Evaluation (400 nights per cell):**
+
+  | Survivor | Trained | Scripted | Random |
+  |---|---|---|---|
+  | Novice | 99.2 % (97.8–99.7) | 86.0 % (82.3–89.1) | 46.2 % (41.4–51.1) |
+  | Normal | 100 % (99.1–100) | 73.2 % (68.7–77.3) | 30.5 % (26.2–35.2) |
+  | Expert | 99.8 % (98.6–100) | 47.5 % (42.6–52.4) | 17.0 % (13.6–21.0) |
+
+- **Observations:** the numbers hide a **degenerate strategy**. Probing the network on the website
+  showed it goes straight to the Party Room, the only way into the Exit Lobby, and patrols between
+  the two: it ignores noises in the staff wing and searches only 0.1–0.5 spots per night (v4:
+  1.8–8.5). Every survivor has to reach the exit, so camping the only door to it wins in the
+  simulation, but it is dull to play against: Freddy waits instead of hunting. The v4 playtest had
+  also shown him waiting outside a hiding spot instead of opening it.
+- **Decision:** discard for the game. Two changes for freddy_v6: the exit is random each night, and
+  waiting next to a hidden player is penalized.
+
+### freddy_v6 — 2026-10-20
+
+- **Changed from previous run:** two exits. Each night the way out is the front doors (Exit Lobby)
+  or the loading door (Storage), chosen at random (`HuntSettings.RandomExit`); the survivor knows
+  which, Freddy does not observe it. No fuse is placed in tonight's exit. New reward term: −0.05 for
+  staying or sensing in the room where the player hides instead of searching (`WaitedOutsideHiding`).
+  Same observations (64) and actions (15).
+- **Config changes:** none (5M steps).
+- **Steps trained / wall time:** 5,000,000 steps in 39 min. (A first attempt ran on the previous
+  build by mistake: a stray `training/` folder next to the game repository redirected the build
+  output. It was stopped at 0.6M steps and discarded; the build path now requires
+  `training/config`.)
+- **Final mean cumulative reward:** +0.85 (started at −0.52). Lower than v5 on purpose: the easy
+  win is gone.
+- **Evaluation (400 nights per cell, catch rate with 95% Wilson interval):**
+
+  | Survivor | Trained | Scripted | Random |
+  |---|---|---|---|
+  | Novice | 92.2 % (89.2–94.5) | 83.8 % (79.8–87.0) | 46.5 % (41.7–51.4) |
+  | Normal | 91.5 % (88.4–93.8) | 71.2 % (66.6–75.5) | 33.5 % (29.0–38.3) |
+  | Expert | 81.8 % (77.7–85.2) | 48.0 % (43.1–52.9) | 17.5 % (14.1–21.5) |
+
+- **Observations:** the exit camping is gone and he searches again (1.1–4.9 spots per night against
+  0.1–0.5 in v5). The trained policy still beats the scripted hunter in every cell, by 8 to 34
+  points, with intervals that do not overlap against Normal and Expert. Probing the network shows a
+  new bias: he heads for the staff wing, where the player starts and where most of the night
+  begins, and reacts to noises there (a fuse in the Kitchen: 100% go to the Kitchen), but often
+  ignores noises in the public wing, even the exit panel in the Exit Lobby. Average night length
+  against experts grew from 36 to 77 decisions: the hunt lasts longer.
+- **Decision:** keep. `unity/Assets/ML/Models/freddy_v6.onnx` is the game's brain. Possible next
+  step: a random player start, so the network cannot rely on where the night begins.

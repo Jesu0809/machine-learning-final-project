@@ -10,9 +10,9 @@ Final project for the Machine Learning course, Universidad de Cundinamarca (Chí
 
 - **Freddy's brain (learned):** a PPO policy that decides where to go, when to stop and listen,
   which hiding spot to search and when to use his "sense" (it finds afraid players), from what
-  Freddy heard and saw. It is trained on an abstract version
-  of the pizzeria (a graph of 9 rooms) against a simulated survivor, and runs in the game as an
-  `.onnx` model.
+  Freddy heard and saw. It is trained on an abstract version of the pizzeria (a graph of 11 rooms
+  on one floor, in two wings) against a simulated survivor, and runs in the game as an `.onnx`
+  model.
 - **Freddy's body (scripted):** walks to the chosen room, sees with a view cone, chases the player in
   sight and plays the animations.
 - **Game:** Unity 6 (C#). Five nights in a pizzeria built in code from the same room graph the brain

@@ -1,7 +1,7 @@
 # ML Design
 
 This document defines the learning problem behind Freddy and the exact rules of a hunt. It is the
-reference for the code in `unity/Assets/Scripts/Hunt/` and for the final report. Values marked
+reference for the code in `unity/Assets/Scripts/Core/` and for the final report. Values marked
 *initial* are starting points and may change during training; every change is recorded in
 [training-log.md](training-log.md).
 
@@ -15,7 +15,7 @@ the alien in *Alien: Isolation* (a "director" that decides and a body that execu
 | **Brain** | Decides *where to go* and *which hiding spot to search*, from what Freddy has heard and seen | PPO policy trained with ML-Agents, run in the game as an `.onnx` model |
 | **Body** | Walks to the chosen room, plays the animations, looks and listens in 3D | Unity NavMesh, Animator, raycasts (no learning) |
 
-The brain is trained on an abstract version of the pizzeria: a graph of 9 rooms with hiding spots.
+The brain is trained on an abstract version of the pizzeria: a graph of 11 rooms with hiding spots.
 This makes training fast (millions of decisions in minutes) and the decisions readable for the
 report. In the 3D game the body turns each decision into movement and reports back what Freddy
 perceives.
@@ -39,35 +39,49 @@ infer.
 
 ### Room graph
 
+One floor in two wings (since `freddy_v5`; v1–v3 used a 3 × 3 grid of 9 rooms, v4 two floors of 14):
+
 ```
-Office ──── WestHall ──── Storage
-  │            │             │
-Kitchen ─── DiningHall ── Arcade
-  │            │             │
-Stage ───── EastHall ──── ExitLobby
+  STAFF WING                                PUBLIC WING
+  Storage ── Kitchen ═════════════════════ DiningHall (stage) ── Arcade
+     │          │                              │                   ║
+  ══ BackHall ══╪═══════════ door ═════════ MainHall ═══════════════╝
+     ║       │       │                         │
+  Office ─ Parts  Restrooms                PartyRoom ────────── ExitLobby
 ```
+
+`═` / `║` mark long connections: walking them takes **two decisions** (`HuntMap.Cost`): Office–Back
+Hall, Back Hall–Main Hall, Kitchen–Dining Hall and Main Hall–Arcade. Every other connection takes one.
 
 | Room | Hiding spots | Notes |
 |---|---|---|
-| Office | 2 | Player start |
-| West Hall | 1 | |
-| Storage | 3 | |
+| Office | 2 | Player start (security office) |
+| Parts & Service | 2 | |
+| Restrooms | 2 | |
+| Back Hall | 1 | Staff hall |
+| Storage | 3 | Loading door: one of the two exits |
 | Kitchen | 3 | |
-| Dining Hall | 3 | Center of the map |
+| Dining Hall | 3 | Freddy start (on the stage) |
+| Main Hall | 1 | Public hall |
+| Party Room | 2 | The only way into the Exit Lobby |
 | Arcade | 2 | |
-| Stage | 2 | Freddy start |
-| East Hall | 1 | |
-| Exit Lobby | 1 | The exit door; needs all fuses |
+| Exit Lobby | 1 | Front doors: one of the two exits |
 
-Spot 0 is always a locker; the others are cabinets or places under tables. The map diameter is 4
-moves (Office to Exit Lobby).
+Spot 0 is always a locker; the others are cabinets or places under tables. The map diameter is 5
+moves. **Air ducts** join Office–Storage, Restrooms–Party Room, Kitchen–Arcade and Parts–Dining
+Hall: only the player fits (4 actions to crawl through), and nobody sees into them.
+
+**Two exits (`freddy_v6`).** Each night the way out is the front doors in the Exit Lobby or the
+loading door in the Storage, chosen at random (`HuntSettings.RandomExit`). The player knows which
+(the objective list says it); Freddy does not observe it, so he cannot camp one door and has to
+hunt by sound (working an exit panel is the loudest noise in the game).
 
 ### Episode termination
 
 | Outcome | When |
 |---|---|
 | `Caught` | Freddy finds the player (section 3) |
-| `Escaped` | The player finishes the work on the exit panel with all 3 fuses |
+| `Escaped` | The player finishes the work on tonight's exit panel with all 3 fuses |
 | `TimeUp` | `MaxTicks` = 240 decisions (about 10 minutes) pass with the player still inside |
 
 ## 3. Rules of a hunt
@@ -75,8 +89,11 @@ moves (Office to Exit Lobby).
 ### Time
 
 One tick = **2 player actions, then 1 Freddy action** (`PlayerActionsPerTick` = 2). Freddy moves
-one room per tick, the same speed as a walking player. A running player is twice as fast but loud.
-Freddy stays on the stage for the first 6 ticks (`FreddyWakeTicks`), so the player can get going.
+one room per tick, the same speed as a walking player; a long connection takes him two ticks
+(**travel time**, `HuntSettings.TravelTime`, since `freddy_v5`), and a walking or running player
+twice as many actions. This keeps the simulation at the pace of the 3D building, where a long
+corridor is a long walk. A running player is twice as fast but loud. Freddy stays on the stage for
+the first 6 ticks (`FreddyWakeTicks`), so the player can get going.
 
 ### Player actions
 
@@ -87,10 +104,11 @@ Freddy stays on the stage for the first 6 ticks (`FreddyWakeTicks`), so the play
 | Run | Moves to a neighboring room in 1 action | 2 |
 | Hide | Enters a hiding spot of the current room | 0 |
 | Pick fuse | Takes the fuse in the room | 2 |
-| Work exit | One of 6 actions on the exit panel (progress is kept if the player leaves) | 3 |
+| Work exit | One of 6 actions on tonight's exit panel (progress is kept if the player leaves) | 3 |
+| Crawl | Moves through an air duct to the room at its other end in 4 actions | 0 |
 
-Three fuses are placed in random rooms at the start of each night, never in the Office, the Stage
-or the Exit Lobby.
+Three fuses are placed in random rooms with a fuse shelf at the start of each night, never in the
+Office, the Exit Lobby or tonight's exit.
 
 ### What Freddy perceives
 
@@ -109,13 +127,14 @@ or the Exit Lobby.
 
 ## 4. Actions
 
-One discrete branch with 13 actions (12 until `freddy_v2`; "sense" was added in `freddy_v3`):
+One discrete branch with R + 4 actions, R = number of rooms: 15 since `freddy_v5` (13 in v3, 18 in
+v4; "sense" was added in `freddy_v3`):
 
 | Index | Action |
 |---|---|
-| 0–8 | Go to room *i* (if *i* is Freddy's room: stay and listen) |
-| 9, 10, 11 | Search hiding spot 0, 1 or 2 of the current room |
-| 12 | **Sense**: if the player's fear is at least 0.5, reveals their room. Then it recharges for 30 decisions (about 1 min 45 s) |
+| 0–10 | Go to room *i* (if *i* is Freddy's room: stay and listen) |
+| 11, 12, 13 | Search hiding spot 0, 1 or 2 of the current room |
+| 14 | **Sense**: if the player's fear is at least 0.5, reveals their room. Then it recharges for 30 decisions (about 1 min 45 s) |
 
 ### Sense and fear (from *Friday the 13th*)
 
@@ -129,30 +148,33 @@ it is something the network has to learn.
 ### Action masking
 
 Moves to rooms that are not connected and searches of spots that do not exist are masked, so the
-policy only chooses among legal actions (Huang & Ontañón, 2022). For example, in the East Hall the
-legal actions are: stay, go to Dining Hall, Stage or Exit Lobby, search spot 0, and sense if it has
+policy only chooses among legal actions (Huang & Ontañón, 2022). For example, in the Main Hall the
+legal actions are: stay, go to Back Hall, Party Room or Arcade, search spot 0, and sense if it has
 recharged.
 
 ## 5. Observations
 
-54 values, all in [0, 1], built only from what Freddy knows (`FreddyObservations.cs`; 43 until `freddy_v2`):
+5R + 9 values (64 since `freddy_v5`; 43 in v1–v2, 54 in v3, 79 in v4), all in [0, 1], built only
+from what Freddy knows (`FreddyObservations.cs`):
 
 | Index | Observation |
 |---|---|
-| 0–8 | Freddy's room, one-hot |
-| 9–17 | Noise memory per room (heard noise level / 3, fades ×0.8 per tick) |
-| 18–26 | Room where the player was last seen, one-hot (zeros if never seen) |
-| 27 | Ticks since the player was seen / 60 |
-| 28–36 | Ticks since Freddy visited each room / 60 |
-| 37 | Player seen this tick |
-| 38 | Fuses collected / 3 (the generators light up the map, so Freddy knows) |
-| 39 | Night progress (tick / 240) |
-| 40–42 | Hiding spots of the current room already searched since arriving |
-| 43 | Sense readiness (1 = ready, 0 right after using it) |
-| 44–52 | Room where sense last found the player, one-hot |
-| 53 | Decisions since that / 60 |
+| 0–10 | Freddy's room, one-hot |
+| 11–21 | Noise memory per room (heard noise level / 3, fades ×0.8 per tick) |
+| 22–32 | Room where the player was last seen, one-hot (zeros if never seen) |
+| 33 | Ticks since the player was seen / 60 |
+| 34–44 | Ticks since Freddy visited each room / 60 |
+| 45 | Player seen this tick |
+| 46 | Fuses collected / 3 (the generators light up the map, so Freddy knows) |
+| 47 | Night progress (tick / 240) |
+| 48–50 | Hiding spots of the current room already searched since arriving |
+| 51 | Sense readiness (1 = ready, 0 right after using it) |
+| 52–62 | Room where sense last found the player, one-hot |
+| 63 | Decisions since that / 60 |
 
-## 6. Reward function (*initial*, `freddy_v1`)
+Tonight's exit is **not** an input: Freddy has to find it out from the noise of the panel.
+
+## 6. Reward function (`freddy_v1`, with the terms added later marked)
 
 | Event | Reward |
 |---|---|
@@ -163,7 +185,13 @@ recharged.
 | Search of an empty spot | −0.01 |
 | Search of a spot already searched since arriving | −0.02 extra |
 | Sense that finds nothing (`freddy_v3`) | −0.01 |
-| Distance shaping | 0.1 · (γ·Φ(s′) − Φ(s)), with Φ(s) = −distance(Freddy, player) / 4 |
+| Staying or sensing in the room where the player hides, instead of searching (`freddy_v6`) | −0.05 |
+| Distance shaping | 0.1 · (γ·Φ(s′) − Φ(s)), with Φ(s) = −distance(Freddy, player) / diameter |
+
+The `freddy_v6` term exists because a policy can win by **waiting**: next to a hidden player he
+only has to stand still until they come out. That is a valid strategy in the simulation and a dull
+one to play against, so waiting there now costs more than opening a spot (−0.01 if it is empty).
+It does not stop him from searching: the catch (+1) still comes from opening the right spot.
 
 The shaping term is **potential-based** (Ng et al., 1999), so it speeds up learning without
 changing the optimal policy. It uses the player's real room, which Freddy never observes:
@@ -196,12 +224,16 @@ not overfit one play style. Evaluation uses three fixed presets:
 
 ### Balance (simulation before training)
 
-2,000 simulated nights per cell, run outside Unity on the same C# code (catch rate):
+400 simulated nights per cell on the two-wing map with random exits, run outside Unity on the
+same C# code (catch rate):
 
 | Freddy | vs Novice | vs Normal | vs Expert |
 |---|---|---|---|
-| Random | 34.0% | 30.4% | 22.8% |
-| Scripted | 55.7% | 47.6% | 33.8% |
+| Random | 46.0% | 31.3% | 19.8% |
+| Scripted | 89.3% | 71.5% | 48.5% |
+
+The map was tuned with these numbers before training: a second door into the Exit Lobby raised the
+scripted hunter against experts from 48.5% to 67.8%, so the lobby keeps a single door.
 
 Difficulty is monotonic (better survivors are caught less) and the scripted hunter is clearly
 better than random but far from perfect, which leaves room for the trained policy.
@@ -226,11 +258,14 @@ better than random but far from perfect, which leaves room for the trained polic
 ### The building is not a grid
 
 The 3D pizzeria keeps exactly the connections of the training graph, but the rooms have different
-sizes and heights and are joined by long halls and short corridors (`PizzeriaLayout.cs`): a large
-Dining Hall in the middle, a tall Show Stage, two narrow halls. Because only the connections
-matter to the brain, the layout can change without retraining. Inside a room Freddy's body walks
-straight lines between the room's hub, its doorways and its hiding spots, and props are only
-placed where they leave those lines free.
+sizes and heights and are joined by corridors whose length matches their cost on the graph
+(`PizzeriaLayout.cs`): two 3 m wide halls, a Dining Hall with the show stage on its north wall, and
+two long corridors between the wings. The wings look different (grey-green staff rooms, red and
+checkered public rooms) and green EXIT signs beside the doors mark the way to tonight's exit. Inside
+a room Freddy's body walks straight lines between the room's hub, its doorways and its hiding
+spots, and props are only placed where they leave those lines free. An automated audit
+(`CaptureMode -audit`) walks every connection both ways and crawls every duct with the real
+player collider.
 
 ### Survivor and body rules that are not learned
 
@@ -243,9 +278,10 @@ sends him to a new one, the body walks to one of the room's hiding spots or its 
 so he also covers the corners. None of this changes what the brain observes or decides; it changes
 how its decisions play out in 3D, and the panting feeds its hearing like any other noise.
 
-Why Freddy favors the middle of the map: the central rooms are at most two moves from every other
-room, so from there the brain hears more of the building and reaches any room quickly. This
-strategy emerged in training; it was not programmed.
+Emergent strategies: on the 3 × 3 grid (v1–v3) Freddy learned to favor the middle of the map, at
+most two moves from every room, so he heard more and reached any room quickly. On the two-wing map
+with a single exit (v5) he learned to guard the only door to the exit instead (see the training
+log), which led to the random exits. None of these were programmed.
 
 ### Things the player can do to the brain
 
@@ -310,8 +346,8 @@ length and searches per night.
 
 - Scene `HuntTraining` with 32 `HuntEnvironment` copies, no 3D and no UI.
 - Each copy advances with a simulated tick instead of real time.
-- Config: `training/config/freddy_ppo.yaml` (256×2 network, buffer 20,480, 3M steps); run IDs
-  `freddy_v1`, `freddy_v2`, …
+- Config: `training/config/freddy_ppo.yaml` (256×2 network, buffer 20,480; 3M steps for v1–v3,
+  5M since v4); run IDs `freddy_v1`, `freddy_v2`, …
 
 ## 12. Limitations (for the report)
 
@@ -319,8 +355,9 @@ length and searches per night.
 - The bot approximates a human player; a policy that beats the bot may feel different against
   people.
 - The brain decides on a graph of rooms; positions inside a room are handled by the scripted body.
-- A policy can exploit weaknesses of the training bot (see freddy_v1 in the training log); the bot
-  is improved and the policy retrained when that happens.
+- A policy can exploit weaknesses of the training bot (freddy_v1) or of the map (freddy_v5, which
+  camped the only door to the exit). High catch rates alone do not show good behavior: the network
+  has to be probed and watched, and the bot, the map or the reward fixed when that happens.
 
 ## References
 
