@@ -55,7 +55,11 @@ namespace NightShift.Evaluation
             }
             if (string.IsNullOrEmpty(resultsPath))
             {
-                resultsPath = Path.GetFullPath(Path.Combine(Application.dataPath, "../../training/evaluation/results.json"));
+                // training/evaluation in the main repository, the ignored Builds folder in the game repository.
+                string training = Path.GetFullPath(Path.Combine(Application.dataPath, "../../training"));
+                resultsPath = Directory.Exists(Path.Combine(training, "config"))
+                    ? Path.Combine(training, "evaluation/results.json")
+                    : Path.GetFullPath(Path.Combine(Application.dataPath, "../Builds/evaluation/results.json"));
             }
         }
 
