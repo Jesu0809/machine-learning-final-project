@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NightShift.Game;
 using NightShift.Hunt;
 using UnityEngine;
@@ -28,6 +29,14 @@ namespace NightShift.UI
         private Text fuses;
         private Text prompt;
         private Text keysLabel;
+        private Text breathHint;
+        private Text noteClose;
+        private GameObject settingsScreen;
+        private Text mouseValue;
+        private Text stickValue;
+        private Button invertButton;
+        private readonly Dictionary<InputAction, Button> keyButtons = new Dictionary<InputAction, Button>();
+        private InputAction? rebinding;
         private Text cinematicCard;
         private Text cinematicSkip;
         private GameObject controlsScreen;
@@ -104,6 +113,7 @@ namespace NightShift.UI
             ui.BuildPause(root);
             ui.BuildEnd(root);
             ui.BuildControls(root);
+            ui.BuildSettings(root);
             ui.BuildCinematic(root);
             ui.flash = UiKit.Panel("Flash", root, Vector2.zero, Vector2.one, new Color(0.6f, 0f, 0f, 0f));
             ui.flash.raycastTarget = false;
@@ -289,7 +299,7 @@ namespace NightShift.UI
             note = UiKit.Panel("Note", root, new Vector2(0.3f, 0.15f), new Vector2(0.7f, 0.85f), new Color(0.86f, 0.83f, 0.72f, 0.97f)).gameObject;
             noteText = UiKit.Label("Text", note.transform, "", 30, new Color(0.12f, 0.1f, 0.08f), TextAnchor.UpperLeft, new Vector2(0.08f, 0.12f), new Vector2(0.92f, 0.92f));
             noteText.supportRichText = false;
-            UiKit.Label("Close", note.transform, "[E] close", 20, new Color(0.35f, 0.3f, 0.25f), TextAnchor.LowerRight, new Vector2(0.5f, 0.02f), new Vector2(0.95f, 0.1f));
+            noteClose = UiKit.Label("Close", note.transform, "[E] close", 20, new Color(0.35f, 0.3f, 0.25f), TextAnchor.LowerRight, new Vector2(0.5f, 0.02f), new Vector2(0.95f, 0.1f));
             note.SetActive(false);
         }
 
@@ -319,6 +329,7 @@ namespace NightShift.UI
         public void ShowNote(string text)
         {
             noteText.text = text;
+            noteClose.text = Controls.Localize("[E] close");
             note.SetActive(true);
             noteOpenedFrame = Time.frameCount;
         }
@@ -349,6 +360,11 @@ namespace NightShift.UI
             {
                 controlsScreen.SetActive(false);
             }
+            if (settingsScreen != null && !pause)
+            {
+                settingsScreen.SetActive(false);
+                rebinding = null;
+            }
         }
 
         // ------------------------------------------------------------------ menu
@@ -367,14 +383,15 @@ namespace NightShift.UI
             float top = 0.63f;
             Button Add(string text, UnityEngine.Events.UnityAction action)
             {
-                Button button = UiKit.Button(text, m, text, 38, new Vector2(0.05f, top - 0.058f), new Vector2(0.3f, top), action);
-                top -= 0.068f;
+                Button button = UiKit.Button(text, m, text, 36, new Vector2(0.05f, top - 0.052f), new Vector2(0.3f, top), action);
+                top -= 0.06f;
                 return button;
             }
             UiKit.Tint(Add("NEW GAME  (STORY)", director.PlayStory), Palette.Accent * 0.8f + new Color(0f, 0f, 0f, 0.2f));
             continueButton = Add("CONTINUE", () => director.StartNight(HuntDirector.BestNight));
             Add("HOW FREDDY THINKS", () => ShowInfo("HOW FREDDY THINKS", ExplainerText()));
             Add("CONTROLS", ShowControls);
+            Add("SETTINGS", ShowSettings);
             Add("CREDITS", () => ShowInfo("CREDITS", CreditsText));
             musicButton = Add("MUSIC", () => { SoundPrefs.MusicOn = !SoundPrefs.MusicOn; director.RefreshSound(); RefreshSoundButtons(); });
             soundButton = Add("SOUND", () => { SoundPrefs.EffectsOn = !SoundPrefs.EffectsOn; director.RefreshSound(); RefreshSoundButtons(); });
@@ -496,9 +513,10 @@ namespace NightShift.UI
         {
             return
                 "Freddy is an NPC built with <color=#ffc840>Unity ML-Agents</color>. His <color=#ffc840>brain</color> is a neural network trained with " +
-                "reinforcement learning (PPO) in thousands of simulated nights. Every few seconds it picks one of 13 actions: go to a " +
-                "neighboring room, stay and listen, search a hiding spot, or <color=#cc66ff>SENSE</color> (find you if you are afraid; long recharge). " +
-                "Nobody told it when to use each one: it learned.\n" +
+                "reinforcement learning (PPO) in millions of simulated nights on this two-floor building. Every few seconds it picks one of " +
+                FreddyActions.Count + " actions: go to one of the " + HuntMap.RoomCount + " rooms, stay and listen, search a hiding spot, or " +
+                "<color=#cc66ff>SENSE</color> (find you if you are afraid; long recharge). Nobody told it when to use each one: it learned.\n" +
+                "It trained against survivors that escape through the <color=#ffc840>air ducts</color>, where it cannot follow.\n" +
                 "It only knows what it heard, where it last saw you and how long since it checked each room. It never knows where you are. " +
                 "That is why a thrown <color=#ffc840>party horn</color> fools it: to the network a noise is a noise.\n" +
                 "Press <color=#ffc840>TAB</color> in the game to watch it think. Below: the proof it learned.";
@@ -576,7 +594,7 @@ namespace NightShift.UI
             trackerLabel = UiKit.Label("Distance", tracker, "", 26, new Color(0.6f, 1f, 0.7f), TextAnchor.UpperCenter, new Vector2(0f, -0.14f), new Vector2(1f, -0.02f));
 
             breath = UiKit.Area("Breath", h, new Vector2(0.38f, 0.08f), new Vector2(0.62f, 0.16f)).gameObject;
-            UiKit.Label("Hint", breath.transform, "Hold SPACE to hold your breath    E  leave", 28, Palette.Ink, TextAnchor.UpperCenter, new Vector2(0f, 0.5f), new Vector2(1f, 1f));
+            breathHint = UiKit.Label("Hint", breath.transform, "Hold SPACE to hold your breath    [E] leave", 28, Palette.Ink, TextAnchor.UpperCenter, new Vector2(0f, 0.5f), new Vector2(1f, 1f));
             UiKit.Panel("Back", breath.transform, new Vector2(0f, 0f), new Vector2(1f, 0.3f), new Color(0f, 0f, 0f, 0.7f));
             breathFill = UiKit.Panel("Fill", breath.transform, new Vector2(0f, 0f), new Vector2(1f, 0.3f), new Color(0.5f, 0.8f, 1f, 0.9f));
         }
@@ -585,6 +603,11 @@ namespace NightShift.UI
         {
             UpdateNote();
             UpdateGamepadSelection();
+            UpdateRebinding();
+            if (breathHint != null && breath.activeSelf)
+            {
+                breathHint.text = Controls.Localize("Hold SPACE to hold your breath    [E] leave");
+            }
             if (flashAlpha > 0f)
             {
                 flashAlpha = Mathf.MoveTowards(flashAlpha, 0f, Time.unscaledDeltaTime * 0.5f);
@@ -833,6 +856,7 @@ namespace NightShift.UI
             pauseSound = Add("SOUND", () => { SoundPrefs.EffectsOn = !SoundPrefs.EffectsOn; RefreshSoundButtons(); });
             pauseInspector = Add("AI INSPECTOR", ToggleInspector);
             Add("CONTROLS", ShowControls);
+            Add("SETTINGS", ShowSettings);
             Add("QUIT TO MENU", director.ShowMenu);
         }
 
@@ -866,6 +890,100 @@ namespace NightShift.UI
 
         public void HideControlsScreen() => controlsScreen.SetActive(false);
 
+        // ------------------------------------------------------------------ settings
+
+        private static readonly (InputAction action, string label)[] RebindableActions =
+        {
+            (InputAction.Forward, "MOVE FORWARD"), (InputAction.Back, "MOVE BACK"), (InputAction.Left, "MOVE LEFT"), (InputAction.Right, "MOVE RIGHT"),
+            (InputAction.Sprint, "SPRINT"), (InputAction.Crouch, "CROUCH"), (InputAction.Use, "USE / HIDE / DOORS"), (InputAction.Flashlight, "FLASHLIGHT"),
+            (InputAction.Throw, "THROW PARTY HORN"), (InputAction.HoldBreath, "HOLD BREATH"), (InputAction.Inspector, "AI INSPECTOR"), (InputAction.Skip, "SKIP CALL")
+        };
+
+        /// <summary>Look sensitivity, invert look and the keyboard keys (saved between sessions).</summary>
+        private void BuildSettings(Transform root)
+        {
+            settingsScreen = UiKit.Panel("Settings", root, Vector2.zero, Vector2.one, new Color(0.02f, 0.02f, 0.025f, 1f)).gameObject;
+            Transform t = settingsScreen.transform;
+            UiKit.Label("Title", t, "SETTINGS", 90, Palette.Ink, TextAnchor.LowerLeft, new Vector2(0.04f, 0.86f), new Vector2(0.5f, 0.97f));
+            UiKit.Button("Close", t, "CLOSE", 30, new Vector2(0.86f, 0.885f), new Vector2(0.96f, 0.945f), () => { rebinding = null; settingsScreen.SetActive(false); });
+            UiKit.Button("Reset", t, "RESET DEFAULTS", 30, new Vector2(0.66f, 0.885f), new Vector2(0.85f, 0.945f), () => { Controls.ResetSettings(); RefreshSettings(); });
+
+            // Left column: looking around.
+            UiKit.Label("LookTitle", t, "LOOK", 40, Palette.Gold, TextAnchor.LowerLeft, new Vector2(0.06f, 0.74f), new Vector2(0.4f, 0.8f));
+            float row = 0.66f;
+            mouseValue = SettingRow(t, "MOUSE SENSITIVITY", row, () => Controls.SetMouseSensitivity(Controls.MouseSensitivity - 0.1f), () => Controls.SetMouseSensitivity(Controls.MouseSensitivity + 0.1f));
+            row -= 0.1f;
+            stickValue = SettingRow(t, "CONTROLLER SENSITIVITY", row, () => Controls.SetStickSensitivity(Controls.StickSensitivity - 0.1f), () => Controls.SetStickSensitivity(Controls.StickSensitivity + 0.1f));
+            row -= 0.1f;
+            UiKit.Label("InvertLabel", t, "INVERT LOOK UP / DOWN", 30, Palette.Ink, TextAnchor.MiddleLeft, new Vector2(0.06f, row), new Vector2(0.3f, row + 0.07f));
+            invertButton = UiKit.Button("Invert", t, "OFF", 30, new Vector2(0.31f, row + 0.005f), new Vector2(0.44f, row + 0.065f), () => { Controls.SetInvertY(!Controls.InvertY); RefreshSettings(); });
+            UiKit.Label("LookNote", t, "A controller always uses the Xbox layout shown in CONTROLS.", 22, Palette.InkDim, TextAnchor.UpperLeft, new Vector2(0.06f, row - 0.12f), new Vector2(0.45f, row - 0.02f));
+
+            // Right column: keyboard keys.
+            UiKit.Label("KeysTitle", t, "KEYBOARD  (click an action, then press a key)", 32, Palette.Gold, TextAnchor.LowerLeft, new Vector2(0.52f, 0.74f), new Vector2(0.97f, 0.8f));
+            for (int i = 0; i < RebindableActions.Length; i++)
+            {
+                (InputAction action, string label) = RebindableActions[i];
+                float y = 0.68f - i * 0.052f;
+                UiKit.Label("Action", t, label, 26, Palette.Ink, TextAnchor.MiddleLeft, new Vector2(0.52f, y), new Vector2(0.76f, y + 0.045f));
+                keyButtons[action] = UiKit.Button("Key" + action, t, "", 26, new Vector2(0.77f, y + 0.003f), new Vector2(0.95f, y + 0.042f), () => { rebinding = action; RefreshSettings(); });
+            }
+            UiKit.Label("KeysNote", t, "Esc always pauses. A key already in use swaps with the old one.", 22, Palette.InkDim, TextAnchor.UpperLeft, new Vector2(0.52f, 0.02f), new Vector2(0.97f, 0.06f));
+            settingsScreen.SetActive(false);
+        }
+
+        private Text SettingRow(Transform t, string label, float y, UnityEngine.Events.UnityAction less, UnityEngine.Events.UnityAction more)
+        {
+            UiKit.Label(label, t, label, 30, Palette.Ink, TextAnchor.MiddleLeft, new Vector2(0.06f, y), new Vector2(0.3f, y + 0.07f));
+            UiKit.Button("Less", t, "<", 34, new Vector2(0.31f, y + 0.005f), new Vector2(0.35f, y + 0.065f), () => { less(); RefreshSettings(); });
+            Text value = UiKit.Label("Value", t, "", 34, Palette.Gold, TextAnchor.MiddleCenter, new Vector2(0.35f, y), new Vector2(0.4f, y + 0.07f));
+            UiKit.Button("More", t, ">", 34, new Vector2(0.4f, y + 0.005f), new Vector2(0.44f, y + 0.065f), () => { more(); RefreshSettings(); });
+            return value;
+        }
+
+        /// <summary>Opens and closes the settings screen (used by the capture tour).</summary>
+        public void ShowSettingsScreen() => ShowSettings();
+
+        public void HideSettingsScreen() => settingsScreen.SetActive(false);
+
+        private void ShowSettings()
+        {
+            settingsScreen.SetActive(true);
+            settingsScreen.transform.SetAsLastSibling();
+            rebinding = null;
+            RefreshSettings();
+        }
+
+        private void RefreshSettings()
+        {
+            mouseValue.text = Controls.MouseSensitivity.ToString("0.0");
+            stickValue.text = Controls.StickSensitivity.ToString("0.0");
+            UiKit.SetButtonText(invertButton, Controls.InvertY ? "ON" : "OFF");
+            foreach (KeyValuePair<InputAction, Button> pair in keyButtons)
+            {
+                bool waiting = rebinding == pair.Key;
+                UiKit.SetButtonText(pair.Value, waiting ? "PRESS A KEY..." : Controls.KeyName(Controls.Binding(pair.Key)));
+                UiKit.Tint(pair.Value, waiting ? Palette.Accent * 0.8f + new Color(0f, 0f, 0f, 0.2f) : Palette.Button);
+            }
+        }
+
+        /// <summary>While an action waits for its new key, the next key pressed is bound to it.</summary>
+        private void UpdateRebinding()
+        {
+            if (!rebinding.HasValue || settingsScreen == null || !settingsScreen.activeSelf)
+            {
+                return;
+            }
+            UnityEngine.InputSystem.Key key = Controls.KeyPressedThisFrame();
+            if (key == UnityEngine.InputSystem.Key.None)
+            {
+                return;
+            }
+            Controls.Rebind(rebinding.Value, key);
+            rebinding = null;
+            RefreshSettings();
+        }
+
         private void ShowControls()
         {
             controlsScreen.SetActive(true);
@@ -898,7 +1016,8 @@ namespace NightShift.UI
             {
                 return;
             }
-            GameObject screen = controlsScreen.activeSelf ? controlsScreen
+            GameObject screen = settingsScreen != null && settingsScreen.activeSelf ? settingsScreen
+                              : controlsScreen.activeSelf ? controlsScreen
                               : menuInfo.activeInHierarchy ? menuInfo
                               : pause.activeSelf ? pause
                               : end.activeSelf ? end
