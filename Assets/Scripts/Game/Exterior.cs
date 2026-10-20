@@ -15,9 +15,9 @@ namespace NightShift.Game
         // z = -19, the exit lobby (the entrance) is set back at z = -17.
         private const float FrontZ = -19.35f;
         private const float LobbyFrontZ = -17.35f;
-        private const float FrontHeight = 6.6f;
+        private const float FrontHeight = 9.2f;   // two floors
         private const float WestX = -21.75f;
-        private const float EastX = 19.75f;
+        private const float EastX = 22.35f;
         private const float LobbyWestX = 8f;
         private const float SidewalkZ = -21.6f;
         public const float RoadZ = -29f;
@@ -139,9 +139,9 @@ namespace NightShift.Game
             Wall(root, "EntranceRight", doorX + half, EastX, LobbyFrontZ, brick);
             BuildKit.Box("EntranceLintel", root, new Vector3(doorX, (doorTop + FrontHeight) * 0.5f, LobbyFrontZ), new Vector3(half * 2f, FrontHeight - doorTop, 0.3f), brick, 2f);
             BuildKit.Box("Step", root, new Vector3(LobbyWestX, FrontHeight * 0.5f, (FrontZ + LobbyFrontZ) * 0.5f), new Vector3(0.3f, FrontHeight, LobbyFrontZ - FrontZ + 0.3f), brick, 2f);
-            BuildKit.Box("SideWest", root, new Vector3(WestX, FrontHeight * 0.5f, -1.5f), new Vector3(0.3f, FrontHeight, 36f), brick, 2f);
-            BuildKit.Box("SideEast", root, new Vector3(EastX, FrontHeight * 0.5f, -0.5f), new Vector3(0.3f, FrontHeight, 34f), brick, 2f);
-            BuildKit.Box("Roof", root, new Vector3((WestX + EastX) * 0.5f, FrontHeight - 0.3f, -1.5f), new Vector3(EastX - WestX, 0.2f, 36f), roof, 4f, false);
+            BuildKit.Box("SideWest", root, new Vector3(WestX, FrontHeight * 0.5f, 0.35f), new Vector3(0.3f, FrontHeight, 39.7f), brick, 2f);
+            BuildKit.Box("SideEast", root, new Vector3(EastX, FrontHeight * 0.5f, 1.35f), new Vector3(0.3f, FrontHeight, 37.7f), brick, 2f);
+            BuildKit.Box("Roof", root, new Vector3((WestX + EastX) * 0.5f, FrontHeight - 0.3f, 0.35f), new Vector3(EastX - WestX, 0.2f, 39.7f), roof, 4f, false);
 
             // Cornice along the top, and a base course.
             BuildKit.Box("Cornice", root, new Vector3((WestX + LobbyWestX) * 0.5f, FrontHeight + 0.15f, FrontZ - 0.1f), new Vector3(LobbyWestX - WestX + 0.6f, 0.35f, 0.6f), trim, 2f, false);
@@ -164,6 +164,12 @@ namespace NightShift.Game
                     }
                 }
                 BuildKit.Box("Sill", root, center + new Vector3(0f, -1.1f, -0.1f), new Vector3(3.6f, 0.1f, 0.25f), trim, 1f, false);
+                // The staff floor's windows above, smaller, one of them faintly lit.
+                var upper = new Vector3(windows[i], 7.2f, FrontZ - 0.17f);
+                BuildKit.Box("UpperFrame", root, upper, new Vector3(2.2f, 1.4f, 0.05f), steel, 1f, false);
+                BuildKit.Box("UpperWindow", root, upper + new Vector3(0f, 0f, -0.02f), new Vector3(2f, 1.2f, 0.04f),
+                             i == 1 ? BuildKit.Glow("upperLit", new Color(0.35f, 0.3f, 0.2f), 0.6f) : glass, 1f, false);
+                BuildKit.Box("UpperSill", root, upper + new Vector3(0f, -0.75f, -0.1f), new Vector3(2.4f, 0.1f, 0.25f), trim, 1f, false);
             }
 
             // The entrance: a steel frame and a striped awning.

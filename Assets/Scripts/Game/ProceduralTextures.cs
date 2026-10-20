@@ -346,6 +346,54 @@ namespace NightShift.Game
             return texture;
         }
 
+        /// <summary>
+        /// The flashlight's lens pattern (a spot light cookie): a hot center, a darker ring, a soft
+        /// outer halo and a few smudges on the glass, like a cheap real torch.
+        /// </summary>
+        public static Texture2D FlashlightCookie(int size = 256)
+        {
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+            var pixels = new Color[size * size];
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = (x + 0.5f) / size * 2f - 1f;
+                    float dy = (y + 0.5f) / size * 2f - 1f;
+                    float r = Mathf.Sqrt(dx * dx + dy * dy);
+                    float hot = Mathf.Exp(-r * r * 7f);
+                    float ring = Mathf.Exp(-Mathf.Pow((r - 0.42f) / 0.06f, 2f)) * 0.35f;
+                    float halo = Mathf.Clamp01(1f - r * r) * 0.6f;
+                    float dip = 1f - Mathf.Exp(-Mathf.Pow((r - 0.3f) / 0.07f, 2f)) * 0.25f;
+                    float smudge = 0.88f + 0.12f * Mathf.PerlinNoise(x * 0.05f + 3f, y * 0.05f + 7f);
+                    float value = Mathf.Clamp01((hot + ring + halo) * dip * smudge) * (r < 1f ? 1f : 0f);
+                    pixels[y * size + x] = new Color(value, value, value, value);
+                }
+            }
+            texture.SetPixels(pixels);
+            texture.Apply();
+            return texture;
+        }
+
+        /// <summary>Yellow and black diagonal hazard stripes.</summary>
+        public static Texture2D HazardStripes()
+        {
+            const int size = 64;
+            var texture = New(size, size, TextureWrapMode.Repeat);
+            var pixels = new Color[size * size];
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    bool yellow = ((x + y) / 8) % 2 == 0;
+                    pixels[y * size + x] = yellow ? new Color(0.95f, 0.75f, 0.1f) : new Color(0.06f, 0.06f, 0.06f);
+                }
+            }
+            texture.SetPixels(pixels);
+            texture.Apply();
+            return texture;
+        }
+
         /// <summary>A far building's front at night: dark walls and a grid of windows, a few lit.</summary>
         public static Texture2D CityWindows()
         {

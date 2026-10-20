@@ -28,7 +28,7 @@ namespace NightShift.Game
             return pickup;
         }
 
-        public string Prompt(PlayerController player) => player.HiddenIn == null ? "[E] Take the party horn (throw it with G)" : "";
+        public string Prompt(PlayerController player) => player.HiddenIn == null ? "[E] Take the party horn (throw it with [G])" : "";
 
         public void Use(PlayerController player)
         {

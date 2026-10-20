@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace NightShift.Game
@@ -37,6 +38,8 @@ namespace NightShift.Game
 
         private static bool doorHintShown;
 
+        private const float FlashlightIntensity = 42f;
+
         private CharacterController body;
         private Transform head;
         private float yaw;
@@ -74,6 +77,22 @@ namespace NightShift.Game
         public bool Sliding { get; private set; }
         public bool Moving { get; private set; }
         public HidingSpot HiddenIn { get; private set; }
+
+        /// <summary>True while crawling through an air duct (Freddy cannot see or reach the player).</summary>
+        public bool Crawling { get; private set; }
+
+        /// <summary>Room at the far end of the duct being crawled through.</summary>
+        public Hunt.Room CrawlTarget { get; private set; }
+
+        // Crawling: the eyes follow a path through the duct.
+        private const float CrawlSpeed = 2.3f;
+        private List<Vector3> crawlPath;
+        private int crawlSegment;
+        private float crawlAlong;
+        private float crawlStepDistance;
+        private float crawlYaw;
+        private float crawlLookYaw;
+        private float crawlLookPitch;
 
         /// <summary>True while hidden and holding the breath (Freddy will not notice you if he searches).</summary>
         public bool HoldingBreath { get; private set; }
@@ -145,10 +164,12 @@ namespace NightShift.Game
             player.Flashlight.transform.SetParent(cameraObject.transform, false);
             player.Flashlight.transform.localPosition = new Vector3(0.2f, -0.15f, 0.1f);
             player.Flashlight.type = LightType.Spot;
-            player.Flashlight.spotAngle = 55f;
-            player.Flashlight.innerSpotAngle = 25f;
-            player.Flashlight.range = 18f;
-            player.Flashlight.intensity = 6f;
+            // The only reliable light in the building: a strong, narrow beam with a real lens pattern.
+            player.Flashlight.spotAngle = 70f;
+            player.Flashlight.innerSpotAngle = 16f;
+            player.Flashlight.range = 30f;
+            player.Flashlight.intensity = FlashlightIntensity;
+            player.Flashlight.cookie = ProceduralTextures.FlashlightCookie();
             player.Flashlight.color = new Color(1f, 0.95f, 0.85f);
             player.Flashlight.shadows = LightShadows.Soft;
             player.Flashlight.enabled = true;
@@ -201,9 +222,92 @@ namespace NightShift.Game
             Director.Audio.PlayAt(Director.Assets.LockerDoor, spot.transform.position, 0.5f);
         }
 
+        /// <summary>Into an air duct: the eyes follow <paramref name="path"/> to the room at its far end.</summary>
+        public void StartCrawl(List<Vector3> path, Hunt.Room target)
+        {
+            if (Crawling || HiddenIn != null || path == null || path.Count < 2)
+            {
+                return;
+            }
+            Crawling = true;
+            CrawlTarget = target;
+            crawlPath = path;
+            crawlSegment = 0;
+            crawlAlong = 0f;
+            crawlStepDistance = 0f;
+            crawlYaw = yaw;
+            crawlLookYaw = 0f;
+            crawlLookPitch = 0f;
+            body.enabled = false;
+            Sliding = false;
+            Flashlight.enabled = true;
+            MakeNoise(1);
+            Director.Audio.PlayAt(Director.Assets.LockerDoor, path[0], 0.45f, 1.5f);
+        }
+
+        private void UpdateCrawl(Vector2 look)
+        {
+            HoldingBreath = false;
+            Breath = Mathf.MoveTowards(Breath, 1f, Time.deltaTime * 0.15f);
+            Stamina = Mathf.MoveTowards(Stamina, 1f, Time.deltaTime * 0.1f);
+            crawlLookYaw = Mathf.Clamp(crawlLookYaw + look.x, -70f, 70f);
+            crawlLookPitch = Mathf.Clamp(crawlLookPitch - look.y, -45f, 45f);
+
+            Vector3 from = crawlPath[crawlSegment];
+            Vector3 to = crawlPath[crawlSegment + 1];
+            float length = Mathf.Max(0.01f, Vector3.Distance(from, to));
+            bool vertical = Mathf.Abs(to.y - from.y) > 0.8f * length;
+            crawlAlong += Time.deltaTime * (vertical ? CrawlSpeed * 0.8f : CrawlSpeed);
+            crawlStepDistance += Time.deltaTime * CrawlSpeed;
+            if (crawlStepDistance > 0.75f)
+            {
+                // Hands and knees on sheet metal: a dull clank, too soft to carry.
+                crawlStepDistance = 0f;
+                Director.Audio.Footstep(0.12f);
+            }
+            if (crawlAlong >= length)
+            {
+                crawlAlong -= length;
+                crawlSegment++;
+                if (crawlSegment >= crawlPath.Count - 1)
+                {
+                    FinishCrawl();
+                    return;
+                }
+                from = crawlPath[crawlSegment];
+                to = crawlPath[crawlSegment + 1];
+                length = Mathf.Max(0.01f, Vector3.Distance(from, to));
+                vertical = Mathf.Abs(to.y - from.y) > 0.8f * length;
+            }
+            Vector3 direction = (to - from) / length;
+            if (!vertical && new Vector2(direction.x, direction.z).sqrMagnitude > 0.01f)
+            {
+                crawlYaw = Mathf.MoveTowardsAngle(crawlYaw, Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg, Time.deltaTime * 240f);
+            }
+            // Going down a shaft you look down it; climbing, you look up.
+            float slopePitch = vertical ? (direction.y < 0f ? 60f : -55f) : 0f;
+            float bob = Mathf.Sin(crawlAlong * 6f) * 0.03f;
+            head.position = Vector3.Lerp(from, to, Mathf.Clamp01(crawlAlong / length)) + Vector3.up * bob;
+            head.rotation = Quaternion.Euler(slopePitch + crawlLookPitch, crawlYaw + crawlLookYaw, Mathf.Sin(crawlAlong * 3f) * 2f);
+        }
+
+        private void FinishCrawl()
+        {
+            Vector3 stand = crawlPath[crawlPath.Count - 1] - Vector3.up * 1.0f;
+            Crawling = false;
+            transform.position = stand;
+            body.enabled = true;
+            yaw = crawlYaw;
+            pitch = 0f;
+            head.localPosition = new Vector3(0f, CrouchHeight - 0.15f, 0f);
+            MakeNoise(1);
+            Director.Audio.PlayAt(Director.Assets.LockerDoor, stand, 0.45f, 1.5f);
+        }
+
         /// <summary>Moves the player out of any spot and back to a position (new night).</summary>
         public void ResetTo(Vector3 position, float facing)
         {
+            Crawling = false;
             if (HiddenIn != null)
             {
                 HiddenIn.Occupied = false;
@@ -235,6 +339,12 @@ namespace NightShift.Game
             Running = false;
             Target = null;
 
+            if (Crawling)
+            {
+                // A crawl, once started, goes on to the other end (it only stops when the game pauses).
+                UpdateCrawl(Controllable ? Controls.Look : Vector2.zero);
+                return;
+            }
             if (!Controllable)
             {
                 HoldingBreath = false;
@@ -244,7 +354,7 @@ namespace NightShift.Game
 
             Vector2 look = Controls.Look;
             UpdateFear();
-            if (Controls.ThrowPressed && HiddenIn == null && Lures > 0)
+            if (Controls.ThrowPressed && HiddenIn == null && !Crawling && Lures > 0)
             {
                 Lures--;
                 ThrownLure.Throw(Director, View.transform.position + View.transform.forward * 0.6f, View.transform.forward);
@@ -383,7 +493,7 @@ namespace NightShift.Game
             {
                 flashlightGlitchUntil = Time.time + Random.Range(0.08f, 0.3f);
             }
-            Flashlight.intensity = Time.time < flashlightGlitchUntil ? 0.6f : 6f;
+            Flashlight.intensity = Time.time < flashlightGlitchUntil ? 0.8f : FlashlightIntensity;
         }
 
         private void UpdateHidden(Vector2 look)
@@ -446,7 +556,7 @@ namespace NightShift.Game
 
         private void PlaceCamera()
         {
-            if (CameraLocked)
+            if (CameraLocked || Crawling)
             {
                 return;
             }

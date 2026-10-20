@@ -89,7 +89,7 @@ namespace NightShift.Game
         {
             foreach (Door door in All)
             {
-                if (!door.Broken && Vector3.Distance(Flat(door.transform.position), Flat(point)) < distance)
+                if (!door.Broken && SameFloor(door, point) && Vector3.Distance(Flat(door.transform.position), Flat(point)) < distance)
                 {
                     return door;
                 }
@@ -115,7 +115,7 @@ namespace NightShift.Game
         {
             foreach (Door door in All)
             {
-                if (door.Closed && !door.Broken && Vector3.Distance(Flat(door.transform.position), Flat(point)) < distance)
+                if (door.Closed && !door.Broken && SameFloor(door, point) && Vector3.Distance(Flat(door.transform.position), Flat(point)) < distance)
                 {
                     return door;
                 }
@@ -196,5 +196,8 @@ namespace NightShift.Game
         }
 
         private static Vector3 Flat(Vector3 p) => new Vector3(p.x, 0f, p.z);
+
+        /// <summary>Doors on the two floors can stand one above the other; only the one on this floor counts.</summary>
+        private static bool SameFloor(Door door, Vector3 point) => Mathf.Abs(point.y - door.transform.position.y) < 2f;
     }
 }
