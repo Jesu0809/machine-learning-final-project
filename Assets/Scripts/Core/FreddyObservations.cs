@@ -7,36 +7,38 @@ namespace NightShift.Hunt
     /// hiding spot. Every value is in [0, 1]. See docs/ml-design.md, section 5.
     /// </summary>
     /// <remarks>
-    /// Layout (54 values):
-    ///   0–8   own room, one-hot
-    ///   9–17  noise memory per room
-    ///   18–26 last room where the player was seen, one-hot (all zero if never seen)
-    ///   27    ticks since the player was seen, normalized
-    ///   28–36 ticks since Freddy visited each room, normalized
-    ///   37    player seen right now
-    ///   38    fuses collected, normalized (the generators light up the map, so Freddy knows)
-    ///   39    night progress
-    ///   40–42 spots of the current room already searched
-    ///   43    "sense" readiness (1 = ready, falls to 0 right after using it)
-    ///   44–52 room where "sense" last found the player, one-hot (all zero if never)
-    ///   53    ticks since that, normalized
+    /// Layout (R = <see cref="HuntMap.RoomCount"/> = 14, so 5R + 9 = 79 values):
+    ///   own room, one-hot (R)
+    ///   noise memory per room (R)
+    ///   last room where the player was seen, one-hot, all zero if never seen (R)
+    ///   ticks since the player was seen, normalized (1)
+    ///   ticks since Freddy visited each room, normalized (R)
+    ///   player seen right now (1)
+    ///   fuses collected, normalized (1) (the generators light up the map, so Freddy knows)
+    ///   night progress (1)
+    ///   spots of the current room already searched (MaxSpots = 3)
+    ///   "sense" readiness, 1 = ready, falls to 0 right after using it (1)
+    ///   room where "sense" last found the player, one-hot, all zero if never (R)
+    ///   ticks since that, normalized (1)
     /// </remarks>
     public static class FreddyObservations
     {
-        public const int Size = 54;
+        private const int R = HuntMap.RoomCount;
+
+        public const int Size = 5 * R + 6 + HuntMap.MaxSpots;
 
         private const int RoomOffset = 0;
-        private const int NoiseOffset = 9;
-        private const int LastSeenOffset = 18;
-        private const int SinceSeenIndex = 27;
-        private const int VisitedOffset = 28;
-        private const int SeenNowIndex = 37;
-        private const int FusesIndex = 38;
-        private const int ProgressIndex = 39;
-        private const int SearchedOffset = 40;
-        private const int SenseReadyIndex = 43;
-        private const int SensedOffset = 44;
-        private const int SinceSensedIndex = 53;
+        private const int NoiseOffset = R;
+        private const int LastSeenOffset = 2 * R;
+        private const int SinceSeenIndex = 3 * R;
+        private const int VisitedOffset = 3 * R + 1;
+        private const int SeenNowIndex = 4 * R + 1;
+        private const int FusesIndex = 4 * R + 2;
+        private const int ProgressIndex = 4 * R + 3;
+        private const int SearchedOffset = 4 * R + 4;
+        private const int SenseReadyIndex = SearchedOffset + HuntMap.MaxSpots;
+        private const int SensedOffset = SenseReadyIndex + 1;
+        private const int SinceSensedIndex = SensedOffset + R;
 
         public static void Write(HuntState state, float[] output)
         {

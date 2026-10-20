@@ -45,6 +45,9 @@ namespace NightShift.Hunt
         /// <summary>Player actions a walk into the next room takes (running takes one).</summary>
         public int WalkTicks = 2;
 
+        /// <summary>Player actions it takes to crawl through an air duct.</summary>
+        public int CrawlActions = 4;
+
         /// <summary>Chance that searching the right spot finds the player (otherwise they held their breath).</summary>
         public float SearchFindChance = 0.8f;
 

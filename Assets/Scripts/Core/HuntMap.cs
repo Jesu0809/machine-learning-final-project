@@ -5,32 +5,46 @@ namespace NightShift.Hunt
     /// <summary>Rooms of the pizzeria. The numeric value is also Freddy's "go to room" action index.</summary>
     public enum Room
     {
+        // Upper floor (staff only).
         Office = 0,
-        WestHall = 1,
-        Storage = 2,
-        Kitchen = 3,
-        DiningHall = 4,
-        Arcade = 5,
-        Stage = 6,
-        EastHall = 7,
-        ExitLobby = 8
+        UpperHall = 1,
+        Manager = 2,
+        Lounge = 3,
+        Parts = 4,
+        Maintenance = 5,
+        // Ground floor.
+        BackHall = 6,
+        Kitchen = 7,
+        DiningHall = 8,
+        Arcade = 9,
+        Storage = 10,
+        Stage = 11,
+        PartyRoom = 12,
+        ExitLobby = 13
     }
 
     /// <summary>
-    /// The room graph the hunt is played on. Freddy's brain decides on this graph; in the 3D game
-    /// each room is a real space and the body walks between them with the NavMesh.
+    /// The room graph the hunt is played on: two floors joined by two staircases (in the dining
+    /// hall and in the storage), plus air ducts that only the player fits through. Freddy's brain
+    /// decides on this graph; in the 3D game each room is a real space (see PizzeriaLayout).
     /// See docs/ml-design.md, section 2.
     /// </summary>
     /// <remarks>
-    /// Office ──── WestHall ──── Storage
-    ///   │            │             │
-    /// Kitchen ─── DiningHall ── Arcade
-    ///   │            │             │
-    /// Stage ───── EastHall ──── ExitLobby
+    /// <code>
+    /// UPPER FLOOR                              GROUND FLOOR (a ring around the dining hall)
+    /// Office ── Manager ── Lounge              Kitchen ──── BackHall ──── Storage*
+    ///              │         │                    │    \                    │
+    ///              └─ UpperHall ─┘                │     DiningHall* ──── Arcade
+    ///          ┌───────┼────────┐               Stage   /                   │
+    ///        Parts  Maintenance  (stairs to *)    └── PartyRoom ──── ExitLobby (exit)
+    ///
+    /// * stairs up to the Upper Hall.   Ducts (player only): Office–Parts, Parts–Stage,
+    ///   Lounge–Arcade, PartyRoom–Kitchen.
+    /// </code>
     /// </remarks>
     public static class HuntMap
     {
-        public const int RoomCount = 9;
+        public const int RoomCount = 14;
 
         /// <summary>Most hiding spots in one room (the size of Freddy's "search spot" actions).</summary>
         public const int MaxSpots = 3;
@@ -41,24 +55,45 @@ namespace NightShift.Hunt
 
         private static readonly Room[][] Neighbors =
         {
-            new[] { Room.WestHall, Room.Kitchen },                          // Office
-            new[] { Room.Office, Room.Storage, Room.DiningHall },           // WestHall
-            new[] { Room.WestHall, Room.Arcade },                           // Storage
-            new[] { Room.Office, Room.DiningHall, Room.Stage },             // Kitchen
-            new[] { Room.WestHall, Room.Kitchen, Room.Arcade, Room.EastHall }, // DiningHall
-            new[] { Room.Storage, Room.DiningHall, Room.ExitLobby },        // Arcade
-            new[] { Room.Kitchen, Room.EastHall },                          // Stage
-            new[] { Room.DiningHall, Room.Stage, Room.ExitLobby },          // EastHall
-            new[] { Room.Arcade, Room.EastHall }                            // ExitLobby
+            new[] { Room.Manager },                                                        // Office
+            new[] { Room.Manager, Room.Lounge, Room.Parts, Room.Maintenance, Room.DiningHall, Room.Storage }, // UpperHall
+            new[] { Room.Office, Room.UpperHall, Room.Lounge },                            // Manager
+            new[] { Room.UpperHall, Room.Manager },                                        // Lounge
+            new[] { Room.UpperHall },                                                      // Parts
+            new[] { Room.UpperHall },                                                      // Maintenance
+            new[] { Room.Kitchen, Room.Storage },                                          // BackHall
+            new[] { Room.BackHall, Room.DiningHall, Room.Stage },                          // Kitchen
+            new[] { Room.UpperHall, Room.Kitchen, Room.Arcade, Room.PartyRoom },           // DiningHall
+            new[] { Room.DiningHall, Room.Storage, Room.ExitLobby },                       // Arcade
+            new[] { Room.UpperHall, Room.BackHall, Room.Arcade },                          // Storage
+            new[] { Room.Kitchen, Room.PartyRoom },                                        // Stage
+            new[] { Room.DiningHall, Room.Stage, Room.ExitLobby },                         // PartyRoom
+            new[] { Room.Arcade, Room.PartyRoom }                                          // ExitLobby
+        };
+
+        /// <summary>Air ducts: crawl-only shortcuts for the player. Freddy is too big for them.</summary>
+        private static readonly (Room a, Room b)[] DuctList =
+        {
+            (Room.Office, Room.Parts),
+            (Room.Parts, Room.Stage),
+            (Room.Lounge, Room.Arcade),
+            (Room.PartyRoom, Room.Kitchen)
         };
 
         // Hiding spots per room: spot 0 is always a locker, then cabinets and under tables.
-        // Halls and the lobby have only one.
-        private static readonly int[] SpotCounts = { 2, 1, 3, 3, 3, 2, 2, 1, 1 };
+        private static readonly int[] SpotCounts = { 2, 1, 2, 2, 3, 2, 1, 3, 3, 2, 3, 2, 3, 1 };
+
+        /// <summary>Rooms with a fuse shelf (where the night's fuses can be).</summary>
+        private static readonly Room[] FuseRoomList =
+        {
+            Room.UpperHall, Room.Manager, Room.Lounge, Room.Parts, Room.Maintenance,
+            Room.BackHall, Room.Kitchen, Room.DiningHall, Room.Arcade, Room.Storage, Room.PartyRoom
+        };
 
         private static readonly string[] Names =
         {
-            "Office", "West Hall", "Storage", "Kitchen", "Dining Hall", "Arcade", "Stage", "East Hall", "Exit Lobby"
+            "Office", "Upper Hall", "Manager", "Lounge", "Parts & Service", "Maintenance",
+            "Back Hall", "Kitchen", "Dining Hall", "Arcade", "Storage", "Stage", "Party Room", "Exit Lobby"
         };
 
         private static readonly int[,] Distances = ComputeDistances();
@@ -67,10 +102,46 @@ namespace NightShift.Hunt
 
         public static bool AreConnected(Room from, Room to) => System.Array.IndexOf(Neighbors[(int)from], to) >= 0;
 
+        /// <summary>The air ducts, as pairs of rooms.</summary>
+        public static IReadOnlyList<(Room a, Room b)> Ducts => DuctList;
+
+        /// <summary>Rooms the player can reach from <paramref name="room"/> through a duct.</summary>
+        public static IEnumerable<Room> DuctsFrom(Room room)
+        {
+            foreach ((Room a, Room b) in DuctList)
+            {
+                if (a == room)
+                {
+                    yield return b;
+                }
+                else if (b == room)
+                {
+                    yield return a;
+                }
+            }
+        }
+
+        public static bool DuctBetween(Room a, Room b)
+        {
+            foreach ((Room x, Room y) in DuctList)
+            {
+                if ((x == a && y == b) || (x == b && y == a))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static IReadOnlyList<Room> FuseRooms => FuseRoomList;
+
+        /// <summary>True for the staff floor upstairs.</summary>
+        public static bool IsUpstairs(Room room) => room <= Room.Maintenance;
+
         /// <summary>Number of hiding spots in <paramref name="room"/> (1 to <see cref="MaxSpots"/>).</summary>
         public static int SpotCount(Room room) => SpotCounts[(int)room];
 
-        /// <summary>Fewest moves between two rooms.</summary>
+        /// <summary>Fewest walking moves between two rooms (ducts do not count: Freddy cannot use them).</summary>
         public static int Distance(Room from, Room to) => Distances[(int)from, (int)to];
 
         /// <summary>Longest shortest path in the map, used to normalize distances.</summary>

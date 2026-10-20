@@ -11,6 +11,9 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/HuntTraining.unity
     guid: b13b4924fb08a4dcb93e10a7dae963d7
+  - enabled: 0
+    path: Assets/Scenes/Evaluation.unity
+    guid: 6c0cefb7b64bf4a569e5557650b6eb54
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0

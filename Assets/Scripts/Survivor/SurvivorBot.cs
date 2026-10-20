@@ -44,14 +44,17 @@ namespace NightShift.Hunt.Survivor
         /// <summary>Chance of choosing spot 0, the locker, in a room with more than one spot (the "where you hide" habit).</summary>
         public float Spot0Preference = 0.5f;
 
+        /// <summary>Chance of escaping through an air duct, or taking one as a shortcut, when there is one.</summary>
+        public float DuctUse = 0.5f;
+
         public static SurvivorSettings FromPreset(SurvivorPreset preset)
         {
             switch (preset)
             {
                 case SurvivorPreset.Novice:
-                    return new SurvivorSettings { TrackerUse = 0.55f, HideChance = 0.75f, RunChance = 0.4f, Patience = 2, MaxWaitActions = 3 };
+                    return new SurvivorSettings { TrackerUse = 0.55f, HideChance = 0.75f, RunChance = 0.4f, Patience = 2, MaxWaitActions = 3, DuctUse = 0.2f };
                 case SurvivorPreset.Expert:
-                    return new SurvivorSettings { TrackerUse = 0.95f, HideChance = 0.45f, RunChance = 0.08f, Patience = 3, MaxWaitActions = 8 };
+                    return new SurvivorSettings { TrackerUse = 0.95f, HideChance = 0.45f, RunChance = 0.08f, Patience = 3, MaxWaitActions = 8, DuctUse = 0.8f };
                 default:
                     return new SurvivorSettings();
             }
@@ -70,7 +73,8 @@ namespace NightShift.Hunt.Survivor
                 RunChance = Range(random, 0.05f, 0.45f),
                 Patience = random.Next(2, 6),
                 MaxWaitActions = random.Next(3, 11),
-                Spot0Preference = Range(random, 0.1f, 0.9f)
+                Spot0Preference = Range(random, 0.1f, 0.9f),
+                DuctUse = Range(random, 0.1f, 0.9f)
             };
         }
 
@@ -143,6 +147,11 @@ namespace NightShift.Hunt.Survivor
         {
             ReadTracker(state);
             Room here = state.PlayerRoom;
+            if (state.PlayerInDuct)
+            {
+                // Nothing to decide inside a duct: keep crawling.
+                return PlayerAction.Crawl(state.PlayerCrawlingTo.Value);
+            }
             // Freddy may have come one room closer for every tick (two player actions) since the
             // last tracker reading.
             int danger = knownFreddy.HasValue ? HuntMap.Distance(here, knownFreddy.Value) - knownAge / 2 : int.MaxValue;
@@ -162,6 +171,12 @@ namespace NightShift.Hunt.Survivor
                 calmTicks = 0;
                 int spots = HuntMap.SpotCount(here);
                 Room flee = FleeRoom(here, knownFreddy.Value);
+                // A vent is the best escape: Freddy cannot follow.
+                Room? vent = BestDuct(here, knownFreddy.Value);
+                if (vent.HasValue && random.NextDouble() < Settings.DuctUse)
+                {
+                    return PlayerAction.Crawl(vent.Value);
+                }
                 // Freddy goes straight to where he heard a noise, so after a loud action, or in a
                 // room with a single spot, get away first if there is somewhere safer to go.
                 bool fleeFirst = (actionsSinceLoud < 3 || spots == 1)
@@ -198,6 +213,15 @@ namespace NightShift.Hunt.Survivor
             }
 
             Room goal = allFuses ? HuntMap.Exit : NearestFuse(state);
+            // A duct that saves at least two rooms of walking, if it does not come out next to Freddy.
+            foreach (Room exit in HuntMap.DuctsFrom(here))
+            {
+                if (HuntMap.Distance(exit, goal) + 2 <= HuntMap.Distance(here, goal) && !NearFreddy(exit)
+                    && random.NextDouble() < Settings.DuctUse)
+                {
+                    return PlayerAction.Crawl(exit);
+                }
+            }
             Room next = HuntMap.NextStep(here, goal, knownFreddy);
             if (next == here || Blocked(next))
             {
@@ -268,6 +292,23 @@ namespace NightShift.Hunt.Survivor
                 {
                     bestScore = score;
                     best = next;
+                }
+            }
+            return best;
+        }
+
+        /// <summary>The duct out of <paramref name="here"/> that comes out farthest from Freddy, if it is not next to him.</summary>
+        private static Room? BestDuct(Room here, Room freddy)
+        {
+            Room? best = null;
+            int bestDistance = 1;
+            foreach (Room exit in HuntMap.DuctsFrom(here))
+            {
+                int distance = HuntMap.Distance(exit, freddy);
+                if (distance > bestDistance)
+                {
+                    bestDistance = distance;
+                    best = exit;
                 }
             }
             return best;

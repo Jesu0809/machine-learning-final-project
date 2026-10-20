@@ -25,7 +25,13 @@ namespace NightShift.Hunt
         /// <summary>Pick up the fuse in the current room (loud).</summary>
         PickFuse,
         /// <summary>Work on the exit panel; needs every fuse (very loud).</summary>
-        WorkExit
+        WorkExit,
+        /// <summary>
+        /// Crawl through an air duct to another room (see <see cref="HuntMap.Ducts"/>): silent after
+        /// the grate rattles, unseen, and takes <see cref="HuntSettings.CrawlActions"/> actions.
+        /// Freddy cannot follow.
+        /// </summary>
+        Crawl
     }
 
     /// <summary>What the player does in one tick, from the simulated survivor or from the 3D game.</summary>
@@ -48,13 +54,15 @@ namespace NightShift.Hunt
         public static PlayerAction Hide(int spot) => new PlayerAction(PlayerActionKind.Hide, default, spot);
         public static PlayerAction PickFuse() => new PlayerAction(PlayerActionKind.PickFuse, default, -1);
         public static PlayerAction WorkExit() => new PlayerAction(PlayerActionKind.WorkExit, default, -1);
+        public static PlayerAction Crawl(Room target) => new PlayerAction(PlayerActionKind.Crawl, target, -1);
 
         public override string ToString()
         {
             switch (Kind)
             {
                 case PlayerActionKind.Walk:
-                case PlayerActionKind.Run: return Kind + " " + Target;
+                case PlayerActionKind.Run:
+                case PlayerActionKind.Crawl: return Kind + " " + Target;
                 case PlayerActionKind.Hide: return "Hide " + Spot;
                 default: return Kind.ToString();
             }
@@ -121,6 +129,10 @@ namespace NightShift.Hunt
         /// <summary>Room the walking player is heading to, or null.</summary>
         public Room? PlayerWalkingTo { get; private set; }
         public int PlayerWalkProgress { get; private set; }
+        /// <summary>Room at the other end of the duct the player is crawling through, or null.</summary>
+        public Room? PlayerCrawlingTo { get; private set; }
+        public int PlayerCrawlProgress { get; private set; }
+        public bool PlayerInDuct => PlayerCrawlingTo.HasValue;
         public int FusesCollected { get; private set; }
         public int ExitProgress { get; private set; }
         /// <summary>Noise level of the player's last action: 0 silent, 1 walk, 2 run or pick up, 3 exit panel.</summary>
@@ -171,6 +183,7 @@ namespace NightShift.Hunt
         public int TimesHeard { get; private set; }
         public int SenseUses { get; private set; }
         public int SenseHits { get; private set; }
+        public int DuctUses { get; private set; }
 
         public HuntState(HuntSettings settings, int seed)
         {
@@ -193,6 +206,8 @@ namespace NightShift.Hunt
             PlayerSpot = -1;
             PlayerWalkingTo = null;
             PlayerWalkProgress = 0;
+            PlayerCrawlingTo = null;
+            PlayerCrawlProgress = 0;
             FusesCollected = 0;
             ExitProgress = 0;
             PlayerNoise = 0;
@@ -201,7 +216,7 @@ namespace NightShift.Hunt
             PlayerSeen = false;
             LastSeenRoom = null;
             TicksSinceSeen = Settings.MemoryWindowTicks;
-            Searches = FailedSearches = TimesSeen = TimesHeard = SenseUses = SenseHits = 0;
+            Searches = FailedSearches = TimesSeen = TimesHeard = SenseUses = SenseHits = DuctUses = 0;
             PlayerFear = 0f;
             SenseCooldown = Math.Min(10, Settings.SenseCooldownTicks);
             SensedRoom = null;
@@ -219,12 +234,14 @@ namespace NightShift.Hunt
         private void PlaceFuses()
         {
             Array.Clear(fuseInRoom, 0, fuseInRoom.Length);
-            // Never in the start rooms or at the exit, so the player always has to cross the map.
+            // Only rooms with a fuse shelf (never the start rooms or the exit), so the player always
+            // has to cross the map.
+            var candidates = HuntMap.FuseRooms;
             int placed = 0;
-            while (placed < Settings.FuseCount)
+            while (placed < Math.Min(Settings.FuseCount, candidates.Count))
             {
-                var room = (Room)random.Next(HuntMap.RoomCount);
-                if (room == HuntMap.PlayerStart || room == HuntMap.FreddyStart || room == HuntMap.Exit || fuseInRoom[(int)room])
+                Room room = candidates[random.Next(candidates.Count)];
+                if (fuseInRoom[(int)room])
                 {
                     continue;
                 }
@@ -252,6 +269,8 @@ namespace NightShift.Hunt
             PlayerSpot = -1;
             PlayerWalkingTo = null;
             PlayerWalkProgress = 0;
+            PlayerCrawlingTo = null;
+            PlayerCrawlProgress = 0;
         }
 
         // =====================================================================
@@ -278,8 +297,38 @@ namespace NightShift.Hunt
             }
             PlayerActionsThisTick++;
             PlayerNoise = 0;
+            if (PlayerInDuct)
+            {
+                // Inside a duct there is nothing to do but keep crawling: silent and out of sight.
+                PlayerCrawlProgress++;
+                if (PlayerCrawlProgress >= Settings.CrawlActions)
+                {
+                    Room exit = PlayerCrawlingTo.Value;
+                    PlayerCrawlingTo = null;
+                    PlayerCrawlProgress = 0;
+                    LeaveHidingSpot();
+                    MovePlayer(exit);
+                    PlayerNoise = 1; // the grate at the other end
+                }
+                Sense();
+                return;
+            }
             switch (action.Kind)
             {
+                case PlayerActionKind.Crawl:
+                    if (!HuntMap.DuctBetween(PlayerRoom, action.Target))
+                    {
+                        break;
+                    }
+                    // Into the vent: the grate rattles, then the player is gone from sight.
+                    PlayerNoise = 1;
+                    PlayerHidden = true;
+                    PlayerSpot = -1;
+                    PlayerCrawlingTo = action.Target;
+                    PlayerCrawlProgress = 0;
+                    DuctUses++;
+                    break;
+
                 case PlayerActionKind.Walk:
                     if (!HuntMap.AreConnected(PlayerRoom, action.Target))
                     {

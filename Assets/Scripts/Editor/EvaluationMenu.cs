@@ -47,7 +47,7 @@ namespace NightShift.EditorTools
         {
             CreateScene();
             bool windows = Application.platform == RuntimePlatform.WindowsEditor;
-            string folder = Path.GetFullPath(Path.Combine(Application.dataPath, "../../training/builds"));
+            string folder = HuntTrainingMenu.BuildsFolder();
             string output = Path.Combine(folder, windows ? "Evaluation/Evaluation.exe" : "Evaluation.app");
             BuildReport report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
             {
