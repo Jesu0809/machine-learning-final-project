@@ -15,7 +15,7 @@ export class ResultsService {
     return this.http.get<Runs>('/api/runs');
   }
 
-  getGameStatus(): Observable<{ available: boolean }> {
-    return this.http.get<{ available: boolean }>('/api/game/status');
+  getGameStatus(): Observable<{ available: boolean; version: string }> {
+    return this.http.get<{ available: boolean; version: string }>('/api/game/status');
   }
 }

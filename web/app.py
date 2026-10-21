@@ -233,13 +233,19 @@ GZIP_CONTENT_TYPES = {
 
 @app.route("/api/game/status", methods=["GET"])
 def game_status():
-    available = os.path.isfile(os.path.join(GAME_DIR, "Build", "game.loader.js"))
-    return jsonify({"available": available})
+    loader = os.path.join(GAME_DIR, "Build", "game.loader.js")
+    data = os.path.join(GAME_DIR, "Build", "game.data.gz")
+    available = os.path.isfile(loader)
+    # The size of the build changes with every new build: the page adds it to the file URLs so the
+    # browser (and Unity's own cache of the data file) never keeps an old build.
+    version = str(os.path.getsize(data)) if os.path.isfile(data) else "0"
+    return jsonify({"available": available, "version": version})
 
 
 @app.route("/game/<path:filename>")
 def game_files(filename):
     response = send_from_directory(GAME_DIR, filename)
+    response.headers["Cache-Control"] = "no-cache"
     for suffix, content_type in GZIP_CONTENT_TYPES.items():
         if filename.endswith(suffix):
             response.headers["Content-Encoding"] = "gzip"

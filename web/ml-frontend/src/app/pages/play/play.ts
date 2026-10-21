@@ -33,11 +33,14 @@ export class Play implements AfterViewInit, OnDestroy {
   private instance: UnityInstance | null = null;
   /** True once the page is left: a game still loading is shut down as soon as it is ready. */
   private destroyed = false;
+  /** Changes with every build; added to the file URLs so an old build is never reused. */
+  private version = '0';
 
   ngAfterViewInit(): void {
     this.resultsService.getGameStatus().subscribe({
       next: (status) => {
         this.available.set(status.available);
+        this.version = status.version ?? '0';
         if (status.available) {
           setTimeout(() => this.load());
         }
@@ -80,7 +83,7 @@ export class Play implements AfterViewInit, OnDestroy {
     }
     const script = document.createElement('script');
     script.id = LOADER_ID;
-    script.src = '/game/Build/game.loader.js';
+    script.src = `/game/Build/game.loader.js?v=${this.version}`;
     script.onload = () => this.start();
     script.onerror = () => {
       script.remove();
@@ -94,13 +97,13 @@ export class Play implements AfterViewInit, OnDestroy {
       return;
     }
     createUnityInstance(this.canvas.nativeElement, {
-        dataUrl: '/game/Build/game.data.gz',
-        frameworkUrl: '/game/Build/game.framework.js.gz',
-        codeUrl: '/game/Build/game.wasm.gz',
+        dataUrl: `/game/Build/game.data.gz?v=${this.version}`,
+        frameworkUrl: `/game/Build/game.framework.js.gz?v=${this.version}`,
+        codeUrl: `/game/Build/game.wasm.gz?v=${this.version}`,
         streamingAssetsUrl: '/game/StreamingAssets',
         companyName: 'UdeC',
         productName: 'Night Shift',
-        productVersion: '1.0',
+        productVersion: this.version,
       }, (p) => this.progress.set(Math.round(p * 100)))
         .then((instance) => {
           if (this.destroyed) {
