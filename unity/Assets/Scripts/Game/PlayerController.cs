@@ -38,7 +38,6 @@ namespace NightShift.Game
 
         private static bool doorHintShown;
 
-        private const float FlashlightIntensity = 42f;
 
         private CharacterController body;
         private Transform head;
@@ -65,6 +64,7 @@ namespace NightShift.Game
         public HuntDirector Director { get; private set; }
         public Camera View { get; private set; }
         public Light Flashlight { get; private set; }
+        private Flashlight flashlightRig;
 
         public bool Controllable { get; set; }
 
@@ -160,18 +160,9 @@ namespace NightShift.Game
             player.View.backgroundColor = new Color(0.006f, 0.007f, 0.011f);
             cameraObject.AddComponent<AudioListener>();
 
-            player.Flashlight = new GameObject("Flashlight").AddComponent<Light>();
-            player.Flashlight.transform.SetParent(cameraObject.transform, false);
-            player.Flashlight.transform.localPosition = new Vector3(0.2f, -0.15f, 0.1f);
-            player.Flashlight.type = LightType.Spot;
-            // The only reliable light in the building: a strong, narrow beam with a real lens pattern.
-            player.Flashlight.spotAngle = 70f;
-            player.Flashlight.innerSpotAngle = 16f;
-            player.Flashlight.range = 30f;
-            player.Flashlight.intensity = FlashlightIntensity;
-            player.Flashlight.cookie = ProceduralTextures.FlashlightCookie();
-            player.Flashlight.color = new Color(1f, 0.95f, 0.85f);
-            player.Flashlight.shadows = LightShadows.Soft;
+            // The only reliable light in the building (see Flashlight.cs).
+            player.flashlightRig = Game.Flashlight.Create(cameraObject.transform);
+            player.Flashlight = player.flashlightRig.Beam;
             player.Flashlight.enabled = true;
             return player;
         }
@@ -511,7 +502,7 @@ namespace NightShift.Game
             {
                 flashlightGlitchUntil = Time.time + Random.Range(0.08f, 0.3f);
             }
-            Flashlight.intensity = Time.time < flashlightGlitchUntil ? 0.8f : FlashlightIntensity;
+            flashlightRig.Glitching = Time.time < flashlightGlitchUntil;
         }
 
         private void UpdateHidden(Vector2 look)

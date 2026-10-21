@@ -361,12 +361,14 @@ namespace NightShift.Game
                     float dx = (x + 0.5f) / size * 2f - 1f;
                     float dy = (y + 0.5f) / size * 2f - 1f;
                     float r = Mathf.Sqrt(dx * dx + dy * dy);
-                    float hot = Mathf.Exp(-r * r * 7f);
-                    float ring = Mathf.Exp(-Mathf.Pow((r - 0.42f) / 0.06f, 2f)) * 0.35f;
-                    float halo = Mathf.Clamp01(1f - r * r) * 0.6f;
-                    float dip = 1f - Mathf.Exp(-Mathf.Pow((r - 0.3f) / 0.07f, 2f)) * 0.25f;
-                    float smudge = 0.88f + 0.12f * Mathf.PerlinNoise(x * 0.05f + 3f, y * 0.05f + 7f);
-                    float value = Mathf.Clamp01((hot + ring + halo) * dip * smudge) * (r < 1f ? 1f : 0f);
+                    // A small hot core, a faint ring from the reflector and a broad halo that fades
+                    // softly to the edge of the (wide) beam.
+                    float hot = Mathf.Exp(-r * r * 16f);
+                    float ring = Mathf.Exp(-Mathf.Pow((r - 0.28f) / 0.05f, 2f)) * 0.12f;
+                    float edge = Mathf.Clamp01((1f - r) / 0.65f);
+                    float halo = edge * edge * (3f - 2f * edge) * 0.42f;
+                    float smudge = 0.9f + 0.1f * Mathf.PerlinNoise(x * 0.05f + 3f, y * 0.05f + 7f);
+                    float value = Mathf.Clamp01((hot + ring + halo) * smudge) * (r < 1f ? 1f : 0f);
                     pixels[y * size + x] = new Color(value, value, value, value);
                 }
             }
