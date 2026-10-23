@@ -155,6 +155,7 @@ namespace NightShift.Game
                     sign.transform.localRotation = Quaternion.Euler(10f, 30f, 0f);
                 }
             });
+            Directory(root, "map_back_hall", new Vector3(-17f, 1.65f, -0.2f), 180f);
             Sign(root, new Vector3(-21.77f, 2.6f, -1.5f), 90f, "STAFF ONLY", new Color(0.9f, 0.9f, 0.85f), new Color(0.15f, 0.15f, 0.18f), 1.8f);
         }
 
@@ -282,6 +283,7 @@ namespace NightShift.Game
                     BuildKit.Box("Bench", root, new Vector3(p.x, 0.25f, p.y), new Vector3(0.5f, 0.5f, 1.6f), Wood());
                 }
             }, 1.5f);
+            Directory(root, "map_main_hall", new Vector3(9f, 1.65f, -0.2f), 180f);
             Sign(root, new Vector3(22.77f, 2.2f, -1.5f), 270f, "WELCOME", new Color(1f, 0.85f, 0.2f), new Color(0.5f, 0.05f, 0.1f), 2.0f);
         }
 
@@ -299,14 +301,13 @@ namespace NightShift.Game
 
         private static void Arcade(Transform root, System.Random random)
         {
-            Color[] screens = { new Color(0.1f, 0.8f, 1f), new Color(1f, 0.2f, 0.7f), new Color(0.3f, 1f, 0.3f), new Color(1f, 0.8f, 0.1f) };
             for (int i = 0; i < 4; i++)
             {
                 var position = new Vector2(17.6f + i * 1.1f, 9.4f);
-                Color color = screens[i % screens.Length];
-                PlaceNear(Room.Arcade, position, 0.5f, p => ArcadeCabinet(root, p, 180f, color), 1.5f);
+                int game = i;
+                PlaceNear(Room.Arcade, position, 0.5f, p => ArcadeCabinet.Build(root, p, 180f, game), 1.5f);
             }
-            PlaceNear(Room.Arcade, new Vector2(21f, 2.7f), 0.5f, p => ArcadeCabinet(root, p, 0f, screens[2]), 1f);
+            PlaceNear(Room.Arcade, new Vector2(21f, 2.7f), 0.5f, p => ArcadeCabinet.Build(root, p, 0f, 2), 1f);
             // Neon strips along the walls, the most colorful light in the building.
             NeonStrip(root, new Vector3(19f, 3.1f, 9.74f), new Vector3(7f, 0.06f, 0.06f), new Color(1f, 0.15f, 0.7f));
             NeonStrip(root, new Vector3(22.74f, 3.1f, 6f), new Vector3(0.06f, 0.06f, 7f), new Color(0.1f, 0.85f, 1f));
@@ -354,14 +355,27 @@ namespace NightShift.Game
                 along = -along;
             }
             Vector3 position = door + into * (PizzeriaLayout.WallThickness + 0.05f) + along * (PizzeriaLayout.DoorWidth * 0.5f + 0.7f) + Vector3.up * 2.2f;
-            ExitSigns.Add((exit, ExitLamp(root, position, facing)));
+            // The arrow points at the door: seen from the room, is the door to the sign's left or right?
+            Vector3 viewerRight = Vector3.Cross(Vector3.up, -into);
+            bool doorOnRight = Vector3.Dot(-along, viewerRight) > 0f;
+            ExitSigns.Add((exit, ExitLamp(root, position, facing, doorOnRight)));
         }
 
         /// <summary>A glowing EXIT box sign facing <paramref name="facing"/>, with a green light under it.</summary>
-        public static GameObject ExitLamp(Transform root, Vector3 position, float facing)
+        public static GameObject ExitLamp(Transform root, Vector3 position, float facing, bool arrowRight = true)
         {
-            Texture2D texture = ProceduralTextures.Sign("EXIT", new Color(0.55f, 1f, 0.6f), new Color(0.02f, 0.25f, 0.08f));
-            var sign = BuildKit.Quad("ExitSign", root, position, new Vector2(0.9f, 0.9f * texture.height / texture.width), facing, BuildKit.Picture("exitGreen", texture, 3f));
+            Texture2D drawn = BuildKit.SignTexture(arrowRight ? "exit_right" : "exit_left");
+            GameObject sign;
+            if (drawn != null)
+            {
+                // A lit box sign: the green face glows on a dark housing.
+                sign = BuildKit.WallSign(root, drawn, position, facing, 0.95f, 2.2f);
+            }
+            else
+            {
+                Texture2D texture = ProceduralTextures.Sign("EXIT", new Color(0.55f, 1f, 0.6f), new Color(0.02f, 0.25f, 0.08f));
+                sign = BuildKit.Quad("ExitSign", root, position, new Vector2(0.9f, 0.9f * texture.height / texture.width), facing, BuildKit.Picture("exitGreen", texture, 3f));
+            }
             var light = new GameObject("ExitLight").AddComponent<Light>();
             light.transform.SetParent(sign.transform, false);
             light.transform.localPosition = new Vector3(0f, -0.3f, -0.5f);
@@ -453,27 +467,6 @@ namespace NightShift.Game
                 var piece = BuildKit.Box("Streamer", root, position, new Vector3((to - from).magnitude / segments, 0.02f, 0.12f), material, 1f, false);
                 piece.transform.localRotation = Quaternion.Euler(i * 30f, 0f, Mathf.Cos(t * Mathf.PI) * 12f);
             }
-        }
-
-        private static void ArcadeCabinet(Transform root, Vector2 position, float yaw, Color screen)
-        {
-            var cabinet = new GameObject("ArcadeCabinet").transform;
-            cabinet.SetParent(root, false);
-            cabinet.localPosition = new Vector3(position.x, 0f, position.y);
-            cabinet.localRotation = Quaternion.Euler(0f, yaw, 0f);
-            Material body = BuildKit.Plain("arcadeBody", new Color(0.08f, 0.06f, 0.15f), 0.4f);
-            BuildKit.Box("Body", cabinet, new Vector3(0f, 0.9f, 0f), new Vector3(0.75f, 1.8f, 0.75f), body);
-            var glass = BuildKit.Quad("Screen", cabinet, new Vector3(0f, 1.3f, 0.385f), new Vector2(0.55f, 0.42f), 0f, BuildKit.Glow("arcadeScreen" + screen.GetHashCode(), screen, 1.6f));
-            glass.transform.localRotation = Quaternion.Euler(-12f, 180f, 0f);
-            BuildKit.Box("Marquee", cabinet, new Vector3(0f, 1.95f, 0.2f), new Vector3(0.75f, 0.25f, 0.35f), BuildKit.Glow("marquee" + screen.GetHashCode(), screen * 0.8f, 2f), 1f, false);
-            BuildKit.Box("Panel", cabinet, new Vector3(0f, 1.0f, 0.45f), new Vector3(0.7f, 0.08f, 0.25f), BuildKit.Plain("panelBlack", new Color(0.03f, 0.03f, 0.03f)), 1f, false);
-            var light = new GameObject("ScreenLight").AddComponent<Light>();
-            light.transform.SetParent(cabinet, false);
-            light.transform.localPosition = new Vector3(0f, 1.3f, 0.9f);
-            light.type = LightType.Point;
-            light.range = 2.2f;
-            light.intensity = 0.6f;
-            light.color = screen;
         }
 
         private static void NeonStrip(Transform root, Vector3 position, Vector3 size, Color color)
@@ -574,8 +567,18 @@ namespace NightShift.Game
                     string[] titles = { "FREDDY", "SMILE", "PIZZA!", "FUN" };
                     Color[] backs = { new Color(0.75f, 0.45f, 0.15f), new Color(0.2f, 0.35f, 0.6f), new Color(0.55f, 0.15f, 0.2f), new Color(0.2f, 0.5f, 0.3f) };
                     int poster = index % 4;
-                    BuildKit.Quad("Poster", root, position, new Vector2(0.9f, 1.25f), facing,
-                                  BuildKit.Picture("poster" + poster, ProceduralTextures.Poster(backs[poster], new Color(0.45f, 0.26f, 0.12f), titles[poster])));
+                    Texture2D drawnPoster = BuildKit.SignTexture("poster_" + index % 5);
+                    if (drawnPoster != null)
+                    {
+                        Vector3 off = Quaternion.Euler(0f, facing, 0f) * Vector3.forward * 0.01f;
+                        BuildKit.Quad("Poster", root, position + off, new Vector2(0.84f, 1.12f), facing, BuildKit.Picture("sign:" + drawnPoster.name, drawnPoster, 0.08f))
+                            .transform.localRotation *= Quaternion.Euler(0f, 0f, (float)random.NextDouble() * 4f - 2f);
+                    }
+                    else
+                    {
+                        BuildKit.Quad("Poster", root, position, new Vector2(0.9f, 1.25f), facing,
+                                      BuildKit.Picture("poster" + poster, ProceduralTextures.Poster(backs[poster], new Color(0.45f, 0.26f, 0.12f), titles[poster])));
+                    }
                 }
                 index++;
             }
@@ -596,8 +599,61 @@ namespace NightShift.Game
             }
         }
 
+        /// <summary>
+        /// A "YOU ARE HERE" board with the plan of the building and both exits, lit by a small
+        /// lamp above it so the player can always read where they are.
+        /// </summary>
+        private static void Directory(Transform root, string name, Vector3 position, float facing)
+        {
+            Texture2D map = BuildKit.SignTexture(name);
+            if (map == null)
+            {
+                return;
+            }
+            Vector3 outward = Quaternion.Euler(0f, facing, 0f) * Vector3.forward;
+            BuildKit.WallSign(root, map, position + outward * 0.03f, facing, 1.4f, 0.35f);
+            var lamp = new GameObject("DirectoryLamp").AddComponent<Light>();
+            lamp.transform.SetParent(root, false);
+            lamp.transform.localPosition = position + outward * 0.45f + Vector3.up * 0.75f;
+            lamp.transform.localRotation = Quaternion.LookRotation(position - lamp.transform.localPosition);
+            lamp.type = LightType.Spot;
+            lamp.spotAngle = 80f;
+            lamp.range = 3f;
+            lamp.intensity = 2.5f;
+            lamp.color = new Color(1f, 0.88f, 0.7f);
+            BuildKit.Box("DirectoryLampHousing", root, lamp.transform.localPosition, new Vector3(0.5f, 0.06f, 0.12f),
+                         BuildKit.Plain("lampHousingDark", new Color(0.12f, 0.12f, 0.12f), 0.5f, 0.6f), 1f, false);
+        }
+
+        /// <summary>The drawn wall sign for each text (tools/generate_signs.py), and whether it lights up.</summary>
+        private static readonly Dictionary<string, (string texture, float glow)> DrawnSigns = new Dictionary<string, (string, float)>
+        {
+            { "SHOWTIME", ("title_showtime", 1.6f) },
+            { "LET'S PARTY!", ("title_lets_party", 1.6f) },
+            { "WELCOME", ("title_welcome", 1.6f) },
+            { "PARTY ROOM", ("title_party_room", 1.6f) },
+            { "PRIZES", ("title_prizes", 1.6f) },
+            { "HAPPY BIRTHDAY", ("title_happy_birthday", 1.4f) },
+            { "SECURITY", ("title_security", 0.3f) },
+            { "PARTS & SERVICE", ("title_parts_service", 0.3f) },
+            { "STORAGE", ("title_storage", 0.3f) },
+            { "STAFF ONLY", ("title_staff_only", 0.3f) },
+            { "OUT OF ORDER", ("title_outwardof_order", 0.35f) },
+        };
+
         public static void Sign(Transform root, Vector3 position, float facing, string text, Color foreground, Color background, float width)
         {
+            if (DrawnSigns.TryGetValue(text, out (string texture, float glow) drawn))
+            {
+                Texture2D picture = BuildKit.SignTexture(drawn.texture);
+                if (picture != null)
+                {
+                    // Off the wall by the backing's thickness.
+                    Vector3 off = Quaternion.Euler(0f, facing, 0f) * Vector3.forward * 0.03f;
+                    BuildKit.WallSign(root, picture, position + off, facing, width, drawn.glow);
+                    return;
+                }
+            }
             Texture2D texture = ProceduralTextures.Sign(text, foreground, background);
             float height = width * texture.height / texture.width;
             BuildKit.Quad("Sign", root, position, new Vector2(width, height), facing, BuildKit.Picture("sign" + text, texture, 0.8f));

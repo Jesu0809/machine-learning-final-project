@@ -206,6 +206,27 @@ namespace NightShift.Game
             return source;
         }
 
+        private static AudioClip lampHum;
+
+        /// <summary>
+        /// The buzz of a fluorescent tube: mains hum at 120 Hz with its harmonics and a little
+        /// crackle. One second long, it loops without a seam.
+        /// </summary>
+        public static AudioClip LampHum()
+        {
+            if (lampHum == null)
+            {
+                lampHum = Synth("LampHum", 1f, (t, i) =>
+                {
+                    float w = 2f * Mathf.PI * 120f * t;
+                    float buzz = Mathf.Sin(w) * 0.35f + Mathf.Sin(w * 2f) * 0.25f + Mathf.Sin(w * 3f) * 0.1f;
+                    buzz += Mathf.Sign(Mathf.Sin(w)) * 0.06f;
+                    return buzz * 0.6f + Noise(i) * 0.03f;
+                }, 0.2f);
+            }
+            return lampHum;
+        }
+
         private static AudioClip Synth(string name, float seconds, System.Func<float, int, float> sample, float lowPass)
         {
             int count = Mathf.CeilToInt(seconds * Rate);

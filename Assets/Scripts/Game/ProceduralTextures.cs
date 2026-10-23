@@ -404,6 +404,37 @@ namespace NightShift.Game
             return texture;
         }
 
+        /// <summary>Dust and smudges on a camera lens: the bloom of bright lights shows them.</summary>
+        public static Texture2D LensDirt(int size = 256)
+        {
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+            var pixels = new Color[size * size];
+            var random = new System.Random(77);
+            var blobs = new Vector4[60];
+            for (int i = 0; i < blobs.Length; i++)
+            {
+                blobs[i] = new Vector4((float)random.NextDouble(), (float)random.NextDouble(), 0.01f + (float)random.NextDouble() * 0.06f, 0.2f + (float)random.NextDouble() * 0.6f);
+            }
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float u = (x + 0.5f) / size;
+                    float v = (y + 0.5f) / size;
+                    float value = 0.05f * Mathf.PerlinNoise(u * 6f, v * 6f);
+                    foreach (Vector4 b in blobs)
+                    {
+                        float d = Vector2.Distance(new Vector2(u, v), new Vector2(b.x, b.y)) / b.z;
+                        value += b.w * Mathf.Clamp01(1f - d * d);
+                    }
+                    pixels[y * size + x] = new Color(value, value, value, 1f);
+                }
+            }
+            texture.SetPixels(pixels);
+            texture.Apply();
+            return texture;
+        }
+
         /// <summary>Yellow and black diagonal hazard stripes.</summary>
         public static Texture2D HazardStripes()
         {

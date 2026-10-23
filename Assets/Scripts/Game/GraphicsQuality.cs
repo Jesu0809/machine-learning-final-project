@@ -32,6 +32,7 @@ namespace NightShift.Game
         private static ScriptableRendererFeature ambientOcclusion;
         private static Flashlight flashlight;
         private static Bloom bloom;
+        private static MotionBlur motionBlur;
         private static bool probesRendered;
         private static UniversalRenderPipelineAsset runtimePipeline;
 
@@ -67,6 +68,7 @@ namespace NightShift.Game
         public static void RegisterProbe(ReflectionProbe probe) => Probes.Add(probe);
         public static void RegisterFlashlight(Flashlight light) => flashlight = light;
         public static void RegisterBloom(Bloom effect) => bloom = effect;
+        public static void RegisterMotionBlur(MotionBlur effect) => motionBlur = effect;
 
         /// <summary>Next level up (wraps around), saved and applied.</summary>
         public static void Cycle(int step)
@@ -116,6 +118,10 @@ namespace NightShift.Game
             if (bloom != null)
             {
                 bloom.highQualityFiltering.Override(high);
+            }
+            if (motionBlur != null)
+            {
+                motionBlur.active = high;
             }
 
             // Lamp shadows: none on Low, the main lamps from High, every lamp on Ultra.

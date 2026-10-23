@@ -460,6 +460,21 @@ namespace NightShift.Game
             flicker.baseIntensity = lamp.intensity;
             flicker.chance = chance;
             flicker.nextFlicker = Random.Range(2f, 10f);
+            if (lamp.intensity > 0f)
+            {
+                // Every working tube hums; the hum goes with the light.
+                flicker.hum = lamp.gameObject.AddComponent<AudioSource>();
+                flicker.hum.clip = GameAudio.LampHum();
+                flicker.hum.loop = true;
+                flicker.hum.spatialBlend = 1f;
+                flicker.hum.rolloffMode = AudioRolloffMode.Linear;
+                flicker.hum.minDistance = 0.8f;
+                flicker.hum.maxDistance = 6f;
+                flicker.hum.volume = HumVolume;
+                flicker.hum.pitch = Random.Range(0.97f, 1.03f);
+                flicker.hum.time = Random.value * 0.9f;
+                flicker.hum.Play();
+            }
             if (fixture != null && lamp.intensity > 0f)
             {
                 fixture.material = new Material(fixture.sharedMaterial);
@@ -486,6 +501,10 @@ namespace NightShift.Game
                 light.dead = light.baseIntensity > 0f && random.NextDouble() < fraction;
                 light.lastOn = !light.dead;
                 light.lamp.intensity = light.dead ? 0f : light.baseIntensity;
+                if (light.hum != null)
+                {
+                    light.hum.volume = light.dead ? 0f : HumVolume;
+                }
                 if (light.shaft != null)
                 {
                     light.shaft.SetActive(!light.dead);
@@ -498,6 +517,8 @@ namespace NightShift.Game
         }
 
         private bool dead;
+        private AudioSource hum;
+        private const float HumVolume = 0.06f;
 
         /// <summary>Every lamp goes dark for a moment.</summary>
         public static void Blackout(float seconds)
@@ -531,6 +552,13 @@ namespace NightShift.Game
 
             bool on = t >= blackoutUntil && (t >= flickerUntil || Random.value < 0.5f);
             lamp.intensity = on ? baseIntensity : baseIntensity * 0.05f;
+            if (hum != null)
+            {
+                // A flickering tube crackles: louder and rougher while it struggles.
+                bool struggling = t < flickerUntil;
+                hum.volume = !on ? HumVolume * 0.1f : struggling ? HumVolume * 2.2f : HumVolume;
+                hum.pitch = struggling ? Random.Range(0.85f, 1.2f) : 1f;
+            }
             if (on != lastOn)
             {
                 lastOn = on;

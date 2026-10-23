@@ -42,6 +42,14 @@ namespace NightShift.Game
                 else if (Mathf.Abs(door.x - area.xMin) < 0.05f) into = Vector3.right;
                 else into = Vector3.left;
                 float facing = Mathf.Atan2(into.x, into.z) * Mathf.Rad2Deg;
+                // The drawn plate: icon and name, in the colors of the wing the door leads to.
+                string key = "door_" + System.Text.RegularExpressions.Regex.Replace(HuntMap.DisplayName(neighbor).ToLowerInvariant(), "[^a-z]+", "_").Trim('_');
+                Texture2D plate = BuildKit.SignTexture(key);
+                if (plate != null)
+                {
+                    BuildKit.WallSign(root, plate, door + into * (PizzeriaLayout.WallThickness + 0.04f) + Vector3.up * (PizzeriaLayout.DoorHeight + 0.24f), facing, 1.15f, 0.3f);
+                    continue;
+                }
                 string name = HuntMap.DisplayName(neighbor).ToUpperInvariant();
                 Texture2D texture = ProceduralTextures.Sign(name, new Color(0.95f, 0.9f, 0.7f), new Color(0.12f, 0.05f, 0.05f), 3, 5);
                 float width = Mathf.Min(2.0f, 0.13f * name.Length + 0.2f);
@@ -120,6 +128,7 @@ namespace NightShift.Game
                 }
             }
             SecurityCamera(room, root, area);
+            Stains(room, root, area, random);
             var panelPoint = new Vector2(area.xMin + 0.3f, area.yMin + area.height * 0.35f);
             if (LevelProps.ClearOfOpenings(room, panelPoint, 0.5f))
             {
@@ -177,6 +186,94 @@ namespace NightShift.Game
             led.AddComponent<Blinker>();
         }
 
+        /// <summary>
+        /// Years of a closed building on the walls: water running down from the ceiling, mold
+        /// creeping up from the floor in the damp rooms, and here and there something written.
+        /// </summary>
+        private static void Stains(Room room, Transform root, Rect area, System.Random random)
+        {
+            float height = PizzeriaLayout.Height(room);
+            int leaks = area.width * area.height > 30f ? 3 : 1;
+            int placed = 0;
+            for (int attempt = 0; attempt < 12 && placed < leaks; attempt++)
+            {
+                Texture2D leak = BuildKit.SignTexture("decal_leak_" + random.Next(3));
+                if (leak == null)
+                {
+                    return;
+                }
+                float width = 1.1f + (float)random.NextDouble() * 0.8f;
+                float tall = Mathf.Min(height - 0.1f, width * 2f);
+                if (WallDecal(room, root, area, random, BuildKit.Decal(leak.name, leak, Color.white), width, tall, height - tall * 0.5f - 0.02f, 0.7f, placed))
+                {
+                    placed++;
+                }
+            }
+            bool damp = room == Room.Restrooms || room == Room.Kitchen || room == Room.Storage || room == Room.Parts || room == Room.BackHall;
+            if (damp)
+            {
+                Texture2D mold = BuildKit.SignTexture("decal_mold_" + random.Next(2));
+                if (mold != null)
+                {
+                    for (int attempt = 0; attempt < 8; attempt++)
+                    {
+                        if (WallDecal(room, root, area, random, BuildKit.Decal(mold.name, mold, Color.white), 2.2f, 1.1f, 0.55f, 1.2f, 10))
+                        {
+                            break;
+                        }
+                    }
+                }
+            }
+            // Written on the walls, in a few places only.
+            (string name, Vector3 position, float facing, float width)? writing = room switch
+            {
+                Room.BackHall => ("decal_graffiti_1", new Vector3(-15f, 1.45f, -2.79f), 0f, 1.7f),
+                Room.MainHall => ("decal_graffiti_0", new Vector3(15.5f, 1.5f, -0.21f), 180f, 1.6f),
+                Room.Restrooms => ("decal_graffiti_2", new Vector3(-5.0f, 1.55f, -13.79f), 0f, 1.0f),
+                Room.PartyRoom => ("decal_handprints", new Vector3(5.2f, 0.9f, -7.21f), 180f, 1.6f),
+                _ => null
+            };
+            if (writing.HasValue)
+            {
+                Texture2D texture = BuildKit.SignTexture(writing.Value.name);
+                if (texture != null)
+                {
+                    float w = writing.Value.width;
+                    BuildKit.Quad("Graffiti", root, writing.Value.position, new Vector2(w, w * texture.height / texture.width), writing.Value.facing,
+                                  BuildKit.Decal(texture.name, texture, Color.white));
+                }
+            }
+        }
+
+        /// <summary>A decal flat on a random wall of the room, clear of doors, spots and the fuse shelf.</summary>
+        private static bool WallDecal(Room room, Transform root, Rect area, System.Random random, Material material, float width, float tall, float y, float clearance, int layer)
+        {
+            int side = random.Next(4);
+            bool alongX = side < 2;
+            float span = alongX ? area.width : area.height;
+            if (span < width + 0.6f)
+            {
+                return false;
+            }
+            float along = (alongX ? area.xMin : area.yMin) + width * 0.5f + 0.3f + (float)random.NextDouble() * (span - width - 0.6f);
+            float inset = PizzeriaLayout.WallThickness + 0.004f + layer * 0.0015f;
+            Vector3 position;
+            float facing;
+            switch (side)
+            {
+                case 0: position = new Vector3(along, y, area.yMax - inset); facing = 180f; break;
+                case 1: position = new Vector3(along, y, area.yMin + inset); facing = 0f; break;
+                case 2: position = new Vector3(area.xMin + inset, y, along); facing = 90f; break;
+                default: position = new Vector3(area.xMax - inset, y, along); facing = 270f; break;
+            }
+            if (!LevelProps.ClearOfOpenings(room, new Vector2(position.x, position.z), clearance + width * 0.3f))
+            {
+                return false;
+            }
+            BuildKit.Quad("Stain", root, position, new Vector2(width, tall), facing, material);
+            return true;
+        }
+
         private static void Extinguisher(Transform root, Vector3 position)
         {
             Material red = BuildKit.Plain("extinguisher", new Color(0.75f, 0.06f, 0.05f), 0.6f);
@@ -231,7 +328,20 @@ namespace NightShift.Game
             if (random.NextDouble() < 0.6)
             {
                 var position = new Vector2((float)(area.xMin + 1.5f + random.NextDouble() * (area.width - 3f)), (float)(area.yMin + 1.5f + random.NextDouble() * (area.height - 3f)));
-                BuildKit.Cylinder("Puddle", root, new Vector3(position.x, 0.003f, position.y), 1.1f + (float)random.NextDouble(), 0.002f, puddle).transform.localScale = new Vector3(1.6f, 0.001f, 1f);
+                Texture2D wet = BuildKit.SignTexture("decal_puddle");
+                if (wet != null)
+                {
+                    // A shallow, glossy puddle: it mirrors the lamps (the room's reflections do the rest).
+                    float size = 1.2f + (float)random.NextDouble();
+                    Material water = BuildKit.Decal("puddle", wet, new Color(0.35f, 0.38f, 0.4f, 1f));
+                    water.SetFloat("_Smoothness", 0.97f);
+                    var quad = BuildKit.Quad("Puddle", root, new Vector3(position.x, 0.004f, position.y), new Vector2(size * 1.5f, size), 0f, water);
+                    quad.transform.localRotation = Quaternion.Euler(90f, (float)random.NextDouble() * 360f, 0f);
+                }
+                else
+                {
+                    BuildKit.Cylinder("Puddle", root, new Vector3(position.x, 0.003f, position.y), 1.1f + (float)random.NextDouble(), 0.002f, puddle).transform.localScale = new Vector3(1.6f, 0.001f, 1f);
+                }
             }
 
             // Bigger things that need room.
@@ -339,12 +449,7 @@ namespace NightShift.Game
                     });
                     LevelProps.PlaceNear(room, new Vector2(22.1f, 9.3f), 0.5f, p =>
                     {
-                        BuildKit.Box("ClawBase", root, new Vector3(p.x, 0.5f, p.y), new Vector3(0.8f, 1f, 0.8f), BuildKit.Plain("clawBase", new Color(0.7f, 0.1f, 0.4f), 0.4f));
-                        BuildKit.Box("ClawGlass", root, new Vector3(p.x, 1.45f, p.y), new Vector3(0.78f, 0.9f, 0.78f), BuildKit.Plain("glass", new Color(0.3f, 0.35f, 0.4f), 0.9f), 1f, false);
-                        for (int i = 0; i < 4; i++)
-                        {
-                            LevelProps.SpareHead(root, new Vector3(p.x - 0.15f + (i % 2) * 0.3f, 1.12f, p.y - 0.15f + (i / 2) * 0.3f), i * 40f, 0.3f);
-                        }
+                        ClawMachine(root, p);
                     });
                     break;
 
@@ -372,6 +477,66 @@ namespace NightShift.Game
                     });
                     break;
             }
+        }
+
+        /// <summary>
+        /// A claw machine: a painted metal base with the prize chute, a glass case on four posts with
+        /// little Freddy heads piled inside, the claw hanging from its gantry, and a lit header.
+        /// </summary>
+        private static void ClawMachine(Transform root, Vector2 p)
+        {
+            var machine = new GameObject("ClawMachine").transform;
+            machine.SetParent(root, false);
+            machine.localPosition = new Vector3(p.x, 0f, p.y);
+            machine.localRotation = Quaternion.Euler(0f, 225f, 0f);
+            Material body = BuildKit.Pbr("metal_red", new Color(1f, 0.55f, 0.85f)) ?? BuildKit.Plain("clawBase", new Color(0.7f, 0.1f, 0.4f), 0.4f);
+            Material chrome = BuildKit.Plain("chrome", new Color(0.7f, 0.7f, 0.72f), 0.8f, 1f);
+            Material black = BuildKit.Plain("arcadeBlack", new Color(0.015f, 0.015f, 0.02f), 0.85f);
+            Material glass = BuildKit.Decal("clawGlass", Texture2D.whiteTexture, new Color(0.6f, 0.75f, 0.85f, 0.18f));
+            glass.SetFloat("_Smoothness", 0.98f);
+            BuildKit.Box("Base", machine, new Vector3(0f, 0.45f, 0f), new Vector3(0.8f, 0.9f, 0.8f), body);
+            BuildKit.Box("Chute", machine, new Vector3(0.22f, 0.3f, 0.41f), new Vector3(0.24f, 0.24f, 0.02f), black, 1f, false);
+            BuildKit.Box("CoinSlot", machine, new Vector3(-0.22f, 0.6f, 0.41f), new Vector3(0.06f, 0.1f, 0.01f), BuildKit.Glow("coinSlot", new Color(1f, 0.45f, 0.1f), 2.5f), 1f, false);
+            BuildKit.Box("ControlShelf", machine, new Vector3(0f, 0.92f, 0.36f), new Vector3(0.8f, 0.04f, 0.16f), black, 1f, false);
+            BuildKit.Cylinder("Stick", machine, new Vector3(-0.15f, 0.98f, 0.36f), 0.02f, 0.1f, chrome);
+            BuildKit.Sphere("StickBall", machine, new Vector3(-0.15f, 1.04f, 0.36f), 0.05f, BuildKit.Plain("joystickBall", new Color(0.75f, 0.05f, 0.05f), 0.8f));
+            BuildKit.Cylinder("Button", machine, new Vector3(0.15f, 0.95f, 0.36f), 0.07f, 0.02f, BuildKit.Glow("arcadeButton0", new Color(1f, 0.1f, 0.1f), 0.6f));
+            // Glass case on four corner posts.
+            foreach (Vector2 corner in new[] { new Vector2(-0.38f, -0.38f), new Vector2(0.38f, -0.38f), new Vector2(-0.38f, 0.38f), new Vector2(0.38f, 0.38f) })
+            {
+                BuildKit.Box("Post", machine, new Vector3(corner.x, 1.4f, corner.y), new Vector3(0.04f, 1f, 0.04f), chrome, 1f, false);
+            }
+            BuildKit.Quad("GlassFront", machine, new Vector3(0f, 1.4f, 0.39f), new Vector2(0.74f, 0.96f), 0f, glass);
+            BuildKit.Quad("GlassBack", machine, new Vector3(0f, 1.4f, -0.39f), new Vector2(0.74f, 0.96f), 180f, glass);
+            BuildKit.Quad("GlassLeft", machine, new Vector3(-0.39f, 1.4f, 0f), new Vector2(0.74f, 0.96f), 270f, glass);
+            BuildKit.Quad("GlassRight", machine, new Vector3(0.39f, 1.4f, 0f), new Vector2(0.74f, 0.96f), 90f, glass);
+            // The prizes: a heap of little Freddy heads.
+            for (int i = 0; i < 9; i++)
+            {
+                LevelProps.SpareHead(machine, new Vector3(-0.22f + (i % 3) * 0.22f, 0.98f + (i / 3) * 0.06f, -0.2f + (i / 3) * 0.16f), i * 47f, 0.26f);
+            }
+            // Gantry and claw.
+            BuildKit.Box("Gantry", machine, new Vector3(0f, 1.86f, 0f), new Vector3(0.74f, 0.03f, 0.05f), chrome, 1f, false);
+            BuildKit.Box("Cable", machine, new Vector3(0.1f, 1.7f, 0f), new Vector3(0.008f, 0.3f, 0.008f), black, 1f, false);
+            for (int k = 0; k < 3; k++)
+            {
+                var finger = BuildKit.Box("Claw", machine, new Vector3(0.1f, 1.52f, 0f), new Vector3(0.015f, 0.12f, 0.015f), chrome, 1f, false);
+                finger.transform.localRotation = Quaternion.Euler(0f, k * 120f, 25f);
+            }
+            // Header with the lit name.
+            BuildKit.Box("Header", machine, new Vector3(0f, 2.02f, 0f), new Vector3(0.82f, 0.3f, 0.82f), body);
+            Texture2D title = BuildKit.SignTexture("title_prize_claw");
+            if (title != null)
+            {
+                BuildKit.Quad("HeaderSign", machine, new Vector3(0f, 2.02f, 0.415f), new Vector2(0.78f, 0.195f), 0f, BuildKit.Picture("sign:" + title.name, title, 2f));
+            }
+            var glow = new GameObject("CaseLight").AddComponent<Light>();
+            glow.transform.SetParent(machine, false);
+            glow.transform.localPosition = new Vector3(0f, 1.8f, 0f);
+            glow.type = LightType.Point;
+            glow.range = 1.6f;
+            glow.intensity = 1.2f;
+            glow.color = new Color(1f, 0.55f, 0.85f);
         }
 
         private static void Cake(Transform root, Vector3 top)
