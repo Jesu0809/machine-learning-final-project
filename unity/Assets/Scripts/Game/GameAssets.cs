@@ -43,6 +43,9 @@ namespace NightShift.Game
         [Tooltip("Scanned 3D props the level places by name.")]
         public Prop[] Props;
 
+        [Tooltip("Signs and posters drawn by tools/generate_signs.py (Assets/Art/Signs).")]
+        public Texture2D[] Signs;
+
         [Tooltip("Screen-space ambient occlusion on the renderer, switched by the graphics quality.")]
         public UnityEngine.Rendering.Universal.ScriptableRendererFeature AmbientOcclusion;
 

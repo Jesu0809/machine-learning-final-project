@@ -160,6 +160,41 @@ namespace NightShift.Game
             });
         }
 
+        /// <summary>
+        /// A lit, alpha-blended decal (water stains, mold, graffiti): it takes the light of the room
+        /// and the flashlight like the wall under it, so it never glows in the dark.
+        /// </summary>
+        public static Material Decal(string key, Texture2D texture, Color tint)
+        {
+            return Cached("decal:" + key + ColorUtility.ToHtmlStringRGBA(tint), () =>
+            {
+                Material material = FromTemplate("LitAlpha", "Universal Render Pipeline/Lit");
+                if (!material.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT"))
+                {
+                    MakeLitAlpha(material);
+                }
+                material.SetTexture("_BaseMap", texture);
+                material.SetColor("_BaseColor", tint);
+                material.SetFloat("_Smoothness", 0.15f);
+                return material;
+            });
+        }
+
+        /// <summary>Sets up a Lit material as alpha-blended transparent (also used for the editor template).</summary>
+        public static void MakeLitAlpha(Material material)
+        {
+            material.SetFloat("_Surface", 1f);
+            material.SetFloat("_Blend", 0f);
+            material.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+            material.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+            material.SetFloat("_SrcBlendAlpha", (float)BlendMode.One);
+            material.SetFloat("_DstBlendAlpha", (float)BlendMode.OneMinusSrcAlpha);
+            material.SetFloat("_ZWrite", 0f);
+            material.SetOverrideTag("RenderType", "Transparent");
+            material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            material.renderQueue = (int)RenderQueue.Transparent - 20;
+        }
+
         /// <summary>Sets up an Unlit material as alpha-blended transparent (also used for the editor template).</summary>
         public static void MakeAlpha(Material material)
         {
@@ -298,6 +333,41 @@ namespace NightShift.Game
                                        Mathf.Abs(size.z) / Mathf.Max(0.0001f, Mathf.Abs(lossy.z)));
             }
             return go;
+        }
+
+        /// <summary>A drawn sign or poster from Assets/Art/Signs, or null.</summary>
+        public static Texture2D SignTexture(string name)
+        {
+            if (assets == null || assets.Signs == null)
+            {
+                return null;
+            }
+            foreach (Texture2D texture in assets.Signs)
+            {
+                if (texture != null && texture.name == name)
+                {
+                    return texture;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Hangs a drawn sign on a wall: the picture on a thin dark backing (so it has an edge and a
+        /// shadow), <paramref name="width"/> meters wide, facing <paramref name="facing"/>. Signs that
+        /// light up get <paramref name="glow"/> &gt; 1; plates that only catch the light stay near 0.3.
+        /// </summary>
+        public static GameObject WallSign(Transform parent, Texture2D texture, Vector3 localPosition, float facing, float width, float glow)
+        {
+            float height = width * texture.height / texture.width;
+            var sign = new GameObject("Sign " + texture.name);
+            sign.transform.SetParent(parent, false);
+            sign.transform.localPosition = localPosition;
+            sign.transform.localRotation = Quaternion.Euler(0f, facing, 0f);
+            Box("Backing", sign.transform, new Vector3(0f, 0f, -0.015f), new Vector3(width + 0.04f, height + 0.04f, 0.03f),
+                Plain("signBacking", new Color(0.05f, 0.05f, 0.05f), 0.3f, 0.4f), 1f, false);
+            Quad("Face", sign.transform, new Vector3(0f, 0f, 0.002f), new Vector2(width, height), 0f, Picture("sign:" + texture.name, texture, glow));
+            return sign;
         }
 
         private static GameAssets.Prop FindProp(string name)

@@ -1057,6 +1057,20 @@ namespace NightShift.Game
             tones.shadows.Override(new Vector4(0.9f, 1f, 1.1f, 0f));
             Bloom bloom = profile.Add<Bloom>(true);
             GraphicsQuality.RegisterBloom(bloom);
+            // Smudges on the "lens" catch the glow of lamps and signs.
+            bloom.dirtTexture.Override(ProceduralTextures.LensDirt());
+            bloom.dirtIntensity.Override(2.5f);
+            // Horror grade: cold shadows, warm practical lights.
+            WhiteBalance balance = profile.Add<WhiteBalance>(true);
+            balance.temperature.Override(-6f);
+            SplitToning split = profile.Add<SplitToning>(true);
+            split.shadows.Override(new Color(0.32f, 0.45f, 0.55f));
+            split.highlights.Override(new Color(0.85f, 0.65f, 0.45f));
+            split.balance.Override(-15f);
+            MotionBlur blur = profile.Add<MotionBlur>(true);
+            blur.quality.Override(MotionBlurQuality.Low);
+            blur.intensity.Override(0.12f);
+            GraphicsQuality.RegisterMotionBlur(blur);
             bloom.intensity.Override(0.8f);
             bloom.threshold.Override(0.95f);
             bloom.scatter.Override(0.7f);

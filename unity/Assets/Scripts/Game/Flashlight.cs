@@ -79,8 +79,20 @@ namespace NightShift.Game
             return flashlight;
         }
 
+        private Quaternion carried;
+        private bool carriedSet;
+
         private void LateUpdate()
         {
+            // The torch is in a hand, not glued to the eyes: it follows the view a moment late.
+            if (!carriedSet)
+            {
+                carried = view.rotation;
+                carriedSet = true;
+            }
+            carried = Quaternion.Slerp(carried, view.rotation, 1f - Mathf.Exp(-Time.deltaTime * 12f));
+            transform.rotation = carried;
+
             bool on = beam.enabled;
             bounce.enabled = on && bounceAllowed;
             if (dust.isPlaying != on)
@@ -101,7 +113,7 @@ namespace NightShift.Game
 
             // What the beam hits, and how far.
             Vector3 origin = view.position;
-            Vector3 forward = view.forward;
+            Vector3 forward = transform.forward;   // where the beam points (it lags the view)
             float distance = BeamRange;
             Vector3 point = origin + forward * BeamRange;
             Vector3 normal = -forward;

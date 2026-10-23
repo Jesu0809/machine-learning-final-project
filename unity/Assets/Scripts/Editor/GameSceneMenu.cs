@@ -95,6 +95,7 @@ namespace NightShift.EditorTools
             assets.MaterialTemplates = CreateMaterialTemplates();
             assets.Surfaces = SurfaceImporter.ImportAll();
             assets.Props = PropImporter.ImportAll();
+            assets.Signs = SignImporter.ImportAll();
             assets.AmbientOcclusion = RenderingSetup.Apply();
             assets.AmbientLoop = Clip("ambient-hum-loop");
             assets.MenuMusic = Clip("menu-music-loop");
@@ -152,7 +153,8 @@ namespace NightShift.EditorTools
                     m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
                 }),
                 Template("UnlitAdditive", "Universal Render Pipeline/Unlit", NightShift.Game.BuildKit.MakeAdditive),
-                Template("UnlitAlpha", "Universal Render Pipeline/Unlit", NightShift.Game.BuildKit.MakeAlpha)
+                Template("UnlitAlpha", "Universal Render Pipeline/Unlit", NightShift.Game.BuildKit.MakeAlpha),
+                Template("LitAlpha", "Universal Render Pipeline/Lit", NightShift.Game.BuildKit.MakeLitAlpha)
             };
         }
 

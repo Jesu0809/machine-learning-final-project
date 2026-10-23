@@ -917,8 +917,11 @@ namespace NightShift.Game
                 }
             }
 
-            var sign = BuildKit.Quad("ExitSign", frame, new Vector3(0f, PizzeriaLayout.DoorHeight + 0.35f, 0.13f), new Vector2(1.2f, 0.35f), 0f,
-                                     BuildKit.Picture("exitSign", ProceduralTextures.Sign("EXIT", new Color(1f, 0.15f, 0.1f), new Color(0.08f, 0f, 0f)), 3f));
+            Texture2D drawnExit = BuildKit.SignTexture("exit_door");
+            GameObject sign = drawnExit != null
+                ? BuildKit.WallSign(frame, drawnExit, new Vector3(0f, PizzeriaLayout.DoorHeight + 0.38f, PizzeriaLayout.WallThickness + 0.03f), 0f, 1.1f, 2.4f)
+                : BuildKit.Quad("ExitSign", frame, new Vector3(0f, PizzeriaLayout.DoorHeight + 0.35f, 0.13f), new Vector2(1.2f, 0.35f), 0f,
+                                BuildKit.Picture("exitSign", ProceduralTextures.Sign("EXIT", new Color(1f, 0.15f, 0.1f), new Color(0.08f, 0f, 0f)), 3f));
             var signLight = new GameObject("SignLight").AddComponent<Light>();
             signLight.transform.SetParent(sign.transform, false);
             signLight.transform.localPosition = new Vector3(0f, 0f, -1f);

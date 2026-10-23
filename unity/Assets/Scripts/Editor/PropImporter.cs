@@ -37,8 +37,13 @@ namespace NightShift.EditorTools
                     continue;
                 }
                 var importer = (ModelImporter)AssetImporter.GetAtPath(path + ".fbx");
-                if (importer != null && (importer.materialImportMode != ModelImporterMaterialImportMode.None || importer.importAnimation || importer.importCameras))
+                if (importer != null && (importer.materialImportMode != ModelImporterMaterialImportMode.None || importer.importAnimation || importer.importCameras
+                                         || importer.meshCompression != ModelImporterMeshCompression.High))
                 {
+                    // Small on disk and on the web: compressed meshes, no materials of their own.
+                    importer.meshCompression = ModelImporterMeshCompression.High;
+                    importer.optimizeMeshPolygons = true;
+                    importer.optimizeMeshVertices = true;
                     importer.materialImportMode = ModelImporterMaterialImportMode.None;
                     importer.importAnimation = false;
                     importer.importCameras = false;

@@ -1,0 +1,226 @@
+{
+  "arcade_marquee_0": {
+    "height": 256,
+    "width": 1024
+  },
+  "arcade_marquee_1": {
+    "height": 256,
+    "width": 1024
+  },
+  "arcade_marquee_2": {
+    "height": 256,
+    "width": 1024
+  },
+  "arcade_marquee_3": {
+    "height": 256,
+    "width": 1024
+  },
+  "arcade_screen_0": {
+    "height": 480,
+    "width": 640
+  },
+  "arcade_screen_1": {
+    "height": 480,
+    "width": 640
+  },
+  "arcade_screen_2": {
+    "height": 480,
+    "width": 640
+  },
+  "arcade_screen_3": {
+    "height": 480,
+    "width": 640
+  },
+  "arcade_side_0": {
+    "height": 1024,
+    "width": 512
+  },
+  "arcade_side_1": {
+    "height": 1024,
+    "width": 512
+  },
+  "arcade_side_2": {
+    "height": 1024,
+    "width": 512
+  },
+  "arcade_side_3": {
+    "height": 1024,
+    "width": 512
+  },
+  "decal_graffiti_0": {
+    "height": 512,
+    "width": 1024
+  },
+  "decal_graffiti_1": {
+    "height": 512,
+    "width": 1024
+  },
+  "decal_graffiti_2": {
+    "height": 512,
+    "width": 1024
+  },
+  "decal_handprints": {
+    "height": 512,
+    "width": 1024
+  },
+  "decal_leak_0": {
+    "height": 1024,
+    "width": 512
+  },
+  "decal_leak_1": {
+    "height": 1024,
+    "width": 512
+  },
+  "decal_leak_2": {
+    "height": 1024,
+    "width": 512
+  },
+  "decal_mold_0": {
+    "height": 512,
+    "width": 1024
+  },
+  "decal_mold_1": {
+    "height": 512,
+    "width": 1024
+  },
+  "decal_puddle": {
+    "height": 512,
+    "width": 512
+  },
+  "door_arcade": {
+    "height": 256,
+    "width": 1024
+  },
+  "door_back_hall": {
+    "height": 256,
+    "width": 1024
+  },
+  "door_dining_hall": {
+    "height": 256,
+    "width": 1024
+  },
+  "door_exit_lobby": {
+    "height": 256,
+    "width": 1024
+  },
+  "door_kitchen": {
+    "height": 256,
+    "width": 1024
+  },
+  "door_main_hall": {
+    "height": 256,
+    "width": 1024
+  },
+  "door_office": {
+    "height": 256,
+    "width": 1024
+  },
+  "door_parts_service": {
+    "height": 256,
+    "width": 1024
+  },
+  "door_party_room": {
+    "height": 256,
+    "width": 1024
+  },
+  "door_restrooms": {
+    "height": 256,
+    "width": 1024
+  },
+  "door_storage": {
+    "height": 256,
+    "width": 1024
+  },
+  "exit_door": {
+    "height": 256,
+    "width": 768
+  },
+  "exit_left": {
+    "height": 320,
+    "width": 768
+  },
+  "exit_right": {
+    "height": 320,
+    "width": 768
+  },
+  "map_back_hall": {
+    "height": 1152,
+    "width": 1536
+  },
+  "map_main_hall": {
+    "height": 1152,
+    "width": 1536
+  },
+  "poster_0": {
+    "height": 1024,
+    "width": 768
+  },
+  "poster_1": {
+    "height": 1024,
+    "width": 768
+  },
+  "poster_2": {
+    "height": 1024,
+    "width": 768
+  },
+  "poster_3": {
+    "height": 1024,
+    "width": 768
+  },
+  "poster_4": {
+    "height": 1024,
+    "width": 768
+  },
+  "title_arcade": {
+    "height": 384,
+    "width": 1536
+  },
+  "title_happy_birthday": {
+    "height": 384,
+    "width": 1536
+  },
+  "title_lets_party": {
+    "height": 384,
+    "width": 1536
+  },
+  "title_out_of_order": {
+    "height": 320,
+    "width": 1280
+  },
+  "title_parts_service": {
+    "height": 320,
+    "width": 1280
+  },
+  "title_party_room": {
+    "height": 384,
+    "width": 1536
+  },
+  "title_prize_claw": {
+    "height": 256,
+    "width": 1024
+  },
+  "title_prizes": {
+    "height": 384,
+    "width": 1536
+  },
+  "title_security": {
+    "height": 320,
+    "width": 1280
+  },
+  "title_showtime": {
+    "height": 384,
+    "width": 1536
+  },
+  "title_staff_only": {
+    "height": 320,
+    "width": 1280
+  },
+  "title_storage": {
+    "height": 320,
+    "width": 1280
+  },
+  "title_welcome": {
+    "height": 384,
+    "width": 1536
+  }
+}
