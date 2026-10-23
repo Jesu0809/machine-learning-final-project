@@ -158,6 +158,11 @@ namespace NightShift.Game
             // The housing: what the player aims at.
             BuildKit.Box("BreakerBox", t, Vector3.zero, new Vector3(0.8f, 1.0f, 0.2f), steel, 1f);
             BuildKit.Box("Inside", t, new Vector3(0f, 0f, 0.095f), new Vector3(0.72f, 0.92f, 0.01f), inside, 1f, false);
+            // The dead front: a steel plate with the circuit names taped under each breaker.
+            if (BuildKit.SignTexture("breaker_deadfront") != null)
+            {
+                BuildKit.Quad("DeadFront", t, new Vector3(0f, 0f, 0.1005f), new Vector2(0.72f, 0.92f), 0f, Label("breaker_deadfront", Color.grey));
+            }
             // A rim in front of the housing: the breakers sit in it and the door closes over it.
             BuildKit.Box("RimTop", t, new Vector3(0f, 0.485f, 0.135f), new Vector3(0.8f, 0.03f, 0.07f), steel, 1f, false);
             BuildKit.Box("RimBottom", t, new Vector3(0f, -0.485f, 0.135f), new Vector3(0.8f, 0.03f, 0.07f), steel, 1f, false);
@@ -173,11 +178,23 @@ namespace NightShift.Game
             {
                 var place = new Vector3(i < 3 ? -0.13f : 0.13f, 0.2f - (i % 3) * 0.2f, 0.12f);
                 BuildKit.Box("Breaker", t, place, new Vector3(0.18f, 0.12f, 0.04f), bakelite, 1f, false);
-                BuildKit.Box("BreakerTag", t, place + new Vector3(0f, -0.075f, -0.015f), new Vector3(0.14f, 0.025f, 0.004f), BuildKit.Plain("breakerTag", new Color(0.5f, 0.48f, 0.42f), 0.1f), 1f, false);
+                if (BuildKit.SignTexture("breaker_module") != null)
+                {
+                    BuildKit.Quad("BreakerFace", t, place + new Vector3(0f, 0f, 0.0205f), new Vector2(0.18f, 0.12f), 0f, Label("breaker_module", Color.black));
+                }
+                else
+                {
+                    BuildKit.Box("BreakerTag", t, place + new Vector3(0f, -0.075f, -0.015f), new Vector3(0.14f, 0.025f, 0.004f), BuildKit.Plain("breakerTag", new Color(0.5f, 0.48f, 0.42f), 0.1f), 1f, false);
+                }
+                // A ribbed black handle in the slot, as on a real breaker.
                 var pivot = new GameObject("Toggle").transform;
                 pivot.SetParent(t, false);
                 pivot.localPosition = place + new Vector3(0f, 0f, 0.02f);
-                BuildKit.Box("Lever", pivot, new Vector3(0f, 0.035f, 0f), new Vector3(0.04f, 0.07f, 0.03f), BuildKit.Plain("toggleRed", new Color(0.55f, 0.06f, 0.05f), 0.5f), 1f, false);
+                BuildKit.Box("Lever", pivot, new Vector3(0f, 0.03f, 0f), new Vector3(0.036f, 0.06f, 0.026f), bakelite, 1f, false);
+                for (int rib = 0; rib < 3; rib++)
+                {
+                    BuildKit.Box("Rib", pivot, new Vector3(0f, 0.04f + rib * 0.008f, 0.014f), new Vector3(0.036f, 0.003f, 0.004f), BuildKit.Plain("rib", new Color(0.12f, 0.12f, 0.13f), 0.3f), 1f, false);
+                }
                 switches[i] = pivot;
             }
 
@@ -188,6 +205,11 @@ namespace NightShift.Game
             BuildKit.Box("Door", door, new Vector3(0.39f, 0f, 0.012f), new Vector3(0.78f, 0.98f, 0.022f), doorSteel, 1f, false);
             BuildKit.Quad("Warning", door, new Vector3(0.39f, 0.15f, 0.0245f), new Vector2(0.3f, 0.375f), 0f, Label("label_danger", new Color(0.9f, 0.75f, 0.1f)));
             BuildKit.Box("Latch", door, new Vector3(0.72f, -0.05f, 0.04f), new Vector3(0.035f, 0.16f, 0.035f), chrome, 1f, false);
+            // The circuit directory on the inside of the door.
+            if (BuildKit.SignTexture("breaker_directory") != null)
+            {
+                BuildKit.Quad("Directory", door, new Vector3(0.39f, 0.08f, -0.0005f), new Vector2(0.3f, 0.4f), 180f, Label("breaker_directory", Color.white));
+            }
 
             // The main handle on the right side: down is off, up is on.
             BuildKit.Cylinder("HandleHub", t, new Vector3(0.43f, -0.1f, 0.04f), 0.09f, 0.06f, chrome).transform.localRotation = Quaternion.Euler(0f, 0f, 90f);

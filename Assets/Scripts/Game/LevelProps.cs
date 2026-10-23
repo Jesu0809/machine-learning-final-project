@@ -57,7 +57,7 @@ namespace NightShift.Game
                 for (int i = 0; i < 2; i++)
                 {
                     var spot = new Vector3(p.x - 0.1f, deskTop, p.y - 0.45f + i * 0.9f);
-                    GameObject crt = BuildKit.Prop("television_02", root, spot, 90f + ScreenFront + (i == 0 ? 8f : -8f), 1f, false);
+                    GameObject crt = Monitor(root, spot, 90f + (i == 0 ? 8f : -8f));
                     if (crt == null)
                     {
                         var monitor = BuildKit.Box("Monitor", root, spot + Vector3.up * 0.25f, new Vector3(0.45f, 0.45f, 0.55f), BuildKit.Plain("crt", new Color(0.18f, 0.17f, 0.15f), 0.3f));
@@ -87,7 +87,7 @@ namespace NightShift.Game
                 {
                     BuildKit.Box("Workbench", root, new Vector3(p.x, 0.45f, p.y), new Vector3(0.9f, 0.9f, 1.6f), wood);
                 }
-                Endoskeleton(root, new Vector3(p.x, scanned ? 0.83f : 0.9f, p.y - 0.3f));
+                RepairJob(root, new Vector3(p.x, scanned ? 0.83f : 0.9f, p.y));
                 BuildKit.Prop("metal_stool_01", root, new Vector3(p.x + 0.75f, 0f, p.y + 0.35f), 25f, 1f, false);
             });
             PlaceNear(Room.Parts, new Vector2(-11.25f, -13.3f), 0.6f, p =>
@@ -524,10 +524,60 @@ namespace NightShift.Game
 
         /// <summary>A spare animatronic head: the kind of thing you should not find in a storage room.</summary>
         /// <summary>A bare endoskeleton lying on a bench.</summary>
-        public static void Endoskeleton(Transform root, Vector3 bench) => LevelClutter.Endoskeleton(root, bench);
+        // Where the picture tube is on the scanned CRT (television_02), in its own frame.
+        private static readonly Vector3 TvScreenCenter = new Vector3(0f, 0.235f, 0.18f);
+        private static readonly Vector2 TvScreenSize = new Vector2(0.27f, 0.205f);
+
+        /// <summary>
+        /// An old CRT monitor standing at <paramref name="position"/>, its screen toward
+        /// <paramref name="yaw"/>, showing one of the security cameras. Null without the model.
+        /// </summary>
+        public static GameObject Monitor(Transform root, Vector3 position, float yaw)
+        {
+            GameObject tv = BuildKit.Prop("television_02", root, position, yaw + ScreenFront, 1f, false);
+            if (tv == null)
+            {
+                return null;
+            }
+            var frame = new GameObject("MonitorFrame").transform;
+            frame.SetParent(root, false);
+            frame.localPosition = position;
+            frame.localRotation = Quaternion.Euler(0f, yaw, 0f);
+            GameObject screen = BuildKit.Quad("Screen", frame, TvScreenCenter, TvScreenSize, 0f, BuildKit.Glow("screenGreen", new Color(0.2f, 0.9f, 0.5f), 1.2f));
+            SecurityFeeds.RegisterScreen(screen.GetComponent<Renderer>());
+            return tv;
+        }
+
+        /// <summary>
+        /// A head being repaired on the bench: lying on its side, the open toolbox next to it,
+        /// screws and a screwdriver. The boxes of the old endoskeleton are the fallback.
+        /// </summary>
+        private static void RepairJob(Transform root, Vector3 top)
+        {
+            if (FreddyParts.Head(root, top + new Vector3(0.05f, 0.16f, -0.25f), Quaternion.Euler(0f, 70f, 80f), 0.55f) == null)
+            {
+                LevelClutter.Endoskeleton(root, top + new Vector3(0f, 0f, -0.3f));
+                return;
+            }
+            BuildKit.Prop("metal_toolbox", root, top + new Vector3(0.05f, 0f, 0.35f), 15f, 0.8f, false);
+            Material steel = BuildKit.Plain("chrome", new Color(0.7f, 0.7f, 0.72f), 0.8f, 1f);
+            var shaft = BuildKit.Cylinder("Screwdriver", root, top + new Vector3(0.25f, 0.01f, -0.05f), 0.008f, 0.16f, steel);
+            shaft.transform.localRotation = Quaternion.Euler(90f, 30f, 0f);
+            var grip = BuildKit.Cylinder("ScrewdriverGrip", root, top + new Vector3(0.21f, 0.013f, -0.12f), 0.026f, 0.1f, BuildKit.Plain("gripYellow", new Color(0.8f, 0.6f, 0.05f), 0.5f));
+            grip.transform.localRotation = Quaternion.Euler(90f, 30f, 0f);
+            for (int i = 0; i < 5; i++)
+            {
+                BuildKit.Cylinder("Screw", root, top + new Vector3(-0.15f + i * 0.045f, 0.004f, 0.08f + (i % 2) * 0.03f), 0.012f, 0.008f, steel);
+            }
+        }
 
         public static void SpareHead(Transform root, Vector3 position, float yaw, float scale = 1f)
         {
+            // Cut from Freddy's own model when it is there; the spheres are the fallback.
+            if (FreddyParts.Head(root, position, Quaternion.Euler(0f, yaw, 15f), scale) != null)
+            {
+                return;
+            }
             var head = new GameObject("SpareHead").transform;
             head.SetParent(root, false);
             head.localPosition = position;
@@ -660,7 +710,12 @@ namespace NightShift.Game
                 if (hall || room == Room.Office)
                 {
                     position.y = 1.5f + (float)random.NextDouble() * 0.5f;
-                    BuildKit.Quad("Drawing", root, position, new Vector2(0.55f, 0.55f), facing, BuildKit.Picture("drawing" + index % 4, ProceduralTextures.Drawing(index % 4)))
+                    // A child's crayon drawing taped to the wall (the pixel drawings are the fallback).
+                    Texture2D crayon = BuildKit.SignTexture("drawing_" + index % 6);
+                    Material drawing = crayon != null ? BuildKit.Picture("sign:" + crayon.name, crayon)
+                                                      : BuildKit.Picture("drawing" + index % 4, ProceduralTextures.Drawing(index % 4));
+                    Vector2 size = crayon != null ? new Vector2(0.6f, 0.45f) : new Vector2(0.55f, 0.55f);
+                    BuildKit.Quad("Drawing", root, position, size, facing, drawing)
                         .transform.localRotation *= Quaternion.Euler(0f, 0f, (float)random.NextDouble() * 10f - 5f);
                 }
                 else if (room == Room.Kitchen || room == Room.Storage || room == Room.Parts || room == Room.Restrooms)

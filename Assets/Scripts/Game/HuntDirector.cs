@@ -81,6 +81,8 @@ namespace NightShift.Game
         private LensDistortion distortion;
         private FilmGrain grain;
         private Vignette vignette;
+        private ColorAdjustments colorAdjustments;
+        private const float BaseExposure = 0.9f;
         private Light jumpscareLight;
 
         public GameAssets Assets { get; private set; }
@@ -207,6 +209,7 @@ namespace NightShift.Game
             Level = LevelBuilder.Build(transform, Assets);
             Player = PlayerController.Create(this, PizzeriaLayout.PlayerStart, PizzeriaLayout.PlayerFacing);
             Freddy = FreddyBody.Create(this, Assets.FreddyPrefab, PizzeriaLayout.FreddyStart, PizzeriaLayout.FreddyFacing);
+            SecurityFeeds.Create(this);
             Material doorSteel = BuildKit.Surface("doorSteel", () => ProceduralTextures.SteelPanel(new Color(0.42f, 0.09f, 0.08f)), 0.4f, 0.35f);
             foreach ((Room _, Room _, Vector3 door, bool alongX, Vector3 corridor) in PizzeriaLayout.Doorways())
             {
@@ -403,6 +406,15 @@ namespace NightShift.Game
             tape.gameObject.SetActive(true);
             RevealItems();
             LastDecision = "asleep (explore mode)";
+        }
+
+        /// <summary>
+        /// Eyes getting used to the dark (0–1), while hidden with the flashlight off: the picture
+        /// brightens by up to 1.5 stops, so the room outside the vents can be watched.
+        /// </summary>
+        public void SetEyeAdaptation(float amount)
+        {
+            colorAdjustments.postExposure.Override(BaseExposure + 1.5f * Mathf.Clamp01(amount));
         }
 
         /// <summary>The breaker box, the keycard lockbox or the tape.</summary>
@@ -1069,9 +1081,10 @@ namespace NightShift.Game
             distortion = profile.Add<LensDistortion>(true);
             distortion.intensity.Override(0f);
             ColorAdjustments color = profile.Add<ColorAdjustments>(true);
+            colorAdjustments = color;
             color.saturation.Override(-20f);
             color.contrast.Override(18f);
-            color.postExposure.Override(0.9f);
+            color.postExposure.Override(BaseExposure);
             color.colorFilter.Override(new Color(1f, 0.96f, 0.9f));
             ShadowsMidtonesHighlights tones = profile.Add<ShadowsMidtonesHighlights>(true);
             tones.shadows.Override(new Vector4(0.9f, 1f, 1.1f, 0f));
