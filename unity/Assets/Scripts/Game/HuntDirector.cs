@@ -230,11 +230,13 @@ namespace NightShift.Game
                 // Testing shortcut: skip the menu and the intro and drop straight into night 1.
                 StartNight(1);
                 CaptureMode.AttachIfRequested(this);
+                ExploreMode.AttachIfRequested(this);
                 return;
             }
 #endif
             ShowMenu();
             CaptureMode.AttachIfRequested(this);
+            ExploreMode.AttachIfRequested(this);
         }
 
         private void CreateBrain()
@@ -387,6 +389,25 @@ namespace NightShift.Game
             UI.ShowHud();
         }
 
+        /// <summary>
+        /// Developer explore mode (see ExploreMode.cs): night 1's building with every objective item
+        /// out, no phone call and Freddy asleep on the stage. The loop in Update stops here.
+        /// </summary>
+        public void BeginExplore()
+        {
+            StartNight(1);
+            call.Skip();
+            wasInCall = false;
+            breaker.gameObject.SetActive(true);
+            keycard.gameObject.SetActive(true);
+            tape.gameObject.SetActive(true);
+            RevealItems();
+            LastDecision = "asleep (explore mode)";
+        }
+
+        /// <summary>The breaker box, the keycard lockbox or the tape.</summary>
+        public ObjectiveItem ItemFor(ObjectiveStep step) => step == ObjectiveStep.Breaker ? breaker : step == ObjectiveStep.Keycard ? keycard : tape;
+
         public void SetPaused(bool paused)
         {
             if (paused && Phase == GamePhase.Playing)
@@ -448,7 +469,7 @@ namespace NightShift.Game
 
             FlickerLight.SetFreddyPosition(Phase == GamePhase.Menu ? new Vector3(9999f, 0f, 9999f) : Freddy.transform.position);
             UpdatePointerLock();
-            if (Phase != GamePhase.Playing)
+            if (Phase != GamePhase.Playing || ExploreMode.Active)
             {
                 return;
             }
@@ -820,7 +841,6 @@ namespace NightShift.Game
                     break;
                 case ObjectiveStep.Tape:
                     Audio.Click();
-                    item.gameObject.SetActive(false);
                     UI.Toast("You have the tape. Get out.");
                     break;
             }
@@ -1074,6 +1094,18 @@ namespace NightShift.Game
             bloom.intensity.Override(0.8f);
             bloom.threshold.Override(0.95f);
             bloom.scatter.Override(0.7f);
+            // Lamps, neon and the flashlight in a wet lens: ghosts and a thin horizontal streak.
+            ScreenSpaceLensFlare flare = profile.Add<ScreenSpaceLensFlare>(true);
+            flare.intensity.Override(0.35f);
+            flare.tintColor.Override(new Color(1f, 0.85f, 0.7f));
+            flare.firstFlareIntensity.Override(0.6f);
+            flare.secondaryFlareIntensity.Override(0.4f);
+            flare.warpedFlareIntensity.Override(0.3f);
+            flare.streaksIntensity.Override(0.45f);
+            flare.streaksLength.Override(0.35f);
+            flare.streaksThreshold.Override(0.55f);
+            flare.chromaticAbberationIntensity.Override(0.6f);
+            GraphicsQuality.RegisterLensFlare(flare);
             Tonemapping tonemapping = profile.Add<Tonemapping>(true);
             tonemapping.mode.Override(TonemappingMode.ACES);
             volume.profile = profile;
