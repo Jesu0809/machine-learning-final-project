@@ -163,7 +163,9 @@ namespace NightShift.Game
                     yield return new WaitForSeconds(0.5f);
                     yield return Shot("17-vent-" + vent.Duct.A);
                     vent.Use(director.Player);
-                    yield return new WaitForSeconds(1.6f);
+                    yield return new WaitForSeconds(0.45f);
+                    yield return Shot("17a-kneel-" + vent.Duct.A);
+                    yield return new WaitForSeconds(1.15f);
                     yield return Shot("17b-crawl-" + vent.Duct.A);
                     float crawlStart = Time.time;
                     while (director.Player.Crawling && Time.time < crawlStart + 30f)
@@ -176,6 +178,7 @@ namespace NightShift.Game
                 }
             }
 
+            yield return PanelTest();
             director.Freddy.gameObject.SetActive(true);
             director.Freddy.ResetTo(PizzeriaLayout.FreddyStart, PizzeriaLayout.FreddyFacing);
 
@@ -277,6 +280,52 @@ namespace NightShift.Game
             Debug.Log("CAPTURE average fps=" + (Time.frameCount / Time.realtimeSinceStartup).ToString("0"));
             Debug.Log("CAPTURE done. outcome=" + director.State.Outcome + " reason=" + director.EndReason + " decisions=" + director.Decisions.Count);
             Application.Quit();
+        }
+
+        /// <summary>
+        /// The exit panel animation: with every fuse, hold E in front of tonight's panel, let go
+        /// half-way through a cell, come back and finish (the cells and the lever keep their place).
+        /// </summary>
+        private IEnumerator PanelTest()
+        {
+            for (int room = 0; room < HuntMap.RoomCount && director.State.FusesCollected < director.FusesNeeded; room++)
+            {
+                if (director.State.FuseIn((Room)room))
+                {
+                    director.State.CollectFuse((Room)room);
+                }
+            }
+            director.ObjectiveList.Complete(ObjectiveStep.Fuses);
+            ExitPanel panel = director.ActiveExit;
+            Vector3 forward = panel.transform.forward;
+            Vector3 stand = panel.transform.position + forward * 0.95f;
+            Teleport(new Vector3(stand.x, 0f, stand.z), -forward);
+            yield return new WaitForSeconds(0.5f);
+            float[] shots = { 0.16f, 0.27f, 0.62f, 0.86f, 1f };
+            string[] names = { "19a-panel-cell-from-hand", "19b-panel-cell-push", "19d-panel-third-cell", "19e-panel-lever", "19f-panel-open" };
+            int next = 0;
+            bool released = false;
+            float start = Time.time;
+            while (next < shots.Length && Time.time < start + 30f)
+            {
+                if (!released && panel.Progress >= 0.4f)
+                {
+                    // Walk away in the middle of the second cell, then come back to it.
+                    released = true;
+                    yield return new WaitForSeconds(1f);
+                    yield return Shot("19c-panel-left-halfway");
+                }
+                panel.Use(director.Player);
+                if (panel.Progress >= shots[next])
+                {
+                    yield return Shot(names[next]);
+                    next++;
+                }
+                yield return null;
+            }
+            Debug.Log("CAPTURE panel progress=" + panel.Progress.ToString("0.00") + " open=" + panel.Open);
+            panel.ResetPanel();
+            panel.Active = true;
         }
 
         /// <summary>

@@ -94,6 +94,7 @@ namespace NightShift.EditorTools
             assets.EvaluationResults = AssetDatabase.LoadAssetAtPath<TextAsset>("Assets/Resources/Data/results.json");
             assets.MaterialTemplates = CreateMaterialTemplates();
             assets.Surfaces = SurfaceImporter.ImportAll();
+            assets.Props = PropImporter.ImportAll();
             assets.AmbientOcclusion = RenderingSetup.Apply();
             assets.AmbientLoop = Clip("ambient-hum-loop");
             assets.MenuMusic = Clip("menu-music-loop");

@@ -377,6 +377,33 @@ namespace NightShift.Game
             return texture;
         }
 
+        /// <summary>
+        /// The light pattern of a long fluorescent fixture seen from below: a soft rounded
+        /// rectangle, twice as long (u) as it is wide (v), so the pool of light on the floor has the
+        /// shape of the lamp instead of a circle.
+        /// </summary>
+        public static Texture2D LampCookie(int size = 128)
+        {
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+            var pixels = new Color[size * size];
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float u = Mathf.Abs((x + 0.5f) / size * 2f - 1f) / 0.92f;
+                    float v = Mathf.Abs((y + 0.5f) / size * 2f - 1f) / 0.5f;
+                    // Superellipse distance: 1 on the rounded-rectangle edge.
+                    float d = Mathf.Pow(Mathf.Pow(u, 4f) + Mathf.Pow(v, 4f), 0.25f);
+                    float value = Mathf.Clamp01(1f - Mathf.SmoothStep(0.35f, 1f, d));
+                    value = value * value * (3f - 2f * value);
+                    pixels[y * size + x] = new Color(value, value, value, value);
+                }
+            }
+            texture.SetPixels(pixels);
+            texture.Apply();
+            return texture;
+        }
+
         /// <summary>Yellow and black diagonal hazard stripes.</summary>
         public static Texture2D HazardStripes()
         {

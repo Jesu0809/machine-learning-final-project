@@ -47,13 +47,27 @@ namespace NightShift.Game
             // The guard's desk in the corner by the west wall, under the camera monitors.
             PlaceNear(Room.Office, new Vector2(-21f, -10.25f), 0.6f, p =>
             {
-                BuildKit.Box("Desk", root, new Vector3(p.x, 0.4f, p.y), new Vector3(0.9f, 0.8f, 1.8f), wood);
+                // The guard's metal desk along the wall, two old CRT monitors facing the room.
+                bool scanned = BuildKit.Prop("metal_office_desk", root, new Vector3(p.x, 0f, p.y), 90f + DeskFront, 0.9f) != null;
+                if (!scanned)
+                {
+                    BuildKit.Box("Desk", root, new Vector3(p.x, 0.4f, p.y), new Vector3(0.9f, 0.8f, 1.8f), wood);
+                }
+                float deskTop = scanned ? 0.71f : 0.8f;
                 for (int i = 0; i < 2; i++)
                 {
-                    var monitor = BuildKit.Box("Monitor", root, new Vector3(p.x - 0.2f, 1.05f, p.y - 0.45f + i * 0.9f), new Vector3(0.45f, 0.45f, 0.55f), BuildKit.Plain("crt", new Color(0.18f, 0.17f, 0.15f), 0.3f));
-                    BuildKit.Quad("Screen", monitor.transform, new Vector3(0.505f, 0.02f, 0f), new Vector2(0.75f, 0.8f), 90f, BuildKit.Glow("screenGreen", new Color(0.2f, 0.9f, 0.5f), 1.2f));
+                    var spot = new Vector3(p.x - 0.1f, deskTop, p.y - 0.45f + i * 0.9f);
+                    GameObject crt = BuildKit.Prop("television_02", root, spot, 90f + ScreenFront + (i == 0 ? 8f : -8f), 1f, false);
+                    if (crt == null)
+                    {
+                        var monitor = BuildKit.Box("Monitor", root, spot + Vector3.up * 0.25f, new Vector3(0.45f, 0.45f, 0.55f), BuildKit.Plain("crt", new Color(0.18f, 0.17f, 0.15f), 0.3f));
+                        BuildKit.Quad("Screen", monitor.transform, new Vector3(0.505f, 0.02f, 0f), new Vector2(0.75f, 0.8f), 90f, BuildKit.Glow("screenGreen", new Color(0.2f, 0.9f, 0.5f), 1.2f));
+                    }
                 }
-                Chair(root, new Vector2(p.x + 0.8f, p.y), 270f);
+                if (BuildKit.Prop("SchoolChair_01", root, new Vector3(p.x + 0.85f, 0f, p.y), 270f + ChairFront + 15f, 1f, false) == null)
+                {
+                    Chair(root, new Vector2(p.x + 0.8f, p.y), 270f);
+                }
                 BuildKit.Box("Papers", root, new Vector3(p.x + 0.1f, 0.81f, p.y + 0.6f), new Vector3(0.3f, 0.02f, 0.4f), BuildKit.Plain("paper", new Color(0.85f, 0.83f, 0.75f)), 1f, false);
             });
             PlaceNear(Room.Office, new Vector2(-21.2f, -12.8f), 0.5f, p =>
@@ -82,6 +96,10 @@ namespace NightShift.Game
             {
                 BuildKit.Box("HeadShelf", root, new Vector3(-13.65f, 1.6f + (i % 2) * 0.6f, -8.8f + i * 0.45f), new Vector3(0.35f, 0.04f, 0.6f), Metal(new Color(0.3f, 0.32f, 0.33f)), 1f, false);
             }
+            // Workshop tools: a drill press, a rolling tool chest, a toolbox left on the floor.
+            PlaceNear(Room.Parts, new Vector2(-8.7f, -7.7f), 0.4f, p => BuildKit.Prop("old_drill_press", root, new Vector3(p.x, 0f, p.y), 225f), 1.5f);
+            PlaceNear(Room.Parts, new Vector2(-13.4f, -12.2f), 0.4f, p => BuildKit.Prop("metal_tool_chest", root, new Vector3(p.x, 0f, p.y), 90f), 1.5f);
+            PlaceNear(Room.Parts, new Vector2(-9.5f, -13.5f), 0.25f, p => BuildKit.Prop("metal_toolbox", root, new Vector3(p.x, 0f, p.y), 20f), 1.5f);
             Sign(root, new Vector3(-11f, 2.4f, -13.77f), 0f, "PARTS & SERVICE", new Color(0.85f, 0.85f, 0.8f), new Color(0.2f, 0.22f, 0.2f), 2.6f);
         }
 
@@ -104,6 +122,17 @@ namespace NightShift.Game
             {
                 BuildKit.Box("StallWall", root, new Vector3(-6.4f, 1.05f, -11.4f + i * 1.0f), new Vector3(1.0f, 1.9f, 0.05f), stall, 1f, false);
             }
+            // Cleaning things the janitor left behind.
+            Place(Room.Restrooms, new Vector2(-5.9f, -12.2f), 0.2f, () => BuildKit.Prop("plunger", root, new Vector3(-5.9f, 0f, -12.2f), 30f, 1f, false));
+            Place(Room.Restrooms, new Vector2(-2.6f, -12.9f), 0.2f, () => BuildKit.Prop("multi_cleaner_5_litre", root, new Vector3(-2.6f, 0f, -12.9f), 200f, 1f, false));
+            Place(Room.Restrooms, new Vector2(-2.5f, -11.3f), 0.25f, () =>
+            {
+                GameObject broom = BuildKit.Prop("plastic_broom", root, new Vector3(-2.55f, 0f, -11.3f), 90f, 1f, false);
+                if (broom != null)
+                {
+                    broom.transform.localRotation *= Quaternion.Euler(0f, 0f, -12f);   // leaning on the wall
+                }
+            });
             Sign(root, new Vector3(-2.23f, 2.3f, -10.5f), 270f, "OUT OF ORDER", new Color(0.9f, 0.9f, 0.85f), new Color(0.35f, 0.05f, 0.05f), 1.8f);
         }
 
@@ -120,8 +149,11 @@ namespace NightShift.Game
             // A wet floor sign nobody picked up.
             Place(Room.BackHall, new Vector2(-13f, -0.6f), 0.3f, () =>
             {
-                var sign = BuildKit.Box("WetFloor", root, new Vector3(-13f, 0.3f, -0.6f), new Vector3(0.35f, 0.6f, 0.05f), BuildKit.Plain("yellow", new Color(0.9f, 0.75f, 0.1f), 0.5f), 1f, false);
-                sign.transform.localRotation = Quaternion.Euler(10f, 30f, 0f);
+                if (BuildKit.Prop("WetFloorSign_01", root, new Vector3(-13f, 0f, -0.6f), 30f, 1f, false) == null)
+                {
+                    var sign = BuildKit.Box("WetFloor", root, new Vector3(-13f, 0.3f, -0.6f), new Vector3(0.35f, 0.6f, 0.05f), BuildKit.Plain("yellow", new Color(0.9f, 0.75f, 0.1f), 0.5f), 1f, false);
+                    sign.transform.localRotation = Quaternion.Euler(10f, 30f, 0f);
+                }
             });
             Sign(root, new Vector3(-21.77f, 2.6f, -1.5f), 90f, "STAFF ONLY", new Color(0.9f, 0.9f, 0.85f), new Color(0.15f, 0.15f, 0.18f), 1.8f);
         }
@@ -144,7 +176,18 @@ namespace NightShift.Game
                     BuildKit.Box("Box", root, new Vector3(-19.2f + b * 0.65f, y + 0.02f + w * 0.5f, 2.45f), new Vector3(w, w, 0.32f), Cardboard(), 1f, false);
                 }
             }
-            PlaceNear(Room.Storage, new Vector2(-16.75f, 3.75f), 0.5f, p => Crate(root, new Vector3(p.x, 0f, p.y), 15f));
+            PlaceNear(Room.Storage, new Vector2(-16.75f, 3.75f), 0.5f, p =>
+            {
+                if (BuildKit.Prop("cardboard_box_01", root, new Vector3(p.x, 0f, p.y), 15f) != null)
+                {
+                    BuildKit.Prop("cardboard_box_01", root, new Vector3(p.x + 0.05f, 0.34f, p.y - 0.02f), 40f);
+                    BuildKit.Prop("plastic_crate_02", root, new Vector3(p.x - 0.1f, 0.68f, p.y), -10f, 1f, false);
+                }
+                else
+                {
+                    Crate(root, new Vector3(p.x, 0f, p.y), 15f);
+                }
+            });
             Sign(root, new Vector3(-21.77f, 2.6f, 4.5f), 90f, "STORAGE", new Color(0.9f, 0.9f, 0.85f), new Color(0.2f, 0.2f, 0.22f), 2.0f);
         }
 
@@ -153,11 +196,19 @@ namespace NightShift.Game
             Material steel = Metal(new Color(0.55f, 0.57f, 0.6f));
             PlaceNear(Room.Kitchen, new Vector2(-12.6f, 9.3f), 0.6f, p =>
             {
-                BuildKit.Box("Stove", root, new Vector3(p.x, 0.45f, p.y), new Vector3(1.4f, 0.9f, 0.7f), BuildKit.Plain("stove", new Color(0.1f, 0.1f, 0.1f), 0.5f));
                 BuildKit.Box("Hood", root, new Vector3(p.x, 2.3f, p.y - 0.05f), new Vector3(1.5f, 0.5f, 0.6f), steel, 1f, false);
-                for (int i = 0; i < 2; i++)
+                if (BuildKit.Prop("electric_stove", root, new Vector3(p.x - 0.35f, 0f, p.y), 180f + DeskFront) != null)
                 {
-                    BuildKit.Cylinder("Pan", root, new Vector3(p.x - 0.35f + i * 0.7f, 0.92f, p.y), 0.25f, 0.04f, BuildKit.Plain("pan", new Color(0.12f, 0.12f, 0.12f), 0.6f, 0.8f));
+                    BuildKit.Prop("electric_stove", root, new Vector3(p.x + 0.35f, 0f, p.y), 180f + DeskFront);
+                    BuildKit.Prop("pot_enamel_01", root, new Vector3(p.x - 0.4f, 0.86f, p.y - 0.05f), 30f, 1.3f, false);
+                }
+                else
+                {
+                    BuildKit.Box("Stove", root, new Vector3(p.x, 0.45f, p.y), new Vector3(1.4f, 0.9f, 0.7f), BuildKit.Plain("stove", new Color(0.1f, 0.1f, 0.1f), 0.5f));
+                    for (int i = 0; i < 2; i++)
+                    {
+                        BuildKit.Cylinder("Pan", root, new Vector3(p.x - 0.35f + i * 0.7f, 0.92f, p.y), 0.25f, 0.04f, BuildKit.Plain("pan", new Color(0.12f, 0.12f, 0.12f), 0.6f, 0.8f));
+                    }
                 }
             });
             PlaceNear(Room.Kitchen, new Vector2(-12.4f, 7.6f), 0.5f, p =>
@@ -225,7 +276,12 @@ namespace NightShift.Game
             BuildKit.Box("Runner", root, new Vector3(area.center.x, 0.005f, area.center.y), new Vector3(area.width - 1f, 0.01f, 1.2f),
                          BuildKit.Surface("carpet", () => ProceduralTextures.Carpet(), 0.05f), 2f, false);
             PlaceNear(Room.MainHall, new Vector2(22.3f, -1.5f), 0.4f, p =>
-                BuildKit.Box("Bench", root, new Vector3(p.x, 0.25f, p.y), new Vector3(0.5f, 0.5f, 1.6f), Wood()), 1.5f);
+            {
+                if (BuildKit.Prop("painted_wooden_bench", root, new Vector3(p.x, 0f, p.y), 90f) == null)
+                {
+                    BuildKit.Box("Bench", root, new Vector3(p.x, 0.25f, p.y), new Vector3(0.5f, 0.5f, 1.6f), Wood());
+                }
+            }, 1.5f);
             Sign(root, new Vector3(22.77f, 2.2f, -1.5f), 270f, "WELCOME", new Color(1f, 0.85f, 0.2f), new Color(0.5f, 0.05f, 0.1f), 2.0f);
         }
 
@@ -237,6 +293,7 @@ namespace NightShift.Game
                 Balloon(root, position, PartyColors[i % PartyColors.Length]);
             }
             Streamer(root, new Vector3(4.2f, 3.1f, -10.5f), new Vector3(9.8f, 3.1f, -10.5f), PartyColors[2]);
+            PlaceNear(Room.PartyRoom, new Vector2(9.3f, -8.9f), 0.3f, p => BuildKit.Prop("boombox", root, new Vector3(p.x, 0f, p.y), 200f, 1f, false), 1f);
             Sign(root, new Vector3(7f, 2.4f, -13.77f), 0f, "PARTY ROOM", new Color(1f, 0.85f, 0.2f), new Color(0.5f, 0.05f, 0.1f), 2.6f);
         }
 
@@ -264,7 +321,12 @@ namespace NightShift.Game
                 BuildKit.Box("Glass", root, new Vector3(p.x, 1.6f, p.y - 0.45f), new Vector3(2.0f, 0.8f, 0.05f), BuildKit.Plain("glass", new Color(0.3f, 0.35f, 0.4f), 0.9f), 1f, false);
             });
             PlaceNear(Room.ExitLobby, new Vector2(19.5f, -13.5f), 0.6f, p =>
-                BuildKit.Box("Bench", root, new Vector3(p.x, 0.25f, p.y), new Vector3(0.5f, 0.5f, 1.8f), Wood()));
+            {
+                if (BuildKit.Prop("painted_wooden_bench", root, new Vector3(p.x, 0f, p.y), 270f) == null)
+                {
+                    BuildKit.Box("Bench", root, new Vector3(p.x, 0.25f, p.y), new Vector3(0.5f, 0.5f, 1.8f), Wood());
+                }
+            });
         }
 
         /// <summary>EXIT signs built for each exit; the director switches on tonight's.</summary>
@@ -314,14 +376,26 @@ namespace NightShift.Game
 
         private static void PartyTable(Transform root, System.Random random, Vector2 center)
         {
-            Material cloth = BuildKit.Surface("tablecloth", () => ProceduralTextures.Tiles(new Color(0.7f, 0.1f, 0.12f), new Color(0.88f, 0.85f, 0.78f), 6, true, 0.4f), 0.05f);
-            BuildKit.Box("Table", root, new Vector3(center.x, 0.75f, center.y), new Vector3(2.0f, 0.06f, 0.9f), cloth);
-            BuildKit.Box("Leg", root, new Vector3(center.x, 0.37f, center.y), new Vector3(0.15f, 0.74f, 0.15f), Metal(new Color(0.3f, 0.3f, 0.32f)));
-            PartySetting(root, new Vector3(center.x, 0.78f, center.y));
+            // The scanned diner table with its checkered cloth, a little smaller than life.
+            float side = 0.75f;
+            float top = 0.78f;
+            if (BuildKit.Prop("dining_table", root, new Vector3(center.x, 0f, center.y), 0f, 0.85f) != null)
+            {
+                side = 0.85f;
+                top = 0.75f;
+            }
+            else
+            {
+                Material cloth = BuildKit.Surface("tablecloth", () => ProceduralTextures.Tiles(new Color(0.7f, 0.1f, 0.12f), new Color(0.88f, 0.85f, 0.78f), 6, true, 0.4f), 0.05f);
+                BuildKit.Box("Table", root, new Vector3(center.x, 0.75f, center.y), new Vector3(2.0f, 0.06f, 0.9f), cloth);
+                BuildKit.Box("Leg", root, new Vector3(center.x, 0.37f, center.y), new Vector3(0.15f, 0.74f, 0.15f), Metal(new Color(0.3f, 0.3f, 0.32f)));
+            }
+            PartySetting(root, new Vector3(center.x, top, center.y));
             for (int i = 0; i < 3; i++)
             {
-                Chair(root, new Vector2(center.x - 0.65f + i * 0.65f, center.y + 0.75f), 180f);
-                Chair(root, new Vector2(center.x - 0.65f + i * 0.65f, center.y - 0.75f), 0f);
+                float jitter = (float)random.NextDouble() * 24f - 12f;
+                Chair(root, new Vector2(center.x - 0.65f + i * 0.65f, center.y + side), 180f + jitter);
+                Chair(root, new Vector2(center.x - 0.65f + i * 0.65f, center.y - side), jitter);
             }
         }
 
@@ -336,8 +410,18 @@ namespace NightShift.Game
             }
         }
 
+        /// <summary>Which way each scanned model faces by default (degrees to add so it faces +z).</summary>
+        internal const float ChairFront = 0f;
+        internal const float DeskFront = 0f;
+        internal const float ScreenFront = 0f;
+
         private static void Chair(Transform root, Vector2 position, float yaw)
         {
+            if (BuildKit.Prop("plastic_monobloc_chair_01", root, new Vector3(position.x, 0f, position.y), yaw + ChairFront, 1f, false,
+                              new Color(1f, 0.55f, 0.5f)) != null)
+            {
+                return;
+            }
             var chair = new GameObject("Chair").transform;
             chair.SetParent(root, false);
             chair.localPosition = new Vector3(position.x, 0f, position.y);

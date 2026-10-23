@@ -222,6 +222,100 @@ namespace NightShift.Game
             return material;
         }
 
+        // ------------------------------------------------------------------ scanned props
+
+        /// <summary>True if the scanned prop <paramref name="name"/> was imported.</summary>
+        public static bool HasProp(string name) => FindProp(name) != null;
+
+        /// <summary>
+        /// Places a scanned 3D prop (Assets/Art/Models) standing on <paramref name="localPosition"/>,
+        /// turned <paramref name="yaw"/> degrees, optionally scaled, with a box collider around it.
+        /// Returns null if the prop was not imported, so callers can fall back to boxes.
+        /// </summary>
+        public static GameObject Prop(string name, Transform parent, Vector3 localPosition, float yaw = 0f, float scale = 1f, bool collider = true, Color? tint = null)
+        {
+            GameAssets.Prop prop = FindProp(name);
+            if (prop == null || prop.Model == null)
+            {
+                return null;
+            }
+            GameObject go = Object.Instantiate(prop.Model, parent, false);
+            go.name = name;
+            // Models exported from Blender keep their own root rotation and scale (z-up to y-up,
+            // centimeters): turn and scale on top of them instead of replacing them.
+            go.transform.localPosition = localPosition;
+            go.transform.localRotation = Quaternion.Euler(0f, yaw, 0f) * prop.Model.transform.localRotation;
+            go.transform.localScale = prop.Model.transform.localScale * scale;
+            Material material = prop.Material;
+            if (tint.HasValue && material != null)
+            {
+                string key = "prop:" + name + ":" + ColorUtility.ToHtmlStringRGB(tint.Value);
+                if (!Materials.TryGetValue(key, out material))
+                {
+                    material = new Material(prop.Material) { name = key };
+                    material.SetColor("_BaseColor", tint.Value);
+                    Materials[key] = material;
+                }
+            }
+            var bounds = new Bounds();
+            bool first = true;
+            foreach (Renderer renderer in go.GetComponentsInChildren<Renderer>())
+            {
+                if (material != null)
+                {
+                    var materials = new Material[renderer.sharedMaterials.Length];
+                    for (int i = 0; i < materials.Length; i++)
+                    {
+                        materials[i] = material;
+                    }
+                    renderer.sharedMaterials = materials;
+                }
+                if (first)
+                {
+                    bounds = renderer.bounds;
+                    first = false;
+                }
+                else
+                {
+                    bounds.Encapsulate(renderer.bounds);
+                }
+            }
+            if (collider && !first)
+            {
+                // Collider in the prop's own space (it is only rotated about y).
+                // On a child that only carries the yaw, so the box stays axis-aligned with the room.
+                var holder = new GameObject("Collider");
+                holder.transform.SetParent(parent, false);
+                holder.transform.localPosition = localPosition;
+                holder.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
+                holder.transform.SetParent(go.transform, true);
+                var box = holder.AddComponent<BoxCollider>();
+                Vector3 size = Quaternion.Inverse(holder.transform.rotation) * bounds.size;
+                box.center = holder.transform.InverseTransformPoint(bounds.center);
+                Vector3 lossy = holder.transform.lossyScale;
+                box.size = new Vector3(Mathf.Abs(size.x) / Mathf.Max(0.0001f, Mathf.Abs(lossy.x)),
+                                       Mathf.Abs(size.y) / Mathf.Max(0.0001f, Mathf.Abs(lossy.y)),
+                                       Mathf.Abs(size.z) / Mathf.Max(0.0001f, Mathf.Abs(lossy.z)));
+            }
+            return go;
+        }
+
+        private static GameAssets.Prop FindProp(string name)
+        {
+            if (assets == null || assets.Props == null)
+            {
+                return null;
+            }
+            foreach (GameAssets.Prop prop in assets.Props)
+            {
+                if (prop != null && prop.Name == name)
+                {
+                    return prop;
+                }
+            }
+            return null;
+        }
+
         // ------------------------------------------------------------------ meshes
 
         /// <summary>A box with its UVs in meters divided by <paramref name="tile"/>.</summary>

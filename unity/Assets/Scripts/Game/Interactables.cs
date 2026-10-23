@@ -124,6 +124,7 @@ namespace NightShift.Game
 
         private Light glow;
         private Vector3 basePosition;
+        private bool taken;
 
         public bool HoldToUse => false;
 
@@ -151,12 +152,60 @@ namespace NightShift.Game
             {
                 return;
             }
+            if (taken)
+            {
+                return;
+            }
+            taken = true;
             player.Director.OnFuseTaken(this);
+            StartCoroutine(FlyToHand(player));
+        }
+
+        /// <summary>The cell is taken: it comes off the shelf into the player's hand, then is put away.</summary>
+        private System.Collections.IEnumerator FlyToHand(PlayerController player)
+        {
+            Collider trigger = GetComponent<Collider>();
+            if (trigger != null)
+            {
+                trigger.enabled = false;
+            }
+            Vector3 start = transform.position;
+            Quaternion startRotation = transform.rotation;
+            Vector3 startScale = transform.localScale;
+            const float seconds = 0.45f;
+            for (float t = 0f; t < seconds; t += Time.deltaTime)
+            {
+                float k = t / seconds;
+                float ease = k * k * (3f - 2f * k);
+                Transform view = player.View.transform;
+                Vector3 hand = view.TransformPoint(new Vector3(0.2f, -0.28f, 0.42f));
+                // A small arc up, then down into the hand.
+                transform.position = Vector3.Lerp(start, hand, ease) + Vector3.up * Mathf.Sin(k * Mathf.PI) * 0.12f;
+                transform.rotation = Quaternion.Slerp(startRotation, view.rotation * Quaternion.Euler(-70f, 0f, 20f), ease);
+                transform.localScale = startScale * Mathf.Lerp(1f, 0.55f, ease);
+                if (glow != null)
+                {
+                    glow.intensity = Mathf.Lerp(1f, 0f, ease);
+                }
+                yield return null;
+            }
+            transform.position = start;
+            transform.rotation = startRotation;
+            transform.localScale = startScale;
+            if (trigger != null)
+            {
+                trigger.enabled = true;
+            }
+            taken = false;
             gameObject.SetActive(false);
         }
 
         private void Update()
         {
+            if (taken)
+            {
+                return;
+            }
             // Slow bob and pulse so the fuse can be found in the dark.
             float t = Time.time;
             transform.localPosition = basePosition + Vector3.up * (Mathf.Sin(t * 2f) * 0.03f);
@@ -169,16 +218,43 @@ namespace NightShift.Game
     }
 
     /// <summary>
-    /// The panel next to an exit: hold E with every fuse to open the door. Loud. Only tonight's
-    /// exit works; the other door stays chained.
+    /// The power panel next to an exit. Holding E with every fuse: the panel door swings open, the
+    /// three power cells go one by one from the player's hand into their sockets (each lights up
+    /// with a spark when it clicks in), then the big lever comes down and the door opens. Loud.
+    /// Everything is drawn from the saved progress, so walking away keeps what was done: a cell
+    /// half pushed in stays sticking out of its socket, and on coming back the player jiggles it
+    /// and carries on. Only tonight's exit works; the other door stays chained.
     /// </summary>
     public class ExitPanel : MonoBehaviour, IInteractable
     {
         public const float WorkSeconds = 6f;
 
+        /// <summary>The moving parts, made by LevelBuilder.</summary>
+        public class Parts
+        {
+            public GameObject Root;
+            public Transform Door;
+            public Transform[] Cells;
+            public Vector3[] SocketPositions;
+            public Renderer[] SocketLights;
+            public Transform Lever;
+            public Renderer Lamp;
+            public ParticleSystem Sparks;
+        }
+
+        // Shares of the progress: open the door, then three cells, then the lever.
+        private const float DoorShare = 0.06f;
+        private const float CellShare = 0.23f;
+        private const float LeverStart = DoorShare + 3 * CellShare;
+
         private Transform[] doors;   // the two door leaves' hinges
-        private Renderer lamp;
+        private Parts parts;
         private float doorOpen;
+        private float lastUsed = -10f;
+        private float resumeKick;
+        private float leverShown;
+        private readonly bool[] seated = new bool[3];
+        private PlayerController user;
 
         public Room Room { get; private set; }
 
@@ -190,10 +266,18 @@ namespace NightShift.Game
 
         public bool HoldToUse => true;
 
+        private bool Held => Time.time - lastUsed < 0.15f;
+
         public void ResetPanel()
         {
             Progress = 0f;
+            leverShown = 0f;
+            for (int i = 0; i < seated.Length; i++)
+            {
+                seated[i] = false;
+            }
             SetLift(0f);
+            Draw();
         }
 
         /// <summary>Swings the doors (0 shut, 1 open outward), also used by the intro.</summary>
@@ -210,12 +294,13 @@ namespace NightShift.Game
             }
         }
 
-        public static ExitPanel Attach(GameObject go, Room room, Transform[] doors, Renderer lamp)
+        public static ExitPanel Attach(Parts parts, Room room, Transform[] doors)
         {
-            var panel = go.AddComponent<ExitPanel>();
+            var panel = parts.Root.AddComponent<ExitPanel>();
+            panel.parts = parts;
             panel.Room = room;
             panel.doors = doors;
-            panel.lamp = lamp;
+            panel.Draw();
             return panel;
         }
 
@@ -233,7 +318,8 @@ namespace NightShift.Game
             {
                 return "The exit is locked. Still to do: " + HuntDirector.Describe(player.Director.ObjectiveList.Current);
             }
-            return "[Hold E] Restore power and open the door  " + Mathf.RoundToInt(Progress * 100f) + "%";
+            string verb = Progress <= 0f ? "Put the fuses in" : Progress < LeverStart ? "Keep putting the fuses in" : "Pull the lever";
+            return "[Hold E] " + verb + "  " + Mathf.RoundToInt(Progress * 100f) + "%";
         }
 
         public void Use(PlayerController player)
@@ -242,6 +328,14 @@ namespace NightShift.Game
             {
                 return;
             }
+            if (!Held)
+            {
+                // Coming back to it (or starting): settle in front of the panel, jiggle what is there.
+                resumeKick = 1f;
+            }
+            user = player;
+            lastUsed = Time.time;
+            player.LookToward(parts.Root.transform.position, 4f);
             Progress = Mathf.Min(1f, Progress + Time.deltaTime / WorkSeconds);
             player.MakeNoise(3);
             if (Open)
@@ -252,16 +346,89 @@ namespace NightShift.Game
 
         private void Update()
         {
-            if (lamp != null)
-            {
-                bool ready = Progress > 0f;
-                Color color = !Active ? new Color(0.05f, 0.05f, 0.05f) : Open ? Color.green : ready ? Color.Lerp(Color.red, Color.yellow, Progress) : new Color(0.6f, 0f, 0f);
-                lamp.material.SetColor("_EmissionColor", color * 2f);
-            }
+            resumeKick = Mathf.MoveTowards(resumeKick, 0f, Time.deltaTime * 2.5f);
+            // Let go of the lever and it springs back a little; it never loses what was pulled.
+            float leverTarget = Mathf.Clamp01((Progress - LeverStart) / (1f - LeverStart));
+            leverShown = Mathf.MoveTowards(leverShown, Held || Open ? leverTarget : leverTarget * 0.85f, Time.deltaTime * 3f);
+            Draw();
             if (Open && doorOpen < 1f)
             {
                 SetLift(Mathf.MoveTowards(doorOpen, 1f, Time.deltaTime * 0.6f));
             }
+        }
+
+        /// <summary>Puts every moving part where the progress says.</summary>
+        private void Draw()
+        {
+            if (parts == null)
+            {
+                return;
+            }
+            float door = Mathf.Clamp01(Progress / DoorShare);
+            parts.Door.localRotation = Quaternion.Euler(0f, -115f * Ease(door), 0f);
+
+            for (int i = 0; i < 3; i++)
+            {
+                float t = (Progress - DoorShare - i * CellShare) / CellShare;
+                Transform cell = parts.Cells[i];
+                Vector3 socket = parts.SocketPositions[i];
+                // Lying in the socket: the cell's long axis goes into the panel.
+                Quaternion inSocket = Quaternion.Euler(-90f, 0f, 0f);
+                if (t <= 0f)
+                {
+                    cell.gameObject.SetActive(false);
+                    SetLight(i, new Color(0.7f, 0f, 0f));
+                    continue;
+                }
+                cell.gameObject.SetActive(true);
+                Vector3 mouth = socket + Vector3.forward * 0.16f;
+                if (t < 0.25f && Held && user != null)
+                {
+                    // From the player's hand (low right of the view) to the socket's mouth.
+                    float k = Ease(t / 0.25f);
+                    Transform view = user.View.transform;
+                    Vector3 hand = transform.InverseTransformPoint(view.TransformPoint(new Vector3(0.22f, -0.25f, 0.45f)));
+                    Quaternion handRotation = Quaternion.Inverse(transform.rotation) * view.rotation * Quaternion.Euler(-60f, 0f, 0f);
+                    cell.localPosition = Vector3.Lerp(hand, mouth, k);
+                    cell.localRotation = Quaternion.Slerp(handRotation, inSocket, k);
+                }
+                else
+                {
+                    // Pushed in against the socket's resistance; left half-way, it sticks out.
+                    float push = Mathf.Clamp01((t - 0.25f) / 0.75f);
+                    float jiggle = Mathf.Sin(Time.time * 40f) * 0.004f * resumeKick;
+                    cell.localPosition = Vector3.Lerp(mouth, socket, Ease(push)) + new Vector3(jiggle, jiggle * 0.5f, 0f);
+                    cell.localRotation = inSocket * Quaternion.Euler(0f, push < 1f ? Mathf.Sin(push * 25f) * 4f * (1f - push) : 0f, 0f);
+                }
+                bool inPlace = t >= 1f;
+                if (inPlace && !seated[i])
+                {
+                    seated[i] = true;
+                    parts.Sparks.transform.localPosition = socket;
+                    parts.Sparks.Emit(25);
+                    if (user != null)
+                    {
+                        user.Director.Audio.PlayAt(user.Director.Assets.LockerDoor, transform.position, 0.5f, 1.7f);
+                    }
+                }
+                bool blinking = !inPlace && Mathf.Repeat(Time.time * 3f, 1f) < 0.5f;
+                SetLight(i, inPlace ? new Color(0.1f, 1f, 0.2f) : blinking ? new Color(1f, 0.6f, 0f) : new Color(0.3f, 0.15f, 0f));
+            }
+
+            parts.Lever.localRotation = Quaternion.Euler(Mathf.Lerp(-35f, 80f, Ease(leverShown)), 0f, 0f);
+            Color lamp = !Active ? new Color(0.05f, 0.05f, 0.05f) : Open ? Color.green : Progress > 0f ? Color.Lerp(Color.red, Color.yellow, Progress) : new Color(0.6f, 0f, 0f);
+            parts.Lamp.material.SetColor("_EmissionColor", lamp * 2f);
+        }
+
+        private void SetLight(int index, Color color)
+        {
+            parts.SocketLights[index].material.SetColor("_EmissionColor", (Active ? color : new Color(0.05f, 0.05f, 0.05f)) * 2.5f);
+        }
+
+        private static float Ease(float t)
+        {
+            t = Mathf.Clamp01(t);
+            return t * t * (3f - 2f * t);
         }
     }
 

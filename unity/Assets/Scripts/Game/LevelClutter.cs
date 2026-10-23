@@ -111,11 +111,15 @@ namespace NightShift.Game
             }
             if (area.height > 4f)
             {
-                var clock = BuildKit.Cylinder("Clock", root, new Vector3(area.center.x + 1.2f, 2.5f, area.yMax - inset), 0.4f, 0.05f, BuildKit.Plain("clockFace", new Color(0.85f, 0.82f, 0.75f), 0.4f));
-                clock.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-                BuildKit.Box("Hand", root, new Vector3(area.center.x + 1.2f, 2.55f, area.yMax - inset - 0.03f), new Vector3(0.02f, 0.14f, 0.01f), BuildKit.Plain("black", Color.black), 1f, false);
-                BuildKit.Box("Hand", root, new Vector3(area.center.x + 1.25f, 2.5f, area.yMax - inset - 0.03f), new Vector3(0.1f, 0.02f, 0.01f), BuildKit.Plain("black", Color.black), 1f, false);
+                if (BuildKit.Prop("wall_clock", root, new Vector3(area.center.x + 1.2f, 2.5f, area.yMax - inset + 0.01f), 180f, 1.3f, false) == null)
+                {
+                    var clock = BuildKit.Cylinder("Clock", root, new Vector3(area.center.x + 1.2f, 2.5f, area.yMax - inset), 0.4f, 0.05f, BuildKit.Plain("clockFace", new Color(0.85f, 0.82f, 0.75f), 0.4f));
+                    clock.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                    BuildKit.Box("Hand", root, new Vector3(area.center.x + 1.2f, 2.55f, area.yMax - inset - 0.03f), new Vector3(0.02f, 0.14f, 0.01f), BuildKit.Plain("black", Color.black), 1f, false);
+                    BuildKit.Box("Hand", root, new Vector3(area.center.x + 1.25f, 2.5f, area.yMax - inset - 0.03f), new Vector3(0.1f, 0.02f, 0.01f), BuildKit.Plain("black", Color.black), 1f, false);
+                }
             }
+            SecurityCamera(room, root, area);
             var panelPoint = new Vector2(area.xMin + 0.3f, area.yMin + area.height * 0.35f);
             if (LevelProps.ClearOfOpenings(room, panelPoint, 0.5f))
             {
@@ -146,6 +150,31 @@ namespace NightShift.Game
             if (Mathf.Abs(door.x - area.xMin) < 0.05f) return new Vector3(area.xMin + inset, 0f, door.y + offset);
             if (Mathf.Abs(door.x - area.xMax) < 0.05f) return new Vector3(area.xMax - inset, 0f, door.y + offset);
             return Vector3.zero;
+        }
+
+        /// <summary>
+        /// A security camera high in a corner of the room, aimed at its middle: the pizzeria still
+        /// watches the guard, and the cameras are what the office monitors show.
+        /// </summary>
+        private static void SecurityCamera(Room room, Transform root, Rect area)
+        {
+            if (area.width < 4f || area.height < 4f)
+            {
+                return;
+            }
+            float height = PizzeriaLayout.Height(room);
+            var corner = new Vector3(area.xMax - 0.35f, height - 0.35f, area.yMax - 0.35f);
+            var middle = new Vector3(area.center.x, 1f, area.center.y);
+            Vector3 look = middle - corner;
+            float yaw = Mathf.Atan2(look.x, look.z) * Mathf.Rad2Deg;
+            GameObject camera = BuildKit.Prop("security_camera_01", root, corner, yaw + LevelProps.ScreenFront, 1.2f, false);
+            if (camera == null)
+            {
+                return;
+            }
+            // A small red light that blinks: it is recording.
+            var led = BuildKit.Box("RecordLed", camera.transform, new Vector3(0f, 0.08f, 0.1f), new Vector3(0.015f, 0.015f, 0.015f), BuildKit.Glow("recordLed", new Color(1f, 0.05f, 0.05f), 6f), 1f, false);
+            led.AddComponent<Blinker>();
         }
 
         private static void Extinguisher(Transform root, Vector3 position)
@@ -239,6 +268,10 @@ namespace NightShift.Game
 
         private static void TrashBin(Transform root, Vector2 point)
         {
+            if (BuildKit.Prop("Barrel_02", root, new Vector3(point.x, 0f, point.y), point.x * 37f, 0.9f) != null)
+            {
+                return;
+            }
             BuildKit.Cylinder("TrashBin", root, new Vector3(point.x, 0.4f, point.y), 0.5f, 0.8f, BuildKit.Plain("bin", new Color(0.18f, 0.25f, 0.2f), 0.3f, 0.3f));
             BuildKit.Sphere("Trash", root, new Vector3(point.x, 0.82f, point.y), 0.35f, BuildKit.Plain("trashBag", new Color(0.05f, 0.05f, 0.05f), 0.7f));
         }
@@ -267,7 +300,11 @@ namespace NightShift.Game
 
                 case Room.PartyRoom:
                     // The birthday cake on the table by the south wall.
-                    Cake(root, PizzeriaLayout.SpotPosition(room, 1) + new Vector3(0.45f, 0.83f, -0.2f));
+                    Vector3 cakeSpot = PizzeriaLayout.SpotPosition(room, 1) + new Vector3(0.45f, 0.83f, -0.2f);
+                    if (BuildKit.Prop("strawberry_chocolate_cake", root, cakeSpot, 0f, 1.6f, false) == null)
+                    {
+                        Cake(root, cakeSpot);
+                    }
                     for (int i = 0; i < 4; i++)
                     {
                         var gift = new Vector2(9.3f + (i % 2) * 0.45f, -7.7f - (i / 2) * 0.45f);
@@ -359,6 +396,27 @@ namespace NightShift.Game
             {
                 var arm = BuildKit.Cylinder("Arm", root, bench + new Vector3(i == 0 ? -0.3f : 0.3f, 0.06f, 0.05f), 0.05f, 0.6f, metal);
                 arm.transform.localRotation = Quaternion.Euler(90f, 0f, i == 0 ? 15f : -15f);
+            }
+        }
+    }
+
+    /// <summary>Blinks its renderer on and off (the record light of the security cameras).</summary>
+    public class Blinker : MonoBehaviour
+    {
+        private Renderer target;
+        private float offset;
+
+        private void Awake()
+        {
+            target = GetComponent<Renderer>();
+            offset = Random.value * 2f;
+        }
+
+        private void Update()
+        {
+            if (target != null)
+            {
+                target.enabled = (Time.time + offset) % 1.6f < 0.8f;
             }
         }
     }
