@@ -47,6 +47,66 @@
     "height": 1024,
     "width": 512
   },
+  "breaker_deadfront": {
+    "height": 736,
+    "width": 576
+  },
+  "breaker_directory": {
+    "height": 512,
+    "width": 384
+  },
+  "breaker_module": {
+    "height": 192,
+    "width": 288
+  },
+  "cctv_arcade": {
+    "height": 384,
+    "width": 512
+  },
+  "cctv_back_hall": {
+    "height": 384,
+    "width": 512
+  },
+  "cctv_dining_hall": {
+    "height": 384,
+    "width": 512
+  },
+  "cctv_exit_lobby": {
+    "height": 384,
+    "width": 512
+  },
+  "cctv_kitchen": {
+    "height": 384,
+    "width": 512
+  },
+  "cctv_main_hall": {
+    "height": 384,
+    "width": 512
+  },
+  "cctv_office": {
+    "height": 384,
+    "width": 512
+  },
+  "cctv_parts_service": {
+    "height": 384,
+    "width": 512
+  },
+  "cctv_party_room": {
+    "height": 384,
+    "width": 512
+  },
+  "cctv_restrooms": {
+    "height": 384,
+    "width": 512
+  },
+  "cctv_storage": {
+    "height": 384,
+    "width": 512
+  },
+  "closed_sign": {
+    "height": 320,
+    "width": 1000
+  },
   "decal_graffiti_0": {
     "height": 512,
     "width": 1024
@@ -107,6 +167,10 @@
     "height": 256,
     "width": 1024
   },
+  "door_logo": {
+    "height": 198,
+    "width": 1024
+  },
   "door_main_hall": {
     "height": 256,
     "width": 1024
@@ -129,6 +193,30 @@
   },
   "door_storage": {
     "height": 256,
+    "width": 1024
+  },
+  "drawing_0": {
+    "height": 768,
+    "width": 1024
+  },
+  "drawing_1": {
+    "height": 768,
+    "width": 1024
+  },
+  "drawing_2": {
+    "height": 768,
+    "width": 1024
+  },
+  "drawing_3": {
+    "height": 768,
+    "width": 1024
+  },
+  "drawing_4": {
+    "height": 768,
+    "width": 1024
+  },
+  "drawing_5": {
+    "height": 768,
     "width": 1024
   },
   "exit_door": {

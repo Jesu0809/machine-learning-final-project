@@ -677,8 +677,8 @@ namespace NightShift.Game
                         piece.transform.localRotation = Quaternion.Euler(-25f, 0f, 0f);
                     }
                     BuildKit.Box("Handle", door, new Vector3(0.78f, 1.0f, 0.04f), new Vector3(0.03f, 0.18f, 0.04f), BuildKit.Plain("chrome", new Color(0.7f, 0.7f, 0.72f), 0.8f, 1f), 1f, false);
-                    // Eyes right behind the vents.
-                    hide = new Vector3(0f, 1.6f, 0.17f);
+                    // Eyes in the middle of the locker: the vents read as slits, and the flashlight can light the door as it shuts.
+                    hide = new Vector3(0f, 1.6f, 0.02f);
                     break;
                 case SpotKind.Cabinet:
                     Material wood = BuildKit.Surface("cabinetWood", () => ProceduralTextures.Planks(new Color(0.38f, 0.25f, 0.15f)), 0.3f);
@@ -886,8 +886,10 @@ namespace NightShift.Game
             Material glass = front ? BuildKit.Stain("frontDoorGlass", Texture2D.whiteTexture, new Color(0.08f, 0.1f, 0.12f, 0.42f))
                                    : BuildKit.Surface("doorSteel", () => ProceduralTextures.SteelPanel(new Color(0.42f, 0.09f, 0.08f)), 0.4f, 0.35f);
             Material brass = BuildKit.Plain("brass", new Color(0.62f, 0.48f, 0.24f), 0.75f, 1f);
-            Material logo = BuildKit.Picture("doorLogo", ProceduralTextures.Sign("FREDDY'S", new Color(1f, 0.85f, 0.4f), new Color(0.35f, 0.04f, 0.04f)), 0f);
-            Material closed = BuildKit.Picture("closedSign", ProceduralTextures.Sign("CLOSED", new Color(0.8f, 0.05f, 0.05f), new Color(0.92f, 0.9f, 0.84f)), 0f);
+            Texture2D drawnLogo = BuildKit.SignTexture("door_logo");
+            Texture2D drawnClosed = BuildKit.SignTexture("closed_sign");
+            Material logo = BuildKit.Picture("doorLogo", drawnLogo != null ? drawnLogo : ProceduralTextures.Sign("FREDDY'S", new Color(1f, 0.85f, 0.4f), new Color(0.35f, 0.04f, 0.04f)), 0f);
+            Material closed = BuildKit.Picture("closedSign", drawnClosed != null ? drawnClosed : ProceduralTextures.Sign("CLOSED", new Color(0.8f, 0.05f, 0.05f), new Color(0.92f, 0.9f, 0.84f)), 0f);
             float leafWidth = PizzeriaLayout.DoorWidth * 0.5f;
             float height = PizzeriaLayout.DoorHeight;
             var hinges = new Transform[2];

@@ -181,6 +181,9 @@ namespace NightShift.Game
             {
                 return;
             }
+            // What it sees goes to the office monitors.
+            Vector3 lens = corner + look.normalized * 0.3f + Vector3.down * 0.12f;
+            SecurityFeeds.RegisterCamera(room, lens, Quaternion.LookRotation(middle - lens));
             // A small red light that blinks: it is recording.
             var led = BuildKit.Box("RecordLed", camera.transform, new Vector3(0f, 0.08f, 0.1f), new Vector3(0.015f, 0.015f, 0.015f), BuildKit.Glow("recordLed", new Color(1f, 0.05f, 0.05f), 6f), 1f, false);
             led.AddComponent<Blinker>();
@@ -393,19 +396,22 @@ namespace NightShift.Game
             switch (room)
             {
                 case Room.Office:
-                    // The camera monitors: a wall of screens with static, over the desk.
-                    Material frame = BuildKit.Plain("crt", new Color(0.18f, 0.17f, 0.15f), 0.3f);
-                    Material screen = BuildKit.Picture("cctv", ProceduralTextures.Static(64, 48), 0.9f);
+                    // The camera monitors: a steel rack on the wall over the desk, two shelves of
+                    // old CRTs showing the security cameras live (see SecurityFeeds).
+                    Material rack = BuildKit.Pbr("metal_worn", new Color(0.45f, 0.47f, 0.5f)) ?? BuildKit.Plain("crt", new Color(0.18f, 0.17f, 0.15f), 0.3f);
                     for (int r = 0; r < 2; r++)
                     {
+                        float shelf = 1.3f + r * 0.5f;
+                        BuildKit.Box("MonitorShelf", root, new Vector3(-21.55f, shelf, -10.75f), new Vector3(0.5f, 0.04f, 1.8f), rack, 1f, false);
                         for (int c = 0; c < 3; c++)
                         {
-                            var position = new Vector3(-21.65f, 1.55f + r * 0.5f, -11.3f + c * 0.55f);
-                            BuildKit.Box("Monitor", root, position, new Vector3(0.45f, 0.45f, 0.5f), frame, 1f, false);
-                            BuildKit.Quad("Screen", root, position + Vector3.right * 0.23f, new Vector2(0.38f, 0.3f), 90f, screen);
+                            LevelProps.Monitor(root, new Vector3(-21.58f, shelf + 0.02f, -11.3f + c * 0.55f), 90f + (c - 1) * 6f);
                         }
                     }
-                    BuildKit.Box("MonitorShelf", root, new Vector3(-21.65f, 1.3f, -10.75f), new Vector3(0.6f, 0.05f, 1.8f), frame, 1f, false);
+                    foreach (float z in new[] { -11.67f, -9.83f })
+                    {
+                        BuildKit.Box("RackPost", root, new Vector3(-21.55f, 1.55f, z), new Vector3(0.04f, 0.6f, 0.04f), rack, 1f, false);
+                    }
                     break;
 
                 case Room.PartyRoom:

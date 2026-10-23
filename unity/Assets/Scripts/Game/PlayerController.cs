@@ -67,6 +67,16 @@ namespace NightShift.Game
         private float hideMotionSeconds;
         private Vector3 hideFromPosition;
         private Quaternion hideFromRotation;
+        // Inside: the door is pulled shut with the flashlight still on, the beam fades out with a
+        // click, then the eyes slowly get used to the dark.
+        private const float MoveShare = 0.55f;
+        private const float DoorShare = 0.5f;
+        private const float FadeStart = 0.78f;
+        private const float FadeEnd = 1f;
+        private bool doorPulled;
+        private bool beamClicked;
+        private float eyeAdaptation;
+        private Light adaptationLight;
 
         public HuntDirector Director { get; private set; }
         public Camera View { get; private set; }
@@ -213,11 +223,13 @@ namespace NightShift.Game
             Breath = Mathf.Max(Breath, 0.3f);
             hideMotion = 0f;
             leaveMotion = 1f;
-            hideMotionSeconds = spot.Kind == SpotKind.Locker ? 0.85f : 1.05f;
+            hideMotionSeconds = spot.Kind == SpotKind.Locker ? 1.6f : 1.8f;
             hideFromPosition = head.position;
             hideFromRotation = head.rotation;
-            // The door stays open while climbing in and shuts behind.
-            spot.Rattle(hideMotionSeconds * 0.8f);
+            doorPulled = false;
+            beamClicked = false;
+            // The door stays open while climbing in, then is pulled shut in front of the eyes.
+            spot.Rattle(hideMotionSeconds * DoorShare, 2.5f);
             MakeNoise(1);
             Director.Audio.PlayAt(Director.Assets.LockerDoor, spot.transform.position, 0.5f);
         }
@@ -231,6 +243,7 @@ namespace NightShift.Game
             hideMotion = 1f;
             leaveMotion = 0f;
             hideMotionSeconds = spot.Kind == SpotKind.Locker ? 0.7f : 0.9f;
+            flashlightRig.Dim = 0f;
             hideFromPosition = head.position;
             hideFromRotation = head.rotation;
             transform.position = spot.ExitPoint.position;
@@ -670,6 +683,32 @@ namespace NightShift.Game
         }
 
         /// <summary>
+        /// Hidden in the dark the eyes adapt over a couple of seconds: the picture brightens and a
+        /// faint cold fill (what the eye makes of the little light there is) shows the inside of
+        /// the spot and the room through the gap. Out of the spot it is gone at once.
+        /// </summary>
+        private void UpdateEyeAdaptation()
+        {
+            bool adapting = HiddenIn != null && hideMotion >= 1f;
+            eyeAdaptation = Mathf.MoveTowards(eyeAdaptation, adapting ? 1f : 0f, Time.deltaTime * (adapting ? 0.5f : 3f));
+            if (adaptationLight == null)
+            {
+                adaptationLight = new GameObject("EyeAdaptation").AddComponent<Light>();
+                // Out in the room, not at the eyes: up close it would burn the vents white.
+                adaptationLight.transform.SetParent(View.transform, false);
+                adaptationLight.transform.localPosition = new Vector3(0f, 0f, 2.2f);
+                adaptationLight.type = LightType.Point;
+                adaptationLight.shadows = LightShadows.None;
+                adaptationLight.range = 5f;
+                adaptationLight.color = new Color(0.68f, 0.72f, 0.8f);
+            }
+            float k = Mathf.SmoothStep(0f, 1f, eyeAdaptation);
+            adaptationLight.intensity = 0.8f * k;
+            adaptationLight.enabled = k > 0.001f;
+            Director.SetEyeAdaptation(k);
+        }
+
+        /// <summary>
         /// Climbing into a spot: up to its front looking in (the door is swinging open), then in,
         /// turning around to face out; under a table or into a cabinet the head ducks low.
         /// </summary>
@@ -723,6 +762,7 @@ namespace NightShift.Game
 
         private void PlaceCamera()
         {
+            UpdateEyeAdaptation();
             if (CameraLocked || Crawling)
             {
                 return;
@@ -734,10 +774,22 @@ namespace NightShift.Game
                 if (hideMotion < 1f)
                 {
                     hideMotion = Mathf.Min(1f, hideMotion + Time.deltaTime / hideMotionSeconds);
-                    PlaceClimbingIn(HiddenIn, hideMotion);
-                    if (hideMotion >= 0.8f)
+                    PlaceClimbingIn(HiddenIn, Mathf.Clamp01(hideMotion / MoveShare));
+                    if (hideMotion >= DoorShare && !doorPulled)
+                    {
+                        doorPulled = true;
+                        Director.Audio.PlayAt(Director.Assets.LockerDoor, HiddenIn.transform.position, 0.4f, 0.8f);
+                    }
+                    if (hideMotion >= FadeStart && !beamClicked)
+                    {
+                        beamClicked = true;
+                        Director.Audio.Click();
+                    }
+                    flashlightRig.Dim = 1f - Mathf.SmoothStep(0f, 1f, (hideMotion - FadeStart) / (FadeEnd - FadeStart));
+                    if (hideMotion >= 1f)
                     {
                         Flashlight.enabled = false;
+                        flashlightRig.Dim = 1f;
                     }
                     return;
                 }
@@ -746,6 +798,8 @@ namespace NightShift.Game
                 return;
             }
             float eye = body.height - 0.15f;
+            // Out of the spot the flashlight comes back up in a moment.
+            flashlightRig.Dim = Mathf.MoveTowards(flashlightRig.Dim, 1f, Time.deltaTime * 4f);
             if (leaveMotion < 1f)
             {
                 // Out of the spot: from inside to standing in front of it, already facing the room.

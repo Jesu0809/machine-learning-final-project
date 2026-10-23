@@ -35,6 +35,7 @@ namespace NightShift.Game
         private Transform door;
         private float doorOpen;
         private float doorTarget;
+        private float doorSpeed = 4f;
 
         /// <summary>True while the player is inside: cabinets and tables stay ajar so the player can peek out.</summary>
         public bool Occupied { get; set; }
@@ -91,17 +92,25 @@ namespace NightShift.Game
             }
         }
 
-        /// <summary>Opens the door for a moment (entering, leaving, or Freddy checking inside).</summary>
-        public void Rattle(float seconds = 0.6f)
+        /// <summary>
+        /// Opens the door for a moment (entering, leaving, or Freddy checking inside), then swings
+        /// it shut at <paramref name="closeSpeed"/> (doors per second; pulled shut from inside is slow).
+        /// </summary>
+        public void Rattle(float seconds = 0.6f, float closeSpeed = 4f)
         {
             doorTarget = 1f;
+            doorSpeed = 4f;
+            closingSpeed = closeSpeed;
             CancelInvoke(nameof(CloseDoor));
             Invoke(nameof(CloseDoor), seconds);
         }
 
+        private float closingSpeed = 4f;
+
         private void CloseDoor()
         {
             doorTarget = 0f;
+            doorSpeed = closingSpeed;
         }
 
         private void Update()
@@ -112,7 +121,7 @@ namespace NightShift.Game
             }
             // A locker has vents; a cabinet door or a tablecloth is left open a crack to look through.
             float rest = Occupied && Kind != SpotKind.Locker ? 0.3f : 0f;
-            doorOpen = Mathf.MoveTowards(doorOpen, Mathf.Max(doorTarget, rest), Time.deltaTime * 4f);
+            doorOpen = Mathf.MoveTowards(doorOpen, Mathf.Max(doorTarget, rest), Time.deltaTime * doorSpeed);
             door.localRotation = Quaternion.Euler(0f, -100f * doorOpen, 0f);
         }
     }

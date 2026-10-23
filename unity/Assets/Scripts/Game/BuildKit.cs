@@ -210,6 +210,27 @@ namespace NightShift.Game
             material.renderQueue = (int)RenderQueue.Transparent - 10;
         }
 
+        /// <summary>
+        /// A new unlit, opaque material showing <paramref name="texture"/> (the monitors' camera
+        /// pictures: a screen makes its own light, the flashlight must not wash it out).
+        /// </summary>
+        public static Material Unlit(Texture texture, Color color)
+        {
+            Material material = FromTemplate("UnlitAlpha", "Universal Render Pipeline/Unlit");
+            material.SetFloat("_Surface", 0f);
+            material.SetFloat("_SrcBlend", (float)BlendMode.One);
+            material.SetFloat("_DstBlend", (float)BlendMode.Zero);
+            material.SetFloat("_SrcBlendAlpha", (float)BlendMode.One);
+            material.SetFloat("_DstBlendAlpha", (float)BlendMode.Zero);
+            material.SetFloat("_ZWrite", 1f);
+            material.SetOverrideTag("RenderType", "Opaque");
+            material.DisableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            material.renderQueue = (int)RenderQueue.Geometry;
+            material.SetTexture("_BaseMap", texture);
+            material.SetColor("_BaseColor", color);
+            return material;
+        }
+
         /// <summary>Sets up an Unlit material as transparent additive (also used by the editor to make the template).</summary>
         public static void MakeAdditive(Material material)
         {

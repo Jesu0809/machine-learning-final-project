@@ -418,7 +418,7 @@ namespace NightShift.Game
             yield return new WaitForSeconds(0.6f);
             yield return Shot("23a-locker");
             locker.Use(director.Player);
-            foreach (float wait in new[] { 0.2f, 0.25f, 0.25f, 0.6f })
+            foreach (float wait in new[] { 0.3f, 0.45f, 0.3f, 0.3f, 0.4f, 2.2f })
             {
                 yield return new WaitForSeconds(wait);
                 yield return Shot("23b-locker-in-" + Mathf.RoundToInt(Time.time * 100f) % 1000);
@@ -435,7 +435,7 @@ namespace NightShift.Game
             Teleport(new Vector3(cabinetFront.x, 0f, cabinetFront.z), -cabinet.transform.forward);
             yield return new WaitForSeconds(0.6f);
             cabinet.Use(director.Player);
-            foreach (float wait in new[] { 0.3f, 0.3f, 0.7f })
+            foreach (float wait in new[] { 0.4f, 0.5f, 0.5f, 2.5f })
             {
                 yield return new WaitForSeconds(wait);
                 yield return Shot("23d-cabinet-in-" + Mathf.RoundToInt(Time.time * 100f) % 1000);
@@ -472,6 +472,12 @@ namespace NightShift.Game
                 (new Vector3(-7.6f, 0f, 7.2f), new Vector3(-7.75f, 0.8f, 9.3f), "24h-kitchen-counter"),
                 (new Vector3(-12.4f, 0f, -10.6f), new Vector3(-12.9f, 0.9f, -8.9f), "24i-parts-workbench"),
                 (new Vector3(-19.4f, 0f, 4.6f), new Vector3(-21.1f, 0.4f, 3.2f), "24j-storage-generator"),
+                (new Vector3(-11.2f, 0f, -11.7f), new Vector3(-11.4f, 1.05f, -13.3f), "24k-parts-heads"),
+                (new Vector3(-19.6f, 0f, -10.6f), new Vector3(-21.6f, 1.4f, -10.75f), "24l-office-monitors"),
+                (new Vector3(-20.4f, 0f, -11.3f), new Vector3(-21.4f, 1.55f, -11.3f), "24m-office-monitor-close"),
+                (new Vector3(-17f, 0f, -12f), new Vector3(-17f, 1.6f, -9.3f), "24n-office-north-wall"),
+                (new Vector3(16f, 0f, -14.6f), new Vector3(16f, 1.7f, -17f), "24o-front-doors"),
+                (new Vector3(-18.6f, 0f, 3.6f), new Vector3(-16.45f, 2.1f, 3.6f), "24p-head-shelf"),
             })
             {
                 Teleport(spot, look - spot);

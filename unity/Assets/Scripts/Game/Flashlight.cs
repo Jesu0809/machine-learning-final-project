@@ -40,6 +40,9 @@ namespace NightShift.Game
         /// <summary>True for a moment while the flashlight sputters (fear, a bad contact).</summary>
         public bool Glitching { get; set; }
 
+        /// <summary>0–1: the beam fading out or back in (switching off inside a hiding spot).</summary>
+        public float Dim { get; set; } = 1f;
+
         /// <summary>Adds the flashlight to the player's camera.</summary>
         public static Flashlight Create(Transform camera)
         {
@@ -127,7 +130,7 @@ namespace NightShift.Game
 
             // Close to a surface the beam dims (no white disc on the wall in front of your face).
             float near = Mathf.SmoothStep(0.3f, 1f, Mathf.Clamp01(distanceSmoothed / 4f));
-            float glitch = Glitching ? 0.03f : 1f;
+            float glitch = (Glitching ? 0.03f : 1f) * Dim;
             beam.intensity = BeamIntensity * near * glitch;
 
             // The bounce sits just off the lit surface; it fades with distance like the spot does.
