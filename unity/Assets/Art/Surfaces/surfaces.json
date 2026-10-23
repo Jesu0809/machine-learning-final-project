@@ -1,0 +1,106 @@
+{
+  "arcade_carpet": {
+    "meters": 2.0,
+    "source": "acg:Carpet012"
+  },
+  "asphalt": {
+    "meters": 3.0,
+    "source": "ph:asphalt_02"
+  },
+  "bricks": {
+    "meters": 1.0,
+    "source": "ph:red_brick_03"
+  },
+  "ceiling_tiles": {
+    "meters": 4.8,
+    "source": "acg:OfficeCeiling006"
+  },
+  "checker_band": {
+    "meters": 1.2,
+    "source": "acg:Tiles016"
+  },
+  "checker_floor": {
+    "meters": 1.2,
+    "source": "acg:Tiles012"
+  },
+  "concrete_floor": {
+    "meters": 1.886,
+    "source": "ph:garage_floor"
+  },
+  "concrete_wall": {
+    "meters": 2.0,
+    "source": "ph:concrete_wall_006"
+  },
+  "kitchen_floor": {
+    "meters": 2.26,
+    "source": "ph:dirty_tiles"
+  },
+  "metal_galvanized": {
+    "meters": 2.7,
+    "source": "ph:corrugated_iron_02"
+  },
+  "metal_green": {
+    "meters": 1.0,
+    "source": "acg:PaintedMetal006"
+  },
+  "metal_hazard": {
+    "meters": 1.0,
+    "source": "acg:PaintedMetal016"
+  },
+  "metal_red": {
+    "meters": 1.0,
+    "source": "acg:PaintedMetal004"
+  },
+  "metal_rusty": {
+    "meters": 1.0,
+    "source": "ph:rusty_metal_02"
+  },
+  "metal_worn": {
+    "meters": 2.5,
+    "source": "ph:blue_metal_plate"
+  },
+  "party_wallpaper": {
+    "meters": 2.0,
+    "source": "acg:Wallpaper002C"
+  },
+  "restroom_floor": {
+    "meters": 1.9,
+    "source": "ph:interior_tiles"
+  },
+  "sidewalk": {
+    "meters": 3.0,
+    "source": "ph:concrete_floor_worn_001"
+  },
+  "staff_band": {
+    "meters": 2.0,
+    "source": "ph:painted_concrete"
+  },
+  "staff_floor": {
+    "meters": 2.0,
+    "source": "ph:linoleum_brown"
+  },
+  "staff_wall": {
+    "meters": 2.0,
+    "source": "ph:concrete_wall_004"
+  },
+  "stage_wood": {
+    "meters": 2.0,
+    "source": "ph:wood_floor_worn"
+  },
+  "tablecloth": {
+    "meters": 1.0,
+    "source": "acg:Fabric061"
+  },
+  "velvet": {
+    "meters": 1.0,
+    "source": "ph:velour_velvet"
+  },
+  "white_tiles": {
+    "meters": 1.27,
+    "source": "ph:long_white_tiles"
+  },
+  "wood_planks": {
+    "meters": 1.8,
+    "source": "ph:weathered_brown_planks"
+  }
+}

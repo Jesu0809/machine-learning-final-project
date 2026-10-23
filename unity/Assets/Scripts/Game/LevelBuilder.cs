@@ -59,6 +59,7 @@ namespace NightShift.Game
                 RoomStyle style = StyleOf(room);
 
                 BuildShell(room, roomRoot, style);
+                ReflectionProbeFor(room, roomRoot);
                 level.Lamps[i] = BuildLamps(room, roomRoot, random);
                 LevelProps.BeginRoom();
                 LevelProps.Decorate(room, roomRoot, random);
@@ -391,6 +392,34 @@ namespace NightShift.Game
 
         // ------------------------------------------------------------------ light
 
+        /// <summary>
+        /// One reflection probe per room, box-projected to its walls, so the wet floors and the
+        /// metal reflect the room's own lamps. Rendered once when the night starts (High and Ultra).
+        /// </summary>
+        private static void ReflectionProbeFor(Room room, Transform root)
+        {
+            Rect area = PizzeriaLayout.Area(room);
+            float height = PizzeriaLayout.Height(room);
+            var probe = new GameObject("Reflections").AddComponent<ReflectionProbe>();
+            probe.transform.SetParent(root, false);
+            probe.transform.localPosition = new Vector3(area.center.x, 1.4f, area.center.y);
+            probe.size = new Vector3(area.width, height, area.height);
+            probe.center = new Vector3(0f, height * 0.5f - 1.4f, 0f);
+            probe.mode = UnityEngine.Rendering.ReflectionProbeMode.Realtime;
+            probe.refreshMode = UnityEngine.Rendering.ReflectionProbeRefreshMode.ViaScripting;
+            probe.timeSlicingMode = UnityEngine.Rendering.ReflectionProbeTimeSlicingMode.NoTimeSlicing;
+            probe.boxProjection = true;
+            probe.blendDistance = 1f;
+            probe.clearFlags = UnityEngine.Rendering.ReflectionProbeClearFlags.SolidColor;
+            probe.backgroundColor = Color.black;
+            probe.resolution = 128;
+            probe.hdr = true;
+            probe.intensity = 1f;
+            probe.nearClipPlane = 0.1f;
+            probe.farClipPlane = 40f;
+            GraphicsQuality.RegisterProbe(probe);
+        }
+
         private static List<FlickerLight> BuildLamps(Room room, Transform root, System.Random random)
         {
             var lamps = new List<FlickerLight>();
@@ -429,10 +458,16 @@ namespace NightShift.Game
             return lamps;
         }
 
-        /// <summary>A ceiling lamp: fixture, downward spot light, a faint light shaft and dust.</summary>
+        /// <summary>
+        /// A fluorescent ceiling lamp: a steel housing with a glowing diffuser, a wide downward spot
+        /// light, and (by graphics quality) the light it bounces back off the floor, a faint visible
+        /// shaft and dust. The bounce and the shaft go out with the lamp when it flickers or dies.
+        /// </summary>
         private static FlickerLight Lamp(Transform root, Vector3 ceilingPoint, Color color, bool dead, float flickerChance, bool shadows, float strength)
         {
-            var fixture = BuildKit.Box("Lamp", root, ceilingPoint - Vector3.up * 0.06f, new Vector3(1.3f, 0.08f, 0.35f),
+            Material housing = BuildKit.Pbr("metal_worn", new Color(0.55f, 0.56f, 0.55f)) ?? BuildKit.Plain("lampHousing", new Color(0.3f, 0.3f, 0.3f), 0.5f, 0.6f);
+            BuildKit.Box("LampHousing", root, ceilingPoint - Vector3.up * 0.05f, new Vector3(1.3f, 0.1f, 0.42f), housing, 1f, false);
+            var fixture = BuildKit.Box("Lamp", root, ceilingPoint - Vector3.up * 0.11f, new Vector3(1.18f, 0.025f, 0.3f),
                                        dead ? BuildKit.Plain("lampDead", new Color(0.3f, 0.3f, 0.28f), 0.5f) : BuildKit.Glow("lampOn", color, 2.2f), 1f, false);
             var light = new GameObject("Light").AddComponent<Light>();
             light.transform.SetParent(root, false);
@@ -446,14 +481,77 @@ namespace NightShift.Game
             light.color = color;
             light.shadows = shadows && !dead ? LightShadows.Soft : LightShadows.None;
             light.shadowStrength = 0.85f;
-
-            GameObject shaftObject = null;
             if (!dead)
             {
-                // Dust floating in the light under the lamp.
-                Dust(root, ceilingPoint - Vector3.up * (ceilingPoint.y * 0.5f), ceilingPoint.y);
+                GraphicsQuality.RegisterLamp(light, shadows);
             }
-            return FlickerLight.Attach(light, fixture.GetComponent<Renderer>(), dead ? 0f : flickerChance, shaftObject);
+
+            GameObject extras = null;
+            if (!dead)
+            {
+                extras = new GameObject("LampExtras");
+                extras.transform.SetParent(root, false);
+                // The floor under the lamp throws a soft light back up onto the walls and the ceiling.
+                var bounce = new GameObject("LampBounce").AddComponent<Light>();
+                bounce.transform.SetParent(extras.transform, false);
+                bounce.transform.localPosition = new Vector3(ceilingPoint.x, 0.5f, ceilingPoint.z);
+                bounce.type = LightType.Point;
+                bounce.range = ceilingPoint.y + 3.5f;
+                bounce.intensity = 0.9f * strength;
+                bounce.color = Color.Lerp(color, new Color(0.9f, 0.85f, 0.8f), 0.4f);
+                bounce.shadows = LightShadows.None;
+                GraphicsQuality.RegisterBounce(bounce);
+                // A faint cone of light in the dusty air under the lamp.
+                var shaft = new GameObject("LightShaft");
+                shaft.transform.SetParent(extras.transform, false);
+                shaft.transform.localPosition = ceilingPoint - Vector3.up * 0.12f;
+                shaft.AddComponent<MeshFilter>().sharedMesh = ShaftMesh(ceilingPoint.y - 0.5f);
+                var shaftRenderer = shaft.AddComponent<MeshRenderer>();
+                shaftRenderer.sharedMaterial = BuildKit.Additive("lampShaft", ShaftTexture(), new Color(color.r, color.g * 0.95f, color.b * 0.85f, 0.045f));
+                shaftRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                GraphicsQuality.RegisterShaft(shaftRenderer);
+                // Dust floating in the light under the lamp.
+                Dust(extras.transform, ceilingPoint - Vector3.up * (ceilingPoint.y * 0.5f), ceilingPoint.y);
+            }
+            return FlickerLight.Attach(light, fixture.GetComponent<Renderer>(), dead ? 0f : flickerChance, extras);
+        }
+
+        private static Mesh shaftMesh;
+
+        /// <summary>An open cone, narrow at the lamp and wide near the floor; v = 1 at the lamp.</summary>
+        private static Mesh ShaftMesh(float length)
+        {
+            if (shaftMesh != null)
+            {
+                return shaftMesh;
+            }
+            const int segments = 24;
+            const float top = 0.45f;
+            const float bottom = 1.9f;
+            var vertices = new List<Vector3>();
+            var uvs = new List<Vector2>();
+            var triangles = new List<int>();
+            for (int i = 0; i <= segments; i++)
+            {
+                float angle = i * Mathf.PI * 2f / segments;
+                var direction = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
+                vertices.Add(direction * top);
+                vertices.Add(direction * bottom - Vector3.up * length);
+                uvs.Add(new Vector2((float)i / segments, 1f));
+                uvs.Add(new Vector2((float)i / segments, 0f));
+            }
+            for (int i = 0; i < segments; i++)
+            {
+                int a = i * 2;
+                triangles.AddRange(new[] { a, a + 2, a + 1, a + 1, a + 2, a + 3 });
+            }
+            shaftMesh = new Mesh { name = "LightShaft" };
+            shaftMesh.SetVertices(vertices);
+            shaftMesh.SetUVs(0, uvs);
+            shaftMesh.SetTriangles(triangles, 0);
+            shaftMesh.RecalculateNormals();
+            shaftMesh.RecalculateBounds();
+            return shaftMesh;
         }
 
         private static Texture2D shaftTexture;

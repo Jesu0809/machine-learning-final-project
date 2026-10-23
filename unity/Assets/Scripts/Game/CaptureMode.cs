@@ -92,6 +92,8 @@ namespace NightShift.Game
             director.StartNight();
             yield return new WaitForSeconds(1f);
             Teleport(PizzeriaLayout.PlayerStart, new Vector3(-1f, 0f, 0.2f));
+            // The photo tour teleports through every room: Freddy waits on his stage meanwhile.
+            director.Freddy.gameObject.SetActive(false);
             yield return new WaitForSeconds(7f);
             yield return Shot("02b-call");
             director.SkipCall();
@@ -173,6 +175,9 @@ namespace NightShift.Game
                     Debug.Log("CAPTURE duct " + vent.Duct.A + " -> " + vent.Duct.B + ": " + (Time.time - crawlStart).ToString("0.0") + " s, now in " + PizzeriaLayout.RoomAt(director.Player.transform.position));
                 }
             }
+
+            director.Freddy.gameObject.SetActive(true);
+            director.Freddy.ResetTo(PizzeriaLayout.FreddyStart, PizzeriaLayout.FreddyFacing);
 
             // Lure test: throw a party horn into the dining hall and see whether the brain goes there.
             director.Player.AddLure();

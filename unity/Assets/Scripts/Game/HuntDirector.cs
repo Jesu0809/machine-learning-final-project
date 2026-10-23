@@ -203,6 +203,7 @@ namespace NightShift.Game
 
             SetUpAtmosphere();
             Audio = GameAudio.Create(transform, Assets);
+            GraphicsQuality.Load(Assets.AmbientOcclusion);
             Level = LevelBuilder.Build(transform, Assets);
             Player = PlayerController.Create(this, PizzeriaLayout.PlayerStart, PizzeriaLayout.PlayerFacing);
             Freddy = FreddyBody.Create(this, Assets.FreddyPrefab, PizzeriaLayout.FreddyStart, PizzeriaLayout.FreddyFacing);
@@ -220,6 +221,7 @@ namespace NightShift.Game
             breaker = ObjectiveItem.Create(this, ObjectiveStep.Breaker, Level.Root, new Vector3(-20.4f, 1.4f, 2.32f), 0f, 3f);
             keycard = ObjectiveItem.Create(this, ObjectiveStep.Keycard, Level.Root, new Vector3(-17f, 1.3f, -9.32f), 180f, 0f);
             tape = ObjectiveItem.Create(this, ObjectiveStep.Tape, Level.Root, PizzeriaLayout.SpotPosition(Room.Office, 1) + new Vector3(0.4f, 0.86f, 0.1f), 20f, 0f);
+            GraphicsQuality.Apply();
             CreateBrain();
             UI = GameUI.Create(this);
 #if UNITY_EDITOR
@@ -1027,7 +1029,8 @@ namespace NightShift.Game
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Exponential;
             RenderSettings.fogDensity = 0.03f;
-            RenderSettings.fogColor = new Color(0.004f, 0.004f, 0.006f);
+            // A faint cold haze: distant rooms fade into it instead of into pure black.
+            RenderSettings.fogColor = new Color(0.012f, 0.014f, 0.02f);
             RenderSettings.skybox = null;
 
             var volumeObject = new GameObject("PostProcessing");
@@ -1053,6 +1056,7 @@ namespace NightShift.Game
             ShadowsMidtonesHighlights tones = profile.Add<ShadowsMidtonesHighlights>(true);
             tones.shadows.Override(new Vector4(0.9f, 1f, 1.1f, 0f));
             Bloom bloom = profile.Add<Bloom>(true);
+            GraphicsQuality.RegisterBloom(bloom);
             bloom.intensity.Override(0.8f);
             bloom.threshold.Override(0.95f);
             bloom.scatter.Override(0.7f);

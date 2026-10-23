@@ -319,6 +319,10 @@ namespace NightShift.Game
                 light.dead = light.baseIntensity > 0f && random.NextDouble() < fraction;
                 light.lastOn = !light.dead;
                 light.lamp.intensity = light.dead ? 0f : light.baseIntensity;
+                if (light.shaft != null)
+                {
+                    light.shaft.SetActive(!light.dead);
+                }
                 if (light.fixture != null && light.baseIntensity > 0f)
                 {
                     light.fixture.material.SetColor("_EmissionColor", light.dead ? Color.black : light.lamp.color * 2.2f);

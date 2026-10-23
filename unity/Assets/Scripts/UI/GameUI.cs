@@ -900,6 +900,17 @@ namespace NightShift.UI
         };
 
         /// <summary>Look sensitivity, invert look and the keyboard keys (saved between sessions).</summary>
+        private Text qualityValue;
+        private Text qualityNote;
+
+        private static readonly string[] QualityNotes =
+        {
+            "For slow computers: lower resolution, no shadows from the lamps, no ambient occlusion.",
+            "Balanced (the web default): ambient occlusion, light shafts, the flashlight's shadows.",
+            "Lamp shadows, reflections on the floors and metal, light bouncing off the floors.",
+            "Every lamp casts shadows, sharper shadows and reflections. Needs a strong graphics card.",
+        };
+
         private void BuildSettings(Transform root)
         {
             settingsScreen = UiKit.Panel("Settings", root, Vector2.zero, Vector2.one, new Color(0.02f, 0.02f, 0.025f, 1f)).gameObject;
@@ -918,6 +929,15 @@ namespace NightShift.UI
             UiKit.Label("InvertLabel", t, "INVERT LOOK UP / DOWN", 30, Palette.Ink, TextAnchor.MiddleLeft, new Vector2(0.06f, row), new Vector2(0.3f, row + 0.07f));
             invertButton = UiKit.Button("Invert", t, "OFF", 30, new Vector2(0.31f, row + 0.005f), new Vector2(0.44f, row + 0.065f), () => { Controls.SetInvertY(!Controls.InvertY); RefreshSettings(); });
             UiKit.Label("LookNote", t, "A controller always uses the Xbox layout shown in CONTROLS.", 22, Palette.InkDim, TextAnchor.UpperLeft, new Vector2(0.06f, row - 0.12f), new Vector2(0.45f, row - 0.02f));
+
+            // Left column, below: graphics quality.
+            UiKit.Label("GraphicsTitle", t, "GRAPHICS", 40, Palette.Gold, TextAnchor.LowerLeft, new Vector2(0.06f, 0.27f), new Vector2(0.4f, 0.33f));
+            float g = 0.19f;
+            UiKit.Label("QualityLabel", t, "QUALITY", 30, Palette.Ink, TextAnchor.MiddleLeft, new Vector2(0.06f, g), new Vector2(0.3f, g + 0.07f));
+            UiKit.Button("QualityLess", t, "<", 34, new Vector2(0.31f, g + 0.005f), new Vector2(0.35f, g + 0.065f), () => { GraphicsQuality.Cycle(-1); RefreshSettings(); });
+            qualityValue = UiKit.Label("QualityValue", t, "", 34, Palette.Gold, TextAnchor.MiddleCenter, new Vector2(0.35f, g), new Vector2(0.46f, g + 0.07f));
+            UiKit.Button("QualityMore", t, ">", 34, new Vector2(0.46f, g + 0.005f), new Vector2(0.5f, g + 0.065f), () => { GraphicsQuality.Cycle(1); RefreshSettings(); });
+            qualityNote = UiKit.Label("QualityNote", t, "", 22, Palette.InkDim, TextAnchor.UpperLeft, new Vector2(0.06f, g - 0.13f), new Vector2(0.5f, g - 0.01f));
 
             // Right column: keyboard keys.
             UiKit.Label("KeysTitle", t, "KEYBOARD  (click an action, then press a key)", 32, Palette.Gold, TextAnchor.LowerLeft, new Vector2(0.52f, 0.74f), new Vector2(0.97f, 0.8f));
@@ -959,6 +979,8 @@ namespace NightShift.UI
             mouseValue.text = Controls.MouseSensitivity.ToString("0.0");
             stickValue.text = Controls.StickSensitivity.ToString("0.0");
             UiKit.SetButtonText(invertButton, Controls.InvertY ? "ON" : "OFF");
+            qualityValue.text = GraphicsQuality.Name(GraphicsQuality.Level);
+            qualityNote.text = QualityNotes[(int)GraphicsQuality.Level];
             foreach (KeyValuePair<InputAction, Button> pair in keyButtons)
             {
                 bool waiting = rebinding == pair.Key;
