@@ -640,7 +640,8 @@ namespace NightShift.Game
         // ------------------------------------------------------------------ materials
 
         private static Material Wood() => BuildKit.Surface("propWood", () => ProceduralTextures.Planks(new Color(0.35f, 0.22f, 0.13f)), 0.3f);
-        private static Material Metal(Color color) => BuildKit.Surface("metal" + color.GetHashCode(), () => ProceduralTextures.Grimy(color, 1f), 0.45f, 0.6f);
+        private static Material Metal(Color color) => BuildKit.Pbr("metal_worn", color * 2.2f)
+                                                       ?? BuildKit.Surface("metal" + color.GetHashCode(), () => ProceduralTextures.Grimy(color, 1f), 0.45f, 0.6f);
         private static Material Cardboard() => BuildKit.Surface("cardboard", () => ProceduralTextures.Grimy(new Color(0.55f, 0.42f, 0.25f), 0.2f), 0.1f);
     }
 }

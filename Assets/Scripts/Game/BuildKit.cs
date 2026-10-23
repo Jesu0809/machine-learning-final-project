@@ -13,6 +13,8 @@ namespace NightShift.Game
     {
         private static readonly Dictionary<string, Material> Materials = new Dictionary<string, Material>();
         private static readonly Dictionary<Vector4, Mesh> Boxes = new Dictionary<Vector4, Mesh>();
+        /// <summary>Scanned surfaces: their textures cover a real size, so boxes using them get UVs in plain meters.</summary>
+        private static readonly HashSet<Material> InMeters = new HashSet<Material>();
         private static GameAssets assets;
         private static Mesh cone;
 
@@ -21,13 +23,26 @@ namespace NightShift.Game
             assets = gameAssets;
             Materials.Clear();
             Boxes.Clear();
+            InMeters.Clear();
         }
 
         // ------------------------------------------------------------------ materials
 
-        /// <summary>Lit surface with base color and normal map; the textures are made only the first time.</summary>
+        /// <summary>
+        /// Lit surface with base color and normal map. If <see cref="SurfaceLibrary"/> maps the key
+        /// to a scanned PBR surface, that one is used; otherwise the textures are generated in code
+        /// (only the first time).
+        /// </summary>
         public static Material Surface(string key, System.Func<Surface> make, float smoothness = 0.2f, float metallic = 0f)
         {
+            if (SurfaceLibrary.TryGet(key, out string scanned, out Color tint))
+            {
+                Material pbr = Pbr(scanned, tint);
+                if (pbr != null)
+                {
+                    return pbr;
+                }
+            }
             return Cached(key, () =>
             {
                 Surface surface = make();
@@ -40,6 +55,32 @@ namespace NightShift.Game
                 material.SetFloat("_Metallic", metallic);
                 return material;
             });
+        }
+
+        /// <summary>A scanned PBR surface (Assets/Art/Surfaces) tinted by <paramref name="tint"/>; null if it was not imported.</summary>
+        public static Material Pbr(string name, Color tint)
+        {
+            string key = "pbr:" + name + ":" + ColorUtility.ToHtmlStringRGB(tint);
+            if (Materials.TryGetValue(key, out Material cached))
+            {
+                return cached;
+            }
+            if (assets == null || assets.Surfaces == null)
+            {
+                return null;
+            }
+            foreach (Material source in assets.Surfaces)
+            {
+                if (source != null && source.name == name)
+                {
+                    var material = new Material(source) { name = key };
+                    material.SetColor("_BaseColor", tint);
+                    Materials[key] = material;
+                    InMeters.Add(material);
+                    return material;
+                }
+            }
+            return null;
         }
 
         public static Material Plain(string key, Color color, float smoothness = 0.2f, float metallic = 0f)
@@ -191,7 +232,7 @@ namespace NightShift.Game
             go.transform.SetParent(parent, false);
             go.transform.localPosition = localPosition;
             go.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
-            go.AddComponent<MeshFilter>().sharedMesh = BoxMesh(size, tile);
+            go.AddComponent<MeshFilter>().sharedMesh = BoxMesh(size, InMeters.Contains(material) ? 1f : tile);
             var renderer = go.AddComponent<MeshRenderer>();
             renderer.sharedMaterial = material;
             if (collider)

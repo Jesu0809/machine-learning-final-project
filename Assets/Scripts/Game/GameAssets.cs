@@ -28,6 +28,9 @@ namespace NightShift.Game
         [Tooltip("Material templates the level copies, so builds keep the shader variants it needs.")]
         public Material[] MaterialTemplates;
 
+        [Tooltip("Scanned PBR surfaces (Assets/Art/Surfaces, made by Night Shift > Import Surfaces).")]
+        public Material[] Surfaces;
+
         [Tooltip("Training curve (copied from web/static/data) shown in the menu's ML explanation.")]
         public TextAsset TrainingCurve;
 
