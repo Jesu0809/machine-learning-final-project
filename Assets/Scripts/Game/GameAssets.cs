@@ -31,6 +31,9 @@ namespace NightShift.Game
         [Tooltip("Scanned PBR surfaces (Assets/Art/Surfaces, made by Night Shift > Import Surfaces).")]
         public Material[] Surfaces;
 
+        [Tooltip("Screen-space ambient occlusion on the renderer, switched by the graphics quality.")]
+        public UnityEngine.Rendering.Universal.ScriptableRendererFeature AmbientOcclusion;
+
         [Tooltip("Training curve (copied from web/static/data) shown in the menu's ML explanation.")]
         public TextAsset TrainingCurve;
 

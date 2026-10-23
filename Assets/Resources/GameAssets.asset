@@ -48,6 +48,7 @@ MonoBehaviour:
   - {fileID: 2100000, guid: 50b1b2104d29c4ea8b394687c2063971, type: 2}
   - {fileID: 2100000, guid: 3351f2457d92640cbb8149a73ad4b201, type: 2}
   - {fileID: 2100000, guid: 8f8e01ec93b3c4845aded5f562e79df2, type: 2}
+  AmbientOcclusion: {fileID: -34212038002134958, guid: 20c182ee12e2d4feeb0459537dcba5e6, type: 2}
   TrainingCurve: {fileID: 4900000, guid: fdb9e7b94f31c4165bc628bbf5119087, type: 3}
   EvaluationResults: {fileID: 4900000, guid: da8984d745240434d82711163f23b489, type: 3}
   Font: {fileID: 12800000, guid: 73f6d5c18ea6e439b98e2e2ca4b946d0, type: 3}
