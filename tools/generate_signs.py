@@ -13,6 +13,10 @@ Marker) and Material Symbols icons, into Assets/Art/Signs/ of the Unity project:
     poster_<n>.png       aged posters of the restaurant
     label_<item>.png     the objective items: the breaker's warning plate, the staff keycard
                          and the label of the security tape
+    breaker_*.png        the breaker panel's dead front with its circuit labels, and the
+                         circuit directory inside its door
+    cctv_<room>.png      what the office monitors draw over each camera's picture
+    drawing_<n>.png      children's crayon drawings taped to the walls
     signs.json           width / height of every texture
 
 Fonts are downloaded once into tools/.font-cache (not committed).
@@ -43,6 +47,7 @@ FONTS = {
     "luckiest": GOOGLE + "apache/luckiestguy/LuckiestGuy-Regular.ttf",
     "typewriter": GOOGLE + "apache/specialelite/SpecialElite-Regular.ttf",
     "marker": GOOGLE + "apache/permanentmarker/PermanentMarker-Regular.ttf",
+    "crayon": GOOGLE + "apache/schoolbell/Schoolbell-Regular.ttf",
     "icons": ICONS + "MaterialSymbolsOutlined%5BFILL,GRAD,opsz,wght%5D.ttf",
 }
 CODEPOINTS = ICONS + "MaterialSymbolsOutlined%5BFILL,GRAD,opsz,wght%5D.codepoints"
@@ -369,20 +374,21 @@ def bear(d, cx, cy, s, color=(122, 72, 40)):
     d.polygon([(cx, cy + 0.66 * s), (cx + 0.3 * s, cy + 0.52 * s), (cx + 0.3 * s, cy + 0.8 * s)], fill=(20, 18, 20))
 
 
-def paper(img, seed):
-    """Old paper: yellowed, stained, folded in four, a torn corner and tape."""
+def paper(img, seed, stains=1.0):
+    """Old paper: yellowed, stained, folded in four, a torn corner and tape (stains scales the dirt)."""
     w, h = img.size
     rng = np.random.default_rng(seed)
     arr = np.asarray(img, dtype=np.float32) / 255.0
     yellow = np.array([1.0, 0.93, 0.78])
     arr = arr * (0.82 + 0.18 * yellow)
-    stains = noise((w, h), 90, seed) * 0.7 + noise((w, h), 20, seed + 3) * 0.3
-    arr *= (1.0 - 0.22 * np.clip(stains - 0.5, 0, 1) * 2)[..., None]
+    strength = stains
+    blotches = noise((w, h), 90, seed) * 0.7 + noise((w, h), 20, seed + 3) * 0.3
+    arr *= (1.0 - 0.22 * strength * np.clip(blotches - 0.5, 0, 1) * 2)[..., None]
     for _ in range(2):
         cx, cy, r = rng.uniform(0, w), rng.uniform(0, h), rng.uniform(40, 140)
         yy, xx = np.mgrid[0:h, 0:w]
         ring = np.exp(-((np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2) - r) / 6.0) ** 2)
-        arr *= (1.0 - 0.18 * ring)[..., None]
+        arr *= (1.0 - 0.18 * strength * ring)[..., None]
     arr = np.clip(arr + (rng.random((h, w, 1)) - 0.5) * 0.05, 0, 1)
     out = Image.fromarray((arr * 255).astype(np.uint8))
     d = ImageDraw.Draw(out)
@@ -729,6 +735,278 @@ def label_tape():
     return grime(img, 0.25, 203)
 
 
+# ---------------------------------------------------------------- breaker panel
+
+CIRCUITS = ["KITCHEN", "FREEZER", "STAGE LIGHTS", "ARCADE", "OFFICE", "SIGNS"]
+
+
+def breaker_deadfront():
+    """The steel plate around the breakers (0.72 x 0.92 m at 800 px/m), with the circuit names
+    written on tape under each breaker. Breakers sit at x = +-0.13 m and y = 0.2, 0, -0.2 m."""
+    w, h = 576, 736
+    img = Image.new("RGB", (w, h), (92, 96, 98))
+    d = ImageDraw.Draw(img)
+    d.rectangle([14, 14, w - 15, h - 15], outline=(60, 62, 64), width=4)
+    draw_text(d, (w / 2, 52), "PANEL B   120/240 V", font("oswald", 34, 600), (30, 32, 34), spacing=3)
+    draw_text(d, (w / 2, 88), "FAZ-ELECTRIC  LOAD CENTER", font("oswald", 20, 500), (40, 42, 44), spacing=2)
+    for i in range(6):
+        # Odd circuits down the left column, even down the right, as on a real panel.
+        number = 2 * i + 1 if i < 3 else 2 * (i - 3) + 2
+        name = CIRCUITS[number - 1]
+        cx = w / 2 + (-0.13 if i < 3 else 0.13) * 800
+        cy = h / 2 - (0.2 - (i % 3) * 0.2) * 800
+        # The opening the breaker comes through, and the tape label under it.
+        d.rectangle([cx - 76, cy - 52, cx + 76, cy + 52], fill=(20, 20, 22))
+        tape = Image.new("RGBA", (150, 38), (232, 222, 190, 255))
+        td = ImageDraw.Draw(tape)
+        draw_text(td, (75, 20), name, fit_font(td, name, "marker", 138, 26), (30, 30, 70))
+        tape = tape.rotate((i * 7 % 5) - 2, expand=True, resample=Image.BICUBIC)
+        img.paste(tape, (int(cx - tape.width / 2), int(cy + 58)), tape)
+        draw_text(d, (cx - 92 if i < 3 else cx + 92, cy), str(number), font("oswald", 26, 600), (30, 32, 34))
+    screws(d, w, h, 34, 9)
+    return grime(img, 0.5, 301)
+
+
+def breaker_module():
+    """The face of one breaker: rating, ON / OFF, the maker."""
+    w, h = 288, 192
+    img = Image.new("RGB", (w, h), (24, 24, 26))
+    d = ImageDraw.Draw(img)
+    d.rectangle([4, 4, w - 5, h - 5], outline=(48, 48, 52), width=4)
+    draw_text(d, (w / 2, 30), "ON", font("oswald", 26, 700), (200, 200, 190), spacing=2)
+    draw_text(d, (w / 2, h - 28), "OFF", font("oswald", 26, 700), (200, 200, 190), spacing=2)
+    draw_text(d, (46, h / 2), "20", font("oswald", 40, 700), (215, 215, 205))
+    draw_text(d, (w - 50, h / 2), "FAZ", font("oswald", 22, 500), (150, 150, 145), spacing=2)
+    d.rectangle([w / 2 - 30, 52, w / 2 + 30, h - 52], fill=(10, 10, 12))
+    return grime(img, 0.2, 302)
+
+
+def circuit_directory():
+    """The card inside the breaker door: which breaker feeds what."""
+    w, h = 384, 512
+    img = Image.new("RGB", (w, h), (238, 232, 212))
+    d = ImageDraw.Draw(img)
+    draw_text(d, (w / 2, 34), "CIRCUIT DIRECTORY", font("oswald", 32, 700), (30, 30, 30), spacing=2)
+    for row in range(12):
+        y = 74 + row * 34
+        d.line([18, y + 30, w - 18, y + 30], fill=(150, 160, 190), width=2)
+        draw_text(d, (34, y + 14), str(row + 1), font("oswald", 22, 500), (40, 40, 40))
+        if row < len(CIRCUITS):
+            draw_text(d, (200, y + 14), CIRCUITS[row].title(), font("marker", 24), (30, 30, 80))
+    draw_text(d, (w / 2 - 30, h - 52), "Never reset FREEZER in a show!", font("marker", 19), (150, 20, 20))
+    return grime(paper(img.resize((w, h)), 303), 0.2, 304)
+
+
+# ---------------------------------------------------------------- office monitors
+
+def cctv_overlay(room, number):
+    """Transparent overlay for a security monitor: corner marks, camera number, room, REC."""
+    w, h = 512, 384
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    for y in range(0, h, 4):
+        d.line([0, y, w, y], fill=(0, 0, 0, 46))
+    white = (230, 240, 230, 235)
+    for x, y, sx, sy in ((20, 20, 1, 1), (w - 20, 20, -1, 1), (20, h - 20, 1, -1), (w - 20, h - 20, -1, -1)):
+        d.line([x, y, x + sx * 40, y], fill=white, width=4)
+        d.line([x, y, x, y + sy * 40], fill=white, width=4)
+    f = font("oswald", 34, 600)
+    draw_text(d, (40, 56), f"CAM {number:02d}", f, white, spacing=2, anchor_center=False)
+    draw_text(d, (40, 96), room.upper(), font("oswald", 26, 500), white, spacing=2, anchor_center=False)
+    d.ellipse([w - 128, 42, w - 106, 64], fill=(230, 30, 30, 240))
+    draw_text(d, (w - 96, 54), "REC", font("oswald", 28, 600), white, spacing=2, anchor_center=False)
+    draw_text(d, (40, h - 52), "FAZBEAR SECURITY   11-12-87", font("oswald", 22, 500), white, spacing=2, anchor_center=False)
+    # Darker corners, like the edge of a picture tube.
+    yy, xx = np.mgrid[0:h, 0:w]
+    r = np.sqrt(((xx - w / 2) / (w / 2)) ** 2 + ((yy - h / 2) / (h / 2)) ** 2)
+    vignette = np.clip((r - 0.75) * 1.6, 0, 1) * 200
+    arr = np.asarray(img).copy()
+    arr[..., 3] = np.maximum(arr[..., 3], vignette.astype(np.uint8))
+    return Image.fromarray(arr, "RGBA")
+
+
+# ---------------------------------------------------------------- children's drawings
+
+def crayon(layer, points, color, width, seed, closed=False):
+    """A crayon stroke: several wobbly, broken passes instead of one clean line."""
+    rng = np.random.default_rng(seed)
+    d = ImageDraw.Draw(layer)
+    pts = list(points) + ([points[0]] if closed else [])
+    for _ in range(4):
+        wobbly = []
+        for x, y in pts:
+            wobbly.append((x + rng.normal(0, width * 0.35), y + rng.normal(0, width * 0.35)))
+        alpha = int(rng.uniform(140, 220))
+        for a, b in zip(wobbly, wobbly[1:]):
+            # Waxy gaps along the stroke.
+            steps = max(2, int(math.dist(a, b) / 6))
+            for k in range(steps):
+                if rng.random() < 0.12:
+                    continue
+                t0, t1 = k / steps, (k + 1) / steps
+                p0 = (a[0] + (b[0] - a[0]) * t0, a[1] + (b[1] - a[1]) * t0)
+                p1 = (a[0] + (b[0] - a[0]) * t1, a[1] + (b[1] - a[1]) * t1)
+                d.line([p0, p1], fill=color + (alpha,), width=max(1, int(width * rng.uniform(0.5, 0.9))))
+
+
+def circle_points(cx, cy, rx, ry, n=36, start=0.0):
+    return [(cx + rx * math.cos(start + 2 * math.pi * i / n), cy + ry * math.sin(start + 2 * math.pi * i / n)) for i in range(n)]
+
+
+def scribble(layer, cx, cy, rx, ry, color, seed, density=7):
+    """Coloring in, the way a child does: back-and-forth strokes that spill over the edge."""
+    rng = np.random.default_rng(seed)
+    pts = []
+    y = cy - ry
+    flip = 1
+    while y < cy + ry:
+        half = rx * math.sqrt(max(0.0, 1 - ((y - cy) / ry) ** 2))
+        pts.append((cx - flip * (half + rng.normal(0, 6)), y))
+        pts.append((cx + flip * (half + rng.normal(0, 6)), y + density * 0.5))
+        y += density
+        flip = -flip
+    crayon(layer, pts, color, 5, seed)
+
+
+def kid_bear(layer, cx, cy, s, seed, eyes=(40, 40, 40), body=True):
+    brown = (120, 70, 35)
+    scribble(layer, cx, cy, s * 0.55, s * 0.5, (150, 95, 50), seed)
+    crayon(layer, circle_points(cx, cy, s * 0.55, s * 0.5), brown, 6, seed + 1, True)
+    for side in (-1, 1):
+        crayon(layer, circle_points(cx + side * s * 0.45, cy - s * 0.48, s * 0.15, s * 0.15), brown, 6, seed + 2 + side, True)
+        crayon(layer, circle_points(cx + side * s * 0.2, cy - s * 0.1, s * 0.08, s * 0.08), eyes, 7, seed + 4 + side, True)
+    crayon(layer, [(cx - s * 0.2, cy + s * 0.18), (cx, cy + s * 0.28), (cx + s * 0.2, cy + s * 0.18)], (30, 20, 20), 6, seed + 6)
+    hat = [(cx - s * 0.18, cy - s * 0.48), (cx - s * 0.18, cy - s * 0.85), (cx + s * 0.18, cy - s * 0.85), (cx + s * 0.18, cy - s * 0.48)]
+    scribble(layer, cx, cy - s * 0.66, s * 0.17, s * 0.17, (20, 20, 20), seed + 7, 5)
+    crayon(layer, hat, (20, 20, 20), 6, seed + 8)
+    crayon(layer, [(cx - s * 0.35, cy - s * 0.48), (cx + s * 0.35, cy - s * 0.48)], (20, 20, 20), 7, seed + 9)
+    if body:
+        crayon(layer, circle_points(cx, cy + s * 1.15, s * 0.45, s * 0.62), brown, 6, seed + 10, True)
+        crayon(layer, [(cx - s * 0.12, cy + s * 0.55), (cx + s * 0.12, cy + s * 0.65), (cx + s * 0.12, cy + s * 0.5), (cx - s * 0.12, cy + s * 0.6), (cx - s * 0.12, cy + s * 0.5)], (20, 20, 20), 6, seed + 11)
+
+
+def stick_kid(layer, cx, cy, s, color, seed, sad=False):
+    crayon(layer, circle_points(cx, cy, s * 0.22, s * 0.24), (40, 40, 40), 5, seed, True)
+    crayon(layer, [(cx, cy + s * 0.24), (cx, cy + s * 0.9)], color, 6, seed + 1)
+    crayon(layer, [(cx - s * 0.35, cy + s * 0.45), (cx, cy + s * 0.4), (cx + s * 0.35, cy + s * 0.45)], color, 6, seed + 2)
+    crayon(layer, [(cx - s * 0.25, cy + s * 1.35), (cx, cy + s * 0.9), (cx + s * 0.25, cy + s * 1.35)], color, 6, seed + 3)
+    for side in (-1, 1):
+        crayon(layer, [(cx + side * s * 0.08, cy - s * 0.05), (cx + side * s * 0.08 + 1, cy - s * 0.03)], (30, 30, 30), 6, seed + 4 + side)
+    mouth = [(cx - s * 0.08, cy + s * 0.14), (cx, cy + s * 0.08), (cx + s * 0.08, cy + s * 0.14)] if sad else \
+            [(cx - s * 0.08, cy + s * 0.08), (cx, cy + s * 0.14), (cx + s * 0.08, cy + s * 0.08)]
+    crayon(layer, mouth, (30, 30, 30), 4, seed + 7)
+
+
+def sun(layer, cx, cy, r, seed):
+    scribble(layer, cx, cy, r, r, (250, 200, 30), seed)
+    for k in range(10):
+        a = 2 * math.pi * k / 10
+        crayon(layer, [(cx + math.cos(a) * r * 1.2, cy + math.sin(a) * r * 1.2), (cx + math.cos(a) * r * 1.7, cy + math.sin(a) * r * 1.7)], (240, 170, 20), 6, seed + k)
+
+
+def kid_text(layer, xy, text, color, size, seed, angle=0):
+    f = font("crayon", size)
+    tmp = Image.new("RGBA", layer.size, (0, 0, 0, 0))
+    td = ImageDraw.Draw(tmp)
+    draw_text(td, xy, text, f, color + (225,))
+    if angle:
+        tmp = tmp.rotate(angle, center=xy, resample=Image.BICUBIC)
+    layer.alpha_composite(tmp)
+
+
+def drawing(index):
+    w, h = 1024, 768
+    seed = 400 + index * 37
+    layer = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    if index == 0:
+        sun(layer, 120, 110, 55, seed)
+        kid_bear(layer, 560, 330, 220, seed + 20)
+        stick_kid(layer, 250, 380, 190, (230, 60, 60), seed + 40)
+        crayon(layer, [(250 + 60, 440), (330, 200)], (60, 60, 60), 3, seed + 50)
+        scribble(layer, 335, 160, 45, 55, (230, 40, 60), seed + 51)
+        kid_text(layer, (w / 2, 690), "HAPPY BIRTHDAY!!", (40, 90, 200), 84, seed + 60, 2)
+    elif index == 1:
+        tri = [(300, 150), (760, 260), (380, 640)]
+        scribble(layer, 480, 360, 170, 200, (250, 200, 50), seed)
+        crayon(layer, tri, (200, 120, 30), 8, seed + 1, True)
+        crayon(layer, [(300, 150), (760, 260)], (170, 90, 30), 18, seed + 2)
+        for k, (x, y) in enumerate([(420, 300), (540, 330), (450, 450), (600, 280)]):
+            scribble(layer, x, y, 32, 30, (200, 30, 30), seed + 10 + k, 5)
+        kid_text(layer, (w / 2, 700), "I LOVE PIZZA", (220, 60, 40), 90, seed + 20, -3)
+    elif index == 2:
+        crayon(layer, [(60, 520), (964, 520)], (120, 60, 30), 10, seed)
+        scribble(layer, 512, 600, 450, 70, (140, 80, 40), seed + 1, 9)
+        kid_bear(layer, 512, 270, 170, seed + 10)
+        crayon(layer, circle_points(250, 300, 80, 95), (130, 70, 200), 6, seed + 20, True)
+        scribble(layer, 250, 300, 80, 95, (160, 110, 230), seed + 21)
+        crayon(layer, [(215, 215), (200, 90), (235, 210)], (130, 70, 200), 6, seed + 22)
+        crayon(layer, [(285, 215), (300, 90), (265, 210)], (130, 70, 200), 6, seed + 23)
+        crayon(layer, circle_points(780, 300, 85, 90), (230, 180, 20), 6, seed + 30, True)
+        scribble(layer, 780, 300, 85, 90, (250, 215, 60), seed + 31)
+        crayon(layer, [(760, 330), (820, 345), (760, 360)], (240, 120, 20), 6, seed + 32, True)
+        kid_text(layer, (w / 2, 700), "BEST DAY EVER", (40, 140, 60), 84, seed + 40, 1)
+    elif index == 3:
+        # The one nobody took down.
+        for k in range(14):
+            crayon(layer, [(40 + k * 70, 40), (90 + k * 70, 730)], (25, 25, 30), 7, seed + k)
+        kid_bear(layer, 640, 300, 200, seed + 30, eyes=(0, 0, 0))
+        scribble(layer, 600, 290, 22, 22, (0, 0, 0), seed + 33, 4)
+        scribble(layer, 680, 290, 22, 22, (0, 0, 0), seed + 34, 4)
+        stick_kid(layer, 230, 380, 170, (70, 90, 200), seed + 40, sad=True)
+        for k in range(3):
+            crayon(layer, [(215 + k * 4, 395), (210 + k * 4, 430)], (60, 120, 230), 4, seed + 50 + k)
+        kid_text(layer, (w / 2, 690), "HE IS STILL HERE", (170, 20, 20), 86, seed + 60, -2)
+    elif index == 4:
+        crayon(layer, [(150, 470), (870, 470)], (120, 70, 40), 10, seed)
+        for x in (210, 810):
+            crayon(layer, [(x, 470), (x, 640)], (120, 70, 40), 9, seed + x)
+        scribble(layer, 512, 400, 120, 60, (240, 150, 190), seed + 10)
+        crayon(layer, [(392, 460), (392, 360), (632, 360), (632, 460)], (200, 80, 120), 6, seed + 11)
+        for k in range(5):
+            crayon(layer, [(430 + k * 40, 360), (430 + k * 40, 310)], (240, 220, 80), 6, seed + 20 + k)
+            scribble(layer, 430 + k * 40, 296, 8, 12, (250, 120, 30), seed + 30 + k, 4)
+        for k, x in enumerate((160, 300, 720, 860)):
+            stick_kid(layer, x, 230, 130, [(230, 60, 60), (60, 160, 60), (60, 90, 220), (230, 150, 30)][k], seed + 40 + k)
+        kid_text(layer, (w / 2, 700), "MY PARTY", (200, 60, 140), 96, seed + 60, 2)
+    else:
+        sun(layer, w - 120, 110, 50, seed)
+        kid_bear(layer, 380, 330, 210, seed + 10)
+        stick_kid(layer, 700, 330, 200, (240, 120, 40), seed + 30)
+        crayon(layer, [(470, 420), (610, 420)], (230, 60, 60), 6, seed + 40)
+        kid_text(layer, (w / 2, 690), "THANK YOU FREDDY", (60, 100, 210), 80, seed + 50, -1)
+    # Signed, like they all are.
+    names = ["Emma, 6", "Lucas", "Mia 7", "", "Sofia, 5", "Noah"]
+    if names[index]:
+        kid_text(layer, (w - 150, h - 40), names[index], (90, 90, 90), 42, seed + 90)
+    base = Image.new("RGB", (w, h), (250, 248, 240))
+    base.paste(layer, (0, 0), layer)
+    return paper(base, seed + 99, 0.3)
+
+
+# ---------------------------------------------------------------- front doors
+
+def door_logo():
+    """The gold lettering across the glass of the front doors."""
+    w, h = 1024, 198
+    img = Image.new("RGB", (w, h), (90, 10, 12))
+    d = ImageDraw.Draw(img)
+    d.rectangle([6, 6, w - 7, h - 7], outline=GOLD, width=5)
+    bear(d, 110, 112, 62, color=(150, 95, 50))
+    draw_text(d, (w / 2 + 70, h / 2 + 4), "FREDDY FAZBEAR'S", fit_font(d, "FREDDY FAZBEAR'S", "luckiest", 760, 120), GOLD)
+    return grime(img, 0.25, 305)
+
+
+def closed_sign():
+    """The sign hanging inside the front doors."""
+    w, h = 1000, 320
+    img = Image.new("RGB", (w, h), (236, 230, 214))
+    d = ImageDraw.Draw(img)
+    d.rectangle([10, 10, w - 11, h - 11], outline=(150, 20, 20), width=10)
+    draw_text(d, (w / 2, 92), "SORRY, WE'RE", font("oswald", 70, 600), (40, 40, 40), spacing=4)
+    draw_text(d, (w / 2, 210), "CLOSED", font("bebas", 150), (170, 20, 20), spacing=10)
+    return grime(img, 0.3, 306)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--project", default=str(ROOT / "unity"), help="Unity project folder")
@@ -788,6 +1066,15 @@ def main():
     save("label_danger", label_danger())
     save("label_keycard", label_keycard())
     save("label_tape", label_tape())
+    save("door_logo", door_logo())
+    save("closed_sign", closed_sign())
+    save("breaker_deadfront", breaker_deadfront())
+    save("breaker_module", breaker_module())
+    save("breaker_directory", circuit_directory())
+    for i, room in enumerate(ROOMS):
+        save_rgba("cctv_" + re.sub(r"[^a-z]+", "_", room.lower()).strip("_"), cctv_overlay(room, i + 1))
+    for i in range(6):
+        save(f"drawing_{i}", drawing(i))
     (out / "signs.json").write_text(json.dumps(made, indent=2, sort_keys=True) + "\n")
 
 
