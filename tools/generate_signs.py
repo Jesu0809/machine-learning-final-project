@@ -683,6 +683,18 @@ def handprints(seed):
 
 # ---------------------------------------------------------------- objective items
 
+def label_reactivate():
+    """A manila repair tag tied to a spare head."""
+    w, h = 384, 192
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    d.polygon([(40, 0), (w - 1, 0), (w - 1, h - 1), (40, h - 1), (0, h - 40), (0, 40)], fill=(214, 186, 128, 255))
+    d.ellipse([22, h / 2 - 12, 46, h / 2 + 12], fill=(0, 0, 0, 0), outline=(150, 120, 70, 255), width=4)
+    draw_text(d, (215, 62), "DO NOT", font("marker", 52), (140, 20, 20, 255))
+    draw_text(d, (215, 132), "REACTIVATE", font("marker", 44), (140, 20, 20, 255))
+    return img
+
+
 def label_danger():
     """The warning plate on the breaker box door."""
     w, h = 512, 640
@@ -1007,6 +1019,100 @@ def closed_sign():
     return grime(img, 0.3, 306)
 
 
+# ---------------------------------------------------------------- outside
+
+def chain_link():
+    """Chain-link fence, tiling: galvanized wire diamonds on transparent."""
+    w = h = 512
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    step = 64
+    wire = (150, 155, 158, 255)
+    for k in range(-w, 2 * w, step):
+        d.line([k, 0, k + h, h], fill=wire, width=5)
+        d.line([k, h, k + h, 0], fill=wire, width=5)
+    # A little rust where the wires cross.
+    rng = np.random.default_rng(310)
+    for _ in range(40):
+        x, y = rng.uniform(0, w), rng.uniform(0, h)
+        d.ellipse([x - 4, y - 4, x + 4, y + 4], fill=(120, 70, 40, 200))
+    return img
+
+
+# ---------------------------------------------------------------- party things
+
+def pizza_box_top():
+    """The lid of a take-away box: white board, red print, a grease stain."""
+    w = h = 512
+    img = Image.new("RGB", (w, h), (232, 226, 210))
+    d = ImageDraw.Draw(img)
+    d.rectangle([14, 14, w - 15, h - 15], outline=(170, 30, 30), width=8)
+    d.ellipse([w / 2 - 120, 70, w / 2 + 120, 310], outline=(170, 30, 30), width=8)
+    bear(d, w / 2, 200, 78, color=(170, 30, 30))
+    draw_text(d, (w / 2, 360), "FREDDY FAZBEAR'S", font("luckiest", 54), (170, 30, 30))
+    draw_text(d, (w / 2, 420), "HOT  &  FRESH  PIZZA", font("oswald", 36, 600), (60, 60, 60), spacing=3)
+    arr = np.asarray(img, dtype=np.float32)
+    yy, xx = np.mgrid[0:h, 0:w]
+    stain = np.exp(-(((xx - 380) / 70.0) ** 2 + ((yy - 120) / 55.0) ** 2)) * 0.35
+    arr *= (1 - stain[..., None] * np.array([0.2, 0.45, 0.8]))
+    return grime(Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8)), 0.25, 320)
+
+
+def paper_plate():
+    """A paper party plate seen from above: scalloped rim, a printed border of balloons."""
+    w = h = 256
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    cx = cy = w / 2
+    points = []
+    for k in range(96):
+        a = 2 * math.pi * k / 96
+        r = 124 + (3 if k % 2 else 0)
+        points.append((cx + r * math.cos(a), cy + r * math.sin(a)))
+    d.polygon(points, fill=(246, 244, 236, 255))
+    d.ellipse([cx - 104, cy - 104, cx + 104, cy + 104], outline=(225, 222, 210, 255), width=3)
+    colors = [(230, 60, 70), (60, 140, 230), (250, 200, 50), (90, 190, 90)]
+    for k in range(12):
+        a = 2 * math.pi * k / 12
+        x, y = cx + 114 * math.cos(a), cy + 114 * math.sin(a)
+        d.ellipse([x - 7, y - 9, x + 7, y + 9], fill=colors[k % 4] + (255,))
+    return img
+
+
+def gift_wrap(index):
+    """Tiling wrapping paper: stripes, polka dots, stars."""
+    w = h = 256
+    backs = [(200, 40, 60), (40, 90, 190), (240, 200, 60)]
+    fronts = [(250, 240, 230), (250, 220, 80), (200, 50, 120)]
+    img = Image.new("RGB", (w, h), backs[index])
+    d = ImageDraw.Draw(img)
+    if index == 0:
+        for k in range(-w, 2 * w, 64):
+            d.polygon([(k, 0), (k + 24, 0), (k + 24 + h, h), (k + h, h)], fill=fronts[0])
+    elif index == 1:
+        for y in range(0, h + 1, 64):
+            for x in range(0, w + 1, 64):
+                for ox, oy in ((0, 0), (32, 32)):
+                    d.ellipse([x + ox - 12, y + oy - 12, x + ox + 12, y + oy + 12], fill=fronts[1])
+    else:
+        glyph, f = icon("star", 60)
+        for y in range(0, h, 64):
+            for x in range(0, w, 64):
+                draw_text(d, (x + 32 + (16 if (y // 64) % 2 else 0), y + 32), glyph, f, fronts[2])
+    return img
+
+
+def lost_and_found():
+    """A torn cardboard label, written in marker."""
+    w, h = 512, 256
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    d.polygon([(8, 20), (w - 14, 6), (w - 4, h - 26), (20, h - 8)], fill=(222, 205, 160, 255))
+    draw_text(d, (w / 2, 92), "LOST &", font("marker", 78), (30, 30, 40, 255))
+    draw_text(d, (w / 2, 180), "FOUND", font("marker", 78), (30, 30, 40, 255))
+    return img
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--project", default=str(ROOT / "unity"), help="Unity project folder")
@@ -1036,7 +1142,8 @@ def main():
               "party_room": ("PARTY ROOM", ((255, 220, 90), (240, 40, 140))),
               "prizes": ("PRIZES", ((170, 255, 255), (40, 200, 255))),
               "happy_birthday": ("HAPPY BIRTHDAY", ((180, 240, 255), (60, 120, 255))),
-              "arcade": ("ARCADE", ((255, 170, 255), (190, 40, 255)))}
+              "arcade": ("ARCADE", ((255, 170, 255), (190, 40, 255))),
+              "tickets": ("TICKETS", ((255, 235, 150), (255, 140, 30)))}
     for key, (text, colors) in public.items():
         save("title_" + key, neon_title(text, colors))
     staff = {"security": "SECURITY", "parts_service": "PARTS & SERVICE", "storage": "STORAGE",
@@ -1066,6 +1173,13 @@ def main():
     save("label_danger", label_danger())
     save("label_keycard", label_keycard())
     save("label_tape", label_tape())
+    save_rgba("decal_tag_reactivate", label_reactivate())
+    save_rgba("fence_chainlink", chain_link())
+    save("pizza_box_top", pizza_box_top())
+    save_rgba("decal_paper_plate", paper_plate())
+    save_rgba("decal_lost_found", lost_and_found())
+    for i in range(3):
+        save(f"wrap_{i}", gift_wrap(i))
     save("door_logo", door_logo())
     save("closed_sign", closed_sign())
     save("breaker_deadfront", breaker_deadfront())
