@@ -25,6 +25,18 @@ namespace NightShift.Game
         /// <summary>Light of the beam (switch it with <see cref="Light.enabled"/>).</summary>
         public Light Beam => beam;
 
+        private bool bounceAllowed = true;
+
+        /// <summary>Graphics quality: shadow detail and the bounce light (High and Ultra only).</summary>
+        public void SetQuality(GraphicsLevel level)
+        {
+            beam.shadows = level == GraphicsLevel.Low ? LightShadows.None : LightShadows.Soft;
+            beam.shadowResolution = level == GraphicsLevel.Ultra ? UnityEngine.Rendering.LightShadowResolution.VeryHigh
+                                  : level == GraphicsLevel.High ? UnityEngine.Rendering.LightShadowResolution.High
+                                  : UnityEngine.Rendering.LightShadowResolution.Medium;
+            bounceAllowed = level >= GraphicsLevel.High;
+        }
+
         /// <summary>True for a moment while the flashlight sputters (fear, a bad contact).</summary>
         public bool Glitching { get; set; }
 
@@ -62,13 +74,15 @@ namespace NightShift.Game
             flashlight.bounce = bounce;
 
             flashlight.dust = BeamDust(go.transform);
+            GraphicsQuality.RegisterFlashlight(flashlight);
+            flashlight.SetQuality(GraphicsQuality.Level);
             return flashlight;
         }
 
         private void LateUpdate()
         {
             bool on = beam.enabled;
-            bounce.enabled = on;
+            bounce.enabled = on && bounceAllowed;
             if (dust.isPlaying != on)
             {
                 if (on)
