@@ -93,6 +93,17 @@ namespace NightShift.Game
         private float crawlYaw;
         private float crawlLookYaw;
         private float crawlLookPitch;
+        // The animation around the crawl: kneeling at the grate, the rhythm of hands and knees,
+        // stopping to push the far grate open.
+        private const float KneelSeconds = 0.75f;
+        private const float ExitPauseSeconds = 0.5f;
+        private float crawlKneel;
+        private float crawlExitPause;
+        private float crawlRhythm;
+        private Vector3 kneelFromPosition;
+        private Quaternion kneelFromRotation;
+        private VentGrate crawlEntry;
+        private VentGrate crawlExit;
 
         /// <summary>True while hidden and holding the breath (Freddy will not notice you if he searches).</summary>
         public bool HoldingBreath { get; private set; }
@@ -231,8 +242,12 @@ namespace NightShift.Game
             PlaceCamera();
         }
 
-        /// <summary>Into an air duct: the eyes follow <paramref name="path"/> to the room at its far end.</summary>
-        public void StartCrawl(List<Vector3> path, Hunt.Room target)
+        /// <summary>
+        /// Into an air duct: kneel in front of the grate while it swings open, crawl along
+        /// <paramref name="path"/> with the rhythm of hands and knees, push the far grate open and
+        /// climb out into the room at the other end.
+        /// </summary>
+        public void StartCrawl(List<Vector3> path, Hunt.Room target, VentGrate entry = null, VentGrate exit = null)
         {
             if (Crawling || HiddenIn != null || path == null || path.Count < 2)
             {
@@ -244,14 +259,28 @@ namespace NightShift.Game
             crawlSegment = 0;
             crawlAlong = 0f;
             crawlStepDistance = 0f;
+            crawlRhythm = 0f;
+            crawlKneel = 0f;
+            crawlExitPause = -1f;
             crawlYaw = yaw;
             crawlLookYaw = 0f;
             crawlLookPitch = 0f;
+            crawlEntry = entry;
+            crawlExit = exit;
+            kneelFromPosition = head.position;
+            kneelFromRotation = head.rotation;
             body.enabled = false;
             Sliding = false;
             Flashlight.enabled = true;
             MakeNoise(1);
-            Director.Audio.PlayAt(Director.Assets.LockerDoor, path[0], 0.45f, 1.5f);
+            if (entry != null)
+            {
+                entry.OpenFor(2.5f, this);
+            }
+            else
+            {
+                Director.Audio.PlayAt(Director.Assets.LockerDoor, path[0], 0.45f, 1.5f);
+            }
         }
 
         private void UpdateCrawl(Vector2 look)
@@ -265,10 +294,53 @@ namespace NightShift.Game
             Vector3 from = crawlPath[crawlSegment];
             Vector3 to = crawlPath[crawlSegment + 1];
             float length = Mathf.Max(0.01f, Vector3.Distance(from, to));
+            Vector3 direction = (to - from) / length;
             bool vertical = Mathf.Abs(to.y - from.y) > 0.8f * length;
-            crawlAlong += Time.deltaTime * (vertical ? CrawlSpeed * 0.8f : CrawlSpeed);
-            crawlStepDistance += Time.deltaTime * CrawlSpeed;
-            if (crawlStepDistance > 0.75f)
+
+            // 1. Kneel down in front of the grate, facing it, while it swings open.
+            if (crawlKneel < 1f)
+            {
+                crawlKneel = Mathf.Min(1f, crawlKneel + Time.deltaTime / KneelSeconds);
+                float k = crawlKneel * crawlKneel * (3f - 2f * crawlKneel);
+                Vector3 into = to - from;
+                float facing = Mathf.Atan2(into.x, into.z) * Mathf.Rad2Deg;
+                float lookDown = vertical || into.y < -0.3f ? 55f : 15f;
+                // The head dips lower than the end pose half-way through: getting down on the knees.
+                Vector3 position = Vector3.Lerp(kneelFromPosition, from, k) - Vector3.up * Mathf.Sin(k * Mathf.PI) * 0.12f;
+                head.position = position;
+                head.rotation = Quaternion.Slerp(kneelFromRotation, Quaternion.Euler(lookDown, facing, 0f), k);
+                crawlYaw = facing;
+                return;
+            }
+
+            // 3. At the far end: stop, push the grate open, wait for it to swing.
+            bool lastSegment = crawlSegment == crawlPath.Count - 2;
+            if (lastSegment && crawlExitPause < 0f)
+            {
+                crawlExitPause = 0f;
+                if (crawlExit != null)
+                {
+                    crawlExit.OpenFor(2.5f, this);
+                }
+            }
+            if (lastSegment && crawlExitPause < ExitPauseSeconds)
+            {
+                crawlExitPause += Time.deltaTime;
+                // A shove against the grate: the view jolts forward a little.
+                float shove = Mathf.Sin(Mathf.Clamp01(crawlExitPause / 0.25f) * Mathf.PI) * 0.06f;
+                head.position = from + direction * shove;
+                head.rotation = Quaternion.Euler(crawlLookPitch, crawlYaw + crawlLookYaw, 0f);
+                return;
+            }
+
+            // 2. Hands and knees: each push moves you forward, then a short pause.
+            float baseSpeed = crawlSegment == 0 || lastSegment ? CrawlSpeed * 0.55f : vertical ? CrawlSpeed * 0.8f : CrawlSpeed;
+            crawlRhythm += Time.deltaTime * 7.5f;
+            float push = 0.35f + 0.65f * Mathf.Pow(Mathf.Abs(Mathf.Sin(crawlRhythm * 0.5f)), 1.5f);
+            float step = Time.deltaTime * baseSpeed * push * 1.25f;
+            crawlAlong += step;
+            crawlStepDistance += step;
+            if (crawlStepDistance > 0.6f)
             {
                 // Hands and knees on sheet metal: a dull clank, too soft to carry.
                 crawlStepDistance = 0f;
@@ -286,18 +358,23 @@ namespace NightShift.Game
                 from = crawlPath[crawlSegment];
                 to = crawlPath[crawlSegment + 1];
                 length = Mathf.Max(0.01f, Vector3.Distance(from, to));
+                direction = (to - from) / length;
                 vertical = Mathf.Abs(to.y - from.y) > 0.8f * length;
             }
-            Vector3 direction = (to - from) / length;
             if (!vertical && new Vector2(direction.x, direction.z).sqrMagnitude > 0.01f)
             {
-                crawlYaw = Mathf.MoveTowardsAngle(crawlYaw, Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg, Time.deltaTime * 240f);
+                // Corners turn smoothly, not on the spot.
+                crawlYaw = Mathf.MoveTowardsAngle(crawlYaw, Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg, Time.deltaTime * 160f);
             }
             // Going down a shaft you look down it; climbing, you look up.
             float slopePitch = vertical ? (direction.y < 0f ? 60f : -55f) : 0f;
-            float bob = Mathf.Sin(crawlAlong * 6f) * 0.03f;
-            head.position = Vector3.Lerp(from, to, Mathf.Clamp01(crawlAlong / length)) + Vector3.up * bob;
-            head.rotation = Quaternion.Euler(slopePitch + crawlLookPitch, crawlYaw + crawlLookYaw, Mathf.Sin(crawlAlong * 3f) * 2f);
+            float bob = -Mathf.Abs(Mathf.Sin(crawlRhythm * 0.5f)) * 0.045f;
+            float roll = Mathf.Sin(crawlRhythm * 0.5f) * 3.5f;
+            float sway = Mathf.Sin(crawlRhythm * 0.25f) * 2f;
+            // Climbing out: the head rises from the duct to a crouch.
+            float rise = lastSegment ? Mathf.SmoothStep(0f, 1f, crawlAlong / length) : 0f;
+            head.position = Vector3.Lerp(from, to, Mathf.Clamp01(crawlAlong / length)) + Vector3.up * (bob * (1f - rise));
+            head.rotation = Quaternion.Euler(slopePitch + crawlLookPitch + bob * 40f, crawlYaw + crawlLookYaw + sway, roll * (1f - rise));
         }
 
         private void FinishCrawl()
@@ -310,7 +387,6 @@ namespace NightShift.Game
             pitch = 0f;
             head.localPosition = new Vector3(0f, CrouchHeight - 0.15f, 0f);
             MakeNoise(1);
-            Director.Audio.PlayAt(Director.Assets.LockerDoor, stand, 0.45f, 1.5f);
         }
 
         /// <summary>Moves the player out of any spot and back to a position (new night).</summary>
@@ -561,6 +637,20 @@ namespace NightShift.Game
             {
                 Target.Use(this);
             }
+        }
+
+        /// <summary>Turns the view smoothly toward a point (working a panel, looking at what the hands do).</summary>
+        public void LookToward(Vector3 point, float speed)
+        {
+            Vector3 direction = point - head.position;
+            var flat = new Vector2(direction.x, direction.z);
+            if (flat.sqrMagnitude < 0.0001f)
+            {
+                return;
+            }
+            float k = 1f - Mathf.Exp(-speed * Time.deltaTime);
+            yaw = Mathf.LerpAngle(yaw, Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg, k);
+            pitch = Mathf.LerpAngle(pitch, -Mathf.Atan2(direction.y, flat.magnitude) * Mathf.Rad2Deg, k);
         }
 
         private void PlaceCamera()

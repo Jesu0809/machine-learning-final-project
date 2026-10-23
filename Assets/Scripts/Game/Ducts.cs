@@ -14,14 +14,55 @@ namespace NightShift.Game
         /// <summary>True if this grate is at the duct's A end.</summary>
         public bool EndA { get; private set; }
 
+        /// <summary>The grate at the duct's other end.</summary>
+        public VentGrate Other { get; set; }
+
         public bool HoldToUse => false;
 
-        public static VentGrate Attach(GameObject go, DuctPath duct, bool endA)
+        private Transform hinge;
+        private GameObject hole;
+        private float openness;
+        private float target;
+        private float closeAt = -1f;
+
+        public static VentGrate Attach(GameObject go, DuctPath duct, bool endA, Transform hinge, GameObject hole)
         {
             var grate = go.AddComponent<VentGrate>();
             grate.Duct = duct;
             grate.EndA = endA;
+            grate.hinge = hinge;
+            grate.hole = hole;
             return grate;
+        }
+
+        /// <summary>Swings the grille open (a creak), and shut again after <paramref name="closeAfter"/> seconds.</summary>
+        public void OpenFor(float closeAfter, PlayerController player)
+        {
+            if (target < 1f && player != null)
+            {
+                player.Director.Audio.PlayAt(player.Director.Assets.LockerDoor, transform.position, 0.35f, 1.8f);
+            }
+            target = 1f;
+            closeAt = Time.time + closeAfter;
+        }
+
+        /// <summary>How open the grille is (0 shut, 1 open).</summary>
+        public float Openness => openness;
+
+        private void Update()
+        {
+            if (closeAt > 0f && Time.time >= closeAt)
+            {
+                target = 0f;
+                closeAt = -1f;
+            }
+            // Opens with a jerk, settles; closes slowly.
+            openness = Mathf.MoveTowards(openness, target, Time.deltaTime * (target > openness ? 2.6f : 1.4f));
+            float k = openness * openness * (3f - 2f * openness);
+            if (hinge != null)
+            {
+                hinge.localRotation = Quaternion.Euler(-105f * k, 0f, 0f);
+            }
         }
 
         public string Prompt(PlayerController player)
@@ -38,7 +79,7 @@ namespace NightShift.Game
         {
             if (player.HiddenIn == null && !player.Crawling)
             {
-                player.StartCrawl(CrawlPath(), EndA ? Duct.B : Duct.A);
+                player.StartCrawl(CrawlPath(), EndA ? Duct.B : Duct.A, this, Other);
             }
         }
 
