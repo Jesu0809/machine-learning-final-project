@@ -1,0 +1,226 @@
+{
+  "Barrel_02": {
+    "meters": [
+      0.488,
+      0.485,
+      0.88
+    ],
+    "source": "polyhaven:Barrel_02"
+  },
+  "SchoolChair_01": {
+    "meters": [
+      0.566,
+      0.675,
+      1.006
+    ],
+    "source": "polyhaven:SchoolChair_01"
+  },
+  "WetFloorSign_01": {
+    "meters": [
+      0.3,
+      0.359,
+      0.63
+    ],
+    "source": "polyhaven:WetFloorSign_01"
+  },
+  "boombox": {
+    "meters": [
+      0.724,
+      0.186,
+      0.47
+    ],
+    "source": "polyhaven:boombox"
+  },
+  "cardboard_box_01": {
+    "meters": [
+      0.387,
+      0.516,
+      0.342
+    ],
+    "source": "polyhaven:cardboard_box_01"
+  },
+  "dining_table": {
+    "meters": [
+      2.256,
+      1.39,
+      0.877
+    ],
+    "source": "polyhaven:dining_table"
+  },
+  "electric_stove": {
+    "meters": [
+      0.503,
+      0.648,
+      0.859
+    ],
+    "source": "polyhaven:electric_stove"
+  },
+  "industrial_storage_cart": {
+    "meters": [
+      1.603,
+      1.103,
+      1.377
+    ],
+    "source": "polyhaven:industrial_storage_cart"
+  },
+  "metal_office_desk": {
+    "meters": [
+      2.0,
+      0.947,
+      0.788
+    ],
+    "source": "polyhaven:metal_office_desk"
+  },
+  "metal_tool_chest": {
+    "meters": [
+      0.685,
+      0.407,
+      0.652
+    ],
+    "source": "polyhaven:metal_tool_chest"
+  },
+  "metal_toolbox": {
+    "meters": [
+      0.4,
+      0.292,
+      0.347
+    ],
+    "source": "polyhaven:metal_toolbox"
+  },
+  "metal_trash_can": {
+    "meters": [
+      1.847,
+      0.556,
+      0.906
+    ],
+    "source": "polyhaven:metal_trash_can"
+  },
+  "multi_cleaner_5_litre": {
+    "meters": [
+      0.219,
+      0.106,
+      0.3
+    ],
+    "source": "polyhaven:multi_cleaner_5_litre"
+  },
+  "old_drill_press": {
+    "meters": [
+      0.527,
+      0.61,
+      1.05
+    ],
+    "source": "polyhaven:old_drill_press"
+  },
+  "painted_wooden_bench": {
+    "meters": [
+      1.165,
+      0.497,
+      0.889
+    ],
+    "source": "polyhaven:painted_wooden_bench"
+  },
+  "plastic_broom": {
+    "meters": [
+      0.416,
+      0.567,
+      1.198
+    ],
+    "source": "polyhaven:plastic_broom"
+  },
+  "plastic_crate_02": {
+    "meters": [
+      0.506,
+      0.406,
+      0.254
+    ],
+    "source": "polyhaven:plastic_crate_02"
+  },
+  "plastic_monobloc_chair_01": {
+    "meters": [
+      0.642,
+      0.628,
+      0.88
+    ],
+    "source": "polyhaven:plastic_monobloc_chair_01"
+  },
+  "plunger": {
+    "meters": [
+      0.172,
+      0.172,
+      0.421
+    ],
+    "source": "polyhaven:plunger"
+  },
+  "pot_enamel_01": {
+    "meters": [
+      0.263,
+      0.18,
+      0.178
+    ],
+    "source": "polyhaven:pot_enamel_01"
+  },
+  "power_box_01": {
+    "meters": [
+      0.377,
+      0.418,
+      0.503
+    ],
+    "source": "polyhaven:power_box_01"
+  },
+  "security_camera_01": {
+    "meters": [
+      0.17,
+      0.554,
+      0.286
+    ],
+    "source": "polyhaven:security_camera_01"
+  },
+  "steel_frame_shelves_01": {
+    "meters": [
+      1.097,
+      0.502,
+      2.141
+    ],
+    "source": "polyhaven:steel_frame_shelves_01"
+  },
+  "strawberry_chocolate_cake": {
+    "meters": [
+      0.244,
+      0.24,
+      0.079
+    ],
+    "source": "polyhaven:strawberry_chocolate_cake"
+  },
+  "television_02": {
+    "meters": [
+      0.4,
+      0.35,
+      0.411
+    ],
+    "source": "polyhaven:television_02"
+  },
+  "tool_cart": {
+    "meters": [
+      1.273,
+      0.754,
+      0.965
+    ],
+    "source": "polyhaven:tool_cart"
+  },
+  "vintage_wooden_drawer_01": {
+    "meters": [
+      1.715,
+      1.007,
+      1.091
+    ],
+    "source": "polyhaven:vintage_wooden_drawer_01"
+  },
+  "wall_clock": {
+    "meters": [
+      0.32,
+      0.047,
+      0.32
+    ],
+    "source": "polyhaven:wall_clock"
+  }
+}

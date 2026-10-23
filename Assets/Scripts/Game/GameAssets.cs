@@ -31,6 +31,18 @@ namespace NightShift.Game
         [Tooltip("Scanned PBR surfaces (Assets/Art/Surfaces, made by Night Shift > Import Surfaces).")]
         public Material[] Surfaces;
 
+        /// <summary>A scanned 3D prop (Assets/Art/Models, made by Night Shift > Import Models).</summary>
+        [System.Serializable]
+        public class Prop
+        {
+            public string Name;
+            public GameObject Model;
+            public Material Material;
+        }
+
+        [Tooltip("Scanned 3D props the level places by name.")]
+        public Prop[] Props;
+
         [Tooltip("Screen-space ambient occlusion on the renderer, switched by the graphics quality.")]
         public UnityEngine.Rendering.Universal.ScriptableRendererFeature AmbientOcclusion;
 

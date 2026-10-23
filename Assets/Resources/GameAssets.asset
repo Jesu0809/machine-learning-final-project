@@ -48,6 +48,91 @@ MonoBehaviour:
   - {fileID: 2100000, guid: 50b1b2104d29c4ea8b394687c2063971, type: 2}
   - {fileID: 2100000, guid: 3351f2457d92640cbb8149a73ad4b201, type: 2}
   - {fileID: 2100000, guid: 8f8e01ec93b3c4845aded5f562e79df2, type: 2}
+  Props:
+  - Name: Barrel_02
+    Model: {fileID: 919132149155446097, guid: bf3c0595735fc4284b0fc602ec13710f, type: 3}
+    Material: {fileID: 2100000, guid: 3d5f55b178f804eaaa2888621668e842, type: 2}
+  - Name: SchoolChair_01
+    Model: {fileID: 919132149155446097, guid: 18dc801f0bb90460ca5e156e8816cfef, type: 3}
+    Material: {fileID: 2100000, guid: 7bfc76d369b1043da8c195a165f6abb1, type: 2}
+  - Name: WetFloorSign_01
+    Model: {fileID: 919132149155446097, guid: a2a28d66d108448e891d7c48a4c71a09, type: 3}
+    Material: {fileID: 2100000, guid: b4180950ff31c414dbbd12dc859a1e46, type: 2}
+  - Name: boombox
+    Model: {fileID: 919132149155446097, guid: fdbcb628df8d04b678e4df7b365e06a5, type: 3}
+    Material: {fileID: 2100000, guid: 371b9c1f8b0cc4f1b986f55e4d651d3b, type: 2}
+  - Name: cardboard_box_01
+    Model: {fileID: 919132149155446097, guid: 4ee28dc5a37ba40d69b8739490b2049e, type: 3}
+    Material: {fileID: 2100000, guid: d5449c072d9494bfb96b202b8da42d3d, type: 2}
+  - Name: dining_table
+    Model: {fileID: 919132149155446097, guid: f0a116898488c4843b83b1c45288261a, type: 3}
+    Material: {fileID: 2100000, guid: 4940e704730574d8286de1268cdd9e3f, type: 2}
+  - Name: electric_stove
+    Model: {fileID: 919132149155446097, guid: 451a42edeb4fa44d89ef1d95cb0e5db6, type: 3}
+    Material: {fileID: 2100000, guid: c37de3fe2bf78488c8a4d20b0025022f, type: 2}
+  - Name: industrial_storage_cart
+    Model: {fileID: 919132149155446097, guid: 0dca6490d7c704d099625b93d6bfe5aa, type: 3}
+    Material: {fileID: 2100000, guid: a6dd0be596d2f4a30825471da76c7b32, type: 2}
+  - Name: metal_office_desk
+    Model: {fileID: 919132149155446097, guid: b22361ef5f13547058ad9c75e44de324, type: 3}
+    Material: {fileID: 2100000, guid: 404bc289d183044a691733fa321fa41b, type: 2}
+  - Name: metal_tool_chest
+    Model: {fileID: 919132149155446097, guid: 38802a3de2d624cb09906dec6cd22f76, type: 3}
+    Material: {fileID: 2100000, guid: fc0aa96f9e4774eab84894939342b1e3, type: 2}
+  - Name: metal_toolbox
+    Model: {fileID: 919132149155446097, guid: 2ff0c6d1320284962b1fbaa472ed098f, type: 3}
+    Material: {fileID: 2100000, guid: 80dd3a789b9b94663985d484179a4a02, type: 2}
+  - Name: metal_trash_can
+    Model: {fileID: 919132149155446097, guid: 357dade7bf12a4ace962d8dc08706f5b, type: 3}
+    Material: {fileID: 2100000, guid: 4545ea2f5cffc44a6be1018b2c86556b, type: 2}
+  - Name: multi_cleaner_5_litre
+    Model: {fileID: 919132149155446097, guid: a07441a9f37614e7d95241d86ed6bd2a, type: 3}
+    Material: {fileID: 2100000, guid: c5839e6563a5f4757ad6d74b80c68c0b, type: 2}
+  - Name: old_drill_press
+    Model: {fileID: 919132149155446097, guid: 20068ec89581a4e429ad473979959c9c, type: 3}
+    Material: {fileID: 2100000, guid: bb62ac3e0486f4e53b66abfa1ce946bc, type: 2}
+  - Name: painted_wooden_bench
+    Model: {fileID: 919132149155446097, guid: 97d8243ed306f4d109f4cd926a52fc9a, type: 3}
+    Material: {fileID: 2100000, guid: 88fbefa6a89294385bed2d3d6c544f8b, type: 2}
+  - Name: plastic_broom
+    Model: {fileID: 919132149155446097, guid: 45582802aabc44962bfc43088ebab331, type: 3}
+    Material: {fileID: 2100000, guid: cb8a459f4ae63443e87a828be7640767, type: 2}
+  - Name: plastic_crate_02
+    Model: {fileID: 919132149155446097, guid: f710249aa887e43bf9b24c2e3bf3aa7a, type: 3}
+    Material: {fileID: 2100000, guid: cb246edda3d8c4ae8b34c25c7d265a60, type: 2}
+  - Name: plastic_monobloc_chair_01
+    Model: {fileID: 919132149155446097, guid: 29672d1a4fe0b4d25a0de6aa0826d977, type: 3}
+    Material: {fileID: 2100000, guid: f9ab7ed55ec1f4dd5999c7b80f4afba1, type: 2}
+  - Name: plunger
+    Model: {fileID: 919132149155446097, guid: 5afbea9f9053a4a86a0bf4e4b243ba36, type: 3}
+    Material: {fileID: 2100000, guid: 5af2c2a46b2484db2ac9292bb47d53b9, type: 2}
+  - Name: pot_enamel_01
+    Model: {fileID: 919132149155446097, guid: 041551f8855b7498e8a0792c188a94ce, type: 3}
+    Material: {fileID: 2100000, guid: d10e571aacbfa4e42b45c464aaf8c5ea, type: 2}
+  - Name: power_box_01
+    Model: {fileID: 919132149155446097, guid: c6e7c12f7e4ef453495032f25d5f0474, type: 3}
+    Material: {fileID: 2100000, guid: 6fd6dfb718b494da1af8cf4e5ad05ba0, type: 2}
+  - Name: security_camera_01
+    Model: {fileID: 919132149155446097, guid: 6c5113897fc4749da99add7c07005252, type: 3}
+    Material: {fileID: 2100000, guid: 0f4add8b512cc4d72b557fa0f0e050f8, type: 2}
+  - Name: steel_frame_shelves_01
+    Model: {fileID: 919132149155446097, guid: 09e4fac3bab574f4e8a471460dbafede, type: 3}
+    Material: {fileID: 2100000, guid: 0eb06198e63dc4ca3a3c958256275ffb, type: 2}
+  - Name: strawberry_chocolate_cake
+    Model: {fileID: 919132149155446097, guid: dcae65d24ab914bde85ad135667f221d, type: 3}
+    Material: {fileID: 2100000, guid: 8c0594fcd4cc6454f82e771ac3decdb7, type: 2}
+  - Name: television_02
+    Model: {fileID: 919132149155446097, guid: ce0ee37cc93a14e5aaeeccd96020c259, type: 3}
+    Material: {fileID: 2100000, guid: 80c5c839881244790aa60dd3825d1130, type: 2}
+  - Name: tool_cart
+    Model: {fileID: 919132149155446097, guid: 116da85eec6124b1ca9cb78fff4b8cdf, type: 3}
+    Material: {fileID: 2100000, guid: f3663549b405c4891b326150688a06f7, type: 2}
+  - Name: vintage_wooden_drawer_01
+    Model: {fileID: 919132149155446097, guid: 91b1d394390c0432c9766cc29eef11c6, type: 3}
+    Material: {fileID: 2100000, guid: ffaf6ae9a3121461ab60a1f7960691a2, type: 2}
+  - Name: wall_clock
+    Model: {fileID: 919132149155446097, guid: 3ef0bba72110346babe5ac78acc271fd, type: 3}
+    Material: {fileID: 2100000, guid: f2fb94d533e1b456384972049b22c6e2, type: 2}
   AmbientOcclusion: {fileID: -34212038002134958, guid: 20c182ee12e2d4feeb0459537dcba5e6, type: 2}
   TrainingCurve: {fileID: 4900000, guid: fdb9e7b94f31c4165bc628bbf5119087, type: 3}
   EvaluationResults: {fileID: 4900000, guid: da8984d745240434d82711163f23b489, type: 3}

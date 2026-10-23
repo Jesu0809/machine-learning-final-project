@@ -49,7 +49,7 @@ namespace NightShift.EditorTools
             return materials.ToArray();
         }
 
-        private static Material Material(string path, string name, Texture2D albedo, Texture2D normal, Texture2D mask, float meters)
+        internal static Material Material(string path, string name, Texture2D albedo, Texture2D normal, Texture2D mask, float meters)
         {
             var material = AssetDatabase.LoadAssetAtPath<Material>(path);
             if (material == null)
@@ -78,7 +78,7 @@ namespace NightShift.EditorTools
             return material;
         }
 
-        private static Texture2D Texture(string path, TextureImporterType type, bool srgb, int webSize = 1024)
+        internal static Texture2D Texture(string path, TextureImporterType type, bool srgb, int webSize = 1024)
         {
             var importer = (TextureImporter)AssetImporter.GetAtPath(path);
             if (importer != null)
