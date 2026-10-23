@@ -67,3 +67,6 @@ art-source/
 web/ml-frontend/node_modules/
 web/ml-frontend/dist/
 web/ml-frontend/.angular/
+
+# Fonts downloaded by tools/generate_signs.py
+tools/.font-cache/
