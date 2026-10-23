@@ -11,6 +11,8 @@ Marker) and Material Symbols icons, into Assets/Art/Signs/ of the Unity project:
     title_<key>.png      the big wall signs (SHOWTIME, PARTY ROOM, SECURITY, ...)
     map_<where>.png      a "YOU ARE HERE" directory of the building, drawn from PizzeriaLayout.cs
     poster_<n>.png       aged posters of the restaurant
+    label_<item>.png     the objective items: the breaker's warning plate, the staff keycard
+                         and the label of the security tape
     signs.json           width / height of every texture
 
 Fonts are downloaded once into tools/.font-cache (not committed).
@@ -23,6 +25,7 @@ import argparse
 import json
 import math
 import re
+import zlib
 from pathlib import Path
 
 import numpy as np
@@ -179,6 +182,11 @@ def grime(img, amount, seed):
     return result
 
 
+def seed(text):
+    """A stable seed for a sign's grime (Python's hash() changes on every run)."""
+    return zlib.crc32(text.encode()) % 1000
+
+
 def screws(draw, w, h, inset, radius=7):
     for x, y in ((inset, inset), (w - inset, inset), (inset, h - inset), (w - inset, h - inset)):
         draw.ellipse([x - radius, y - radius, x + radius, y + radius], fill=(150, 150, 145), outline=(60, 60, 60), width=2)
@@ -213,7 +221,7 @@ def door_plate(room):
     f = fit_font(d, name, "oswald", w - 330, 150, weight=650, spacing=6)
     draw_text(d, (240 + (w - 270) / 2, h / 2 + 4), name, f, CREAM if public else WHITE, spacing=6)
     screws(d, w, h, 46, 8)
-    return grime(img, 0.35, hash(room) % 1000)
+    return grime(img, 0.35, seed(room))
 
 
 def exit_box(arrow_left):
@@ -260,7 +268,7 @@ def neon_title(text, colors, width=1536, height=384, font_name="bungee"):
     img = ImageChops.add(img, glow)
     img = ImageChops.add(img, ImageChops.multiply(glow, Image.new("RGB", img.size, (120, 120, 120))))
     img.paste(letters, (0, 0), letters.convert("L").point(lambda v: 255 if v > 20 else 0))
-    return grime(img, 0.2, hash(text) % 1000)
+    return grime(img, 0.2, seed(text))
 
 
 def staff_title(text, plate=(196, 192, 176), ink=(32, 34, 34), width=1280, height=320):
@@ -271,7 +279,7 @@ def staff_title(text, plate=(196, 192, 176), ink=(32, 34, 34), width=1280, heigh
     f = fit_font(d, text, "oswald", width - 160, height - 110, weight=700, spacing=8)
     draw_text(d, (width / 2, height / 2 + 4), text, f, ink, spacing=8)
     screws(d, width, height, 34, 9)
-    return grime(img, 0.3, hash(text) % 1000)
+    return grime(img, 0.3, seed(text))
 
 
 # ---------------------------------------------------------------- directory maps
@@ -335,7 +343,7 @@ def directory(project, here, title):
     d.text((hx + 40, hy - 70), "YOU ARE HERE", font=f, fill=(170, 10, 10))
     legend = "RED: RESTAURANT     GREY-GREEN: STAFF ONLY     GREEN: WAY OUT (ONE OPENS EACH NIGHT)"
     draw_text(d, (w / 2, h - 50), legend, font("oswald", 34, 500), (60, 50, 44))
-    return grime(img, 0.45, hash(title) % 1000)
+    return grime(img, 0.45, seed(title))
 
 
 # ---------------------------------------------------------------- posters
@@ -667,6 +675,60 @@ def handprints(seed):
 
 # ---------------------------------------------------------------- main
 
+# ---------------------------------------------------------------- objective items
+
+def label_danger():
+    """The warning plate on the breaker box door."""
+    w, h = 512, 640
+    img = Image.new("RGB", (w, h), (238, 196, 40))
+    d = ImageDraw.Draw(img)
+    d.rectangle([0, 0, w - 1, 150], fill=(20, 20, 20))
+    draw_text(d, (w / 2, 78), "DANGER", font("bebas", 140), (238, 196, 40), spacing=10)
+    d.polygon([(w / 2, 190), (w / 2 - 150, 450), (w / 2 + 150, 450)], fill=(20, 20, 20))
+    d.polygon([(w / 2, 222), (w / 2 - 122, 434), (w / 2 + 122, 434)], fill=(238, 196, 40))
+    glyph, f = icon("bolt", 190)
+    draw_text(d, (w / 2, 352), glyph, f, (20, 20, 20))
+    draw_text(d, (w / 2, 512), "HIGH VOLTAGE", font("oswald", 64, 700), (20, 20, 20), spacing=3)
+    draw_text(d, (w / 2, 584), "AUTHORIZED STAFF ONLY", font("oswald", 38, 500), (20, 20, 20), spacing=2)
+    screws(d, w, h, 26, 8)
+    return grime(img, 0.45, 201)
+
+
+def label_keycard():
+    """The staff keycard in the office lockbox."""
+    w, h = 640, 404
+    img = Image.new("RGB", (w, h), (232, 234, 236))
+    d = ImageDraw.Draw(img)
+    d.rectangle([0, 0, w, 120], fill=(30, 70, 150))
+    draw_text(d, (w / 2 + 58, 62), "FAZBEAR ENTERTAINMENT", font("oswald", 42, 700), WHITE, spacing=2)
+    bear(d, 70, 70, 44, color=(150, 100, 60))
+    d.rectangle([40, 160, 200, 350], fill=(190, 196, 204), outline=(120, 126, 134), width=3)
+    glyph, f = icon("person", 150)
+    draw_text(d, (120, 258), glyph, f, (120, 126, 134))
+    draw_text(d, (430, 190), "STAFF ACCESS", font("oswald", 54, 700), (30, 70, 150), spacing=2)
+    draw_text(d, (430, 252), "LEVEL 2  -  NIGHT", font("oswald", 34, 500), (60, 64, 70), spacing=2)
+    d.rectangle([240, 300, 610, 340], fill=(24, 24, 26))
+    for i in range(34):
+        x = 248 + i * 10.6
+        d.rectangle([x, 304, x + (3 if i % 3 else 6), 336], fill=(232, 234, 236))
+    d.rectangle([0, h - 30, w, h], fill=(200, 30, 30))
+    return grime(img, 0.15, 202)
+
+
+def label_tape():
+    """The handwritten label on the security tape."""
+    w, h = 768, 256
+    img = Image.new("RGB", (w, h), (236, 228, 200))
+    d = ImageDraw.Draw(img)
+    for y in range(70, h, 46):
+        d.line([20, y, w - 20, y], fill=(170, 180, 205), width=2)
+    d.rectangle([0, 0, w, 34], fill=(190, 40, 40))
+    draw_text(d, (w / 2, 18), "SECURITY  -  CAM 03", font("oswald", 26, 600), WHITE, spacing=4)
+    draw_text(d, (w / 2, 112), "NIGHT OF 11/12/87", font("marker", 64), (30, 30, 80))
+    draw_text(d, (w / 2, 190), "DO NOT TAPE OVER", font("marker", 50), (150, 20, 20))
+    return grime(img, 0.25, 203)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--project", default=str(ROOT / "unity"), help="Unity project folder")
@@ -723,6 +785,9 @@ def main():
         save(f"arcade_side_{i}", side_art(i))
     for i, make in enumerate([poster_celebrate, poster_lets_eat, poster_rules, poster_help_wanted, poster_employee]):
         save(f"poster_{i}", make())
+    save("label_danger", label_danger())
+    save("label_keycard", label_keycard())
+    save("label_tape", label_tape())
     (out / "signs.json").write_text(json.dumps(made, indent=2, sort_keys=True) + "\n")
 
 

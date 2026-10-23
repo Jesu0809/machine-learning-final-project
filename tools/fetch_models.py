@@ -30,7 +30,8 @@ MODELS = [
     "security_camera_01",
     # Parts & service, storage
     "tool_cart", "old_drill_press", "metal_tool_chest", "steel_frame_shelves_01", "cardboard_box_01",
-    "plastic_crate_02", "Barrel_02", "metal_toolbox",
+    "plastic_crate_02", "Barrel_02", "metal_toolbox", "WoodenTable_03", "bench_vice_01", "metal_stool_01",
+    "portable_welding_cart", "portable_generator",
     # Kitchen
     "electric_stove", "industrial_storage_cart", "pot_enamel_01",
     # Restrooms, halls
