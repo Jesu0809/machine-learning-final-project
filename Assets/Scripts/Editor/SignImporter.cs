@@ -26,15 +26,20 @@ namespace NightShift.EditorTools
                 var importer = (TextureImporter)AssetImporter.GetAtPath(path);
                 if (importer != null)
                 {
-                    int webSize = Path.GetFileName(path).StartsWith("map_") ? 1024 : 512;
-                    bool changed = importer.textureType != TextureImporterType.Default || importer.wrapMode != TextureWrapMode.Clamp || importer.anisoLevel != 8;
+                    string name = Path.GetFileName(path);
+                    int webSize = name.StartsWith("map_") ? 1024 : 512;
+                    // Fences and wrapping paper tile; everything with see-through parts keeps clean edges.
+                    TextureWrapMode wrap = name.StartsWith("fence_") || name.StartsWith("wrap_") ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
+                    bool transparent = name.StartsWith("decal_") || name.StartsWith("cctv_") || name.StartsWith("fence_");
+                    bool changed = importer.textureType != TextureImporterType.Default || importer.wrapMode != wrap || importer.anisoLevel != 8
+                                   || importer.alphaIsTransparency != transparent;
                     importer.textureType = TextureImporterType.Default;
                     importer.sRGBTexture = true;
                     importer.mipmapEnabled = true;
-                    importer.wrapMode = TextureWrapMode.Clamp;
+                    importer.wrapMode = wrap;
                     importer.anisoLevel = 8;
                     importer.npotScale = TextureImporterNPOTScale.ToNearest;
-                    importer.alphaIsTransparency = Path.GetFileName(path).StartsWith("decal_");
+                    importer.alphaIsTransparency = transparent;
                     TextureImporterPlatformSettings web = importer.GetPlatformTextureSettings("WebGL");
                     if (!web.overridden || web.maxTextureSize != webSize || !web.crunchedCompression)
                     {
