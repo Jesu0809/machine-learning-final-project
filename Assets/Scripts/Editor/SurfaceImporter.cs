@@ -41,7 +41,7 @@ namespace NightShift.EditorTools
                 }
                 Texture2D albedo = Texture(path + "_albedo.jpg", TextureImporterType.Default, true);
                 Texture2D normal = Texture(path + "_normal.jpg", TextureImporterType.NormalMap, false);
-                Texture2D mask = Texture(path + "_mask.png", TextureImporterType.Default, false);
+                Texture2D mask = Texture(path + "_mask.png", TextureImporterType.Default, false, 512);
                 float meters = sizes.TryGetValue(name, out float size) ? size : 2f;
                 materials.Add(Material(path + ".mat", name, albedo, normal, mask, meters));
             }
@@ -78,7 +78,7 @@ namespace NightShift.EditorTools
             return material;
         }
 
-        private static Texture2D Texture(string path, TextureImporterType type, bool srgb)
+        private static Texture2D Texture(string path, TextureImporterType type, bool srgb, int webSize = 1024)
         {
             var importer = (TextureImporter)AssetImporter.GetAtPath(path);
             if (importer != null)
@@ -91,13 +91,16 @@ namespace NightShift.EditorTools
                 importer.anisoLevel = 8;
                 importer.wrapMode = TextureWrapMode.Repeat;
                 importer.textureCompression = TextureImporterCompression.Compressed;
-                // The web build downloads every texture: 1K there.
+                // The web build downloads every texture: 1K (masks 512) and crunch-compressed there.
                 TextureImporterPlatformSettings web = importer.GetPlatformTextureSettings("WebGL");
-                if (!web.overridden || web.maxTextureSize != 1024)
+                if (!web.overridden || web.maxTextureSize != webSize || !web.crunchedCompression)
                 {
                     web.overridden = true;
-                    web.maxTextureSize = 1024;
+                    web.maxTextureSize = webSize;
                     web.format = TextureImporterFormat.Automatic;
+                    web.textureCompression = TextureImporterCompression.Compressed;
+                    web.crunchedCompression = true;
+                    web.compressionQuality = 60;
                     importer.SetPlatformTextureSettings(web);
                     changed = true;
                 }
