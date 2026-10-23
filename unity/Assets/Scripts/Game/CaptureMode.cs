@@ -478,6 +478,17 @@ namespace NightShift.Game
                 (new Vector3(-17f, 0f, -12f), new Vector3(-17f, 1.6f, -9.3f), "24n-office-north-wall"),
                 (new Vector3(16f, 0f, -14.6f), new Vector3(16f, 1.7f, -17f), "24o-front-doors"),
                 (new Vector3(-18.6f, 0f, 3.6f), new Vector3(-16.45f, 2.1f, 3.6f), "24p-head-shelf"),
+                (new Vector3(-24.6f, 0f, 7.5f), new Vector3(-29f, 1.4f, 3f), "25a-alley"),
+                (new Vector3(-26.5f, 0f, 13f), new Vector3(-24f, 1f, 2f), "25b-alley-south"),
+                (new Vector3(-10.5f, 0f, 6.2f), new Vector3(-10.8f, 1f, 9.5f), "25c-kitchen-row"),
+                (new Vector3(-20.8f, 0f, -10.75f), new Vector3(-21.58f, 1.53f, -10.75f), "25d-tv-head-on"),
+                (new Vector3(7.6f, 0f, -9.6f), new Vector3(9.5f, 0.3f, -7.9f), "25e-party-gifts"),
+                (new Vector3(14.6f, 0f, -13.2f), new Vector3(13.2f, 1.3f, -9.9f), "25f-ticket-booth"),
+                (new Vector3(14.8f, 0f, -12.6f), new Vector3(12.8f, 0.4f, -12.6f), "25g-lost-found"),
+                (new Vector3(-4.2f, 0f, -9f), new Vector3(-2.4f, 1.1f, -9f), "25h-restroom-sink"),
+                (new Vector3(-19.4f, 0f, -12.8f), new Vector3(-21.2f, 0.8f, -12.8f), "25i-filing-cabinet"),
+                (new Vector3(-17.8f, 0f, -11.6f), new Vector3(-17.8f, 2.5f, -9.2f), "25j-clock"),
+                (new Vector3(4.25f, 0f, 6.3f), new Vector3(4.25f, 0.8f, 8.25f), "25k-party-table"),
             })
             {
                 Teleport(spot, look - spot);

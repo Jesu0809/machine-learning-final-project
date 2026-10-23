@@ -63,6 +63,7 @@ namespace NightShift.Game
 
             exterior.BuildGround(root);
             exterior.BuildFront(root);
+            exterior.BuildBackAlley(root);
             exterior.BuildSigns(root, assets);
             exterior.BuildStreetLights(root);
             exterior.BuildSkyline(root);
@@ -196,6 +197,143 @@ namespace NightShift.Game
             {
                 float width = Mathf.Min(6f, toX - x);
                 BuildKit.Box(name, root, new Vector3(x + width * 0.5f, FrontHeight * 0.5f, z), new Vector3(width, FrontHeight, 0.3f), material, 2f);
+            }
+        }
+
+        // ------------------------------------------------------------------ the back alley
+
+        /// <summary>
+        /// What the loading door opens onto: a wet alley between the pizzeria and the next
+        /// building, lit by one buzzing sodium lamp over the door (always on, unlike the street
+        /// lights). A dumpster, pallets, trash cans, puddles and a chain-link fence at the end.
+        /// </summary>
+        private void BuildBackAlley(Transform root)
+        {
+            const float alleyWestX = WestX - 9f;     // the wall of the next building
+            const float southZ = SidewalkZ;
+            const float fenceZ = BackZ + 5f;
+            Vector3 loading = PizzeriaLayout.BackExitDoor;
+            Material brick = BuildKit.Surface("bricks", () => ProceduralTextures.Bricks(new Color(0.42f, 0.17f, 0.12f), new Color(0.32f, 0.3f, 0.27f)), 0.25f);
+            Material darkBrick = BuildKit.Pbr("bricks", new Color(0.55f, 0.5f, 0.5f)) ?? brick;
+            Material boards = BuildKit.Surface("boards", () => ProceduralTextures.Planks(new Color(0.3f, 0.22f, 0.14f)), 0.2f);
+            Material steel = BuildKit.Plain("frameSteel", new Color(0.12f, 0.12f, 0.13f), 0.5f, 0.7f);
+            Material dumpster = BuildKit.Pbr("metal_green", new Color(0.75f, 0.85f, 0.75f)) ?? BuildKit.Plain("dumpster", new Color(0.12f, 0.25f, 0.15f), 0.4f, 0.5f);
+            Material rubber = BuildKit.Plain("rubber", new Color(0.03f, 0.03f, 0.03f), 0.3f);
+
+            // Ground in tiles (lights per object), the next building's wall across the alley.
+            for (float z = southZ; z < fenceZ; z += 6f)
+            {
+                float depth = Mathf.Min(6f, fenceZ - z);
+                BuildKit.Box("AlleyGround", root, new Vector3((alleyWestX + WestX) * 0.5f, -0.07f, z + depth * 0.5f), new Vector3(WestX - alleyWestX, 0.1f, depth), asphalt, 6f, false);
+                BuildKit.Box("NextBuilding", root, new Vector3(alleyWestX - 0.2f, 4f, z + depth * 0.5f), new Vector3(0.4f, 8f, depth), darkBrick, 2f);
+            }
+            // Its windows: boarded, dark, and one with a weak light (someone still lives there).
+            float[] windowZ = { -10f, -2f, 6f, 13f };
+            for (int i = 0; i < windowZ.Length; i++)
+            {
+                var center = new Vector3(alleyWestX + 0.02f, 3.4f, windowZ[i]);
+                BuildKit.Box("Window", root, center, new Vector3(0.06f, 1.6f, 1.2f),
+                             i == 2 ? BuildKit.Glow("windowWarm", new Color(1f, 0.7f, 0.35f), 0.35f) : BuildKit.Plain("darkGlass", new Color(0.02f, 0.025f, 0.03f), 0.96f, 0.2f), 1f, false);
+                BuildKit.Box("Sill", root, center + new Vector3(0.08f, -0.85f, 0f), new Vector3(0.2f, 0.08f, 1.4f), steel, 1f, false);
+                if (i % 2 == 1)
+                {
+                    for (int b = 0; b < 3; b++)
+                    {
+                        var plank = BuildKit.Box("Board", root, center + new Vector3(0.06f, -0.5f + b * 0.5f, 0f), new Vector3(0.04f, 0.24f, 1.4f), boards, 1f, false);
+                        plank.transform.localRotation = Quaternion.Euler((b - 1) * 8f, 0f, 0f);
+                    }
+                }
+            }
+            // A fire escape ladder up the next building.
+            for (float y = 1.2f; y < 7.5f; y += 0.35f)
+            {
+                BuildKit.Box("Rung", root, new Vector3(alleyWestX + 0.35f, y, 9.5f), new Vector3(0.04f, 0.04f, 0.5f), steel, 1f, false);
+            }
+            foreach (float side in new[] { -0.25f, 0.25f })
+            {
+                BuildKit.Box("Rail", root, new Vector3(alleyWestX + 0.35f, 4.35f, 9.5f + side), new Vector3(0.05f, 6.3f, 0.05f), steel, 1f, false);
+            }
+
+            // The sodium lamp over the loading door, and its fixture.
+            BuildKit.Box("WallPack", root, new Vector3(WestX - 0.2f, 3.3f, loading.z), new Vector3(0.25f, 0.3f, 0.4f), steel, 1f, false);
+            BuildKit.Box("WallPackLens", root, new Vector3(WestX - 0.34f, 3.22f, loading.z), new Vector3(0.03f, 0.18f, 0.32f), BuildKit.Glow("sodium", new Color(1f, 0.62f, 0.25f), 4f), 1f, false);
+            var sodium = new GameObject("SodiumLamp").AddComponent<Light>();
+            sodium.transform.SetParent(root, false);
+            sodium.transform.localPosition = new Vector3(WestX - 0.45f, 3.2f, loading.z);
+            sodium.transform.localRotation = Quaternion.Euler(60f, -90f, 0f);
+            sodium.type = LightType.Spot;
+            sodium.spotAngle = 125f;
+            sodium.innerSpotAngle = 60f;
+            sodium.range = 14f;
+            sodium.intensity = 7f;
+            sodium.color = new Color(1f, 0.66f, 0.32f);
+            sodium.shadows = LightShadows.Soft;
+            sodium.gameObject.AddComponent<SodiumFlicker>();
+
+            // The dumpster against the wall, lids half open.
+            var bin = new GameObject("Dumpster").transform;
+            bin.SetParent(root, false);
+            bin.localPosition = new Vector3(WestX - 0.75f, 0f, loading.z - 4.2f);
+            BuildKit.Box("Body", bin, new Vector3(0f, 0.7f, 0f), new Vector3(1.1f, 1.1f, 1.9f), dumpster);
+            BuildKit.Box("Rim", bin, new Vector3(0f, 1.27f, 0f), new Vector3(1.16f, 0.06f, 1.96f), dumpster, 1f, false);
+            for (int i = 0; i < 2; i++)
+            {
+                var lid = BuildKit.Box("Lid", bin, new Vector3(-0.05f, 1.32f + i * 0.08f, -0.47f + i * 0.95f), new Vector3(1.2f, 0.04f, 0.95f), BuildKit.Plain("lidBlack", new Color(0.05f, 0.05f, 0.05f), 0.4f), 1f, false);
+                lid.transform.localRotation = Quaternion.Euler(0f, 0f, i == 0 ? 4f : -22f);
+            }
+            foreach (Vector3 wheel in new[] { new Vector3(-0.4f, 0.08f, -0.8f), new Vector3(0.4f, 0.08f, -0.8f), new Vector3(-0.4f, 0.08f, 0.8f), new Vector3(0.4f, 0.08f, 0.8f) })
+            {
+                BuildKit.Cylinder("Wheel", bin, wheel, 0.16f, 0.06f, rubber).transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+            }
+            BuildKit.Prop("cardboard_box_01", root, new Vector3(WestX - 1.6f, 0f, loading.z - 5.6f), 35f);
+            BuildKit.Prop("cardboard_box_01", root, new Vector3(WestX - 1.7f, 0f, loading.z - 6.2f), -20f, 0.9f);
+
+            // Pallets leaning on the next building, trash cans by the door.
+            for (int i = 0; i < 3; i++)
+            {
+                var pallet = new GameObject("Pallet").transform;
+                pallet.SetParent(root, false);
+                pallet.localPosition = new Vector3(alleyWestX + 0.35f + i * 0.12f, 0.6f, 2f + i * 0.08f);
+                pallet.localRotation = Quaternion.Euler(0f, 0f, -14f + i * 2f);
+                for (int slat = 0; slat < 5; slat++)
+                {
+                    BuildKit.Box("Slat", pallet, new Vector3(0f, -0.5f + slat * 0.25f, 0f), new Vector3(0.025f, 0.1f, 1.2f), boards, 1f, false);
+                }
+                BuildKit.Box("Stringer", pallet, new Vector3(-0.05f, 0f, -0.55f), new Vector3(0.08f, 1.2f, 0.1f), boards, 1f, false);
+                BuildKit.Box("Stringer", pallet, new Vector3(-0.05f, 0f, 0.55f), new Vector3(0.08f, 1.2f, 0.1f), boards, 1f, false);
+            }
+            BuildKit.Prop("metal_trash_can", root, new Vector3(WestX - 0.55f, 0f, loading.z + 3.1f), 20f);
+            BuildKit.Prop("metal_trash_can", root, new Vector3(WestX - 0.6f, 0f, loading.z + 3.8f), -35f);
+            BuildKit.Prop("Barrel_02", root, new Vector3(alleyWestX + 0.8f, 0f, 11.2f), 0f);
+            BuildKit.Prop("plastic_crate_02", root, new Vector3(alleyWestX + 0.9f, 0f, 7.4f), 12f);
+
+            // Puddles that mirror the sodium lamp.
+            Texture2D wet = BuildKit.SignTexture("decal_puddle");
+            if (wet != null)
+            {
+                Material water = BuildKit.Decal("puddle", wet, new Color(0.35f, 0.38f, 0.4f, 1f));
+                water.SetFloat("_Smoothness", 0.97f);
+                Vector3[] puddles = { new Vector3(WestX - 6.2f, 0f, loading.z + 1.5f), new Vector3(WestX - 5.5f, 0f, loading.z - 3f), new Vector3(WestX - 2.4f, 0f, loading.z + 6.5f) };
+                for (int i = 0; i < puddles.Length; i++)
+                {
+                    var quad = BuildKit.Quad("Puddle", root, puddles[i] + Vector3.up * -0.015f, new Vector2(2.6f, 1.7f), 0f, water);
+                    quad.transform.localRotation = Quaternion.Euler(90f, i * 70f, 0f);
+                }
+            }
+
+            // Chain-link fence closing the alley at the back.
+            Texture2D link = BuildKit.SignTexture("fence_chainlink");
+            for (float x = alleyWestX; x < WestX - 0.1f; x += 3f)
+            {
+                BuildKit.Cylinder("FencePost", root, new Vector3(x, 1.1f, fenceZ), 0.06f, 2.2f, steel);
+            }
+            BuildKit.Cylinder("FenceRail", root, new Vector3((alleyWestX + WestX) * 0.5f, 2.2f, fenceZ), 0.04f, WestX - alleyWestX, steel).transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+            if (link != null)
+            {
+                Material mesh = BuildKit.Decal("chainLink", link, Color.white);
+                mesh.SetTextureScale("_BaseMap", new Vector2((WestX - alleyWestX) / 0.8f, 2.2f / 0.8f));
+                BuildKit.Quad("Fence", root, new Vector3((alleyWestX + WestX) * 0.5f, 1.1f, fenceZ), new Vector2(WestX - alleyWestX, 2.2f), 180f, mesh);
+                BuildKit.Quad("FenceBack", root, new Vector3((alleyWestX + WestX) * 0.5f, 1.1f, fenceZ + 0.01f), new Vector2(WestX - alleyWestX, 2.2f), 0f, mesh);
             }
         }
 
@@ -586,6 +724,32 @@ namespace NightShift.Game
             {
                 lamp.enabled = on;
             }
+        }
+    }
+
+    /// <summary>The alley's sodium lamp: a steady orange with, now and then, a stutter.</summary>
+    public class SodiumFlicker : MonoBehaviour
+    {
+        private Light lamp;
+        private float baseIntensity;
+        private float nextStutter;
+        private float stutterUntil;
+
+        private void Awake()
+        {
+            lamp = GetComponent<Light>();
+            baseIntensity = lamp.intensity;
+            nextStutter = Time.time + Random.Range(4f, 12f);
+        }
+
+        private void Update()
+        {
+            if (Time.time >= nextStutter)
+            {
+                stutterUntil = Time.time + Random.Range(0.15f, 0.5f);
+                nextStutter = Time.time + Random.Range(5f, 15f);
+            }
+            lamp.intensity = Time.time < stutterUntil && Random.value < 0.5f ? baseIntensity * 0.25f : baseIntensity;
         }
     }
 }

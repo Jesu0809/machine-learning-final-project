@@ -119,7 +119,13 @@ namespace NightShift.Game
             }
             if (area.height > 4f)
             {
-                if (BuildKit.Prop("wall_clock", root, new Vector3(area.center.x + 1.2f, 2.5f, area.yMax - inset + 0.01f), 180f, 1.3f, false) == null)
+                GameObject wallClock = BuildKit.Prop("wall_clock", root, new Vector3(area.center.x + 1.2f, 2.5f, area.yMax - inset + 0.01f), 180f, 1.3f, false);
+                if (wallClock != null)
+                {
+                    // Its glass mirrored the room so much the face could not be read.
+                    BuildKit.Matte(wallClock, 0.35f);
+                }
+                else
                 {
                     var clock = BuildKit.Cylinder("Clock", root, new Vector3(area.center.x + 1.2f, 2.5f, area.yMax - inset), 0.4f, 0.05f, BuildKit.Plain("clockFace", new Color(0.85f, 0.82f, 0.75f), 0.4f));
                     clock.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
@@ -425,19 +431,31 @@ namespace NightShift.Game
                     {
                         var gift = new Vector2(9.3f + (i % 2) * 0.45f, -7.7f - (i / 2) * 0.45f);
                         LevelProps.Place(room, gift, 0.3f, () =>
-                            BuildKit.Box("Gift", root, new Vector3(gift.x, 0.2f, gift.y), new Vector3(0.4f, 0.4f, 0.4f), BuildKit.Plain("gift" + i, Party[i % Party.Length], 0.4f), 1f, false, i * 17f));
+                            Gift(root, new Vector3(gift.x, 0f, gift.y), new Vector3(0.4f - (i % 2) * 0.08f, 0.4f - (i / 2) * 0.12f, 0.4f), i, i * 17f));
                     }
                     LevelProps.Sign(root, new Vector3(4.23f, 2.5f, -11f), 90f, "HAPPY BIRTHDAY", new Color(0.3f, 0.85f, 1f), new Color(0.08f, 0.05f, 0.25f), 3.4f);
                     break;
 
                 case Room.Storage:
-                    // A row of spare masks watching the door.
+                    // A row of spare heads watching the door: one looks straight at you, one has an
+                    // eye that still flickers, one lost its hat (it is on the floor below).
+                    Quaternion[] poses = { Quaternion.Euler(0f, 262f, 8f), Quaternion.Euler(-6f, 252f, 22f), Quaternion.Euler(4f, 292f, -6f) };
+                    HeadStyle[] styles = { HeadStyle.Default, HeadStyle.LiveEye, HeadStyle.NoHat };
                     for (int i = 0; i < 3; i++)
                     {
                         float z = 2.9f + i * 0.7f;
                         BuildKit.Box("MaskShelf", root, new Vector3(-16.4f, 1.85f, z), new Vector3(0.35f, 0.04f, 0.65f), BuildKit.Plain("pipe", new Color(0.32f, 0.3f, 0.27f), 0.5f, 0.6f), 1f, false);
-                        LevelProps.SpareHead(root, new Vector3(-16.45f, 2.15f, z), 270f + (i - 1) * 15f);
+                        GameObject head = FreddyParts.Head(root, new Vector3(-16.45f, 2.17f, z), poses[i], 1f, styles[i]);
+                        if (head == null)
+                        {
+                            LevelProps.SpareHead(root, new Vector3(-16.45f, 2.15f, z), 270f + (i - 1) * 15f);
+                        }
+                        else if (i == 0)
+                        {
+                            LevelProps.NeckWires(head.transform);
+                        }
                     }
+                    FreddyParts.Hat(root, new Vector3(-16.75f, 0.09f, 4.6f), Quaternion.Euler(0f, 40f, 95f), 1f);
                     break;
 
                 case Room.Arcade:
@@ -476,11 +494,32 @@ namespace NightShift.Game
                         var post = new Vector2(13.4f + i * 1.2f, -14.6f);
                         LevelProps.Place(room, post, 0.2f, () => BuildKit.Cylinder("Stanchion", root, new Vector3(post.x, 0.45f, post.y), 0.08f, 0.9f, BuildKit.Plain("brass", new Color(0.8f, 0.6f, 0.25f), 0.7f, 0.9f)));
                     }
-                    LevelProps.Place(room, new Vector2(19.4f, -16.4f), 0.5f, () =>
+                    LevelProps.PlaceNear(room, new Vector2(12.8f, -12.6f), 0.45f, spot =>
                     {
-                        BuildKit.Box("LostAndFound", root, new Vector3(19.4f, 0.3f, -16.4f), new Vector3(0.7f, 0.6f, 0.5f), BuildKit.Surface("cardboard", () => ProceduralTextures.Grimy(new Color(0.55f, 0.42f, 0.25f), 0.2f), 0.1f));
-                        LevelProps.SpareHead(root, new Vector3(19.4f, 0.75f, -16.4f), 200f, 0.35f);
-                    });
+                        var box = new Vector3(spot.x, 0f, spot.y);
+                        // An open cardboard box, LOST & FOUND in marker, a small head looking out of it.
+                        Material cardboard = BuildKit.Surface("cardboard", () => ProceduralTextures.Grimy(new Color(0.55f, 0.42f, 0.25f), 0.2f), 0.1f);
+                        foreach ((Vector3 at, Vector3 size) in new[]
+                        {
+                            (new Vector3(0f, 0.02f, 0f), new Vector3(0.7f, 0.04f, 0.5f)), (new Vector3(-0.34f, 0.3f, 0f), new Vector3(0.02f, 0.6f, 0.5f)),
+                            (new Vector3(0.34f, 0.3f, 0f), new Vector3(0.02f, 0.6f, 0.5f)), (new Vector3(0f, 0.3f, -0.24f), new Vector3(0.7f, 0.6f, 0.02f)),
+                            (new Vector3(0f, 0.3f, 0.24f), new Vector3(0.7f, 0.6f, 0.02f)),
+                        })
+                        {
+                            BuildKit.Box("LostAndFound", root, box + at, size, cardboard);
+                        }
+                        foreach (float side in new[] { -1f, 1f })
+                        {
+                            BuildKit.Box("Flap", root, box + new Vector3(side * 0.47f, 0.62f, 0f), new Vector3(0.26f, 0.02f, 0.5f), cardboard, 1f, false)
+                                .transform.localRotation = Quaternion.Euler(0f, 0f, side * -35f);
+                        }
+                        Texture2D label = BuildKit.SignTexture("decal_lost_found");
+                        if (label != null)
+                        {
+                            BuildKit.Quad("Label", root, box + new Vector3(0.355f, 0.35f, 0f), new Vector2(0.4f, 0.2f), 90f, BuildKit.Decal("lostFound", label, Color.white));
+                        }
+                        LevelProps.SpareHead(root, box + new Vector3(0f, 0.6f, 0f), 200f, 0.35f);
+                    }, 2.5f);
                     break;
             }
         }
@@ -554,6 +593,27 @@ namespace NightShift.Game
                 Vector3 candle = top + new Vector3(Mathf.Cos(angle) * 0.12f, 0.27f, Mathf.Sin(angle) * 0.12f);
                 BuildKit.Cylinder("Candle", root, candle, 0.02f, 0.12f, BuildKit.Plain("candle", new Color(0.3f, 0.5f, 0.9f)));
             }
+        }
+
+        /// <summary>A wrapped present: patterned paper, a ribbon both ways and a bow on top.</summary>
+        private static void Gift(Transform root, Vector3 floor, Vector3 size, int index, float yaw)
+        {
+            var gift = new GameObject("Gift").transform;
+            gift.SetParent(root, false);
+            gift.localPosition = floor;
+            gift.localRotation = Quaternion.Euler(0f, yaw, 0f);
+            Texture2D paper = BuildKit.SignTexture("wrap_" + index % 3);
+            Material wrap = paper != null ? BuildKit.Picture("sign:" + paper.name, paper) : BuildKit.Plain("gift" + index, Party[index % Party.Length], 0.4f);
+            Color[] ribbons = { new Color(0.95f, 0.85f, 0.2f), new Color(0.9f, 0.15f, 0.2f), new Color(0.2f, 0.4f, 0.9f) };
+            Material ribbon = BuildKit.Plain("ribbon" + index % 3, ribbons[index % 3], 0.6f);
+            BuildKit.Box("Box", gift, new Vector3(0f, size.y * 0.5f, 0f), size, wrap, 0.25f, true);
+            BuildKit.Box("RibbonX", gift, new Vector3(0f, size.y * 0.5f, 0f), new Vector3(size.x + 0.006f, size.y + 0.006f, 0.04f), ribbon, 1f, false);
+            BuildKit.Box("RibbonZ", gift, new Vector3(0f, size.y * 0.5f, 0f), new Vector3(0.04f, size.y + 0.006f, size.z + 0.006f), ribbon, 1f, false);
+            foreach (float side in new[] { -1f, 1f })
+            {
+                BuildKit.Sphere("Bow", gift, new Vector3(side * 0.05f, size.y + 0.03f, 0f), 1f, ribbon).transform.localScale = new Vector3(0.09f, 0.05f, 0.04f);
+            }
+            BuildKit.Sphere("Knot", gift, new Vector3(0f, size.y + 0.02f, 0f), 0.035f, ribbon);
         }
 
         public static void Endoskeleton(Transform root, Vector3 bench)

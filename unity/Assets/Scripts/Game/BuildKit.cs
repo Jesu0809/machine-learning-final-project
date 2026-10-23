@@ -280,6 +280,27 @@ namespace NightShift.Game
 
         // ------------------------------------------------------------------ scanned props
 
+        /// <summary>Makes a placed prop less glossy (a copy of its material, shared by the same name and amount).</summary>
+        public static void Matte(GameObject prop, float smoothness)
+        {
+            foreach (Renderer renderer in prop.GetComponentsInChildren<Renderer>())
+            {
+                Material source = renderer.sharedMaterial;
+                if (source == null)
+                {
+                    continue;
+                }
+                string key = "matte:" + source.name + ":" + smoothness.ToString("0.00");
+                if (!Materials.TryGetValue(key, out Material matte))
+                {
+                    matte = new Material(source) { name = key };
+                    matte.SetFloat("_Smoothness", smoothness);
+                    Materials[key] = matte;
+                }
+                renderer.sharedMaterial = matte;
+            }
+        }
+
         /// <summary>True if the scanned prop <paramref name="name"/> was imported.</summary>
         public static bool HasProp(string name) => FindProp(name) != null;
 

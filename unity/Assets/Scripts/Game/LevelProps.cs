@@ -70,8 +70,7 @@ namespace NightShift.Game
                 }
                 BuildKit.Box("Papers", root, new Vector3(p.x + 0.1f, 0.81f, p.y + 0.6f), new Vector3(0.3f, 0.02f, 0.4f), BuildKit.Plain("paper", new Color(0.85f, 0.83f, 0.75f)), 1f, false);
             });
-            PlaceNear(Room.Office, new Vector2(-21.2f, -12.8f), 0.5f, p =>
-                BuildKit.Box("FilingCabinet", root, new Vector3(p.x, 0.7f, p.y), new Vector3(0.5f, 1.4f, 0.7f), Metal(new Color(0.35f, 0.38f, 0.36f))));
+            PlaceNear(Room.Office, new Vector2(-21.2f, -12.8f), 0.5f, p => FilingCabinet(root, new Vector3(p.x, 0f, p.y), 90f));
             Sign(root, new Vector3(-19f, 2.3f, -15.77f), 0f, "SECURITY", new Color(0.8f, 0.8f, 0.7f), new Color(0.12f, 0.15f, 0.25f), 1.8f);
         }
 
@@ -98,10 +97,13 @@ namespace NightShift.Game
                     BuildKit.Box("Workbench", root, new Vector3(p.x, 0.45f, p.y), new Vector3(1.8f, 0.9f, 0.7f), wood);
                 }
                 float top = scanned ? 0.83f : 0.9f;
-                float spacing = scanned ? 0.4f : 0.6f;
-                for (int i = 0; i < 3; i++)
+                if (!HeadBench(root, p, top))
                 {
-                    SpareHead(root, new Vector3(p.x - spacing + i * spacing - (scanned ? 0.12f : 0f), top + 0.25f, p.y), (i - 1) * 20f, 0.6f);
+                    float spacing = scanned ? 0.4f : 0.6f;
+                    for (int i = 0; i < 3; i++)
+                    {
+                        SpareHead(root, new Vector3(p.x - spacing + i * spacing - (scanned ? 0.12f : 0f), top + 0.25f, p.y), (i - 1) * 20f, 0.6f);
+                    }
                 }
                 if (scanned)
                 {
@@ -128,11 +130,7 @@ namespace NightShift.Game
             for (int i = 0; i < 2; i++)
             {
                 float z = -8.4f - i * 1.3f;
-                Place(Room.Restrooms, new Vector2(-2.5f, z), 0.3f, () =>
-                {
-                    BuildKit.Box("Sink", root, new Vector3(-2.45f, 0.85f, z), new Vector3(0.5f, 0.15f, 0.6f), porcelain);
-                    BuildKit.Box("Mirror", root, new Vector3(-2.22f, 1.6f, z), new Vector3(0.02f, 0.7f, 0.55f), mirror, 1f, false);
-                });
+                Place(Room.Restrooms, new Vector2(-2.5f, z), 0.3f, () => Washbasin(root, new Vector3(-2.2f, 0f, z), 270f, porcelain, mirror));
             }
             Material stall = BuildKit.Plain("stall", new Color(0.32f, 0.4f, 0.42f), 0.4f, 0.3f);
             for (int i = 0; i < 3; i++)
@@ -231,7 +229,11 @@ namespace NightShift.Game
                     }
                 }
             });
-            PlaceNear(Room.Kitchen, new Vector2(-12.4f, 7.6f), 0.5f, p => Fridge(root, new Vector3(p.x, 0f, p.y), 180f));
+            // The fridge in the row along the north wall, next to the stoves (not out in the room).
+            if (!PlaceNear(Room.Kitchen, new Vector2(-11.1f, 9.45f), 0.45f, p => Fridge(root, new Vector3(p.x, 0f, p.y), 180f), 0.5f))
+            {
+                PlaceNear(Room.Kitchen, new Vector2(-13.35f, 8.4f), 0.45f, p => Fridge(root, new Vector3(p.x, 0f, p.y), 90f), 0.8f);
+            }
             PlaceNear(Room.Kitchen, new Vector2(-7.75f, 9.3f), 0.6f, p =>
             {
                 Counter(root, new Vector3(p.x, 0f, p.y), 180f, steel);
@@ -336,8 +338,7 @@ namespace NightShift.Game
         {
             PlaceNear(Room.ExitLobby, new Vector2(13.2f, -9.9f), 0.9f, p =>
             {
-                BuildKit.Box("TicketBooth", root, new Vector3(p.x, 0.6f, p.y), new Vector3(2.0f, 1.2f, 1.0f), BuildKit.Plain("booth", new Color(0.4f, 0.1f, 0.1f), 0.4f));
-                BuildKit.Box("Glass", root, new Vector3(p.x, 1.6f, p.y - 0.45f), new Vector3(2.0f, 0.8f, 0.05f), BuildKit.Plain("glass", new Color(0.3f, 0.35f, 0.4f), 0.9f), 1f, false);
+                TicketBooth(root, new Vector3(p.x, 0f, p.y));
             });
             PlaceNear(Room.ExitLobby, new Vector2(19.5f, -13.5f), 0.6f, p =>
             {
@@ -434,11 +435,32 @@ namespace NightShift.Game
         /// <summary>Party hats and plates on a table top.</summary>
         public static void PartySetting(Transform parent, Vector3 top)
         {
+            // Paper plates with a printed rim, a paper cup each, party hats with a pompom.
+            Texture2D plate = BuildKit.SignTexture("decal_paper_plate");
+            Material cupRed = BuildKit.Plain("cupRed", new Color(0.75f, 0.1f, 0.12f), 0.35f);
+            Material cupRim = BuildKit.Plain("cupRim", new Color(0.92f, 0.9f, 0.86f), 0.3f);
             for (int i = 0; i < 3; i++)
             {
                 Vector3 position = top + new Vector3(-0.6f + i * 0.6f, 0f, (i % 2) * 0.2f - 0.1f);
-                BuildKit.Cylinder("Plate", parent, position + Vector3.up * 0.01f, 0.25f, 0.01f, BuildKit.Plain("plate", new Color(0.9f, 0.9f, 0.85f), 0.6f));
-                BuildKit.Cone("PartyHat", parent, position + new Vector3(0.12f, 0.01f, 0.1f), 0.07f, 0.22f, BuildKit.Plain("hat" + i, PartyColors[i % PartyColors.Length], 0.3f));
+                if (plate != null)
+                {
+                    BuildKit.Quad("Plate", parent, position + Vector3.up * 0.004f, new Vector2(0.26f, 0.26f), 0f, BuildKit.Decal("paperPlate", plate, Color.white))
+                        .transform.localRotation = Quaternion.Euler(90f, i * 40f, 0f);
+                }
+                else
+                {
+                    BuildKit.Cylinder("Plate", parent, position + Vector3.up * 0.01f, 0.25f, 0.01f, BuildKit.Plain("plate", new Color(0.9f, 0.9f, 0.85f), 0.6f));
+                }
+                Vector3 cup = position + new Vector3(-0.18f, 0.055f, -0.12f);
+                BuildKit.Cylinder("Cup", parent, cup, 0.07f, 0.11f, cupRed);
+                BuildKit.Cylinder("CupRim", parent, cup + Vector3.up * 0.05f, 0.074f, 0.012f, cupRim);
+                Vector3 hat = position + new Vector3(0.12f, 0.01f, 0.1f);
+                BuildKit.Cone("PartyHat", parent, hat, 0.07f, 0.22f, BuildKit.Plain("hat" + i, PartyColors[i % PartyColors.Length], 0.3f))
+                    .transform.localRotation = Quaternion.Euler(0f, 0f, i == 1 ? 70f : 0f);
+                if (i != 1)
+                {
+                    BuildKit.Sphere("Pompom", parent, hat + Vector3.up * 0.225f, 0.05f, BuildKit.Plain("pompom" + i, PartyColors[(i + 2) % PartyColors.Length], 0.1f));
+                }
             }
         }
 
@@ -470,8 +492,17 @@ namespace NightShift.Game
 
         private static void Balloon(Transform root, Vector3 position, Color color)
         {
-            BuildKit.Sphere("Balloon", root, position, 0.35f, BuildKit.Plain("balloon" + color.GetHashCode(), color, 0.75f)).transform.localScale = new Vector3(0.33f, 0.4f, 0.33f);
-            BuildKit.Box("String", root, position - Vector3.up * 0.6f, new Vector3(0.005f, 1f, 0.005f), BuildKit.Plain("string", new Color(0.8f, 0.8f, 0.8f)), 1f, false);
+            // Shiny latex, a knot, a string that hangs in a curve; it drifts a little.
+            var balloon = new GameObject("Balloon").transform;
+            balloon.SetParent(root, false);
+            balloon.localPosition = position;
+            Material latex = BuildKit.Plain("balloon" + color.GetHashCode(), color * 0.9f, 0.88f);
+            BuildKit.Sphere("Body", balloon, Vector3.zero, 1f, latex).transform.localScale = new Vector3(0.32f, 0.39f, 0.32f);
+            BuildKit.Cone("Knot", balloon, new Vector3(0f, -0.215f, 0f), 0.025f, 0.035f, latex).transform.localRotation = Quaternion.Euler(180f, 0f, 0f);
+            Material twine = BuildKit.Plain("string", new Color(0.8f, 0.8f, 0.8f));
+            BuildKit.Box("String", balloon, new Vector3(0.02f, -0.5f, 0f), new Vector3(0.004f, 0.56f, 0.004f), twine, 1f, false).transform.localRotation = Quaternion.Euler(0f, 0f, 4f);
+            BuildKit.Box("String", balloon, new Vector3(0.02f, -1.02f, 0f), new Vector3(0.004f, 0.5f, 0.004f), twine, 1f, false).transform.localRotation = Quaternion.Euler(0f, 0f, -5f);
+            balloon.gameObject.AddComponent<Drift>();
         }
 
         private static void Streamer(Transform root, Vector3 from, Vector3 to, Color color)
@@ -524,9 +555,12 @@ namespace NightShift.Game
 
         /// <summary>A spare animatronic head: the kind of thing you should not find in a storage room.</summary>
         /// <summary>A bare endoskeleton lying on a bench.</summary>
-        // Where the picture tube is on the scanned CRT (television_02), in its own frame.
-        private static readonly Vector3 TvScreenCenter = new Vector3(0f, 0.235f, 0.18f);
-        private static readonly Vector2 TvScreenSize = new Vector2(0.27f, 0.205f);
+        // Where the picture tube is on the front of the scanned CRT (television_02), as fractions
+        // of the set's width and height measured from its lower left corner, seen from the front.
+        public static Vector2 TvScreenCenter = new Vector2(0.5f, 0.6f);
+        public static Vector2 TvScreenSize = new Vector2(0.62f, 0.5f);
+        // Just in front of the tube: its glass bulges out past the bezel and would hide a picture behind it.
+        private const float TvScreenOffset = 0.002f;
 
         /// <summary>
         /// An old CRT monitor standing at <paramref name="position"/>, its screen toward
@@ -543,9 +577,79 @@ namespace NightShift.Game
             frame.SetParent(root, false);
             frame.localPosition = position;
             frame.localRotation = Quaternion.Euler(0f, yaw, 0f);
-            GameObject screen = BuildKit.Quad("Screen", frame, TvScreenCenter, TvScreenSize, 0f, BuildKit.Glow("screenGreen", new Color(0.2f, 0.9f, 0.5f), 1.2f));
+            // The set's real box in the frame (its pivot is not in the middle of the model).
+            var box = new Bounds();
+            bool first = true;
+            foreach (MeshFilter filter in tv.GetComponentsInChildren<MeshFilter>())
+            {
+                Bounds mesh = filter.sharedMesh.bounds;
+                for (int corner = 0; corner < 8; corner++)
+                {
+                    var local = new Vector3((corner & 1) == 0 ? mesh.min.x : mesh.max.x, (corner & 2) == 0 ? mesh.min.y : mesh.max.y, (corner & 4) == 0 ? mesh.min.z : mesh.max.z);
+                    Vector3 point = frame.InverseTransformPoint(filter.transform.TransformPoint(local));
+                    if (first)
+                    {
+                        box = new Bounds(point, Vector3.zero);
+                        first = false;
+                    }
+                    box.Encapsulate(point);
+                }
+            }
+            // Seen from the front (looking down -z), the set's left edge is at +x.
+            var center = new Vector3(box.max.x - TvScreenCenter.x * box.size.x, box.min.y + TvScreenCenter.y * box.size.y, box.max.z + TvScreenOffset);
+            var size = new Vector2(TvScreenSize.x * box.size.x, TvScreenSize.y * box.size.y);
+            GameObject screen = BuildKit.Quad("Screen", frame, center, size, 0f, BuildKit.Glow("screenGreen", new Color(0.2f, 0.9f, 0.5f), 1.2f));
             SecurityFeeds.RegisterScreen(screen.GetComponent<Renderer>());
             return tv;
+        }
+
+        /// <summary>
+        /// Three heads left on the workbench, each its own story: one on a test stand with its
+        /// wires hanging out, one knocked on its side with its hat off and an eye that still
+        /// flickers, one turned to face the wall with a DO NOT REACTIVATE tag. False without the model.
+        /// </summary>
+        private static bool HeadBench(Transform root, Vector2 p, float top)
+        {
+            const float scale = 0.55f;
+            float half = FreddyParts.HeadHeight * scale * 0.5f;
+            Material steel = BuildKit.Plain("chrome", new Color(0.7f, 0.7f, 0.72f), 0.8f, 1f);
+            GameObject onStand = FreddyParts.Head(root, new Vector3(p.x - 0.45f, top + 0.27f + half, p.y), Quaternion.Euler(-8f, 12f, 5f), scale);
+            if (onStand == null)
+            {
+                return false;
+            }
+            BuildKit.Cylinder("StandBase", root, new Vector3(p.x - 0.45f, top + 0.01f, p.y), 0.16f, 0.02f, steel);
+            BuildKit.Cylinder("StandPole", root, new Vector3(p.x - 0.45f, top + 0.14f, p.y), 0.025f, 0.26f, steel);
+            NeckWires(onStand.transform);
+
+            FreddyParts.Head(root, new Vector3(p.x - 0.08f, top + half * 0.95f, p.y - 0.02f), Quaternion.Euler(0f, 35f, 82f), scale, HeadStyle.NoHat | HeadStyle.LiveEye);
+            FreddyParts.Hat(root, new Vector3(p.x - 0.02f, top + 0.05f, p.y + 0.22f), Quaternion.Euler(0f, 25f, 100f), scale);
+
+            GameObject turned = FreddyParts.Head(root, new Vector3(p.x + 0.3f, top + half, p.y - 0.05f), Quaternion.Euler(0f, 195f, -4f), scale);
+            NeckWires(turned.transform);
+            Texture2D tag = BuildKit.SignTexture("decal_tag_reactivate");
+            if (tag != null)
+            {
+                BuildKit.Quad("RepairTag", root, new Vector3(p.x + 0.33f, top + 0.08f, p.y + 0.14f), new Vector2(0.13f, 0.065f), 0f, BuildKit.Decal("repairTag", tag, Color.white))
+                    .transform.localRotation *= Quaternion.Euler(0f, 0f, -12f);
+            }
+            return true;
+        }
+
+        /// <summary>Wires hanging out of a spare head's neck (in the head's own space, before its scale).</summary>
+        public static void NeckWires(Transform head)
+        {
+            Color[] colors = { new Color(0.6f, 0.05f, 0.05f), new Color(0.05f, 0.05f, 0.05f), new Color(0.75f, 0.6f, 0.05f), new Color(0.1f, 0.25f, 0.6f) };
+            for (int i = 0; i < colors.Length; i++)
+            {
+                Material insulation = BuildKit.Plain("wire" + i, colors[i], 0.45f);
+                var start = new Vector3(-0.07f + i * 0.045f, -FreddyParts.HeadHeight * 0.45f, -0.02f + (i % 2) * 0.05f);
+                var upper = BuildKit.Cylinder("Wire", head, start + new Vector3(0f, -0.07f, 0f), 0.018f, 0.14f, insulation);
+                upper.transform.localRotation = Quaternion.Euler((i - 1.5f) * 9f, 0f, (i % 2 == 0 ? 1f : -1f) * 12f);
+                var lower = BuildKit.Cylinder("Wire", head, start + new Vector3((i % 2 == 0 ? 0.03f : -0.03f), -0.19f, (i - 1.5f) * 0.02f), 0.018f, 0.12f, insulation);
+                lower.transform.localRotation = Quaternion.Euler((i - 1.5f) * -14f, 0f, (i % 2 == 0 ? -1f : 1f) * 18f);
+                BuildKit.Cylinder("WireEnd", head, start + new Vector3((i % 2 == 0 ? 0.045f : -0.045f), -0.255f, (i - 1.5f) * 0.03f), 0.014f, 0.02f, BuildKit.Plain("copper", new Color(0.72f, 0.45f, 0.2f), 0.7f, 1f));
+            }
         }
 
         /// <summary>
@@ -554,7 +658,12 @@ namespace NightShift.Game
         /// </summary>
         private static void RepairJob(Transform root, Vector3 top)
         {
-            if (FreddyParts.Head(root, top + new Vector3(0.05f, 0.16f, -0.25f), Quaternion.Euler(0f, 70f, 80f), 0.55f) == null)
+            GameObject repaired = FreddyParts.Head(root, top + new Vector3(0.05f, 0.16f, -0.25f), Quaternion.Euler(0f, 70f, 80f), 0.55f, HeadStyle.NoHat);
+            if (repaired != null)
+            {
+                NeckWires(repaired.transform);
+            }
+            else
             {
                 LevelClutter.Endoskeleton(root, top + new Vector3(0f, 0f, -0.3f));
                 return;
@@ -681,11 +790,105 @@ namespace NightShift.Game
             }
         }
 
+        /// <summary>A wall-hung washbasin with its taps, the pipes under it and a mirror over it.</summary>
+        private static void Washbasin(Transform root, Vector3 wall, float yaw, Material porcelain, Material mirror)
+        {
+            var basin = new GameObject("Washbasin").transform;
+            basin.SetParent(root, false);
+            basin.localPosition = wall;
+            basin.localRotation = Quaternion.Euler(0f, yaw, 0f);
+            Material chrome = BuildKit.Plain("chrome", new Color(0.7f, 0.7f, 0.72f), 0.8f, 1f);
+            Material dark = BuildKit.Plain("drain", new Color(0.08f, 0.08f, 0.08f), 0.6f);
+            BuildKit.Box("Basin", basin, new Vector3(0f, 0.82f, 0.27f), new Vector3(0.55f, 0.16f, 0.45f), porcelain);
+            BuildKit.Box("Bowl", basin, new Vector3(0f, 0.905f, 0.29f), new Vector3(0.4f, 0.01f, 0.3f), BuildKit.Plain("bowl", new Color(0.62f, 0.64f, 0.62f), 0.8f), 1f, false);
+            BuildKit.Cylinder("Drain", basin, new Vector3(0f, 0.912f, 0.29f), 0.04f, 0.002f, dark);
+            BuildKit.Cylinder("Tap", basin, new Vector3(0f, 0.97f, 0.1f), 0.03f, 0.12f, chrome);
+            BuildKit.Cylinder("Spout", basin, new Vector3(0f, 1.02f, 0.16f), 0.025f, 0.12f, chrome).transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            foreach (float x in new[] { -0.12f, 0.12f })
+            {
+                BuildKit.Cylinder("Knob", basin, new Vector3(x, 0.95f, 0.1f), 0.05f, 0.03f, chrome);
+            }
+            BuildKit.Cylinder("Trap", basin, new Vector3(0f, 0.6f, 0.2f), 0.045f, 0.32f, chrome);
+            BuildKit.Cylinder("TrapBend", basin, new Vector3(0f, 0.45f, 0.11f), 0.045f, 0.2f, chrome).transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            // The mirror: a steel frame, the glass a little dirty.
+            BuildKit.Box("MirrorFrame", basin, new Vector3(0f, 1.6f, 0.012f), new Vector3(0.6f, 0.75f, 0.02f), chrome, 1f, false);
+            BuildKit.Box("Mirror", basin, new Vector3(0f, 1.6f, 0.024f), new Vector3(0.55f, 0.7f, 0.006f), mirror, 1f, false);
+            BuildKit.Box("Shelf", basin, new Vector3(0f, 1.2f, 0.06f), new Vector3(0.5f, 0.02f, 0.1f), porcelain, 1f, false);
+        }
+
+        /// <summary>The ticket booth by the entrance: striped counter, glass window, TICKETS on top.</summary>
+        private static void TicketBooth(Transform root, Vector3 position)
+        {
+            var booth = new GameObject("TicketBooth").transform;
+            booth.SetParent(root, false);
+            booth.localPosition = position;
+            booth.localRotation = Quaternion.Euler(0f, 180f, 0f);   // the window looks at the entrance
+            Material stripes = BuildKit.Surface("wainscotRed", () => ProceduralTextures.Tiles(new Color(0.6f, 0.08f, 0.08f), new Color(0.9f, 0.86f, 0.75f), 8, true, 0.3f), 0.3f);
+            Material wood = Wood();
+            Material brass = BuildKit.Plain("brass", new Color(0.62f, 0.48f, 0.24f), 0.75f, 1f);
+            Material glass = BuildKit.Decal("boothGlass", Texture2D.whiteTexture, new Color(0.55f, 0.65f, 0.7f, 0.15f));
+            BuildKit.Box("Counter", booth, new Vector3(0f, 0.55f, 0f), new Vector3(2.0f, 1.1f, 1.0f), stripes);
+            BuildKit.Box("CounterTop", booth, new Vector3(0f, 1.12f, 0.03f), new Vector3(2.1f, 0.05f, 1.1f), wood);
+            foreach (float x in new[] { -0.98f, 0.98f })
+            {
+                BuildKit.Box("Post", booth, new Vector3(x, 1.6f, 0.45f), new Vector3(0.06f, 0.9f, 0.06f), brass, 1f, false);
+            }
+            BuildKit.Quad("Window", booth, new Vector3(0f, 1.6f, 0.45f), new Vector2(1.9f, 0.9f), 0f, glass);
+            BuildKit.Box("WindowSlot", booth, new Vector3(0f, 1.18f, 0.47f), new Vector3(0.4f, 0.06f, 0.04f), brass, 1f, false);
+            BuildKit.Box("Roof", booth, new Vector3(0f, 2.08f, 0.05f), new Vector3(2.2f, 0.08f, 1.2f), wood, 1f, false);
+            BuildKit.Cylinder("TicketRoll", booth, new Vector3(0.6f, 1.2f, 0.3f), 0.16f, 0.12f, BuildKit.Plain("ticketRed", new Color(0.75f, 0.12f, 0.1f), 0.3f))
+                .transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+            BuildKit.Sphere("Bell", booth, new Vector3(-0.5f, 1.17f, 0.35f), 0.08f, brass).transform.localScale = new Vector3(0.09f, 0.05f, 0.09f);
+            Texture2D title = BuildKit.SignTexture("title_tickets");
+            if (title != null)
+            {
+                BuildKit.WallSign(booth, title, new Vector3(0f, 2.35f, 0.5f), 0f, 1.6f, 1.6f);
+            }
+        }
+
+        /// <summary>A four-drawer steel filing cabinet; its front looks toward <paramref name="yaw"/>.</summary>
+        private static void FilingCabinet(Transform root, Vector3 position, float yaw)
+        {
+            var cabinet = new GameObject("FilingCabinet").transform;
+            cabinet.SetParent(root, false);
+            cabinet.localPosition = position;
+            cabinet.localRotation = Quaternion.Euler(0f, yaw, 0f);
+            Material steel = BuildKit.Pbr("metal_worn", new Color(0.62f, 0.68f, 0.64f)) ?? Metal(new Color(0.35f, 0.38f, 0.36f));
+            Material chrome = BuildKit.Plain("chrome", new Color(0.7f, 0.7f, 0.72f), 0.8f, 1f);
+            Material card = BuildKit.Plain("labelCard", new Color(0.88f, 0.86f, 0.78f), 0.1f);
+            BuildKit.Box("Body", cabinet, new Vector3(0f, 0.7f, -0.02f), new Vector3(0.5f, 1.4f, 0.66f), steel);
+            for (int d = 0; d < 4; d++)
+            {
+                float y = 0.2f + d * 0.335f;
+                // The third drawer is pulled out a little: someone left in a hurry.
+                float open = d == 2 ? 0.12f : 0f;
+                BuildKit.Box("Drawer", cabinet, new Vector3(0f, y, 0.32f + open), new Vector3(0.46f, 0.31f, 0.03f), steel, 1f, false);
+                BuildKit.Box("Handle", cabinet, new Vector3(0f, y + 0.02f, 0.345f + open), new Vector3(0.14f, 0.025f, 0.025f), chrome, 1f, false);
+                BuildKit.Box("LabelHolder", cabinet, new Vector3(0f, y + 0.09f, 0.337f + open), new Vector3(0.09f, 0.04f, 0.004f), card, 1f, false);
+                if (open > 0f)
+                {
+                    BuildKit.Box("DrawerSide", cabinet, new Vector3(0f, y - 0.05f, 0.25f), new Vector3(0.44f, 0.2f, 0.14f), steel, 1f, false);
+                    BuildKit.Box("Folders", cabinet, new Vector3(0f, y + 0.02f, 0.25f), new Vector3(0.4f, 0.22f, 0.12f), BuildKit.Plain("folders", new Color(0.8f, 0.68f, 0.42f), 0.1f), 1f, false);
+                }
+            }
+        }
+
         private static void PizzaBoxes(Transform root, Vector3 position, int count)
         {
+            // A stack of take-away boxes with the printed lid on top of each.
+            Texture2D print = BuildKit.SignTexture("pizza_box_top");
             for (int i = 0; i < count; i++)
             {
-                BuildKit.Box("PizzaBox", root, position + new Vector3(0f, 0.025f + i * 0.05f, 0f), new Vector3(0.45f, 0.045f, 0.45f), Cardboard(), 1f, false, i * 7f);
+                var box = new GameObject("PizzaBox").transform;
+                box.SetParent(root, false);
+                box.localPosition = position + new Vector3(0f, 0.025f + i * 0.05f, 0f);
+                box.localRotation = Quaternion.Euler(0f, i * 7f, 0f);
+                BuildKit.Box("Body", box, Vector3.zero, new Vector3(0.45f, 0.045f, 0.45f), BuildKit.Plain("pizzaBoxSide", new Color(0.78f, 0.74f, 0.66f), 0.15f), 1f, false);
+                if (print != null)
+                {
+                    BuildKit.Quad("Lid", box, new Vector3(0f, 0.0231f, 0f), new Vector2(0.44f, 0.44f), 0f, BuildKit.Picture("sign:" + print.name, print))
+                        .transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                }
             }
         }
 
@@ -794,12 +997,13 @@ namespace NightShift.Game
             { "WELCOME", ("title_welcome", 1.6f) },
             { "PARTY ROOM", ("title_party_room", 1.6f) },
             { "PRIZES", ("title_prizes", 1.6f) },
+            { "TICKETS", ("title_tickets", 1.6f) },
             { "HAPPY BIRTHDAY", ("title_happy_birthday", 1.4f) },
             { "SECURITY", ("title_security", 0.3f) },
             { "PARTS & SERVICE", ("title_parts_service", 0.3f) },
             { "STORAGE", ("title_storage", 0.3f) },
             { "STAFF ONLY", ("title_staff_only", 0.3f) },
-            { "OUT OF ORDER", ("title_outwardof_order", 0.35f) },
+            { "OUT OF ORDER", ("title_out_of_order", 0.35f) },
         };
 
         public static void Sign(Transform root, Vector3 position, float facing, string text, Color foreground, Color background, float width)
@@ -846,7 +1050,7 @@ namespace NightShift.Game
         /// <paramref name="maxShift"/> meters (rings around it), and builds it there. Rooms are cut by
         /// Freddy's walking lines, so big furniture needs to find its gap.
         /// </summary>
-        public static void PlaceNear(Room room, Vector2 desired, float radius, System.Action<Vector2> build, float maxShift = 3.5f)
+        public static bool PlaceNear(Room room, Vector2 desired, float radius, System.Action<Vector2> build, float maxShift = 3.5f)
         {
             Rect area = PizzeriaLayout.Area(room);
             for (float ring = 0f; ring <= maxShift; ring += 0.35f)
@@ -865,7 +1069,7 @@ namespace NightShift.Game
                     {
                         Occupied.Add((point, radius));
                         build(point);
-                        return;
+                        return true;
                     }
                 }
             }
@@ -873,6 +1077,7 @@ namespace NightShift.Game
             {
                 Debug.Log("CAPTURE prop has no room in " + room + " near " + desired + " (radius " + radius + ")");
             }
+            return false;
         }
 
         /// <summary>True if a prop of this radius at <paramref name="center"/> leaves Freddy's lines, doors, spots and other props free.</summary>
@@ -944,5 +1149,25 @@ namespace NightShift.Game
         private static Material Metal(Color color) => BuildKit.Pbr("metal_worn", color * 2.2f)
                                                        ?? BuildKit.Surface("metal" + color.GetHashCode(), () => ProceduralTextures.Grimy(color, 1f), 0.45f, 0.6f);
         private static Material Cardboard() => BuildKit.Surface("cardboard", () => ProceduralTextures.Grimy(new Color(0.55f, 0.42f, 0.25f), 0.2f), 0.1f);
+    }
+
+    /// <summary>A balloon drifting in the air the vents move: a slow sway and bob.</summary>
+    public class Drift : MonoBehaviour
+    {
+        private Vector3 home;
+        private float phase;
+
+        private void Start()
+        {
+            home = transform.localPosition;
+            phase = Random.value * 10f;
+        }
+
+        private void Update()
+        {
+            float t = Time.time * 0.4f + phase;
+            transform.localPosition = home + new Vector3(Mathf.Sin(t) * 0.04f, Mathf.Sin(t * 1.3f) * 0.03f, Mathf.Cos(t * 0.8f) * 0.04f);
+            transform.localRotation = Quaternion.Euler(Mathf.Sin(t * 0.9f) * 4f, t * 6f, Mathf.Cos(t) * 4f);
+        }
     }
 }
