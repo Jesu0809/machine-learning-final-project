@@ -60,6 +60,13 @@ namespace NightShift.Game
         private float hideYaw;
         private float hidePitch;
         private bool flashlightBeforeHiding;
+        // Getting in and out of a spot: the eyes travel from where they were, through the front
+        // of the spot, to the hide point (and back out), instead of jumping.
+        private float hideMotion = 1f;
+        private float leaveMotion = 1f;
+        private float hideMotionSeconds;
+        private Vector3 hideFromPosition;
+        private Quaternion hideFromRotation;
 
         public HuntDirector Director { get; private set; }
         public Camera View { get; private set; }
@@ -130,6 +137,7 @@ namespace NightShift.Game
         public void AddLure() => Lures++;
 
         private float lastSprintAt = -10f;
+        private float breathPhase;
         private float nextPantAt;
         private float flashlightGlitchUntil;
 
@@ -197,13 +205,19 @@ namespace NightShift.Game
             spot.Occupied = true;
             body.enabled = false;
             Sliding = false;
-            // Nobody hides with the flashlight on; it comes back on when leaving.
+            // Nobody hides with the flashlight on: it goes off as the door shuts, and comes back
+            // on when leaving.
             flashlightBeforeHiding = Flashlight.enabled;
-            Flashlight.enabled = false;
             hideYaw = 0f;
             hidePitch = 0f;
             Breath = Mathf.Max(Breath, 0.3f);
-            spot.Rattle();
+            hideMotion = 0f;
+            leaveMotion = 1f;
+            hideMotionSeconds = spot.Kind == SpotKind.Locker ? 0.85f : 1.05f;
+            hideFromPosition = head.position;
+            hideFromRotation = head.rotation;
+            // The door stays open while climbing in and shuts behind.
+            spot.Rattle(hideMotionSeconds * 0.8f);
             MakeNoise(1);
             Director.Audio.PlayAt(Director.Assets.LockerDoor, spot.transform.position, 0.5f);
         }
@@ -214,6 +228,11 @@ namespace NightShift.Game
             spot.Occupied = false;
             HiddenIn = null;
             HoldingBreath = false;
+            hideMotion = 1f;
+            leaveMotion = 0f;
+            hideMotionSeconds = spot.Kind == SpotKind.Locker ? 0.7f : 0.9f;
+            hideFromPosition = head.position;
+            hideFromRotation = head.rotation;
             transform.position = spot.ExitPoint.position;
             yaw = spot.transform.eulerAngles.y;
             pitch = 0f;
@@ -393,6 +412,8 @@ namespace NightShift.Game
         public void ResetTo(Vector3 position, float facing)
         {
             Crawling = false;
+            hideMotion = 1f;
+            leaveMotion = 1f;
             if (HiddenIn != null)
             {
                 HiddenIn.Occupied = false;
@@ -433,6 +454,12 @@ namespace NightShift.Game
             if (!Controllable)
             {
                 HoldingBreath = false;
+                PlaceCamera();
+                return;
+            }
+            if (leaveMotion < 1f)
+            {
+                // Climbing out of a hiding spot: no walking until the feet are out.
                 PlaceCamera();
                 return;
             }
@@ -584,8 +611,11 @@ namespace NightShift.Game
         private void UpdateHidden(Vector2 look)
         {
             float range = HiddenIn.Kind == SpotKind.Locker ? 50f : 70f;
-            hideYaw = Mathf.Clamp(hideYaw + look.x, -range, range);
-            hidePitch = Mathf.Clamp(hidePitch - look.y, -30f, 30f);
+            if (hideMotion >= 1f)
+            {
+                hideYaw = Mathf.Clamp(hideYaw + look.x, -range, range);
+                hidePitch = Mathf.Clamp(hidePitch - look.y, -30f, 30f);
+            }
 
             bool wantsToHold = Controls.HoldBreath && Time.time >= breathBlockedUntil;
             HoldingBreath = wantsToHold && Breath > 0f;
@@ -639,6 +669,44 @@ namespace NightShift.Game
             }
         }
 
+        /// <summary>
+        /// Climbing into a spot: up to its front looking in (the door is swinging open), then in,
+        /// turning around to face out; under a table or into a cabinet the head ducks low.
+        /// </summary>
+        private void PlaceClimbingIn(HidingSpot spot, float progress)
+        {
+            Transform point = spot.HidePoint;
+            bool locker = spot.Kind == SpotKind.Locker;
+            Vector3 front = spot.ExitPoint.position + Vector3.up * (locker ? 1.6f : 0.8f);
+            Vector3 inward = point.position - front;
+            float inYaw = Mathf.Atan2(inward.x, inward.z) * Mathf.Rad2Deg;
+            float inPitch = -Mathf.Atan2(inward.y, new Vector2(inward.x, inward.z).magnitude) * Mathf.Rad2Deg;
+            const float split = 0.45f;
+            if (progress < split)
+            {
+                float a = Ease(progress / split);
+                head.position = Vector3.Lerp(hideFromPosition, front, a);
+                head.rotation = Quaternion.Slerp(hideFromRotation, Quaternion.Euler(inPitch, inYaw, 0f), a);
+                return;
+            }
+            float b = Ease((progress - split) / (1f - split));
+            // Turning around always the same way, never a random spin.
+            float turn = Mathf.DeltaAngle(inYaw, point.eulerAngles.y);
+            if (Mathf.Abs(turn) > 170f)
+            {
+                turn = 180f;
+            }
+            float duck = Mathf.Sin(b * Mathf.PI) * (locker ? 0.04f : 0.14f);
+            head.position = Vector3.Lerp(front, point.position, b) - Vector3.up * duck;
+            head.rotation = Quaternion.Euler(Mathf.Lerp(inPitch, 0f, b), inYaw + turn * b, 0f);
+        }
+
+        private static float Ease(float t)
+        {
+            t = Mathf.Clamp01(t);
+            return t * t * (3f - 2f * t);
+        }
+
         /// <summary>Turns the view smoothly toward a point (working a panel, looking at what the hands do).</summary>
         public void LookToward(Vector3 point, float speed)
         {
@@ -663,14 +731,51 @@ namespace NightShift.Game
             if (HiddenIn != null)
             {
                 Transform point = HiddenIn.HidePoint;
-                head.position = Vector3.Lerp(head.position, point.position, Time.deltaTime * 10f);
-                head.rotation = point.rotation * Quaternion.Euler(hidePitch, hideYaw, 0f);
+                if (hideMotion < 1f)
+                {
+                    hideMotion = Mathf.Min(1f, hideMotion + Time.deltaTime / hideMotionSeconds);
+                    PlaceClimbingIn(HiddenIn, hideMotion);
+                    if (hideMotion >= 0.8f)
+                    {
+                        Flashlight.enabled = false;
+                    }
+                    return;
+                }
+                head.position = point.position + Vector3.up * BreathRise();
+                head.rotation = point.rotation * Quaternion.Euler(hidePitch, hideYaw, 0f) * BreathSway();
                 return;
             }
             float eye = body.height - 0.15f;
+            if (leaveMotion < 1f)
+            {
+                // Out of the spot: from inside to standing in front of it, already facing the room.
+                leaveMotion = Mathf.Min(1f, leaveMotion + Time.deltaTime / hideMotionSeconds);
+                float k = Ease(leaveMotion);
+                Vector3 standing = transform.position + Vector3.up * eye;
+                head.position = Vector3.Lerp(hideFromPosition, standing, k) + Vector3.up * (Mathf.Sin(k * Mathf.PI) * 0.04f);
+                head.rotation = Quaternion.Slerp(hideFromRotation, Quaternion.Euler(pitch, yaw, 0f), k);
+                return;
+            }
             float bob = Moving ? Mathf.Sin(bobPhase) * (Running ? 0.05f : 0.025f) : 0f;
-            head.localPosition = Vector3.Lerp(head.localPosition, new Vector3(0f, eye + bob, 0f), Time.deltaTime * 12f);
-            head.rotation = Quaternion.Euler(pitch, yaw, 0f);
+            head.localPosition = Vector3.Lerp(head.localPosition, new Vector3(0f, eye + bob + BreathRise(), 0f), Time.deltaTime * 12f);
+            head.rotation = Quaternion.Euler(pitch, yaw, 0f) * BreathSway();
         }
+
+        /// <summary>
+        /// Breathing: the view drifts a fraction of a degree with each breath, slow when calm,
+        /// faster and wider when afraid or winded, almost still while holding the breath.
+        /// </summary>
+        private Quaternion BreathSway()
+        {
+            breathPhase += Time.deltaTime * (1.6f + Fear * 2.5f + (Winded ? 2.5f : 0f));
+            float amount = BreathAmount();
+            return Quaternion.Euler(Mathf.Sin(breathPhase) * amount * 0.5f,
+                                    Mathf.Sin(breathPhase * 0.5f + 0.7f) * amount * 0.35f,
+                                    Mathf.Sin(breathPhase * 0.5f) * amount * 0.3f);
+        }
+
+        private float BreathRise() => Mathf.Sin(breathPhase) * 0.004f * BreathAmount();
+
+        private float BreathAmount() => (0.25f + Fear * 0.6f + (1f - Stamina) * 0.7f) * (HoldingBreath ? 0.15f : 1f);
     }
 }

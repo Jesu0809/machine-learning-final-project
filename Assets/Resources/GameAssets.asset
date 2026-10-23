@@ -59,6 +59,12 @@ MonoBehaviour:
   - Name: WetFloorSign_01
     Model: {fileID: 919132149155446097, guid: a2a28d66d108448e891d7c48a4c71a09, type: 3}
     Material: {fileID: 2100000, guid: b4180950ff31c414dbbd12dc859a1e46, type: 2}
+  - Name: WoodenTable_03
+    Model: {fileID: 919132149155446097, guid: 9fe75f849ddee437e87aac07744a4a85, type: 3}
+    Material: {fileID: 2100000, guid: c652752c4e8574752a02458f033a9bcd, type: 2}
+  - Name: bench_vice_01
+    Model: {fileID: 919132149155446097, guid: b57ae59c5a7694e4ea660cf6601f0904, type: 3}
+    Material: {fileID: 2100000, guid: b5e3c48dbc1884299bc06acf688efefb, type: 2}
   - Name: boombox
     Model: {fileID: 919132149155446097, guid: fdbcb628df8d04b678e4df7b365e06a5, type: 3}
     Material: {fileID: 2100000, guid: 371b9c1f8b0cc4f1b986f55e4d651d3b, type: 2}
@@ -77,6 +83,9 @@ MonoBehaviour:
   - Name: metal_office_desk
     Model: {fileID: 919132149155446097, guid: b22361ef5f13547058ad9c75e44de324, type: 3}
     Material: {fileID: 2100000, guid: 404bc289d183044a691733fa321fa41b, type: 2}
+  - Name: metal_stool_01
+    Model: {fileID: 919132149155446097, guid: 76f3ec61acd6541b9b245e00fef63530, type: 3}
+    Material: {fileID: 2100000, guid: 344d95e91770a4b7e99eebfe3b5fb8c7, type: 2}
   - Name: metal_tool_chest
     Model: {fileID: 919132149155446097, guid: 38802a3de2d624cb09906dec6cd22f76, type: 3}
     Material: {fileID: 2100000, guid: fc0aa96f9e4774eab84894939342b1e3, type: 2}
@@ -107,6 +116,12 @@ MonoBehaviour:
   - Name: plunger
     Model: {fileID: 919132149155446097, guid: 5afbea9f9053a4a86a0bf4e4b243ba36, type: 3}
     Material: {fileID: 2100000, guid: 5af2c2a46b2484db2ac9292bb47d53b9, type: 2}
+  - Name: portable_generator
+    Model: {fileID: 919132149155446097, guid: c599a888e6f5e4de2a1d93a374ba5587, type: 3}
+    Material: {fileID: 2100000, guid: 8cf5764360e39410fa9a1f13ab88329f, type: 2}
+  - Name: portable_welding_cart
+    Model: {fileID: 919132149155446097, guid: 1f792065e0c8e4b6e9433b333318e650, type: 3}
+    Material: {fileID: 2100000, guid: 5078bfc9462214315b91bd1ed71f4c8e, type: 2}
   - Name: pot_enamel_01
     Model: {fileID: 919132149155446097, guid: 041551f8855b7498e8a0792c188a94ce, type: 3}
     Material: {fileID: 2100000, guid: d10e571aacbfa4e42b45c464aaf8c5ea, type: 2}
@@ -171,6 +186,9 @@ MonoBehaviour:
   - {fileID: 2800000, guid: dd9f8144a39d546ec93a317cb5037b52, type: 3}
   - {fileID: 2800000, guid: ebbd7746dd5f141dd9e84ca96c18246d, type: 3}
   - {fileID: 2800000, guid: a8af12903724c4e0f943785dea7942a4, type: 3}
+  - {fileID: 2800000, guid: f3b7bef4a182a4b5898cee3a15605039, type: 3}
+  - {fileID: 2800000, guid: 073d694678e834343b6dd8d0915449bd, type: 3}
+  - {fileID: 2800000, guid: ba9e4365b862e45ad97e7b61ef08f8d8, type: 3}
   - {fileID: 2800000, guid: 823fe2f3ab64a4686896e2417703978e, type: 3}
   - {fileID: 2800000, guid: afcee6ac421744b5db3c6fb734343364, type: 3}
   - {fileID: 2800000, guid: 0bf3408b61aa64f5e803b9976099f6f5, type: 3}

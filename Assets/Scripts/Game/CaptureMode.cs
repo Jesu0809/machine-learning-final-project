@@ -38,6 +38,12 @@ namespace NightShift.Game
 
         private IEnumerator Start()
         {
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-itemtest") >= 0)
+            {
+                yield return ItemTest();
+                Application.Quit();
+                yield break;
+            }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-audit") >= 0)
             {
                 yield return WalkAudit();
@@ -329,6 +335,153 @@ namespace NightShift.Game
         }
 
         /// <summary>
+        /// The objective items, a locker and the explore mode, photographed step by step: run with
+        /// "-capture folder -itemtest". Night 5 (every objective), Freddy left out.
+        /// </summary>
+        private IEnumerator ItemTest()
+        {
+            yield return new WaitForSeconds(1f);
+            director.StartNight(5);
+            director.SkipCall();
+            director.Freddy.gameObject.SetActive(false);
+            for (int room = 0; room < HuntMap.RoomCount && director.State.FusesCollected < director.FusesNeeded; room++)
+            {
+                if (director.State.FuseIn((Room)room))
+                {
+                    director.State.CollectFuse((Room)room);
+                }
+            }
+            director.ObjectiveList.Complete(ObjectiveStep.Fuses);
+
+            // The breaker: hold, let go half-way, come back and finish.
+            ObjectiveItem breaker = director.ItemFor(ObjectiveStep.Breaker);
+            Vector3 front = breaker.transform.forward;
+            Vector3 stand = breaker.transform.position + front * 1.0f;
+            Teleport(new Vector3(stand.x, 0f, stand.z), -front);
+            yield return new WaitForSeconds(0.6f);
+            yield return Shot("20a-breaker-closed");
+            float[] marks = { 0.08f, 0.35f, 0.55f, 0.85f, 1f };
+            int next = 0;
+            bool released = false;
+            float start = Time.time;
+            while (next < marks.Length && Time.time < start + 20f)
+            {
+                if (!released && breaker.Progress / breaker.HoldSeconds >= 0.45f)
+                {
+                    released = true;
+                    yield return new WaitForSeconds(1f);
+                    yield return Shot("20c-breaker-let-go");
+                }
+                breaker.Use(director.Player);
+                if (breaker.Progress / breaker.HoldSeconds >= marks[next] - 0.001f)
+                {
+                    yield return Shot("20b-breaker-" + Mathf.RoundToInt(marks[next] * 100f));
+                    next++;
+                }
+                yield return null;
+            }
+            yield return new WaitForSeconds(0.8f);
+            yield return Shot("20d-breaker-done");
+            Debug.Log("CAPTURE breaker done=" + director.ObjectiveList.IsDone(ObjectiveStep.Breaker));
+
+            // The keycard lockbox.
+            ObjectiveItem keycard = director.ItemFor(ObjectiveStep.Keycard);
+            front = keycard.transform.forward;
+            stand = keycard.transform.position + front * 0.9f;
+            Teleport(new Vector3(stand.x, 0f, stand.z), -front);
+            yield return Aim(keycard.transform.position);
+            yield return Shot("21a-keycard-box");
+            keycard.Use(director.Player);
+            foreach (float wait in new[] { 0.25f, 0.2f, 0.25f, 0.4f })
+            {
+                yield return new WaitForSeconds(wait);
+                yield return Shot("21b-keycard-" + Mathf.RoundToInt(Time.time * 100f) % 1000);
+            }
+
+            // The tape on the office table.
+            ObjectiveItem tape = director.ItemFor(ObjectiveStep.Tape);
+            Vector3 tapeAt = tape.transform.position;
+            Teleport(new Vector3(tapeAt.x - 0.2f, 0f, tapeAt.z + 0.75f), (tapeAt - new Vector3(tapeAt.x - 0.2f, 1.6f, tapeAt.z + 0.75f)));
+            yield return Aim(tapeAt);
+            yield return Shot("22a-tape");
+            tape.Use(director.Player);
+            foreach (float wait in new[] { 0.2f, 0.25f, 0.3f })
+            {
+                yield return new WaitForSeconds(wait);
+                yield return Shot("22b-tape-" + Mathf.RoundToInt(Time.time * 100f) % 1000);
+            }
+
+            // Into the office locker and out again.
+            HidingSpot locker = director.Level.Spot(Room.Office, 0);
+            Vector3 lockerFront = locker.ExitPoint.position + locker.transform.forward * 0.6f;
+            Teleport(new Vector3(lockerFront.x, 0f, lockerFront.z), -locker.transform.forward);
+            yield return new WaitForSeconds(0.6f);
+            yield return Shot("23a-locker");
+            locker.Use(director.Player);
+            foreach (float wait in new[] { 0.2f, 0.25f, 0.25f, 0.6f })
+            {
+                yield return new WaitForSeconds(wait);
+                yield return Shot("23b-locker-in-" + Mathf.RoundToInt(Time.time * 100f) % 1000);
+            }
+            locker.Use(director.Player);
+            foreach (float wait in new[] { 0.25f, 0.6f })
+            {
+                yield return new WaitForSeconds(wait);
+                yield return Shot("23c-locker-out-" + Mathf.RoundToInt(Time.time * 100f) % 1000);
+            }
+            // And a cabinet (crouching in).
+            HidingSpot cabinet = director.Level.Spot(Room.Parts, 1);
+            Vector3 cabinetFront = cabinet.ExitPoint.position + cabinet.transform.forward * 0.6f;
+            Teleport(new Vector3(cabinetFront.x, 0f, cabinetFront.z), -cabinet.transform.forward);
+            yield return new WaitForSeconds(0.6f);
+            cabinet.Use(director.Player);
+            foreach (float wait in new[] { 0.3f, 0.3f, 0.7f })
+            {
+                yield return new WaitForSeconds(wait);
+                yield return Shot("23d-cabinet-in-" + Mathf.RoundToInt(Time.time * 100f) % 1000);
+            }
+            cabinet.Use(director.Player);
+            yield return new WaitForSeconds(1f);
+
+            // The explore mode, with and without work lights.
+            ExploreMode explore = ExploreMode.Attach(director);
+            yield return new WaitForSeconds(1f);
+            explore.GoToRoom((int)Room.DiningHall);
+            yield return new WaitForSeconds(0.8f);
+            yield return Shot("24a-explore");
+            explore.SetWorkLights(true);
+            yield return new WaitForSeconds(0.5f);
+            yield return Shot("24b-explore-work-lights");
+            explore.GoToRoom((int)Room.Kitchen);
+            yield return new WaitForSeconds(0.8f);
+            yield return Shot("24c-explore-kitchen");
+            explore.GoToRoom((int)Room.Storage);
+            yield return new WaitForSeconds(0.8f);
+            yield return Shot("24d-explore-storage");
+            explore.GoToRoom((int)Room.Parts);
+            yield return new WaitForSeconds(0.8f);
+            yield return Shot("24e-explore-parts");
+            explore.SetFlying(true);
+            director.Player.transform.position += Vector3.up * 1.5f;
+            yield return new WaitForSeconds(0.5f);
+            yield return Shot("24f-explore-flying");
+            explore.SetFlying(false);
+            foreach ((Vector3 spot, Vector3 look, string name) in new[]
+            {
+                (new Vector3(-10.4f, 0f, 5.4f), new Vector3(-12.4f, 1.1f, 7.6f), "24g-kitchen-fridge"),
+                (new Vector3(-7.6f, 0f, 7.2f), new Vector3(-7.75f, 0.8f, 9.3f), "24h-kitchen-counter"),
+                (new Vector3(-12.4f, 0f, -10.6f), new Vector3(-12.9f, 0.9f, -8.9f), "24i-parts-workbench"),
+                (new Vector3(-19.4f, 0f, 4.6f), new Vector3(-21.1f, 0.4f, 3.2f), "24j-storage-generator"),
+            })
+            {
+                Teleport(spot, look - spot);
+                yield return Aim(look);
+                yield return Shot(name);
+            }
+            Debug.Log("CAPTURE itemtest done");
+        }
+
+        /// <summary>
         /// Bug audit of the map: the player's real body walks every connection of the room graph
         /// (both ways: doorways and corridors) and crawls every duct; anything that blocks it is
         /// logged with a screenshot. Run with "-capture folder -audit".
@@ -421,6 +574,16 @@ namespace NightShift.Game
                           " after " + (Time.time - t0).ToString("0.0") + " s, standing " + (director.Player.transform.position.y).ToString("0.00"));
             }
             Debug.Log("CAPTURE AUDIT done: " + tested + " walks, " + blocked + " blocked");
+        }
+
+        /// <summary>Turns the player's view onto a point (the tour teleports with level eyes).</summary>
+        private IEnumerator Aim(Vector3 point)
+        {
+            for (float t = 0f; t < 0.6f; t += Time.deltaTime)
+            {
+                director.Player.LookToward(point, 12f);
+                yield return null;
+            }
         }
 
         private IEnumerator Pose(Vector3 position, Vector3 look, string name)

@@ -907,7 +907,7 @@ namespace NightShift.UI
         {
             "For slow computers: lower resolution, no shadows from the lamps, no ambient occlusion.",
             "Balanced (the web default): ambient occlusion, light shafts, the flashlight's shadows.",
-            "Lamp shadows, reflections on the floors and metal, light bouncing off the floors.",
+            "Lamp shadows, reflections on the floors and metal, light bouncing off the floors, lens flares.",
             "Every lamp casts shadows, sharper shadows and reflections. Needs a strong graphics card.",
         };
 

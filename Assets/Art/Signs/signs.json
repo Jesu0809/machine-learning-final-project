@@ -143,6 +143,18 @@
     "height": 320,
     "width": 768
   },
+  "label_danger": {
+    "height": 640,
+    "width": 512
+  },
+  "label_keycard": {
+    "height": 404,
+    "width": 640
+  },
+  "label_tape": {
+    "height": 256,
+    "width": 768
+  },
   "map_back_hall": {
     "height": 1152,
     "width": 1536

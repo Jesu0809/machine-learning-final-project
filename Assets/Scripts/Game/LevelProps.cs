@@ -79,17 +79,33 @@ namespace NightShift.Game
         {
             Material wood = Wood();
             // Workbenches with animatronic parts: an endoskeleton, rows of empty heads.
+            // The scanned workbench is 0.83 m high; the boxes they replace (no model imported) 0.9 m.
             PlaceNear(Room.Parts, new Vector2(-12.9f, -8.9f), 0.6f, p =>
             {
-                BuildKit.Box("Workbench", root, new Vector3(p.x, 0.45f, p.y), new Vector3(0.9f, 0.9f, 1.6f), wood);
-                Endoskeleton(root, new Vector3(p.x, 0.9f, p.y - 0.3f));
+                bool scanned = BuildKit.Prop("WoodenTable_03", root, new Vector3(p.x, 0f, p.y), 90f) != null;
+                if (!scanned)
+                {
+                    BuildKit.Box("Workbench", root, new Vector3(p.x, 0.45f, p.y), new Vector3(0.9f, 0.9f, 1.6f), wood);
+                }
+                Endoskeleton(root, new Vector3(p.x, scanned ? 0.83f : 0.9f, p.y - 0.3f));
+                BuildKit.Prop("metal_stool_01", root, new Vector3(p.x + 0.75f, 0f, p.y + 0.35f), 25f, 1f, false);
             });
             PlaceNear(Room.Parts, new Vector2(-11.25f, -13.3f), 0.6f, p =>
             {
-                BuildKit.Box("Workbench", root, new Vector3(p.x, 0.45f, p.y), new Vector3(1.8f, 0.9f, 0.7f), wood);
+                bool scanned = BuildKit.Prop("WoodenTable_03", root, new Vector3(p.x, 0f, p.y), 0f) != null;
+                if (!scanned)
+                {
+                    BuildKit.Box("Workbench", root, new Vector3(p.x, 0.45f, p.y), new Vector3(1.8f, 0.9f, 0.7f), wood);
+                }
+                float top = scanned ? 0.83f : 0.9f;
+                float spacing = scanned ? 0.4f : 0.6f;
                 for (int i = 0; i < 3; i++)
                 {
-                    SpareHead(root, new Vector3(p.x - 0.6f + i * 0.6f, 1.15f, p.y), (i - 1) * 20f, 0.6f);
+                    SpareHead(root, new Vector3(p.x - spacing + i * spacing - (scanned ? 0.12f : 0f), top + 0.25f, p.y), (i - 1) * 20f, 0.6f);
+                }
+                if (scanned)
+                {
+                    BuildKit.Prop("bench_vice_01", root, new Vector3(p.x + 0.55f, top, p.y + 0.12f), 180f, 1f, false);
                 }
             });
             for (int i = 0; i < 3; i++)
@@ -98,8 +114,9 @@ namespace NightShift.Game
             }
             // Workshop tools: a drill press, a rolling tool chest, a toolbox left on the floor.
             PlaceNear(Room.Parts, new Vector2(-8.7f, -7.7f), 0.4f, p => BuildKit.Prop("old_drill_press", root, new Vector3(p.x, 0f, p.y), 225f), 1.5f);
-            PlaceNear(Room.Parts, new Vector2(-13.4f, -12.2f), 0.4f, p => BuildKit.Prop("metal_tool_chest", root, new Vector3(p.x, 0f, p.y), 90f), 1.5f);
+            PlaceNear(Room.Parts, new Vector2(-13.4f, -12.2f), 0.4f, p => BuildKit.Prop("metal_tool_chest", root, new Vector3(p.x, 0f, p.y), 90f), 3f);
             PlaceNear(Room.Parts, new Vector2(-9.5f, -13.5f), 0.25f, p => BuildKit.Prop("metal_toolbox", root, new Vector3(p.x, 0f, p.y), 20f), 1.5f);
+            PlaceNear(Room.Parts, new Vector2(-8.7f, -10.2f), 0.5f, p => BuildKit.Prop("portable_welding_cart", root, new Vector3(p.x, 0f, p.y), 270f), 1.5f);
             Sign(root, new Vector3(-11f, 2.4f, -13.77f), 0f, "PARTS & SERVICE", new Color(0.85f, 0.85f, 0.8f), new Color(0.2f, 0.22f, 0.2f), 2.6f);
         }
 
@@ -189,6 +206,8 @@ namespace NightShift.Game
                     Crate(root, new Vector3(p.x, 0f, p.y), 15f);
                 }
             });
+            // The backup generator that never got connected.
+            PlaceNear(Room.Storage, new Vector2(-21.1f, 3.2f), 0.4f, p => BuildKit.Prop("portable_generator", root, new Vector3(p.x, 0f, p.y), 180f), 3f);
             Sign(root, new Vector3(-21.77f, 2.6f, 4.5f), 90f, "STORAGE", new Color(0.9f, 0.9f, 0.85f), new Color(0.2f, 0.2f, 0.22f), 2.0f);
         }
 
@@ -212,12 +231,11 @@ namespace NightShift.Game
                     }
                 }
             });
-            PlaceNear(Room.Kitchen, new Vector2(-12.4f, 7.6f), 0.5f, p =>
-                BuildKit.Box("Fridge", root, new Vector3(p.x, 1.0f, p.y), new Vector3(0.75f, 2.0f, 0.8f), Metal(new Color(0.75f, 0.75f, 0.72f))));
+            PlaceNear(Room.Kitchen, new Vector2(-12.4f, 7.6f), 0.5f, p => Fridge(root, new Vector3(p.x, 0f, p.y), 180f));
             PlaceNear(Room.Kitchen, new Vector2(-7.75f, 9.3f), 0.6f, p =>
             {
-                BuildKit.Box("Counter", root, new Vector3(p.x, 0.45f, p.y), new Vector3(1.6f, 0.9f, 0.7f), steel);
-                PizzaBoxes(root, new Vector3(p.x + 0.3f, 0.9f, p.y), 4);
+                Counter(root, new Vector3(p.x, 0f, p.y), 180f, steel);
+                PizzaBoxes(root, new Vector3(p.x + 0.3f, 0.92f, p.y), 4);
             });
         }
 
@@ -523,6 +541,94 @@ namespace NightShift.Game
             BuildKit.Sphere("EyeL", head, new Vector3(-0.12f, 0.07f, 0.27f), 0.09f, BuildKit.Glow("deadEye", new Color(0.6f, 0.65f, 0.7f), 0.4f));
             BuildKit.Sphere("EyeR", head, new Vector3(0.12f, 0.07f, 0.27f), 0.09f, BuildKit.Glow("deadEye", new Color(0.6f, 0.65f, 0.7f), 0.4f));
             BuildKit.Cylinder("Hat", head, new Vector3(0f, 0.38f, 0f), 0.2f, 0.18f, BuildKit.Plain("black", Color.black));
+        }
+
+        /// <summary>
+        /// An old enamel fridge (no CC0 model exists): body on a kick plate with a grille, freezer
+        /// and fridge doors with chrome handles, a badge, notes held by magnets, and its hum.
+        /// Its front looks toward <paramref name="yaw"/>.
+        /// </summary>
+        private static void Fridge(Transform root, Vector3 position, float yaw)
+        {
+            var fridge = new GameObject("Fridge").transform;
+            fridge.SetParent(root, false);
+            fridge.localPosition = position;
+            fridge.localRotation = Quaternion.Euler(0f, yaw, 0f);
+            Material enamel = BuildKit.Pbr("metal_worn", new Color(1f, 0.97f, 0.88f)) ?? BuildKit.Plain("fridgeEnamel", new Color(0.8f, 0.78f, 0.7f), 0.4f);
+            Material chrome = BuildKit.Plain("chrome", new Color(0.7f, 0.7f, 0.72f), 0.8f, 1f);
+            Material dark = BuildKit.Plain("fridgeDark", new Color(0.04f, 0.04f, 0.045f), 0.3f);
+            Material paper = BuildKit.Plain("paper", new Color(0.85f, 0.83f, 0.75f));
+
+            BuildKit.Box("Body", fridge, new Vector3(0f, 1.0f, -0.03f), new Vector3(0.75f, 1.84f, 0.7f), enamel);
+            BuildKit.Box("Kick", fridge, new Vector3(0f, 0.04f, 0f), new Vector3(0.7f, 0.08f, 0.66f), dark, 1f, false);
+            for (int slat = 0; slat < 4; slat++)
+            {
+                BuildKit.Box("Grille", fridge, new Vector3(0f, 0.025f + slat * 0.015f, 0.335f), new Vector3(0.6f, 0.006f, 0.01f), chrome, 1f, false);
+            }
+            // Doors stand proud of the body, a dark seam between them.
+            BuildKit.Box("FreezerDoor", fridge, new Vector3(0f, 1.62f, 0.345f), new Vector3(0.74f, 0.54f, 0.05f), enamel, 1f, false);
+            BuildKit.Box("FridgeDoor", fridge, new Vector3(0f, 0.75f, 0.345f), new Vector3(0.74f, 1.16f, 0.05f), enamel, 1f, false);
+            BuildKit.Box("Seam", fridge, new Vector3(0f, 1.34f, 0.335f), new Vector3(0.74f, 0.02f, 0.04f), dark, 1f, false);
+            foreach ((float low, float high) in new[] { (1.42f, 1.78f), (0.9f, 1.28f) })
+            {
+                float x = 0.3f;
+                BuildKit.Box("Handle", fridge, new Vector3(x, (low + high) * 0.5f, 0.4f), new Vector3(0.025f, high - low, 0.025f), chrome, 1f, false);
+                BuildKit.Box("HandleFoot", fridge, new Vector3(x, low, 0.383f), new Vector3(0.03f, 0.03f, 0.04f), chrome, 1f, false);
+                BuildKit.Box("HandleFoot", fridge, new Vector3(x, high, 0.383f), new Vector3(0.03f, 0.03f, 0.04f), chrome, 1f, false);
+            }
+            BuildKit.Box("Badge", fridge, new Vector3(-0.2f, 1.82f, 0.372f), new Vector3(0.14f, 0.025f, 0.006f), chrome, 1f, false);
+            // Notes under magnets: a schedule, a warning, a child's drawing.
+            Color[] magnets = { new Color(0.8f, 0.1f, 0.1f), new Color(0.15f, 0.35f, 0.85f), new Color(0.95f, 0.8f, 0.15f) };
+            Vector3[] notes = { new Vector3(-0.12f, 1.15f, 0f), new Vector3(0.1f, 0.95f, 0f), new Vector3(-0.15f, 0.7f, 0f) };
+            for (int i = 0; i < notes.Length; i++)
+            {
+                var note = BuildKit.Box("Note", fridge, notes[i] + new Vector3(0f, 0f, 0.372f), new Vector3(0.15f, 0.2f, 0.002f), paper, 1f, false);
+                note.transform.localRotation = Quaternion.Euler(0f, 0f, (i - 1) * 6f);
+                BuildKit.Cylinder("Magnet", fridge, notes[i] + new Vector3(0f, 0.08f, 0.377f), 0.03f, 0.012f, BuildKit.Plain("magnet" + i, magnets[i], 0.5f))
+                    .transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            }
+            var hum = fridge.gameObject.AddComponent<AudioSource>();
+            hum.clip = GameAudio.LampHum();
+            hum.loop = true;
+            hum.spatialBlend = 1f;
+            hum.rolloffMode = AudioRolloffMode.Linear;
+            hum.minDistance = 0.8f;
+            hum.maxDistance = 5f;
+            hum.volume = 0.05f;
+            hum.pitch = 0.45f;
+            hum.Play();
+        }
+
+        /// <summary>A steel prep counter: drawers over two doors, a recessed kick, a backsplash.</summary>
+        private static void Counter(Transform root, Vector3 position, float yaw, Material steel)
+        {
+            var counter = new GameObject("Counter").transform;
+            counter.SetParent(root, false);
+            counter.localPosition = position;
+            counter.localRotation = Quaternion.Euler(0f, yaw, 0f);
+            Material top = BuildKit.Plain("stainless", new Color(0.62f, 0.64f, 0.66f), 0.55f, 0.9f);
+            Material chrome = BuildKit.Plain("chrome", new Color(0.7f, 0.7f, 0.72f), 0.8f, 1f);
+            Material dark = BuildKit.Plain("fridgeDark", new Color(0.04f, 0.04f, 0.045f), 0.3f);
+
+            BuildKit.Box("Cabinet", counter, new Vector3(0f, 0.49f, -0.02f), new Vector3(1.6f, 0.82f, 0.62f), steel);
+            BuildKit.Box("Kick", counter, new Vector3(0f, 0.04f, -0.04f), new Vector3(1.56f, 0.08f, 0.56f), dark, 1f, false);
+            BuildKit.Box("Top", counter, new Vector3(0f, 0.92f, 0f), new Vector3(1.66f, 0.04f, 0.72f), top, 1f, false);
+            BuildKit.Box("Backsplash", counter, new Vector3(0f, 1.08f, -0.35f), new Vector3(1.66f, 0.28f, 0.02f), top, 1f, false);
+            // Seams and handles: three drawers, two doors.
+            BuildKit.Box("Seam", counter, new Vector3(0f, 0.7f, 0.292f), new Vector3(1.56f, 0.012f, 0.008f), dark, 1f, false);
+            for (int i = 0; i < 2; i++)
+            {
+                BuildKit.Box("Seam", counter, new Vector3(-0.27f + i * 0.54f, 0.79f, 0.292f), new Vector3(0.012f, 0.17f, 0.008f), dark, 1f, false);
+            }
+            BuildKit.Box("Seam", counter, new Vector3(0f, 0.4f, 0.292f), new Vector3(0.012f, 0.58f, 0.008f), dark, 1f, false);
+            for (int i = 0; i < 3; i++)
+            {
+                BuildKit.Box("DrawerHandle", counter, new Vector3(-0.54f + i * 0.54f, 0.8f, 0.31f), new Vector3(0.16f, 0.015f, 0.02f), chrome, 1f, false);
+            }
+            for (int i = 0; i < 2; i++)
+            {
+                BuildKit.Box("DoorHandle", counter, new Vector3(i == 0 ? -0.08f : 0.08f, 0.5f, 0.31f), new Vector3(0.015f, 0.16f, 0.02f), chrome, 1f, false);
+            }
         }
 
         private static void PizzaBoxes(Transform root, Vector3 position, int count)

@@ -23,6 +23,22 @@
     ],
     "source": "polyhaven:WetFloorSign_01"
   },
+  "WoodenTable_03": {
+    "meters": [
+      1.327,
+      0.562,
+      0.83
+    ],
+    "source": "polyhaven:WoodenTable_03"
+  },
+  "bench_vice_01": {
+    "meters": [
+      0.2,
+      0.396,
+      0.272
+    ],
+    "source": "polyhaven:bench_vice_01"
+  },
   "boombox": {
     "meters": [
       0.724,
@@ -70,6 +86,14 @@
       0.788
     ],
     "source": "polyhaven:metal_office_desk"
+  },
+  "metal_stool_01": {
+    "meters": [
+      0.352,
+      0.355,
+      0.883
+    ],
+    "source": "polyhaven:metal_stool_01"
   },
   "metal_tool_chest": {
     "meters": [
@@ -150,6 +174,22 @@
       0.421
     ],
     "source": "polyhaven:plunger"
+  },
+  "portable_generator": {
+    "meters": [
+      0.818,
+      0.564,
+      0.577
+    ],
+    "source": "polyhaven:portable_generator"
+  },
+  "portable_welding_cart": {
+    "meters": [
+      0.838,
+      0.655,
+      1.563
+    ],
+    "source": "polyhaven:portable_welding_cart"
   },
   "pot_enamel_01": {
     "meters": [

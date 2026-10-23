@@ -302,6 +302,27 @@ namespace NightShift.EditorTools
             Debug.Log("WebGL build: " + report.summary.result + " (" + (report.summary.totalSize / (1024 * 1024)) + " MB) at " + output);
         }
 
+        /// <summary>Plays the game scene in the developer explore mode (see ExploreMode.cs).</summary>
+        [MenuItem("Night Shift/Explore Map (developers)")]
+        public static void ExploreMap()
+        {
+            if (EditorApplication.isPlaying)
+            {
+                return;
+            }
+            if (!File.Exists(ScenePath))
+            {
+                CreateGameScene();
+            }
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+            {
+                return;
+            }
+            EditorSceneManager.OpenScene(ScenePath);
+            SessionState.SetBool(ExploreMode.EditorFlag, true);
+            EditorApplication.EnterPlaymode();
+        }
+
         [MenuItem("Night Shift/Build Game")]
         public static void BuildGame()
         {
