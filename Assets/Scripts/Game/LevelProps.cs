@@ -31,6 +31,8 @@ namespace NightShift.Game
                 case Room.PartyRoom: PartyRoom(root, random); break;
                 case Room.Arcade: Arcade(root, random); break;
                 case Room.ExitLobby: Lobby(root, random); break;
+                case Room.Banquet: Banquet(root, random); break;
+                case Room.Veranda: Veranda(root, random); break;
             }
             foreach (Room exit in HuntMap.Exits)
             {
@@ -332,6 +334,73 @@ namespace NightShift.Game
             NeonStrip(root, new Vector3(19f, 3.1f, 9.74f), new Vector3(7f, 0.06f, 0.06f), new Color(1f, 0.15f, 0.7f));
             NeonStrip(root, new Vector3(22.74f, 3.1f, 6f), new Vector3(0.06f, 0.06f, 7f), new Color(0.1f, 0.85f, 1f));
             Sign(root, new Vector3(22.77f, 2.3f, 5.4f), 270f, "PRIZES", new Color(0.2f, 1f, 1f), new Color(0.1f, 0.02f, 0.15f), 1.8f);
+        }
+
+        /// <summary>The banquet room off the kitchen: long rows of windows and laid tables, some of them to hide under.</summary>
+        private static void Banquet(Transform root, System.Random random)
+        {
+            Rect area = PizzeriaLayout.Area(Room.Banquet);
+            foreach (float x in new[] { -13.5f, -9f, -4.5f, 0f, 4.5f })
+            {
+                Window(root, new Vector3(x, 0f, area.yMax - WindowInset), 180f, 1.8f, 1.7f);
+            }
+            Window(root, new Vector3(area.xMin + WindowInset, 0f, 18.5f), 90f, 1.8f, 1.7f);
+            foreach (Vector2 table in new[] { new Vector2(-8.5f, 20f), new Vector2(1.5f, 20.2f), new Vector2(-8f, 16.5f) })
+            {
+                PlaceNear(Room.Banquet, table, 1.5f, p => PartyTable(root, random, p), 2.5f);
+            }
+            for (int i = 0; i < 6; i++)
+            {
+                var position = new Vector3(-14f + (float)random.NextDouble() * 22f, 2.6f + (float)random.NextDouble() * 0.5f, 15.5f + (float)random.NextDouble() * 6f);
+                Balloon(root, position, PartyColors[i % PartyColors.Length]);
+            }
+            Streamer(root, new Vector3(-15.5f, 3.1f, 16.2f), new Vector3(8.5f, 3.1f, 16.2f), PartyColors[0]);
+        }
+
+        /// <summary>The veranda above the arcade: tall windows on two walls, tables with chairs pushed in.</summary>
+        private static void Veranda(Transform root, System.Random random)
+        {
+            Rect area = PizzeriaLayout.Area(Room.Veranda);
+            foreach (float x in new[] { 14.5f, 20.5f })
+            {
+                Window(root, new Vector3(x, 0f, area.yMax - WindowInset), 180f, 2f, 1.9f);
+            }
+            foreach (float z in new[] { 17f, 20f })
+            {
+                Window(root, new Vector3(area.xMax - WindowInset, 0f, z), 270f, 1.8f, 1.9f);
+            }
+            PlaceNear(Room.Veranda, new Vector2(14.2f, 16.5f), 1.5f, p => PartyTable(root, random, p), 1.5f);
+            PlaceNear(Room.Veranda, new Vector2(20.5f, 16.5f), 1.5f, p => PartyTable(root, random, p), 1.5f);
+        }
+
+        private const float WindowInset = PizzeriaLayout.WallThickness + 0.02f;
+
+        /// <summary>
+        /// A tall window set into a wall, looking out on the night: a frame with a cross, cold glass
+        /// that glows faintly, a sill and a curtain on each side. <paramref name="at"/> is on the wall
+        /// (y ignored), <paramref name="facing"/> the direction the window looks into the room.
+        /// </summary>
+        private static void Window(Transform root, Vector3 at, float facing, float width, float height)
+        {
+            Quaternion turn = Quaternion.Euler(0f, facing, 0f);
+            Vector3 P(float x, float y, float depth) => new Vector3(at.x, 0f, at.z) + turn * new Vector3(x, y, depth);
+            float bottom = 0.9f;
+            float middle = bottom + height * 0.5f;
+            Material frame = BuildKit.Plain("windowFrame", new Color(0.1f, 0.07f, 0.05f), 0.35f);
+            Material glass = BuildKit.Glow("windowMoon", new Color(0.28f, 0.36f, 0.55f), 0.55f);
+            Material cloth = BuildKit.Plain("windowCurtain", new Color(0.36f, 0.06f, 0.1f), 0.1f);
+            BuildKit.Box("WindowGlass", root, P(0f, middle, 0f), new Vector3(width, height, 0.03f), glass, 1f, false, facing);
+            BuildKit.Box("FrameTop", root, P(0f, bottom + height, 0.02f), new Vector3(width + 0.12f, 0.08f, 0.09f), frame, 1f, false, facing);
+            BuildKit.Box("FrameBottom", root, P(0f, bottom, 0.02f), new Vector3(width + 0.12f, 0.08f, 0.09f), frame, 1f, false, facing);
+            BuildKit.Box("FrameLeft", root, P(-width * 0.5f, middle, 0.02f), new Vector3(0.08f, height, 0.09f), frame, 1f, false, facing);
+            BuildKit.Box("FrameRight", root, P(width * 0.5f, middle, 0.02f), new Vector3(0.08f, height, 0.09f), frame, 1f, false, facing);
+            BuildKit.Box("MullionV", root, P(0f, middle, 0.02f), new Vector3(0.05f, height, 0.07f), frame, 1f, false, facing);
+            BuildKit.Box("MullionH", root, P(0f, middle, 0.02f), new Vector3(width, 0.05f, 0.07f), frame, 1f, false, facing);
+            BuildKit.Box("Sill", root, P(0f, bottom - 0.06f, 0.1f), new Vector3(width + 0.3f, 0.06f, 0.24f), frame, 1f, false, facing);
+            foreach (float side in new[] { -1f, 1f })
+            {
+                BuildKit.Box("Curtain", root, P(side * (width * 0.5f + 0.2f), bottom + height * 0.5f + 0.15f, 0.1f), new Vector3(0.4f, height + 0.5f, 0.12f), cloth, 1f, false, facing);
+            }
         }
 
         private static void Lobby(Transform root, System.Random random)
@@ -906,6 +975,11 @@ namespace NightShift.Game
                 Vector2 into = new Vector2(Mathf.Sin(facing * Mathf.Deg2Rad), Mathf.Cos(facing * Mathf.Deg2Rad));
                 Vector2 spotOnWall = point + into * inset;
                 if (!ClearOfOpenings(room, spotOnWall, 1.4f) || random.NextDouble() < 0.35)
+                {
+                    continue;
+                }
+                // The windows take up the walls of the north wing: posters only on the south wall.
+                if ((room == Room.Banquet || room == Room.Veranda) && Mathf.Abs(facing) > 0.5f)
                 {
                     continue;
                 }

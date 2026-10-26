@@ -19,7 +19,7 @@ namespace NightShift.Game
         private const float WestX = -22.35f;
         private const float EastX = 23.35f;
         private const float LobbyWestX = 12f;
-        private const float BackZ = 12.35f;
+        private const float BackZ = 22.35f;
         private const float SidewalkZ = -19.6f;
         public const float RoadZ = -29f;
 

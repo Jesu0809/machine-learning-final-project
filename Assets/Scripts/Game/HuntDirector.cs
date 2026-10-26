@@ -663,10 +663,23 @@ namespace NightShift.Game
                 }
                 SpotKind kind = PizzeriaLayout.SpotKindOf(DecisionRoom, spot);
                 string what = kind == SpotKind.Locker ? "the locker" : kind == SpotKind.Cabinet ? "cabinet" : "under table";
-                if (kind != SpotKind.Locker && HuntMap.SpotCount(DecisionRoom) == 3)
+                if (kind != SpotKind.Locker)
                 {
-                    // Two cabinets or two tables in the room: say which one.
-                    what += spot == 1 ? " A" : " B";
+                    // Several cabinets or tables in the room: say which one.
+                    int same = 0;
+                    int index = 0;
+                    for (int other = 0; other < HuntMap.SpotCount(DecisionRoom); other++)
+                    {
+                        if (PizzeriaLayout.SpotKindOf(DecisionRoom, other) == kind)
+                        {
+                            same++;
+                            index += other < spot ? 1 : 0;
+                        }
+                    }
+                    if (same > 1)
+                    {
+                        what += " " + (char)('A' + index);
+                    }
                 }
                 return "search " + what;
             }
@@ -819,7 +832,7 @@ namespace NightShift.Game
             var rooms = new List<Room>
             {
                 Room.Office, Room.Parts, Room.Restrooms, Room.BackHall, Room.Kitchen,
-                Room.DiningHall, Room.MainHall, Room.Arcade, Room.Storage, Room.PartyRoom
+                Room.DiningHall, Room.MainHall, Room.Arcade, Room.Storage, Room.PartyRoom, Room.Banquet, Room.Veranda
             };
             for (int i = first; i < first + 2 && i < StoryData.Notes.Length; i++)
             {

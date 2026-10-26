@@ -31,10 +31,12 @@ namespace NightShift.Game
 
     /// <summary>
     /// Physical layout of the pizzeria: where each room of <see cref="HuntMap"/> is in the 3D world.
-    /// One floor in two wings joined by a long service corridor: the staff wing to the west (the
-    /// security office where the night starts, parts, restrooms, the back hall, the kitchen and
-    /// the storage) and the public wing to the east (the dining hall with Freddy's stage, the
-    /// arcade, the main hall, the party room and the exit lobby). Air ducts give the player
+    /// One floor in two wings joined by the north wing: the staff wing to the west (the security
+    /// office where the night starts, parts, restrooms, the back hall, the kitchen and the
+    /// storage) and the public wing to the east (the dining hall with Freddy's stage, the
+    /// arcade, the main hall, the party room and the exit lobby). The north wing is two dining
+    /// rooms with tables and windows, the banquet room off the kitchen and the veranda above the
+    /// arcade; its tables are hiding spots to slide under. Air ducts give the player
     /// crawl-only shortcuts across. Rooms keep exactly the connections of the graph the brain was
     /// trained on, and corridors are as long as their cost in it. Inside a room Freddy walks
     /// straight lines between the room's hub, its doorways and its hiding spots; props are kept
@@ -43,9 +45,11 @@ namespace NightShift.Game
     /// <remarks>
     /// Top view (north up):
     /// <code>
-    ///  [Storage]=[  Kitchen  ]=======[ Dining Hall (stage) ]=[ Arcade ]
-    ///                 ||                                         ||
-    ///  [============ Back Hall ============]=======[======== Main Hall ========]
+    ///                [======= Banquet Room =======]===[ Veranda ]
+    ///                       ||                          ||
+    ///  [Storage]=[ Kitchen ]      [ Dining Hall (stage) ]=[ Arcade ]
+    ///                 ||                                    ||
+    ///  [=========== Back Hall ===========]   [======= Main Hall =======]
     ///     ||        ||          ||                    ||
     ///  [Office]=[ Parts ]   [Restrooms]           [ Party ]=[ Exit Lobby ]
     ///                                                            EXIT
@@ -98,7 +102,9 @@ namespace NightShift.Game
             Shape(4f, -3f, 19f, 3f, 3.4f),            // Main Hall
             Shape(4f, -14f, 6f, 7f, 3.4f),            // Party Room
             Shape(15f, 2f, 8f, 8f, 3.6f),             // Arcade
-            Shape(12f, -17f, 8f, 8f, 3.6f)            // Exit Lobby
+            Shape(12f, -17f, 8f, 8f, 3.6f),           // Exit Lobby
+            Shape(-16f, 15f, 25f, 7f, 3.4f),          // Banquet Room (north of the kitchen)
+            Shape(12f, 15f, 10f, 7f, 3.4f)            // Veranda (north of the arcade)
         };
 
         private static readonly Passage[] Passages =
@@ -110,9 +116,10 @@ namespace NightShift.Game
             Link(Room.Restrooms, Room.BackHall, -4.5f, -7f, -4.5f, -3f),
             Link(Room.BackHall, Room.Kitchen, -9.5f, 0f, -9.5f, 2f),
             Link(Room.Storage, Room.Kitchen, -16f, 6f, -14f, 6f),
-            // Between the wings: the service corridor and the kitchen pass.
-            Link(Room.BackHall, Room.MainHall, -3f, -1.5f, 4f, -1.5f),
-            Link(Room.Kitchen, Room.DiningHall, -5f, 6f, 2f, 6f),
+            // Between the wings: only the north wing.
+            Link(Room.Kitchen, Room.Banquet, -6.3f, 10f, -6.3f, 15f),
+            Link(Room.Banquet, Room.Veranda, 9f, 18.5f, 12f, 18.5f),
+            Link(Room.Veranda, Room.Arcade, 18f, 15f, 18f, 10f),
             // Public wing.
             Link(Room.DiningHall, Room.Arcade, 13f, 6f, 15f, 6f),
             Link(Room.MainHall, Room.Arcade, 19f, 0f, 19f, 2f),
@@ -145,7 +152,7 @@ namespace NightShift.Game
                 Points = new[] { new Vector3(-6f, 0f, 8.5f), new Vector3(-6f, Under, 8.5f), new Vector3(16f, Under, 8.5f), new Vector3(16f, 0f, 8.5f) },
                 FloorGrateA = true, FloorGrateB = true
             },
-            // Parts → Dining Hall: under the restrooms and the service corridor.
+            // Parts → Dining Hall: under the restrooms and the main hall.
             new DuctPath
             {
                 A = Room.Parts, B = Room.DiningHall,
@@ -167,7 +174,9 @@ namespace NightShift.Game
             new[] { S(SpotKind.Locker, 12f, -0.4f, 180f) },                                                                                  // Main Hall
             new[] { S(SpotKind.Locker, 9.4f, -13.4f, 315f), S(SpotKind.Table, 7.6f, -13.2f, 0f) },                                          // Party Room
             new[] { S(SpotKind.Locker, 22.4f, 9.4f, 225f), S(SpotKind.Cabinet, 22.6f, 4f, 270f) },                                          // Arcade
-            new[] { S(SpotKind.Locker, 19.4f, -9.6f, 225f) }                                                                                 // Exit Lobby
+            new[] { S(SpotKind.Locker, 19.4f, -9.6f, 225f) },                                                                                // Exit Lobby
+            new[] { S(SpotKind.Table, -12f, 17.2f, 90f), S(SpotKind.Table, -3.5f, 20.5f, 180f), S(SpotKind.Table, 3f, 16.4f, 0f) },        // Banquet Room
+            new[] { S(SpotKind.Table, 20.2f, 20.4f, 180f), S(SpotKind.Table, 14.2f, 20.4f, 180f) }                                          // Veranda
         };
 
         // Wall shelves for the fuses (rooms that can hold one), with the direction the shelf faces.
@@ -223,7 +232,7 @@ namespace NightShift.Game
         }
 
         /// <summary>Area that contains the whole building (for the maps in the UI).</summary>
-        public static readonly Rect Bounds = new Rect(-23f, -19f, 47f, 32f);
+        public static readonly Rect Bounds = new Rect(-23f, -19f, 47f, 42f);
 
         public static Rect Area(Room room) => Rooms[(int)room].Area;
         public static float Height(Room room) => Rooms[(int)room].Height;

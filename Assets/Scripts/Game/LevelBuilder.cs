@@ -129,6 +129,16 @@ namespace NightShift.Game
                         Wall = BuildKit.Surface("arcadeWall", () => ProceduralTextures.Wallpaper(new Color(0.1f, 0.08f, 0.16f), new Color(0.2f, 0.12f, 0.32f)), 0.1f),
                         Ceiling = ceiling
                     };
+                case Room.Banquet:
+                case Room.Veranda:
+                    // The north wing: dark wood floors and paneling under the party wallpaper.
+                    return new RoomStyle
+                    {
+                        Floor = BuildKit.Surface("banquetFloor", () => ProceduralTextures.Planks(new Color(0.3f, 0.19f, 0.11f)), 0.45f),
+                        Wainscot = BuildKit.Surface("banquetPanels", () => ProceduralTextures.Planks(new Color(0.22f, 0.13f, 0.08f)), 0.35f),
+                        Wall = BuildKit.Surface("banquetWall", () => ProceduralTextures.Wallpaper(new Color(0.34f, 0.3f, 0.26f), new Color(0.42f, 0.16f, 0.14f)), 0.1f),
+                        Ceiling = ceiling
+                    };
                 case Room.Office:
                 case Room.BackHall:
                     // The staff wing: grey-green offices and halls, so it never looks like the restaurant.
