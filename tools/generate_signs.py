@@ -17,6 +17,8 @@ Marker) and Material Symbols icons, into Assets/Art/Signs/ of the Unity project:
                          circuit directory inside its door
     cctv_<room>.png      what the office monitors draw over each camera's picture
     drawing_<n>.png      children's crayon drawings taped to the walls
+    key_<n>.png          the keys of the tape box's keypad
+    lcd_<message>.png    what the card reader and the tape box show on their little screens
     signs.json           width / height of every texture
 
 Fonts are downloaded once into tools/.font-cache (not committed).
@@ -48,17 +50,21 @@ FONTS = {
     "typewriter": GOOGLE + "apache/specialelite/SpecialElite-Regular.ttf",
     "marker": GOOGLE + "apache/permanentmarker/PermanentMarker-Regular.ttf",
     "crayon": GOOGLE + "apache/schoolbell/Schoolbell-Regular.ttf",
+    "lcd": GOOGLE + "ofl/vt323/VT323-Regular.ttf",
     "icons": ICONS + "MaterialSymbolsOutlined%5BFILL,GRAD,opsz,wght%5D.ttf",
 }
 CODEPOINTS = ICONS + "MaterialSymbolsOutlined%5BFILL,GRAD,opsz,wght%5D.codepoints"
 
 ROOMS = ["Office", "Parts & Service", "Restrooms", "Back Hall", "Storage", "Kitchen",
-         "Dining Hall", "Main Hall", "Party Room", "Arcade", "Exit Lobby"]
+         "Dining Hall", "Main Hall", "Party Room", "Arcade", "Exit Lobby", "Banquet Room", "Veranda"]
+# The power sockets and the color of the cell each takes (yellow, blue, green).
+SOCKETS = {"Parts & Service": (250, 196, 40), "Banquet Room": (60, 140, 255), "Party Room": (70, 220, 110)}
 STAFF_WING = {"Office", "Parts & Service", "Restrooms", "Back Hall", "Storage", "Kitchen"}
 ROOM_ICONS = {
     "Office": "security", "Parts & Service": "build", "Restrooms": "wc", "Back Hall": "meeting_room",
     "Storage": "inventory_2", "Kitchen": "restaurant", "Dining Hall": "local_pizza", "Main Hall": "storefront",
     "Party Room": "celebration", "Arcade": "sports_esports", "Exit Lobby": "door_open",
+    "Banquet Room": "table_restaurant", "Veranda": "deck",
 }
 
 GOLD = (236, 190, 86)
@@ -324,30 +330,51 @@ def directory(project, here, title):
             d.rectangle([min(a[0], b[0]), a[1] - half, max(a[0], b[0]), a[1] + half], fill=(150, 144, 128))
         else:
             d.rectangle([a[0] - half, min(a[1], b[1]), a[0] + half, max(a[1], b[1])], fill=(150, 144, 128))
+    hx, hy = p(*here)
     for i, (x, z, rw, rd) in enumerate(rooms):
         name = ROOMS[i]
         fill = (196, 70, 64) if name not in STAFF_WING else (110, 128, 118)
         a, b = p(x, z + rd), p(x + rw, z)
         d.rectangle([a[0], a[1], b[0], b[1]], fill=fill, outline=(40, 30, 30), width=4)
-        f = fit_font(d, name.upper(), "oswald", b[0] - a[0] - 14, 54, weight=650)
-        draw_text(d, ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2), name.upper(), f, CREAM)
-    f = font("oswald", 42, 700)
-    for (ex, ez), lines, outside in ((front, ["EXIT  (FRONT DOORS)"], "below"), (back, ["EXIT", "LOADING", "DOOR"], "left")):
+        # The name keeps clear of the YOU ARE HERE pin when the pin is in this room.
+        left, right = a[0] + 12, b[0] - 12
+        if a[0] <= hx <= b[0] and a[1] <= hy <= b[1]:
+            if hx - a[0] < b[0] - hx:
+                left = hx + 36
+            else:
+                right = hx - 36
+        f = fit_font(d, name.upper(), "oswald", right - left, 54, weight=650)
+        draw_text(d, ((left + right) / 2, (a[1] + b[1]) / 2), name.upper(), f, CREAM)
+    f = font("oswald", 40, 700)
+    # The exits sit just outside their wall, their labels where nothing else is drawn.
+    for (ex, ez), lines, outside in ((front, ["EXIT", "FRONT DOORS"], "below"), (back, ["EXIT", "LOADING", "DOOR"], "left")):
         c = p(ex, ez)
-        d.rectangle([c[0] - 26, c[1] - 26, c[0] + 26, c[1] + 26], fill=EXIT_GREEN, outline=WHITE, width=4)
+        c = (c[0], c[1] + 26) if outside == "below" else (c[0] - 26, c[1])
+        d.rectangle([c[0] - 22, c[1] - 22, c[0] + 22, c[1] + 22], fill=EXIT_GREEN, outline=WHITE, width=4)
         for k, line in enumerate(lines):
             tw, th, _ = text_size(d, line, f)
             if outside == "below":
-                d.text((c[0] - tw / 2, c[1] + 34 + k * 48), line, font=f, fill=EXIT_GREEN)
+                d.text((c[0] - 40 - tw, c[1] - 46 + k * 46), line, font=f, fill=EXIT_GREEN)
             else:
-                d.text((c[0] - 40 - tw, c[1] - 70 + k * 48), line, font=f, fill=EXIT_GREEN)
-    hx, hy = p(*here)
-    for r, col in ((34, (255, 255, 255)), (26, (220, 20, 20))):
+                d.text((c[0] - 40 - tw, c[1] - 70 + k * 46), line, font=f, fill=EXIT_GREEN)
+    for r, col in ((26, (255, 255, 255)), (19, (220, 20, 20))):
         d.ellipse([hx - r, hy - r, hx + r, hy + r], fill=col)
-    f = font("oswald", 44, 700)
-    d.text((hx + 40, hy - 70), "YOU ARE HERE", font=f, fill=(170, 10, 10))
-    legend = "RED: RESTAURANT     GREY-GREEN: STAFF ONLY     GREEN: WAY OUT (ONE OPENS EACH NIGHT)"
-    draw_text(d, (w / 2, h - 50), legend, font("oswald", 34, 500), (60, 50, 44))
+    f = font("oswald", 40, 700)
+    tw, th, box = text_size(d, "YOU ARE HERE", f)
+    bx, by = hx - tw / 2 - 16, hy + 38
+    d.line([hx, hy + 24, hx, by], fill=(170, 10, 10), width=5)
+    d.rectangle([bx, by, bx + tw + 32, by + th + 22], fill=(250, 246, 236), outline=(170, 10, 10), width=4)
+    d.text((bx + 16, by + 11 - box[1]), "YOU ARE HERE", font=f, fill=(170, 10, 10))
+    # The power sockets, in their colors (from night 2 each cell fits only its own).
+    glyph, icon_font = icon("power", 34)
+    for i, (x, z, rw, rd) in enumerate(rooms):
+        if ROOMS[i] in SOCKETS:
+            a, b = p(x, z + rd), p(x + rw, z)
+            cx, cy = b[0] - 30, b[1] - 30
+            d.ellipse([cx - 24, cy - 24, cx + 24, cy + 24], fill=SOCKETS[ROOMS[i]], outline=(30, 30, 30), width=4)
+            draw_text(d, (cx, cy), glyph, icon_font, (25, 25, 25))
+    legend = "RED: RESTAURANT    GREY-GREEN: STAFF ONLY    GREEN: WAY OUT    PLUGS: POWER SOCKETS"
+    draw_text(d, (w / 2, h - 50), legend, font("oswald", 32, 500), (60, 50, 44))
     return grime(img, 0.45, seed(title))
 
 
@@ -1113,6 +1140,91 @@ def lost_and_found():
     return img
 
 
+def window_night(index):
+    """The view through a window at night: sky, a moon behind clouds, the town's rooftops with a
+    few lit windows, and rain on the glass. Seen through the north wing's windows."""
+    w, h = 512, 512
+    rng = np.random.default_rng(330 + index)
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    top = np.array([8, 12, 26], np.float32)
+    low = np.array([28, 34, 52], np.float32)
+    t = (yy / h)[..., None]
+    sky = top * (1 - t) + low * t
+    mx, my = (140 + index * 220) % 420 + 50, 110
+    glow = np.exp(-(((xx - mx) ** 2 + (yy - my) ** 2) / (2 * 70.0 ** 2)))[..., None]
+    sky += glow * np.array([70, 80, 100], np.float32)
+    clouds = noise((w, h), 60, 331 + index)
+    sky *= (0.75 + 0.35 * clouds)[..., None]
+    img = Image.fromarray(np.clip(sky, 0, 255).astype(np.uint8))
+    d = ImageDraw.Draw(img)
+    d.ellipse([mx - 20, my - 20, mx + 20, my + 20], fill=(210, 215, 225))
+    # Rooftops: a jagged band of dark buildings, some windows still lit.
+    x = 0
+    while x < w:
+        bw = int(rng.uniform(40, 110))
+        top_y = int(rng.uniform(260, 380))
+        d.rectangle([x, top_y, x + bw, h], fill=(6, 7, 11))
+        for wy in range(top_y + 12, h - 10, 22):
+            for wx in range(x + 8, x + bw - 10, 18):
+                if rng.random() < 0.12:
+                    warm = rng.random() < 0.7
+                    d.rectangle([wx, wy, wx + 8, wy + 11], fill=(230, 180, 90) if warm else (150, 190, 230))
+        x += bw + int(rng.uniform(0, 12))
+    # Rain on the glass: beads and the trails they leave.
+    drops = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    dd = ImageDraw.Draw(drops)
+    for _ in range(160):
+        x0, y0 = rng.uniform(0, w), rng.uniform(0, h)
+        r = rng.uniform(1.5, 4.5)
+        dd.ellipse([x0 - r, y0 - r, x0 + r, y0 + r], fill=(200, 210, 230, 70))
+        if rng.random() < 0.35:
+            dd.line([x0, y0, x0 + rng.uniform(-3, 3), y0 + rng.uniform(20, 90)], fill=(180, 190, 210, 40), width=2)
+    img = Image.alpha_composite(img.convert("RGBA"), drops.filter(ImageFilter.GaussianBlur(0.8))).convert("RGB")
+    return img
+
+
+# ---------------------------------------------------------------- minigame screens and keys
+
+LCD_MESSAGES = {
+    "reader_swipe": ("SWIPE CARD", (110, 255, 140)),
+    "reader_fast": ("TOO FAST. TRY AGAIN.", (255, 90, 70)),
+    "reader_slow": ("TOO SLOW. TRY AGAIN.", (255, 90, 70)),
+    "reader_bad": ("BAD READ. TRY AGAIN.", (255, 90, 70)),
+    "reader_ok": ("ACCEPTED. THANK YOU.", (110, 255, 140)),
+    "reader_nocard": ("NO CARD", (255, 190, 70)),
+    "keypad_enter": ("ENTER 1 - 9", (110, 255, 140)),
+    "keypad_wrong": ("WRONG CODE", (255, 90, 70)),
+    "keypad_open": ("OPEN", (110, 255, 140)),
+}
+
+
+def lcd(text, color):
+    """A small backlit LCD: dark glass, faint unlit segments, the message glowing."""
+    w, h = 512, 128
+    img = Image.new("RGB", (w, h), (8, 16, 10))
+    d = ImageDraw.Draw(img)
+    for y in range(0, h, 3):
+        d.line([0, y, w, y], fill=(12, 22, 14))
+    f = fit_font(d, text, "lcd", w - 40, 96)
+    glowing = Image.new("RGB", (w, h), (0, 0, 0))
+    gd = ImageDraw.Draw(glowing)
+    draw_text(gd, (w / 2, h / 2), text, f, color)
+    img = ImageChops.add(img, glowing.filter(ImageFilter.GaussianBlur(6)))
+    img = ImageChops.add(img, glowing)
+    return img
+
+
+def keypad_key(number):
+    """One key of a steel keypad: a raised square with the number stamped in."""
+    w = h = 128
+    img = Image.new("RGB", (w, h), (52, 54, 56))
+    d = ImageDraw.Draw(img)
+    d.rounded_rectangle([6, 6, w - 7, h - 7], radius=14, fill=(150, 152, 150), outline=(70, 72, 74), width=4)
+    d.rounded_rectangle([14, 12, w - 15, h - 22], radius=10, fill=(176, 178, 176))
+    draw_text(d, (w / 2, h / 2 - 4), str(number), font("oswald", 70, 700), (28, 28, 30))
+    return grime(img, 0.25, 340 + number)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--project", default=str(ROOT / "unity"), help="Unity project folder")
@@ -1143,7 +1255,9 @@ def main():
               "prizes": ("PRIZES", ((170, 255, 255), (40, 200, 255))),
               "happy_birthday": ("HAPPY BIRTHDAY", ((180, 240, 255), (60, 120, 255))),
               "arcade": ("ARCADE", ((255, 170, 255), (190, 40, 255))),
-              "tickets": ("TICKETS", ((255, 235, 150), (255, 140, 30)))}
+              "tickets": ("TICKETS", ((255, 235, 150), (255, 140, 30))),
+              "banquet_room": ("BANQUET ROOM", ((255, 230, 170), (230, 120, 40))),
+              "veranda": ("VERANDA", ((190, 255, 210), (40, 200, 120)))}
     for key, (text, colors) in public.items():
         save("title_" + key, neon_title(text, colors))
     staff = {"security": "SECURITY", "parts_service": "PARTS & SERVICE", "storage": "STORAGE",
@@ -1175,11 +1289,17 @@ def main():
     save("label_tape", label_tape())
     save_rgba("decal_tag_reactivate", label_reactivate())
     save_rgba("fence_chainlink", chain_link())
+    for i in range(3):
+        save(f"window_night_{i}", window_night(i))
     save("pizza_box_top", pizza_box_top())
     save_rgba("decal_paper_plate", paper_plate())
     save_rgba("decal_lost_found", lost_and_found())
     for i in range(3):
         save(f"wrap_{i}", gift_wrap(i))
+    for name, (text, color) in LCD_MESSAGES.items():
+        save("lcd_" + name, lcd(text, color))
+    for n in range(1, 10):
+        save(f"key_{n}", keypad_key(n))
     save("door_logo", door_logo())
     save("closed_sign", closed_sign())
     save("breaker_deadfront", breaker_deadfront())

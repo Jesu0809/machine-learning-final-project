@@ -7,8 +7,10 @@ makes the calls), the calls are his phone calls on each night.
 
 Requirements: macOS (say, afconvert) and Python with numpy and soundfile.
 Usage (from the repository root):
-    python tools/generate_story_audio.py
+    python tools/generate_story_audio.py                    # writes into unity/
+    python tools/generate_story_audio.py --project ../ml-game
 """
+import argparse
 import re
 import subprocess
 import tempfile
@@ -18,8 +20,6 @@ import numpy as np
 import soundfile as sf
 
 ROOT = Path(__file__).resolve().parents[1]
-STORY = ROOT / "unity" / "Assets" / "Scripts" / "Game" / "StoryData.cs"
-OUTPUT = ROOT / "unity" / "Assets" / "Audio" / "Story"
 RATE = 22050
 
 
@@ -62,16 +62,21 @@ def save(audio, path):
 
 
 def main():
-    OUTPUT.mkdir(parents=True, exist_ok=True)
-    intro, nights = string_arrays(STORY.read_text(encoding="utf-8"))
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--project", default=str(ROOT / "unity"), help="Unity project folder")
+    args = parser.parse_args()
+    story = Path(args.project) / "Assets" / "Scripts" / "Game" / "StoryData.cs"
+    output = Path(args.project) / "Assets" / "Audio" / "Story"
+    output.mkdir(parents=True, exist_ok=True)
+    intro, nights = string_arrays(story.read_text(encoding="utf-8"))
     for i, line in enumerate(intro, 1):
         # Line 1 is the answering machine; the rest is the man from the calls, talking a bit faster.
         voice, rate = ("Fred", 165) if i == 1 else ("Daniel", 185)
-        save(phone(synthesize(line, voice, rate)), OUTPUT / f"intro_{i:02d}.wav")
+        save(phone(synthesize(line, voice, rate)), output / f"intro_{i:02d}.wav")
     for night, lines in enumerate(nights, 1):
         for i, line in enumerate(lines, 1):
-            save(phone(synthesize(line, "Daniel", 175)), OUTPUT / f"night{night}_{i:02d}.wav")
-    print(f"{len(intro)} intro lines, {sum(len(n) for n in nights)} call lines in {OUTPUT}")
+            save(phone(synthesize(line, "Daniel", 175)), output / f"night{night}_{i:02d}.wav")
+    print(f"{len(intro)} intro lines, {sum(len(n) for n in nights)} call lines in {output}")
 
 
 if __name__ == "__main__":
