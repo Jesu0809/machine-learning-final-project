@@ -7,7 +7,7 @@ namespace NightShift.Hunt
         InProgress,
         /// <summary>Freddy found the player.</summary>
         Caught,
-        /// <summary>The player opened the exit with every fuse.</summary>
+        /// <summary>The player did every objective of the night and opened the exit.</summary>
         Escaped,
         /// <summary>The night ran out with the player still inside.</summary>
         TimeUp
@@ -22,9 +22,16 @@ namespace NightShift.Hunt
         Run,
         /// <summary>Hide in a spot of the current room (silent).</summary>
         Hide,
-        /// <summary>Pick up the fuse in the current room (loud).</summary>
-        PickFuse,
-        /// <summary>Work on the exit panel; needs every fuse (very loud).</summary>
+        /// <summary>Pick up the power cell in the current room, if the hands are free (loud).</summary>
+        PickCell,
+        /// <summary>Put the carried cell into the socket of the current room, if it fits (loud clunk).</summary>
+        InsertCell,
+        /// <summary>
+        /// Work on the night's task in the current room: flip a breaker, take the keycard, swipe it,
+        /// press the tape box's keypad. Some of it is loud; a failed swipe or a wrong key beeps.
+        /// </summary>
+        Work,
+        /// <summary>Pull the exit lever; needs every objective done (very loud).</summary>
         WorkExit,
         /// <summary>
         /// Crawl through an air duct to another room (see <see cref="HuntMap.Ducts"/>): silent after
@@ -52,7 +59,9 @@ namespace NightShift.Hunt
         public static PlayerAction Walk(Room target) => new PlayerAction(PlayerActionKind.Walk, target, -1);
         public static PlayerAction Run(Room target) => new PlayerAction(PlayerActionKind.Run, target, -1);
         public static PlayerAction Hide(int spot) => new PlayerAction(PlayerActionKind.Hide, default, spot);
-        public static PlayerAction PickFuse() => new PlayerAction(PlayerActionKind.PickFuse, default, -1);
+        public static PlayerAction PickCell() => new PlayerAction(PlayerActionKind.PickCell, default, -1);
+        public static PlayerAction InsertCell() => new PlayerAction(PlayerActionKind.InsertCell, default, -1);
+        public static PlayerAction Work() => new PlayerAction(PlayerActionKind.Work, default, -1);
         public static PlayerAction WorkExit() => new PlayerAction(PlayerActionKind.WorkExit, default, -1);
         public static PlayerAction Crawl(Room target) => new PlayerAction(PlayerActionKind.Crawl, target, -1);
 
@@ -147,9 +156,41 @@ namespace NightShift.Hunt
         public Room? PlayerCrawlingTo { get; private set; }
         public int PlayerCrawlProgress { get; private set; }
         public bool PlayerInDuct => PlayerCrawlingTo.HasValue;
-        public int FusesCollected { get; private set; }
         public int ExitProgress { get; private set; }
-        /// <summary>Noise level of the player's last action: 0 silent, 1 walk, 2 run or pick up, 3 exit panel.</summary>
+
+        // ---- The night's objectives ----
+
+        /// <summary>The night being played (1–5): it decides the objectives (see <see cref="HuntSettings.Night"/>).</summary>
+        public int Night { get; private set; } = 1;
+
+        /// <summary>Index of the cell the player carries, or -1 (one at a time).</summary>
+        public int CarriedCell { get; private set; } = -1;
+
+        /// <summary>Cells already in their socket.</summary>
+        public int CellsInserted { get; private set; }
+
+        public int BreakerProgress { get; private set; }
+        public bool BreakerDone { get; private set; }
+        public bool CardTaken { get; private set; }
+        public bool CardSwiped { get; private set; }
+        public int KeypadProgress { get; private set; }
+        public bool TapeTaken { get; private set; }
+
+        public bool NeedsBreaker => Night >= 3;
+        public bool NeedsCard => Night >= 4;
+        public bool NeedsTape => Night >= 5;
+
+        /// <summary>Objectives of tonight: one per cell, the breaker, taking and swiping the card, the tape.</summary>
+        public int ObjectivesTotal => Settings.CellCount + (NeedsBreaker ? 1 : 0) + (NeedsCard ? 2 : 0) + (NeedsTape ? 1 : 0);
+
+        public int ObjectivesDone => CellsInserted + (BreakerDone ? 1 : 0) + (CardTaken ? 1 : 0) + (CardSwiped ? 1 : 0) + (TapeTaken ? 1 : 0);
+
+        /// <summary>How close the player is to getting out, 0–1 (the generators light up the map, so Freddy knows).</summary>
+        public float Progress => ObjectivesTotal == 0 ? 1f : ObjectivesDone / (float)ObjectivesTotal;
+
+        /// <summary>True once every objective is done: the exit lever works.</summary>
+        public bool ExitUnlocked => ObjectivesDone >= ObjectivesTotal;
+        /// <summary>Noise level of the player's last action: 0 silent, 1 walk, 2 run, pick up or a beep, 3 exit lever.</summary>
         public int PlayerNoise { get; private set; }
 
         /// <summary>Player actions applied in the current tick.</summary>
@@ -158,7 +199,11 @@ namespace NightShift.Hunt
         /// <summary>True once the player has used all their actions of this tick; Freddy acts next.</summary>
         public bool FreddyTurn => PlayerActionsThisTick >= Settings.PlayerActionsPerTick;
 
-        private readonly bool[] fuseInRoom = new bool[HuntMap.RoomCount];
+        // Where each cell waits (null once picked up), the socket it fits (-1: any), the sockets filled.
+        private readonly Room?[] cellRoom = new Room?[MaxCells];
+        private readonly int[] cellSocket = new int[MaxCells];
+        private readonly bool[] socketPowered = new bool[MaxCells];
+        private const int MaxCells = 3;
 
         // ---- Freddy's knowledge (what the observations are built from) ----
 
@@ -206,9 +251,43 @@ namespace NightShift.Hunt
             Reset();
         }
 
-        public bool FuseIn(Room room) => fuseInRoom[(int)room];
+        /// <summary>Index of the cell waiting in <paramref name="room"/>, or -1.</summary>
+        public int CellAt(Room room)
+        {
+            for (int i = 0; i < CellCount; i++)
+            {
+                if (cellRoom[i] == room)
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
 
-        /// <summary>Starts a new night with the fuses in random rooms.</summary>
+        public bool CellIn(Room room) => CellAt(room) >= 0;
+
+        /// <summary>Room where cell <paramref name="cell"/> waits, or null once it was picked up.</summary>
+        public Room? CellRoom(int cell) => cellRoom[cell];
+
+        /// <summary>The socket cell <paramref name="cell"/> fits (index in <see cref="HuntMap.SocketRooms"/>), or -1 for any.</summary>
+        public int CellSocket(int cell) => cellSocket[cell];
+
+        public bool SocketPowered(int socket) => socketPowered[socket];
+
+        public bool CellFits(int cell, int socket) => cell >= 0 && socket >= 0 && !socketPowered[socket] && (cellSocket[cell] < 0 || cellSocket[cell] == socket);
+
+        private int CellCount => Math.Min(MaxCells, Settings.CellCount);
+
+        /// <summary>True if <see cref="PlayerActionKind.Work"/> in <paramref name="room"/> would do something now.</summary>
+        public bool HasWorkIn(Room room)
+        {
+            return (room == HuntMap.BreakerRoom && NeedsBreaker && !BreakerDone)
+                || (room == HuntMap.CardRoom && NeedsCard && !CardTaken)
+                || (room == HuntMap.ReaderRoom && CardTaken && !CardSwiped)
+                || (room == HuntMap.TapeRoom && NeedsTape && !TapeTaken);
+        }
+
+        /// <summary>Starts a new night: its objectives, and the cells in random rooms.</summary>
         public void Reset()
         {
             Tick = 0;
@@ -224,8 +303,12 @@ namespace NightShift.Hunt
             PlayerCrawlingTo = null;
             PlayerCrawlProgress = 0;
             FreddyTravelLeft = 0;
-            FusesCollected = 0;
             ExitProgress = 0;
+            Night = Settings.RandomNight ? random.Next(1, 6) : Math.Max(1, Math.Min(5, Settings.Night));
+            CarriedCell = -1;
+            CellsInserted = 0;
+            BreakerProgress = KeypadProgress = 0;
+            BreakerDone = CardTaken = CardSwiped = TapeTaken = false;
             PlayerNoise = 0;
             PlayerActionsThisTick = 0;
             HeardRoom = null;
@@ -244,35 +327,61 @@ namespace NightShift.Hunt
                 TicksSinceVisited[room] = Settings.MemoryWindowTicks;
             }
             TicksSinceVisited[(int)FreddyRoom] = 0;
-            PlaceFuses();
+            PlaceCells();
         }
 
-        private void PlaceFuses()
+        /// <summary>
+        /// One cell per socket, each on a shelf in a different room: never a socket room or tonight's
+        /// exit, and at least two rooms away from the socket it fits (any socket on night 1), so
+        /// every cell is a trip across the building.
+        /// </summary>
+        private void PlaceCells()
         {
-            Array.Clear(fuseInRoom, 0, fuseInRoom.Length);
-            // Only rooms with a fuse shelf (never the start rooms or tonight's exit), so the player
-            // always has to cross the map.
-            var candidates = HuntMap.FuseRooms;
-            int placed = 0;
-            while (placed < Math.Min(Settings.FuseCount, candidates.Count - 1))
+            Array.Clear(socketPowered, 0, socketPowered.Length);
+            bool colored = Night >= 2;
+            var candidates = HuntMap.CellRooms;
+            for (int i = 0; i < MaxCells; i++)
             {
-                Room room = candidates[random.Next(candidates.Count)];
-                if (fuseInRoom[(int)room] || room == ExitRoom)
+                cellRoom[i] = null;
+                cellSocket[i] = colored ? i : -1;
+            }
+            for (int i = 0; i < CellCount; i++)
+            {
+                for (int attempt = 0; attempt < 60; attempt++)
                 {
-                    continue;
+                    Room room = candidates[random.Next(candidates.Count)];
+                    bool strict = attempt < 40;
+                    if (HuntMap.SocketIn(room) >= 0 || room == ExitRoom || CellIn(room) || (strict && SocketDistance(room, cellSocket[i]) < 2))
+                    {
+                        continue;
+                    }
+                    cellRoom[i] = room;
+                    break;
                 }
-                fuseInRoom[(int)room] = true;
-                placed++;
             }
         }
 
-        /// <summary>Puts a fuse in a specific room (tests and hand-made scenarios).</summary>
-        public void SetFuses(params Room[] rooms)
+        /// <summary>Rooms between <paramref name="room"/> and socket <paramref name="socket"/> (the nearest socket if -1).</summary>
+        private static int SocketDistance(Room room, int socket)
         {
-            Array.Clear(fuseInRoom, 0, fuseInRoom.Length);
-            foreach (Room room in rooms)
+            if (socket >= 0)
             {
-                fuseInRoom[(int)room] = true;
+                return HuntMap.Distance(room, HuntMap.SocketRooms[socket]);
+            }
+            int best = int.MaxValue;
+            foreach (Room s in HuntMap.SocketRooms)
+            {
+                best = Math.Min(best, HuntMap.Distance(room, s));
+            }
+            return best;
+        }
+
+        /// <summary>Puts the cells in given rooms (tests and hand-made scenarios).</summary>
+        public void SetCells(params Room[] rooms)
+        {
+            for (int i = 0; i < MaxCells; i++)
+            {
+                cellRoom[i] = i < rooms.Length ? rooms[i] : (Room?)null;
             }
         }
 
@@ -382,18 +491,37 @@ namespace NightShift.Hunt
                     }
                     break;
 
-                case PlayerActionKind.PickFuse:
-                    if (fuseInRoom[(int)PlayerRoom])
+                case PlayerActionKind.PickCell:
+                    if (CarriedCell < 0 && CellAt(PlayerRoom) >= 0)
                     {
                         LeaveHidingSpot();
-                        fuseInRoom[(int)PlayerRoom] = false;
-                        FusesCollected++;
+                        CarriedCell = CellAt(PlayerRoom);
+                        cellRoom[CarriedCell] = null;
                         PlayerNoise = 2;
                     }
                     break;
 
+                case PlayerActionKind.InsertCell:
+                    if (CellFits(CarriedCell, HuntMap.SocketIn(PlayerRoom)))
+                    {
+                        LeaveHidingSpot();
+                        socketPowered[HuntMap.SocketIn(PlayerRoom)] = true;
+                        CarriedCell = -1;
+                        CellsInserted++;
+                        PlayerNoise = 2;
+                    }
+                    break;
+
+                case PlayerActionKind.Work:
+                    if (HasWorkIn(PlayerRoom))
+                    {
+                        LeaveHidingSpot();
+                        PlayerNoise = DoWork(PlayerRoom);
+                    }
+                    break;
+
                 case PlayerActionKind.WorkExit:
-                    if (PlayerRoom == ExitRoom && FusesCollected >= Settings.FuseCount)
+                    if (PlayerRoom == ExitRoom && ExitUnlocked)
                     {
                         LeaveHidingSpot();
                         ExitProgress++;
@@ -422,6 +550,44 @@ namespace NightShift.Hunt
             }
 
             Sense();
+        }
+
+        /// <summary>One action of the night's task in <paramref name="room"/>; returns the noise it made.</summary>
+        private int DoWork(Room room)
+        {
+            if (room == HuntMap.BreakerRoom && NeedsBreaker && !BreakerDone)
+            {
+                BreakerProgress++;
+                BreakerDone = BreakerProgress >= Settings.BreakerActions;
+                return 2;
+            }
+            if (room == HuntMap.CardRoom && NeedsCard && !CardTaken)
+            {
+                CardTaken = true;
+                return 1;
+            }
+            if (room == HuntMap.ReaderRoom && CardTaken && !CardSwiped)
+            {
+                // Too fast, too slow: the reader beeps and the card has to go through again.
+                if (random.NextDouble() < Settings.SwipeFailChance)
+                {
+                    return 2;
+                }
+                CardSwiped = true;
+                return 1;
+            }
+            if (room == HuntMap.TapeRoom && NeedsTape && !TapeTaken)
+            {
+                if (random.NextDouble() < Settings.KeypadFailChance)
+                {
+                    KeypadProgress = 0;
+                    return 2;
+                }
+                KeypadProgress++;
+                TapeTaken = KeypadProgress >= Settings.KeypadActions;
+                return 1;
+            }
+            return 0;
         }
 
         /// <summary>Progress toward a neighboring room; the player arrives when the connection's length is covered.</summary>
@@ -551,16 +717,42 @@ namespace NightShift.Hunt
             TicksSinceVisited[(int)room] = 0;
         }
 
-        /// <summary>The 3D player picked up the fuse of <paramref name="room"/>. False if there was none.</summary>
-        public bool CollectFuse(Room room)
+        /// <summary>The 3D player picked up the cell waiting in <paramref name="room"/>; returns its index, or -1.</summary>
+        public int TakeCell(Room room)
         {
-            if (!fuseInRoom[(int)room])
+            int cell = CellAt(room);
+            if (cell < 0 || CarriedCell >= 0)
+            {
+                return -1;
+            }
+            cellRoom[cell] = null;
+            CarriedCell = cell;
+            return cell;
+        }
+
+        /// <summary>The 3D player put the carried cell into socket <paramref name="socket"/>. False if it does not fit.</summary>
+        public bool InsertCarriedCell(int socket)
+        {
+            if (!CellFits(CarriedCell, socket))
             {
                 return false;
             }
-            fuseInRoom[(int)room] = false;
-            FusesCollected++;
+            socketPowered[socket] = true;
+            CarriedCell = -1;
+            CellsInserted++;
             return true;
+        }
+
+        /// <summary>The 3D player finished one of the night's tasks (the minigames are played in the game, not here).</summary>
+        public void CompleteBreaker() => BreakerDone = true;
+        public void CompleteCardTaken() => CardTaken = true;
+        public void CompleteCardSwipe() => CardSwiped = true;
+        public void CompleteTape() => TapeTaken = true;
+
+        /// <summary>The 3D game sets tonight's number before <see cref="Reset"/> (training draws it at random).</summary>
+        public void SetNight(int night)
+        {
+            Settings.Night = night;
         }
 
         /// <summary>Ends the night from the 3D game (the body caught the player, or the door opened).</summary>

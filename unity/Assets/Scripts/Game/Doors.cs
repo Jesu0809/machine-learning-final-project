@@ -142,6 +142,10 @@ namespace NightShift.Game
                 return;
             }
             Closed = !Closed;
+            if (!Closed)
+            {
+                SwingAwayFrom(player.transform.position);
+            }
             player.MakeNoise(Closed ? 2 : 1);
             director.Audio.PlayAt(director.Assets.LockerDoor, transform.position, Closed ? 0.9f : 0.5f, 0.7f);
         }
@@ -154,6 +158,7 @@ namespace NightShift.Game
                 return false;
             }
             Closed = false;
+            SwingAwayFrom(player.transform.position);
             player.MakeNoise(3);
             director.Audio.PlayAt(director.Assets.LockerDoor, transform.position, 1f, 0.6f);
             return true;
@@ -196,6 +201,13 @@ namespace NightShift.Game
                 // Open, the leaves rest ajar at an angle: seen from both sides of the doorway, still wide enough to run through.
                 hinges[i].localRotation = Quaternion.Euler(0f, axisYaw + side * openSign * 100f * swing, 0f);
             }
+        }
+
+        /// <summary>The door opens in either direction: the leaves swing away from whoever opens it.</summary>
+        private void SwingAwayFrom(Vector3 point)
+        {
+            Vector3 normal = Quaternion.Euler(0f, axisYaw, 0f) * Vector3.forward;
+            openSign = Vector3.Dot(Flat(point) - Flat(transform.position), normal) >= 0f ? -1f : 1f;
         }
 
         private static Vector3 Flat(Vector3 p) => new Vector3(p.x, 0f, p.z);

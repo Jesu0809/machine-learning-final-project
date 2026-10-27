@@ -30,14 +30,36 @@ namespace NightShift.Hunt
         /// <summary>Chance that Freddy spots a player who is not hidden in his own room (rooms have corners).</summary>
         public float SightSameRoomChance = 0.75f;
 
-        /// <summary>Fuses the player must collect before the exit can be opened.</summary>
-        public int FuseCount = 3;
+        /// <summary>
+        /// The night being played (1–5), which sets the objectives: night 1 three cells that fit any
+        /// socket; night 2 each cell has its socket's color; night 3 adds the breaker; night 4 the
+        /// keycard; night 5 the tape. Ignored when <see cref="RandomNight"/> is true.
+        /// </summary>
+        public int Night = 1;
+
+        /// <summary>True in training and evaluation: every hunt plays a random night (1–5).</summary>
+        public bool RandomNight = true;
+
+        /// <summary>Power cells, one for each socket of <see cref="HuntMap.SocketRooms"/>. The player carries one at a time.</summary>
+        public int CellCount = 3;
+
+        /// <summary>Player actions flipping the tripped breakers back up (each flip is a loud clack).</summary>
+        public int BreakerActions = 4;
+
+        /// <summary>Chance that a keycard swipe is too fast or too slow: an error beep, try again.</summary>
+        public float SwipeFailChance = 0.35f;
+
+        /// <summary>Player actions pressing 1 to 9 on the tape box's keypad.</summary>
+        public int KeypadActions = 5;
+
+        /// <summary>Chance per keypad action of a wrong key: a buzz, and the sequence starts over.</summary>
+        public float KeypadFailChance = 0.15f;
 
         /// <summary>True: each night the way out is a random one of <see cref="HuntMap.Exits"/>; false: always the front doors.</summary>
         public bool RandomExit = true;
 
-        /// <summary>Player actions of loud work at the exit panel to open the door.</summary>
-        public int ExitWorkTicks = 6;
+        /// <summary>Player actions at the exit: pulling the lever and the doors swinging open (very loud).</summary>
+        public int ExitWorkTicks = 2;
 
         /// <summary>
         /// Player actions per Freddy decision. With 2, Freddy (one room per decision) walks as fast

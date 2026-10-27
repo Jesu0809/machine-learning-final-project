@@ -9,7 +9,11 @@ namespace NightShift.Game
     {
         public Transform Root;
         public readonly HidingSpot[][] Spots = new HidingSpot[HuntMap.RoomCount][];
-        public readonly FusePickup[] Fuses = new FusePickup[HuntMap.RoomCount];
+        /// <summary>The power cell shelf of each room that has one (null elsewhere).</summary>
+        public readonly CellPickup[] Cells = new CellPickup[HuntMap.RoomCount];
+
+        /// <summary>The three power sockets (built by the director, which they report to).</summary>
+        public readonly PowerSocket[] Sockets = new PowerSocket[3];
         public readonly List<FlickerLight>[] Lamps = new List<FlickerLight>[HuntMap.RoomCount];
         /// <summary>The front doors' panel (the intro opens these doors).</summary>
         public ExitPanel Exit;
@@ -50,6 +54,7 @@ namespace NightShift.Game
             level.Root.SetParent(parent, false);
             var random = new System.Random(1987);
             LevelProps.ExitSigns.Clear();
+            LevelProps.BeginLevel();
 
             for (int i = 0; i < HuntMap.RoomCount; i++)
             {
@@ -72,7 +77,7 @@ namespace NightShift.Game
                 }
                 if (PizzeriaLayout.HasFuseShelf(room))
                 {
-                    level.Fuses[i] = BuildFuse(room, roomRoot);
+                    level.Cells[i] = BuildCellShelf(room, roomRoot);
                 }
             }
             BuildCorridors(level, random);
@@ -129,6 +134,16 @@ namespace NightShift.Game
                         Wall = BuildKit.Surface("arcadeWall", () => ProceduralTextures.Wallpaper(new Color(0.1f, 0.08f, 0.16f), new Color(0.2f, 0.12f, 0.32f)), 0.1f),
                         Ceiling = ceiling
                     };
+                case Room.Banquet:
+                case Room.Veranda:
+                    // The north wing: dark wood floors and paneling under the party wallpaper.
+                    return new RoomStyle
+                    {
+                        Floor = BuildKit.Surface("banquetFloor", () => ProceduralTextures.Planks(new Color(0.3f, 0.19f, 0.11f)), 0.45f),
+                        Wainscot = BuildKit.Surface("banquetPanels", () => ProceduralTextures.Planks(new Color(0.22f, 0.13f, 0.08f)), 0.35f),
+                        Wall = BuildKit.Surface("banquetWall", () => ProceduralTextures.Wallpaper(new Color(0.34f, 0.3f, 0.26f), new Color(0.42f, 0.16f, 0.14f)), 0.1f),
+                        Ceiling = ceiling
+                    };
                 case Room.Office:
                 case Room.BackHall:
                     // The staff wing: grey-green offices and halls, so it never looks like the restaurant.
@@ -166,36 +181,69 @@ namespace NightShift.Game
 
             float t = PizzeriaLayout.WallThickness;
             // North and south walls run along x; west and east along z. Each sits just inside the room.
-            Side(root, style, height, doors, area.xMin, area.xMax, area.yMax - t * 0.5f, true, area.yMax);
+            Side(root, style, height, doors, area.xMin, area.xMax, area.yMax - t * 0.5f, true, area.yMax, room);
             Side(root, style, height, doors, area.xMin, area.xMax, area.yMin + t * 0.5f, true, area.yMin);
             Side(root, style, height, doors, area.yMin, area.yMax, area.xMin + t * 0.5f, false, area.xMin);
             Side(root, style, height, doors, area.yMin, area.yMax, area.xMax - t * 0.5f, false, area.xMax);
         }
 
-        /// <summary>One wall from <paramref name="from"/> to <paramref name="to"/> with openings at the doorways on it.</summary>
+        /// <summary>
+        /// One wall from <paramref name="from"/> to <paramref name="to"/> with openings at the
+        /// doorways on it, and on the north wall of <paramref name="room"/> its real windows.
+        /// </summary>
         private static void Side(Transform root, RoomStyle style, float height, List<Vector2> doors,
-                                 float from, float to, float at, bool alongX, float boundary)
+                                 float from, float to, float at, bool alongX, float boundary, Room? room = null)
         {
-            var openings = new List<float>();
+            // Openings along the wall: (center, width, sill, top); a door goes down to the floor.
+            var openings = new List<(float along, float width, float sill, float top)>();
             foreach (Vector2 door in doors)
             {
                 float across = alongX ? door.y : door.x;
                 float along = alongX ? door.x : door.y;
                 if (Mathf.Abs(across - boundary) < 0.05f && along > from && along < to)
                 {
-                    openings.Add(along);
+                    openings.Add((along, PizzeriaLayout.DoorWidth, 0f, PizzeriaLayout.DoorHeight));
                 }
             }
-            openings.Sort();
+            if (room.HasValue)
+            {
+                foreach ((Room r, float x, float width, float sill, float top) in PizzeriaLayout.Windows)
+                {
+                    if (r == room.Value)
+                    {
+                        openings.Add((x, width, sill, top));
+                    }
+                }
+            }
+            openings.Sort((a, b) => a.along.CompareTo(b.along));
 
             float start = from;
-            foreach (float opening in openings)
+            foreach ((float along, float width, float sill, float top) in openings)
             {
-                WallRun(root, style, height, start, opening - PizzeriaLayout.DoorWidth * 0.5f, at, alongX);
-                Doorway(root, style, height, opening, at, alongX);
-                start = opening + PizzeriaLayout.DoorWidth * 0.5f;
+                WallRun(root, style, height, start, along - width * 0.5f, at, alongX);
+                if (sill <= 0f)
+                {
+                    Doorway(root, style, height, along, at, alongX);
+                }
+                else
+                {
+                    WindowOpening(root, style, height, along, width, sill, top, at, alongX);
+                }
+                start = along + width * 0.5f;
             }
             WallRun(root, style, height, start, to, at, alongX);
+        }
+
+        /// <summary>A real hole for a window: wall under the sill and over the head, nothing between.</summary>
+        private static void WindowOpening(Transform root, RoomStyle style, float height, float along, float width, float sill, float top, float at, bool alongX)
+        {
+            float t = PizzeriaLayout.WallThickness;
+            Vector3 Position(float y) => alongX ? new Vector3(along, y, at) : new Vector3(at, y, along);
+            Vector3 Size(float h) => alongX ? new Vector3(width, h, t) : new Vector3(t, h, width);
+            BuildKit.Box("UnderWindow", root, Position(sill * 0.5f), Size(sill), style.Wainscot, 1f);
+            BuildKit.Box("OverWindow", root, Position(top + (height - top) * 0.5f), Size(height - top), style.Wall, 1.6f);
+            Vector3 baseboard = alongX ? new Vector3(width, 0.14f, t + 0.04f) : new Vector3(t + 0.04f, 0.14f, width);
+            BuildKit.Box("Baseboard", root, Position(0.07f), baseboard, BuildKit.Plain("baseboard", new Color(0.06f, 0.05f, 0.05f), 0.3f), 1f, false);
         }
 
         private static void WallRun(Transform root, RoomStyle style, float height, float from, float to, float at, bool alongX)
@@ -710,7 +758,7 @@ namespace NightShift.Game
             return HidingSpot.Attach(go, room, index, kind, door, hide, new Vector3(0f, 0f, 1.1f));
         }
 
-        private static FusePickup BuildFuse(Room room, Transform roomRoot)
+        private static CellPickup BuildCellShelf(Room room, Transform roomRoot)
         {
             Vector3 position = PizzeriaLayout.FusePosition(room);
             Quaternion facing = PizzeriaLayout.FuseFacing(room);
@@ -740,7 +788,7 @@ namespace NightShift.Game
             glow.range = 4f;
             glow.color = new Color(1f, 0.62f, 0.18f);
             glow.intensity = 1.6f;
-            FusePickup pickup = FusePickup.Attach(fuse, room, glow);
+            CellPickup pickup = CellPickup.Attach(fuse, room, glow, halo.GetComponent<Renderer>());
             fuse.SetActive(false);
             return pickup;
         }
@@ -799,26 +847,22 @@ namespace NightShift.Game
             BuildKit.Box("Door", parts.Door, new Vector3(0.31f, 0f, 0.012f), new Vector3(0.62f, 0.8f, 0.025f), hazard, 1f, false);
             BuildKit.Box("Handle", parts.Door, new Vector3(0.56f, 0f, 0.04f), new Vector3(0.03f, 0.14f, 0.03f), chrome, 1f, false);
 
-            // Three sockets in a row, a light above each, and the cells that go in them.
+            // Three big lamps in a row, one per power socket of the building: red until its socket
+            // has a cell, then the cell's color.
             parts.SocketLights = new Renderer[3];
-            parts.Cells = new Transform[3];
             for (int i = 0; i < 3; i++)
             {
                 float x = -0.17f + i * 0.17f;
-                var socket = BuildKit.Cylinder("Socket", t, new Vector3(x, 0.12f, 0.07f), 0.11f, 0.03f, chrome);
-                socket.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-                var hole = BuildKit.Cylinder("SocketHole", t, new Vector3(x, 0.12f, 0.085f), 0.085f, 0.01f, BuildKit.Plain("black", Color.black));
-                hole.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-                GameObject light = BuildKit.Box("SocketLight", t, new Vector3(x, 0.27f, 0.085f), new Vector3(0.05f, 0.025f, 0.02f), BuildKit.Glow("socketLight", new Color(0.7f, 0f, 0f), 2f), 1f, false);
+                BuildKit.Cylinder("LampBezel", t, new Vector3(x, 0.12f, 0.08f), 0.12f, 0.02f, chrome).transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                GameObject light = BuildKit.Cylinder("SocketLight", t, new Vector3(x, 0.12f, 0.092f), 0.09f, 0.008f, BuildKit.Glow("socketLight", new Color(0.7f, 0f, 0f), 2f));
+                light.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
                 Renderer renderer = light.GetComponent<Renderer>();
                 renderer.material = new Material(renderer.sharedMaterial);
+                // Dark and matte under the glass: only its own light shows, not the flashlight's.
+                renderer.material.SetColor("_BaseColor", Color.black);
+                renderer.material.SetFloat("_Smoothness", 0.15f);
                 parts.SocketLights[i] = renderer;
-                GameObject cell = PowerCell(t);
-                cell.transform.localScale = Vector3.one * 0.45f;
-                cell.SetActive(false);
-                parts.Cells[i] = cell.transform;
             }
-            parts.SocketPositions = new[] { new Vector3(-0.17f, 0.12f, 0.12f), new Vector3(0f, 0.12f, 0.12f), new Vector3(0.17f, 0.12f, 0.12f) };
 
             // The lever: a pivot under the sockets, a steel arm and a red grip.
             parts.Lever = new GameObject("LeverPivot").transform;

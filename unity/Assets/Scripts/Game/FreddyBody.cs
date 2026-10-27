@@ -401,11 +401,12 @@ namespace NightShift.Game
 
         /// <summary>
         /// Gets faster as the player gets closer to escaping, like Jason's rage in Friday the 13th:
-        /// +10% walking and +6% chasing per fuse, and once more when the exit panel starts working.
+        /// up to +30% walking and +18% chasing as the night's objectives get done, and once more
+        /// when the exit lever is pulled.
         /// </summary>
         private float RageScale(bool chasing)
         {
-            int level = director.FusesCollected + (director.ActiveExit.Progress > 0f ? 1 : 0);
+            float level = director.State.Progress * 3f + (director.ActiveExit.Progress > 0f ? 1f : 0f);
             return (1f + level * (chasing ? 0.06f : 0.1f)) * NightSpeed;
         }
 

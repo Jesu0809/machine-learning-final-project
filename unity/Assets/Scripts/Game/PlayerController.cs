@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace NightShift.Game
 {
@@ -84,6 +85,20 @@ namespace NightShift.Game
         private Flashlight flashlightRig;
 
         public bool Controllable { get; set; }
+
+        /// <summary>The power cell in the player's hand, if any (one at a time).</summary>
+        public HeldCell Cell { get; private set; }
+
+        /// <summary>The panel being worked up close with the pointer, or null (see <see cref="IFocusTask"/>).</summary>
+        public IFocusTask Focus { get; private set; }
+        public bool InFocus => Focus != null;
+
+        private const float FocusSeconds = 0.35f;
+        private float focusBlend;
+        private Vector3 focusFromPosition;
+        private Quaternion focusFromRotation;
+        private Vector2 virtualCursor;
+        private static Texture2D cursorRing;
 
         /// <summary>While true the camera is placed by someone else (menu view, jumpscare).</summary>
         public bool CameraLocked { get; set; }
@@ -193,7 +208,109 @@ namespace NightShift.Game
             player.flashlightRig = Game.Flashlight.Create(cameraObject.transform);
             player.Flashlight = player.flashlightRig.Beam;
             player.Flashlight.enabled = true;
+            player.Cell = HeldCell.Create(player);
             return player;
+        }
+
+        /// <summary>Empty hands for a new night (the cell carried last night is gone).</summary>
+        public void ClearHands()
+        {
+            if (Cell != null && Cell.Carrying)
+            {
+                Cell.Release();
+            }
+        }
+
+        /// <summary>Steps up to a panel and works it with the pointer (see <see cref="IFocusTask"/>).</summary>
+        public void BeginFocus(IFocusTask task)
+        {
+            if (InFocus || HiddenIn != null || Crawling)
+            {
+                return;
+            }
+            Focus = task;
+            focusBlend = 0f;
+            focusFromPosition = head.position;
+            focusFromRotation = head.rotation;
+            Sliding = false;
+            virtualCursor = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+
+        /// <summary>Steps back from the panel: the view keeps looking where it looked, the pointer goes away.</summary>
+        public void EndFocus()
+        {
+            if (!InFocus)
+            {
+                return;
+            }
+            IFocusTask task = Focus;
+            Focus = null;
+            task.FocusEnded();
+            Vector3 forward = head.forward;
+            yaw = Mathf.Atan2(forward.x, forward.z) * Mathf.Rad2Deg;
+            pitch = Mathf.Clamp(-Mathf.Asin(Mathf.Clamp(forward.y, -1f, 1f)) * Mathf.Rad2Deg, -80f, 80f);
+            if (Director.Playing)
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+        }
+
+        private void UpdateFocus(bool input)
+        {
+            focusBlend = Mathf.Min(1f, focusBlend + Time.deltaTime / FocusSeconds);
+            float k = Ease(focusBlend);
+            Transform view = Focus.FocusView;
+            head.position = Vector3.Lerp(focusFromPosition, view.position, k);
+            head.rotation = Quaternion.Slerp(focusFromRotation, view.rotation, k) * JoltShake();
+            if (focusBlend < 1f || !input)
+            {
+                return;
+            }
+            // Step back: right click, the gamepad's B, or walking away (Esc pauses, see HuntDirector).
+            Mouse mouse = Mouse.current;
+            Gamepad pad = Gamepad.current;
+            if ((mouse != null && mouse.rightButton.wasPressedThisFrame) || (pad != null && pad.buttonEast.wasPressedThisFrame)
+                || Controls.Move.sqrMagnitude > 0.5f)
+            {
+                EndFocus();
+                return;
+            }
+            // The pointer: the mouse, or on a gamepad a cursor moved with the left stick.
+            Vector2 point;
+            if (Controls.UsingGamepad && pad != null)
+            {
+                virtualCursor += pad.leftStick.ReadValue() * Screen.height * 0.9f * Time.unscaledDeltaTime;
+                virtualCursor = new Vector2(Mathf.Clamp(virtualCursor.x, 0f, Screen.width), Mathf.Clamp(virtualCursor.y, 0f, Screen.height));
+                point = virtualCursor;
+            }
+            else
+            {
+                point = mouse != null ? mouse.position.ReadValue() : new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+            }
+            bool pressed = (mouse != null && mouse.leftButton.wasPressedThisFrame) || (pad != null && pad.buttonSouth.wasPressedThisFrame);
+            bool held = (mouse != null && mouse.leftButton.isPressed) || (pad != null && pad.buttonSouth.isPressed);
+            bool released = (mouse != null && mouse.leftButton.wasReleasedThisFrame) || (pad != null && pad.buttonSouth.wasReleasedThisFrame);
+            Focus.FocusUpdate(new FocusInput { Ray = View.ScreenPointToRay(point), Screen = point, Pressed = pressed, Held = held, Released = released });
+        }
+
+        private void OnGUI()
+        {
+            if (!InFocus || !Controls.UsingGamepad || focusBlend < 1f)
+            {
+                return;
+            }
+            // The gamepad's cursor: a small ring.
+            var rect = new Rect(virtualCursor.x - 9f, Screen.height - virtualCursor.y - 9f, 18f, 18f);
+            GUI.color = new Color(1f, 0.85f, 0.4f, 0.9f);
+            if (cursorRing == null)
+            {
+                cursorRing = ProceduralTextures.Ring(64, 0.18f);
+            }
+            GUI.DrawTexture(rect, cursorRing);
+            GUI.color = Color.white;
         }
 
         /// <summary>Noise level since the last call (0 silent … 3 very loud), then resets.</summary>
@@ -424,6 +541,10 @@ namespace NightShift.Game
         /// <summary>Moves the player out of any spot and back to a position (new night).</summary>
         public void ResetTo(Vector3 position, float facing)
         {
+            if (InFocus)
+            {
+                EndFocus();
+            }
             Crawling = false;
             hideMotion = 1f;
             leaveMotion = 1f;
@@ -462,6 +583,12 @@ namespace NightShift.Game
             {
                 // A crawl, once started, goes on to the other end (it only stops when the game pauses).
                 UpdateCrawl(Controllable ? Controls.Look : Vector2.zero);
+                return;
+            }
+            if (InFocus)
+            {
+                // The eyes always move to the panel; the pointer only works when the player has control.
+                UpdateFocus(Controllable);
                 return;
             }
             if (!Controllable)
@@ -746,6 +873,27 @@ namespace NightShift.Game
             return t * t * (3f - 2f * t);
         }
 
+        /// <summary>A short knock of the view (a heavy clunk, a lever hitting its stop), in degrees; it dies away in a moment.</summary>
+        public void Jolt(float degrees)
+        {
+            jolt = Mathf.Max(jolt, degrees);
+        }
+
+        private float jolt;
+
+        private Quaternion JoltShake()
+        {
+            if (jolt <= 0.001f)
+            {
+                return Quaternion.identity;
+            }
+            jolt = Mathf.MoveTowards(jolt, 0f, Time.deltaTime * (jolt * 7f + 0.4f));
+            float t = Time.time * 40f;
+            return Quaternion.Euler((Mathf.PerlinNoise(t, 0.3f) - 0.5f) * 2f * jolt,
+                                    (Mathf.PerlinNoise(0.7f, t) - 0.5f) * 2f * jolt,
+                                    (Mathf.PerlinNoise(t, t) - 0.5f) * jolt);
+        }
+
         /// <summary>Turns the view smoothly toward a point (working a panel, looking at what the hands do).</summary>
         public void LookToward(Vector3 point, float speed)
         {
@@ -763,7 +911,7 @@ namespace NightShift.Game
         private void PlaceCamera()
         {
             UpdateEyeAdaptation();
-            if (CameraLocked || Crawling)
+            if (CameraLocked || Crawling || InFocus)
             {
                 return;
             }
@@ -812,7 +960,7 @@ namespace NightShift.Game
             }
             float bob = Moving ? Mathf.Sin(bobPhase) * (Running ? 0.05f : 0.025f) : 0f;
             head.localPosition = Vector3.Lerp(head.localPosition, new Vector3(0f, eye + bob + BreathRise(), 0f), Time.deltaTime * 12f);
-            head.rotation = Quaternion.Euler(pitch, yaw, 0f) * BreathSway();
+            head.rotation = Quaternion.Euler(pitch, yaw, 0f) * BreathSway() * JoltShake();
         }
 
         /// <summary>

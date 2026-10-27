@@ -107,10 +107,10 @@ namespace NightShift.Game
             director.UI.ShowNote(StoryData.Notes[4]);
             yield return Shot("02c-note");
             director.UI.HideNote();
-            // A power cell (fuse) up close, in the dark and with the flashlight off.
+            // A power cell up close, in the dark and with the flashlight off.
             for (int room = 0; room < HuntMap.RoomCount; room++)
             {
-                FusePickup fuse = director.Level.Fuses[room];
+                CellPickup fuse = director.Level.Cells[room];
                 if (fuse != null && fuse.gameObject.activeSelf)
                 {
                     Quaternion shelf = PizzeriaLayout.FuseFacing((Room)room);
@@ -134,9 +134,12 @@ namespace NightShift.Game
             yield return Pose(new Vector3(-6f, 0f, 3f), new Vector3(-1f, 0f, 0.6f), "06-kitchen");
             yield return Pose(new Vector3(-17f, 0f, 3f), new Vector3(-1f, 0.2f, 1f), "09-storage");
             yield return Pose(new Vector3(-18.5f, 0f, 6.5f), new Vector3(-1f, 0.05f, 0f), "09e-loading-door");
-            // Between the wings.
-            yield return Pose(new Vector3(-4.5f, 0f, 6f), new Vector3(1f, 0f, 0f), "03b-kitchen-pass");
-            yield return Pose(new Vector3(-2.5f, 0f, -1.5f), new Vector3(1f, 0f, 0f), "07d-service-corridor");
+            // Between the wings: the north wing, and out of its windows.
+            yield return Pose(new Vector3(-6.3f, 0f, 11.5f), new Vector3(0f, 0.05f, 1f), "03b-north-corridor");
+            yield return Pose(new Vector3(9.5f, 0f, 18.5f), new Vector3(1f, 0f, 0f), "07d-veranda-corridor");
+            yield return Pose(new Vector3(-9f, 0f, 18.2f), new Vector3(0f, 0.08f, 1f), "11c-banquet-windows");
+            yield return Pose(new Vector3(19.5f, 0f, 19f), new Vector3(0.25f, 0.08f, 1f), "11d-veranda-window");
+            yield return Pose(new Vector3(2f, 0f, 24.5f), new Vector3(-0.2f, 0.1f, 1f), "11e-back-lot");
             // Public wing.
             yield return Pose(new Vector3(3f, 0f, 3f), new Vector3(0.6f, 0.1f, 1f), "03-dining");
             yield return Pose(new Vector3(7.5f, 0f, 5f), new Vector3(0f, 0.1f, 1f), "05-stage");
@@ -289,127 +292,173 @@ namespace NightShift.Game
         }
 
         /// <summary>
-        /// The exit panel animation: with every fuse, hold E in front of tonight's panel, let go
-        /// half-way through a cell, come back and finish (the cells and the lever keep their place).
+        /// The exit, night 1: every cell carried to a socket, then the lever pulled. The panel is
+        /// reset afterwards so the tour can go on.
         /// </summary>
         private IEnumerator PanelTest()
         {
-            for (int room = 0; room < HuntMap.RoomCount && director.State.FusesCollected < director.FusesNeeded; room++)
-            {
-                if (director.State.FuseIn((Room)room))
-                {
-                    director.State.CollectFuse((Room)room);
-                }
-            }
-            director.ObjectiveList.Complete(ObjectiveStep.Fuses);
+            yield return PowerTheSockets(null);
+            yield return PullTheLever("19");
             ExitPanel panel = director.ActiveExit;
-            Vector3 forward = panel.transform.forward;
-            Vector3 stand = panel.transform.position + forward * 0.95f;
-            Teleport(new Vector3(stand.x, 0f, stand.z), -forward);
-            yield return new WaitForSeconds(0.5f);
-            float[] shots = { 0.16f, 0.27f, 0.62f, 0.86f, 1f };
-            string[] names = { "19a-panel-cell-from-hand", "19b-panel-cell-push", "19d-panel-third-cell", "19e-panel-lever", "19f-panel-open" };
-            int next = 0;
-            bool released = false;
-            float start = Time.time;
-            while (next < shots.Length && Time.time < start + 30f)
-            {
-                if (!released && panel.Progress >= 0.4f)
-                {
-                    // Walk away in the middle of the second cell, then come back to it.
-                    released = true;
-                    yield return new WaitForSeconds(1f);
-                    yield return Shot("19c-panel-left-halfway");
-                }
-                panel.Use(director.Player);
-                if (panel.Progress >= shots[next])
-                {
-                    yield return Shot(names[next]);
-                    next++;
-                }
-                yield return null;
-            }
-            Debug.Log("CAPTURE panel progress=" + panel.Progress.ToString("0.00") + " open=" + panel.Open);
             panel.ResetPanel();
             panel.Active = true;
         }
 
         /// <summary>
-        /// The objective items, a locker and the explore mode, photographed step by step: run with
-        /// "-capture folder -itemtest". Night 5 (every objective), Freddy left out.
+        /// The power cells start to finish, the way a player does it: each one off its shelf into
+        /// the hand, carried to a socket it fits and pushed in. Shots of the first one if
+        /// <paramref name="prefix"/> is set.
+        /// </summary>
+        private IEnumerator PowerTheSockets(string prefix)
+        {
+            PlayerController player = director.Player;
+            for (int cell = 0; cell < director.CellsNeeded; cell++)
+            {
+                Room? room = director.State.CellRoom(cell);
+                if (!room.HasValue)
+                {
+                    continue;
+                }
+                bool shots = prefix != null && cell == 0;
+                CellPickup pickup = director.Level.Cells[(int)room.Value];
+                Quaternion shelf = PizzeriaLayout.FuseFacing(room.Value);
+                Vector3 stand = pickup.transform.position + shelf * Vector3.forward * 1.3f;
+                Teleport(new Vector3(stand.x, 0f, stand.z), -(shelf * Vector3.forward));
+                yield return Aim(pickup.transform.position);
+                if (shots)
+                {
+                    yield return Shot(prefix + "a-cell-shelf");
+                }
+                pickup.Use(player);
+                yield return new WaitForSeconds(0.7f);
+                if (shots)
+                {
+                    yield return Shot(prefix + "b-cell-in-hand");
+                }
+                int socket = 0;
+                while (socket < director.Level.Sockets.Length && !director.State.CellFits(cell, socket))
+                {
+                    socket++;
+                }
+                PowerSocket target = director.Level.Sockets[socket];
+                Vector3 front = target.transform.position + target.transform.forward * 1.1f;
+                Teleport(new Vector3(front.x, 0f, front.z), -target.transform.forward);
+                yield return Aim(target.transform.position);
+                if (shots)
+                {
+                    yield return Shot(prefix + "c-socket");
+                }
+                target.Use(player);
+                yield return new WaitForSeconds(0.85f);
+                if (shots)
+                {
+                    yield return Shot(prefix + "d-socket-inserting");
+                }
+                yield return new WaitForSeconds(1.0f);
+                if (shots)
+                {
+                    yield return Shot(prefix + "d2-socket-charging");
+                }
+                yield return new WaitForSeconds(0.9f);
+                if (shots)
+                {
+                    yield return Shot(prefix + "e-socket-powered");
+                }
+            }
+            Debug.Log("CAPTURE cells inserted=" + director.State.CellsInserted + " of " + director.CellsNeeded);
+        }
+
+        private IEnumerator PullTheLever(string prefix)
+        {
+            ExitPanel panel = director.ActiveExit;
+            Vector3 forward = panel.transform.forward;
+            Vector3 stand = panel.transform.position + forward * 0.95f;
+            Teleport(new Vector3(stand.x, 0f, stand.z), -forward);
+            yield return Aim(panel.transform.position);
+            yield return Shot(prefix + "a-panel");
+            panel.Use(director.Player);
+            yield return new WaitForSeconds(0.7f);
+            yield return Shot(prefix + "b-lever");
+            yield return new WaitForSeconds(1.4f);
+            yield return Shot(prefix + "c-open");
+            Debug.Log("CAPTURE exit open=" + panel.Open + " unlocked=" + director.State.ExitUnlocked);
+        }
+
+        /// <summary>
+        /// Night 5 start to finish, every task photographed: the cells, the breakers, the keycard
+        /// and its reader (one swipe too fast, then a good one), the tape box (a wrong key, then
+        /// 1 to 9) and the lever. Then a locker, a cabinet and the explore mode. Run with
+        /// "-capture folder -itemtest". Freddy is left out.
         /// </summary>
         private IEnumerator ItemTest()
         {
+            PlayerController player = director.Player;
             yield return new WaitForSeconds(1f);
             director.StartNight(5);
             director.SkipCall();
             director.Freddy.gameObject.SetActive(false);
-            for (int room = 0; room < HuntMap.RoomCount && director.State.FusesCollected < director.FusesNeeded; room++)
-            {
-                if (director.State.FuseIn((Room)room))
-                {
-                    director.State.CollectFuse((Room)room);
-                }
-            }
-            director.ObjectiveList.Complete(ObjectiveStep.Fuses);
+            yield return new WaitForSeconds(0.5f);
+            yield return PowerTheSockets("30");
 
-            // The breaker: hold, let go half-way, come back and finish.
-            ObjectiveItem breaker = director.ItemFor(ObjectiveStep.Breaker);
+            BreakerBox breaker = director.Breaker;
             Vector3 front = breaker.transform.forward;
-            Vector3 stand = breaker.transform.position + front * 1.0f;
+            Vector3 stand = breaker.transform.position + front * 1.1f;
             Teleport(new Vector3(stand.x, 0f, stand.z), -front);
+            yield return Aim(breaker.transform.position);
+            yield return Shot("31a-breaker-closed");
+            breaker.Use(player);
+            yield return new WaitForSeconds(1f);
+            yield return Shot("31b-breaker-focus");
+            StartCoroutine(breaker.AutoPlay(player));
+            yield return new WaitForSeconds(1.2f);
+            yield return Shot("31c-breaker-flipping");
+            yield return new WaitForSeconds(2.2f);
+            yield return Shot("31d-breaker-done");
+            Debug.Log("CAPTURE breaker done=" + director.State.BreakerDone);
+
+            Vector3 pedestal = PizzeriaLayout.CardPedestal;
+            Teleport(new Vector3(pedestal.x, 0f, pedestal.z - 1.3f), Vector3.forward);
+            yield return Aim(pedestal + Vector3.up * 1.05f);
+            yield return Shot("32a-pedestal");
+            director.CardPedestal.Use(player);
+            yield return new WaitForSeconds(0.3f);
+            yield return Shot("32b-card-taken");
             yield return new WaitForSeconds(0.6f);
-            yield return Shot("20a-breaker-closed");
-            float[] marks = { 0.08f, 0.35f, 0.55f, 0.85f, 1f };
-            int next = 0;
-            bool released = false;
-            float start = Time.time;
-            while (next < marks.Length && Time.time < start + 20f)
-            {
-                if (!released && breaker.Progress / breaker.HoldSeconds >= 0.45f)
-                {
-                    released = true;
-                    yield return new WaitForSeconds(1f);
-                    yield return Shot("20c-breaker-let-go");
-                }
-                breaker.Use(director.Player);
-                if (breaker.Progress / breaker.HoldSeconds >= marks[next] - 0.001f)
-                {
-                    yield return Shot("20b-breaker-" + Mathf.RoundToInt(marks[next] * 100f));
-                    next++;
-                }
-                yield return null;
-            }
-            yield return new WaitForSeconds(0.8f);
-            yield return Shot("20d-breaker-done");
-            Debug.Log("CAPTURE breaker done=" + director.ObjectiveList.IsDone(ObjectiveStep.Breaker));
 
-            // The keycard lockbox.
-            ObjectiveItem keycard = director.ItemFor(ObjectiveStep.Keycard);
-            front = keycard.transform.forward;
-            stand = keycard.transform.position + front * 0.9f;
+            CardReader reader = director.Reader;
+            front = reader.transform.forward;
+            stand = reader.transform.position + front * 1.0f;
             Teleport(new Vector3(stand.x, 0f, stand.z), -front);
-            yield return Aim(keycard.transform.position);
-            yield return Shot("21a-keycard-box");
-            keycard.Use(director.Player);
-            foreach (float wait in new[] { 0.25f, 0.2f, 0.25f, 0.4f })
-            {
-                yield return new WaitForSeconds(wait);
-                yield return Shot("21b-keycard-" + Mathf.RoundToInt(Time.time * 100f) % 1000);
-            }
+            yield return Aim(reader.transform.position);
+            yield return Shot("33a-reader");
+            reader.Use(player);
+            yield return new WaitForSeconds(0.6f);
+            yield return Shot("33b-reader-focus");
+            reader.Judge(0.1f);
+            yield return new WaitForSeconds(0.2f);
+            yield return Shot("33c-reader-too-fast");
+            yield return new WaitForSeconds(1.4f);
+            reader.Judge(0.6f);
+            yield return new WaitForSeconds(0.3f);
+            yield return Shot("33d-reader-accepted");
+            yield return new WaitForSeconds(1.1f);
+            Debug.Log("CAPTURE card swiped=" + director.State.CardSwiped);
 
-            // The tape on the office table.
-            ObjectiveItem tape = director.ItemFor(ObjectiveStep.Tape);
-            Vector3 tapeAt = tape.transform.position;
-            Teleport(new Vector3(tapeAt.x - 0.2f, 0f, tapeAt.z + 0.75f), (tapeAt - new Vector3(tapeAt.x - 0.2f, 1.6f, tapeAt.z + 0.75f)));
-            yield return Aim(tapeAt);
-            yield return Shot("22a-tape");
-            tape.Use(director.Player);
-            foreach (float wait in new[] { 0.2f, 0.25f, 0.3f })
-            {
-                yield return new WaitForSeconds(wait);
-                yield return Shot("22b-tape-" + Mathf.RoundToInt(Time.time * 100f) % 1000);
-            }
+            TapeBox box = director.Tape;
+            front = box.transform.forward;
+            stand = box.transform.position + front * 1.0f;
+            Teleport(new Vector3(stand.x, 0f, stand.z), -front);
+            yield return Aim(box.transform.position);
+            yield return Shot("34-tapebox");
+            yield return box.AutoPlay(player, "34", Shot);
+            yield return Shot("34d-tapebox-open");
+            box.Use(player);
+            yield return new WaitForSeconds(0.35f);
+            yield return Shot("34e-tape-taken");
+            yield return new WaitForSeconds(0.6f);
+            Debug.Log("CAPTURE tape taken=" + director.State.TapeTaken + ", objectives " + director.State.ObjectivesDone + "/" + director.State.ObjectivesTotal);
+
+            yield return PullTheLever("35");
 
             // Into the office locker and out again.
             HidingSpot locker = director.Level.Spot(Room.Office, 0);
@@ -478,6 +527,15 @@ namespace NightShift.Game
                 (new Vector3(-17f, 0f, -12f), new Vector3(-17f, 1.6f, -9.3f), "24n-office-north-wall"),
                 (new Vector3(16f, 0f, -14.6f), new Vector3(16f, 1.7f, -17f), "24o-front-doors"),
                 (new Vector3(-18.6f, 0f, 3.6f), new Vector3(-16.45f, 2.1f, 3.6f), "24p-head-shelf"),
+                (new Vector3(-10f, 0f, 18.5f), new Vector3(2f, 1.2f, 18.5f), "26a-banquet-east"),
+                (new Vector3(5f, 0f, 18.5f), new Vector3(-10f, 1.2f, 18.5f), "26b-banquet-west"),
+                (new Vector3(13f, 0f, 18.5f), new Vector3(21f, 1.2f, 18.5f), "26c-veranda"),
+                (new Vector3(-6.3f, 0f, 7f), new Vector3(-6.3f, 2.4f, 10f), "26d-kitchen-to-banquet"),
+                (new Vector3(18f, 0f, 7f), new Vector3(18f, 2.4f, 10f), "26e-arcade-to-veranda"),
+                (new Vector3(19f, 0f, 4.5f), new Vector3(18f, 1.2f, 9.5f), "26f-arcade-north"),
+                (new Vector3(-11f, 0f, 19.5f), new Vector3(-11f, 2.4f, 15f), "26g-banquet-sign"),
+                (new Vector3(15f, 0f, 19.5f), new Vector3(14.6f, 2.4f, 15f), "26h-veranda-sign"),
+                (new Vector3(-17f, 0f, -2f), new Vector3(-17f, 1.65f, -0.2f), "26i-directory"),
                 (new Vector3(-24.6f, 0f, 7.5f), new Vector3(-29f, 1.4f, 3f), "25a-alley"),
                 (new Vector3(-26.5f, 0f, 13f), new Vector3(-24f, 1f, 2f), "25b-alley-south"),
                 (new Vector3(-10.5f, 0f, 6.2f), new Vector3(-10.8f, 1f, 9.5f), "25c-kitchen-row"),

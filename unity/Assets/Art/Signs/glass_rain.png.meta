@@ -1,0 +1,5096 @@
+fileFormatVersion: 2
+guid: b0492e1edd89a4d29bdf35b7645db56a
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 1923199436979702595
+    second: glass_rain_0
+  - first:
+      213: -4915467764622300493
+    second: glass_rain_1
+  - first:
+      213: 5710149467141120638
+    second: glass_rain_2
+  - first:
+      213: -4157331043547649897
+    second: glass_rain_3
+  - first:
+      213: -8013811756426146420
+    second: glass_rain_4
+  - first:
+      213: -2235268260957104028
+    second: glass_rain_5
+  - first:
+      213: -1467916745235797723
+    second: glass_rain_6
+  - first:
+      213: 5324905922516538857
+    second: glass_rain_7
+  - first:
+      213: 2525361604213423480
+    second: glass_rain_8
+  - first:
+      213: -3485026077324609048
+    second: glass_rain_9
+  - first:
+      213: -7002032028012631938
+    second: glass_rain_10
+  - first:
+      213: -7963705662229073604
+    second: glass_rain_11
+  - first:
+      213: 2179417422039876304
+    second: glass_rain_12
+  - first:
+      213: -8097687728785642301
+    second: glass_rain_13
+  - first:
+      213: -2013946791810700794
+    second: glass_rain_14
+  - first:
+      213: 1254145745371471854
+    second: glass_rain_15
+  - first:
+      213: -4830329554495792944
+    second: glass_rain_16
+  - first:
+      213: -8788434220799151688
+    second: glass_rain_17
+  - first:
+      213: -7688989589514357418
+    second: glass_rain_18
+  - first:
+      213: 7965781893765641595
+    second: glass_rain_19
+  - first:
+      213: 5212876255077858639
+    second: glass_rain_20
+  - first:
+      213: -5241624195844616215
+    second: glass_rain_21
+  - first:
+      213: 8613803411079130260
+    second: glass_rain_22
+  - first:
+      213: 2653303063515751540
+    second: glass_rain_23
+  - first:
+      213: -7124410595774372147
+    second: glass_rain_24
+  - first:
+      213: -6372150328684965067
+    second: glass_rain_25
+  - first:
+      213: 279042719055112205
+    second: glass_rain_26
+  - first:
+      213: -795385920870125508
+    second: glass_rain_27
+  - first:
+      213: 8393575571683061891
+    second: glass_rain_28
+  - first:
+      213: -8103726320182419062
+    second: glass_rain_29
+  - first:
+      213: -2093370343045137882
+    second: glass_rain_30
+  - first:
+      213: 4519445683806826836
+    second: glass_rain_31
+  - first:
+      213: -3755565182168197685
+    second: glass_rain_32
+  - first:
+      213: -7188582014987662337
+    second: glass_rain_33
+  - first:
+      213: -3027413180066790981
+    second: glass_rain_34
+  - first:
+      213: -530534622991654306
+    second: glass_rain_35
+  - first:
+      213: -4852377392709757717
+    second: glass_rain_36
+  - first:
+      213: -7621026326243870740
+    second: glass_rain_37
+  - first:
+      213: -2444528705351312910
+    second: glass_rain_38
+  - first:
+      213: -4886457576172436921
+    second: glass_rain_39
+  - first:
+      213: 2241294547418415301
+    second: glass_rain_40
+  - first:
+      213: -2991259988792911476
+    second: glass_rain_41
+  - first:
+      213: 4927958282914604599
+    second: glass_rain_42
+  - first:
+      213: -6296502791401733984
+    second: glass_rain_43
+  - first:
+      213: 5977841100381730992
+    second: glass_rain_44
+  - first:
+      213: -2793776369541191566
+    second: glass_rain_45
+  - first:
+      213: -6265900438268456604
+    second: glass_rain_46
+  - first:
+      213: 2692314548965121821
+    second: glass_rain_47
+  - first:
+      213: 3558717958505705884
+    second: glass_rain_48
+  - first:
+      213: 3819950295527823746
+    second: glass_rain_49
+  - first:
+      213: -681963491380905076
+    second: glass_rain_50
+  - first:
+      213: -6148372826501498606
+    second: glass_rain_51
+  - first:
+      213: 4492072485535660372
+    second: glass_rain_52
+  - first:
+      213: 215268663961542853
+    second: glass_rain_53
+  - first:
+      213: 5107672947117598732
+    second: glass_rain_54
+  - first:
+      213: -6988870911975933015
+    second: glass_rain_55
+  - first:
+      213: 5644733741474104286
+    second: glass_rain_56
+  - first:
+      213: -5664714174517270932
+    second: glass_rain_57
+  - first:
+      213: 6610031916215487756
+    second: glass_rain_58
+  - first:
+      213: -6138785724511143909
+    second: glass_rain_59
+  - first:
+      213: -5048455967295724853
+    second: glass_rain_60
+  - first:
+      213: -2882437759654160083
+    second: glass_rain_61
+  - first:
+      213: 6217712831668957782
+    second: glass_rain_62
+  - first:
+      213: -2460139183762491182
+    second: glass_rain_63
+  - first:
+      213: 1945309309942260587
+    second: glass_rain_64
+  - first:
+      213: -7128816730423597194
+    second: glass_rain_65
+  - first:
+      213: -5110215643995054803
+    second: glass_rain_66
+  - first:
+      213: 2762778284815933446
+    second: glass_rain_67
+  - first:
+      213: 7291522991486924532
+    second: glass_rain_68
+  - first:
+      213: 5869452954656259697
+    second: glass_rain_69
+  - first:
+      213: -5749060503457075586
+    second: glass_rain_70
+  - first:
+      213: -3144684085565044969
+    second: glass_rain_71
+  - first:
+      213: -1460852126540509963
+    second: glass_rain_72
+  - first:
+      213: -6894263116321547230
+    second: glass_rain_73
+  - first:
+      213: -8057148738389831918
+    second: glass_rain_74
+  - first:
+      213: 8165737942661721945
+    second: glass_rain_75
+  - first:
+      213: 3532616300271299105
+    second: glass_rain_76
+  - first:
+      213: 5857548294132457365
+    second: glass_rain_77
+  - first:
+      213: -406444212107968904
+    second: glass_rain_78
+  - first:
+      213: 5287312531280794380
+    second: glass_rain_79
+  - first:
+      213: -8813462766903130958
+    second: glass_rain_80
+  - first:
+      213: -8919997394041754023
+    second: glass_rain_81
+  - first:
+      213: -4364577940429997916
+    second: glass_rain_82
+  - first:
+      213: -8156966795527749089
+    second: glass_rain_83
+  - first:
+      213: -2002731097729679688
+    second: glass_rain_84
+  - first:
+      213: -6666211454398613930
+    second: glass_rain_85
+  - first:
+      213: -1805696441165394
+    second: glass_rain_86
+  - first:
+      213: -1144687501751593841
+    second: glass_rain_87
+  - first:
+      213: 8058414539362085027
+    second: glass_rain_88
+  - first:
+      213: -3459382169751016463
+    second: glass_rain_89
+  - first:
+      213: 5604413827472406593
+    second: glass_rain_90
+  - first:
+      213: 6649094594574647640
+    second: glass_rain_91
+  - first:
+      213: -7790827221025727394
+    second: glass_rain_92
+  - first:
+      213: -7340650526186637346
+    second: glass_rain_93
+  - first:
+      213: 2552139430396363994
+    second: glass_rain_94
+  - first:
+      213: 3359301834784896483
+    second: glass_rain_95
+  - first:
+      213: -1851924146767189220
+    second: glass_rain_96
+  - first:
+      213: -5993239946530376160
+    second: glass_rain_97
+  - first:
+      213: 724256819632540363
+    second: glass_rain_98
+  - first:
+      213: 6938532785287078114
+    second: glass_rain_99
+  - first:
+      213: 2500528698560914109
+    second: glass_rain_100
+  - first:
+      213: 710189409636291946
+    second: glass_rain_101
+  - first:
+      213: 6602572775619838773
+    second: glass_rain_102
+  - first:
+      213: -3211198613792979508
+    second: glass_rain_103
+  - first:
+      213: 8414827333919343730
+    second: glass_rain_104
+  - first:
+      213: -4130984971346095063
+    second: glass_rain_105
+  - first:
+      213: 2353747081019622332
+    second: glass_rain_106
+  - first:
+      213: 6258926127786909529
+    second: glass_rain_107
+  - first:
+      213: 6090261008133927847
+    second: glass_rain_108
+  - first:
+      213: 4256839846816982456
+    second: glass_rain_109
+  - first:
+      213: -7908881345750773785
+    second: glass_rain_110
+  - first:
+      213: 7488008266464247676
+    second: glass_rain_111
+  - first:
+      213: -3032660187289445129
+    second: glass_rain_112
+  - first:
+      213: 6544316129863471944
+    second: glass_rain_113
+  - first:
+      213: -5189460241058789482
+    second: glass_rain_114
+  - first:
+      213: -7132618138242193033
+    second: glass_rain_115
+  - first:
+      213: -4798317933822636952
+    second: glass_rain_116
+  - first:
+      213: -5312840566341464940
+    second: glass_rain_117
+  - first:
+      213: -2318173773126546461
+    second: glass_rain_118
+  - first:
+      213: -909397521340012589
+    second: glass_rain_119
+  - first:
+      213: 6032883846741986410
+    second: glass_rain_120
+  - first:
+      213: 2995368441039105878
+    second: glass_rain_121
+  - first:
+      213: 8219700666598236196
+    second: glass_rain_122
+  - first:
+      213: -6349033409658164030
+    second: glass_rain_123
+  - first:
+      213: -3795679190495735659
+    second: glass_rain_124
+  - first:
+      213: 2624716917833142605
+    second: glass_rain_125
+  - first:
+      213: -6883421035749769378
+    second: glass_rain_126
+  - first:
+      213: 7719339701538422951
+    second: glass_rain_127
+  - first:
+      213: 1904065794805435678
+    second: glass_rain_128
+  - first:
+      213: -1779146576235568115
+    second: glass_rain_129
+  - first:
+      213: -7900631524995914920
+    second: glass_rain_130
+  - first:
+      213: 8565109154020788533
+    second: glass_rain_131
+  - first:
+      213: -1959496112486318544
+    second: glass_rain_132
+  - first:
+      213: 748773029891608965
+    second: glass_rain_133
+  - first:
+      213: 8681694981163379802
+    second: glass_rain_134
+  - first:
+      213: -3202841124457947845
+    second: glass_rain_135
+  - first:
+      213: -5850956238054127813
+    second: glass_rain_136
+  - first:
+      213: 3463182404982259321
+    second: glass_rain_137
+  - first:
+      213: -3087299983471802662
+    second: glass_rain_138
+  - first:
+      213: 2338660154081115970
+    second: glass_rain_139
+  - first:
+      213: 680847616063441787
+    second: glass_rain_140
+  - first:
+      213: -310804035348457475
+    second: glass_rain_141
+  - first:
+      213: 1826528575532968318
+    second: glass_rain_142
+  - first:
+      213: 5279514616471784900
+    second: glass_rain_143
+  - first:
+      213: -8727130988771286344
+    second: glass_rain_144
+  - first:
+      213: 6401253720084592417
+    second: glass_rain_145
+  - first:
+      213: -8067220003178536549
+    second: glass_rain_146
+  - first:
+      213: 7961015241056107319
+    second: glass_rain_147
+  - first:
+      213: 8841267185193709588
+    second: glass_rain_148
+  - first:
+      213: -6148239166199382738
+    second: glass_rain_149
+  - first:
+      213: 8223874921181727307
+    second: glass_rain_150
+  - first:
+      213: 3041717015092474083
+    second: glass_rain_151
+  - first:
+      213: 3649150593362317221
+    second: glass_rain_152
+  - first:
+      213: 8828448586332714653
+    second: glass_rain_153
+  - first:
+      213: 9125963903774536483
+    second: glass_rain_154
+  - first:
+      213: -4836516839578069421
+    second: glass_rain_155
+  - first:
+      213: -13344111441959477
+    second: glass_rain_156
+  - first:
+      213: 4692341035348596979
+    second: glass_rain_157
+  - first:
+      213: 3319657430190844378
+    second: glass_rain_158
+  - first:
+      213: -4816771277087276178
+    second: glass_rain_159
+  - first:
+      213: -3387545258787575269
+    second: glass_rain_160
+  - first:
+      213: 8812103548660661300
+    second: glass_rain_161
+  - first:
+      213: 3417652786482080611
+    second: glass_rain_162
+  - first:
+      213: -8687771142656799583
+    second: glass_rain_163
+  - first:
+      213: -1782182399074838663
+    second: glass_rain_164
+  - first:
+      213: -2223885182532468513
+    second: glass_rain_165
+  - first:
+      213: -7328946537512411855
+    second: glass_rain_166
+  - first:
+      213: -7721430256591866721
+    second: glass_rain_167
+  - first:
+      213: -2182620722500484182
+    second: glass_rain_168
+  - first:
+      213: -3751526641408162539
+    second: glass_rain_169
+  - first:
+      213: -5217707436224394706
+    second: glass_rain_170
+  - first:
+      213: -7064300632111567527
+    second: glass_rain_171
+  - first:
+      213: 6450038005581282644
+    second: glass_rain_172
+  - first:
+      213: 3921628155805596986
+    second: glass_rain_173
+  - first:
+      213: 4344240554789150335
+    second: glass_rain_174
+  - first:
+      213: -3014354979337350478
+    second: glass_rain_175
+  - first:
+      213: -5000531205922397080
+    second: glass_rain_176
+  - first:
+      213: 68934528368249100
+    second: glass_rain_177
+  - first:
+      213: 6662703396356016829
+    second: glass_rain_178
+  - first:
+      213: 8889729565701165418
+    second: glass_rain_179
+  - first:
+      213: 5476347889547377664
+    second: glass_rain_180
+  - first:
+      213: 5943595280100464682
+    second: glass_rain_181
+  - first:
+      213: -4452378942977482623
+    second: glass_rain_182
+  - first:
+      213: -4516802701509505711
+    second: glass_rain_183
+  - first:
+      213: 3403577267082070899
+    second: glass_rain_184
+  - first:
+      213: 3358656276558794675
+    second: glass_rain_185
+  - first:
+      213: -5888464448927417204
+    second: glass_rain_186
+  - first:
+      213: -2749528463858615048
+    second: glass_rain_187
+  - first:
+      213: -336614502341215710
+    second: glass_rain_188
+  - first:
+      213: -865008234205032260
+    second: glass_rain_189
+  - first:
+      213: -215042954459702091
+    second: glass_rain_190
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 1
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 8
+    mipBias: 0
+    wrapU: 0
+    wrapV: 0
+    wrapW: 0
+  nPOTScale: 1
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 0
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 512
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 70
+    crunchedCompression: 1
+    allowsAlphaSplitting: 0
+    overridden: 1
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: glass_rain_0
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 1006
+        width: 29
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 34b0869c2b390ba10800000000000000
+      internalID: 1923199436979702595
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_1
+      rect:
+        serializedVersion: 2
+        x: 9
+        y: 464
+        width: 105
+        height: 560
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3baedc08c10c8cbb0800000000000000
+      internalID: -4915467764622300493
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_2
+      rect:
+        serializedVersion: 2
+        x: 122
+        y: 297
+        width: 92
+        height: 727
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e72255bcfa68e3f40800000000000000
+      internalID: 5710149467141120638
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_3
+      rect:
+        serializedVersion: 2
+        x: 210
+        y: 703
+        width: 41
+        height: 321
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 79863af31713e46c0800000000000000
+      internalID: -4157331043547649897
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_4
+      rect:
+        serializedVersion: 2
+        x: 243
+        y: 729
+        width: 30
+        height: 295
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c8dce51aaa839c090800000000000000
+      internalID: -8013811756426146420
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_5
+      rect:
+        serializedVersion: 2
+        x: 278
+        y: 997
+        width: 18
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 46852ff0c5bbaf0e0800000000000000
+      internalID: -2235268260957104028
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_6
+      rect:
+        serializedVersion: 2
+        x: 302
+        y: 900
+        width: 18
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5296f506f79e0abe0800000000000000
+      internalID: -1467916745235797723
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_7
+      rect:
+        serializedVersion: 2
+        x: 310
+        y: 273
+        width: 77
+        height: 751
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9e5d8f559bdd5e940800000000000000
+      internalID: 5324905922516538857
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_8
+      rect:
+        serializedVersion: 2
+        x: 368
+        y: 772
+        width: 32
+        height: 252
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 87d3d84cff2eb0320800000000000000
+      internalID: 2525361604213423480
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_9
+      rect:
+        serializedVersion: 2
+        x: 448
+        y: 1018
+        width: 10
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8e9f7144f33b2afc0800000000000000
+      internalID: -3485026077324609048
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_10
+      rect:
+        serializedVersion: 2
+        x: 470
+        y: 1007
+        width: 11
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e78266808f8c3de90800000000000000
+      internalID: -7002032028012631938
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_11
+      rect:
+        serializedVersion: 2
+        x: 490
+        y: 694
+        width: 22
+        height: 330
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c31b11bc4eb3b7190800000000000000
+      internalID: -7963705662229073604
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_12
+      rect:
+        serializedVersion: 2
+        x: 102
+        y: 0
+        width: 58
+        height: 1011
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0d20cf92998de3e10800000000000000
+      internalID: 2179417422039876304
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_13
+      rect:
+        serializedVersion: 2
+        x: 207
+        y: 1001
+        width: 9
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3cc21bff9eb3f9f80800000000000000
+      internalID: -8097687728785642301
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_14
+      rect:
+        serializedVersion: 2
+        x: 401
+        y: 863
+        width: 16
+        height: 149
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 60ae59d20160d04e0800000000000000
+      internalID: -2013946791810700794
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_15
+      rect:
+        serializedVersion: 2
+        x: 486
+        y: 1004
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eef1f6129ee976110800000000000000
+      internalID: 1254145745371471854
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_16
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 988
+        width: 14
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0d81534ccd837fcb0800000000000000
+      internalID: -4830329554495792944
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_17
+      rect:
+        serializedVersion: 2
+        x: 411
+        y: 996
+        width: 9
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b13169a3a5390680800000000000000
+      internalID: -8788434220799151688
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_18
+      rect:
+        serializedVersion: 2
+        x: 462
+        y: 991
+        width: 12
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 655f153d4b83b4590800000000000000
+      internalID: -7688989589514357418
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_19
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 966
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b75b3288d642c8e60800000000000000
+      internalID: 7965781893765641595
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_20
+      rect:
+        serializedVersion: 2
+        x: 284
+        y: 961
+        width: 9
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f4dfbf1c55bd75840800000000000000
+      internalID: 5212876255077858639
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_21
+      rect:
+        serializedVersion: 2
+        x: 435
+        y: 969
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9efc690b0920247b0800000000000000
+      internalID: -5241624195844616215
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_22
+      rect:
+        serializedVersion: 2
+        x: 476
+        y: 963
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 49c6b6280906a8770800000000000000
+      internalID: 8613803411079130260
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_23
+      rect:
+        serializedVersion: 2
+        x: 275
+        y: 953
+        width: 10
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 474ef46141d62d420800000000000000
+      internalID: 2653303063515751540
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_24
+      rect:
+        serializedVersion: 2
+        x: 445
+        y: 953
+        width: 8
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dc6e6d45f42012d90800000000000000
+      internalID: -7124410595774372147
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_25
+      rect:
+        serializedVersion: 2
+        x: 207
+        y: 913
+        width: 11
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 533185389039197a0800000000000000
+      internalID: -6372150328684965067
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_26
+      rect:
+        serializedVersion: 2
+        x: 280
+        y: 920
+        width: 15
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d086072efdb5fd300800000000000000
+      internalID: 279042719055112205
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_27
+      rect:
+        serializedVersion: 2
+        x: 434
+        y: 607
+        width: 49
+        height: 323
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c30703718b836f4f0800000000000000
+      internalID: -795385920870125508
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_28
+      rect:
+        serializedVersion: 2
+        x: 276
+        y: 883
+        width: 10
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 380b099e288fb7470800000000000000
+      internalID: 8393575571683061891
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_29
+      rect:
+        serializedVersion: 2
+        x: 298
+        y: 884
+        width: 23
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a812b80e8d7c98f80800000000000000
+      internalID: -8103726320182419062
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_30
+      rect:
+        serializedVersion: 2
+        x: 425
+        y: 896
+        width: 9
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 62af47f93cad2f2e0800000000000000
+      internalID: -2093370343045137882
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_31
+      rect:
+        serializedVersion: 2
+        x: 396
+        y: 886
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4517af487eb48be30800000000000000
+      internalID: 4519445683806826836
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_32
+      rect:
+        serializedVersion: 2
+        x: 486
+        y: 880
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bc51a0a5d5d81ebc0800000000000000
+      internalID: -3755565182168197685
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_33
+      rect:
+        serializedVersion: 2
+        x: 205
+        y: 861
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ffb06ed7eb60d3c90800000000000000
+      internalID: -7188582014987662337
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_34
+      rect:
+        serializedVersion: 2
+        x: 418
+        y: 849
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bb188cda0c77cf5d0800000000000000
+      internalID: -3027413180066790981
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_35
+      rect:
+        serializedVersion: 2
+        x: 285
+        y: 835
+        width: 31
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e52698f329923a8f0800000000000000
+      internalID: -530534622991654306
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_36
+      rect:
+        serializedVersion: 2
+        x: 394
+        y: 835
+        width: 13
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: be416676874e8acb0800000000000000
+      internalID: -4852377392709757717
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_37
+      rect:
+        serializedVersion: 2
+        x: 427
+        y: 846
+        width: 9
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ce775582fecac3690800000000000000
+      internalID: -7621026326243870740
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_38
+      rect:
+        serializedVersion: 2
+        x: 301
+        y: 803
+        width: 14
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2f91a4a181a431ed0800000000000000
+      internalID: -2444528705351312910
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_39
+      rect:
+        serializedVersion: 2
+        x: 395
+        y: 823
+        width: 11
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 742c93a59b0df2cb0800000000000000
+      internalID: -4886457576172436921
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_40
+      rect:
+        serializedVersion: 2
+        x: 484
+        y: 811
+        width: 11
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5c005e7148daa1f10800000000000000
+      internalID: 2241294547418415301
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_41
+      rect:
+        serializedVersion: 2
+        x: 474
+        y: 791
+        width: 19
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c89d82973e8ec76d0800000000000000
+      internalID: -2991259988792911476
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_42
+      rect:
+        serializedVersion: 2
+        x: 287
+        y: 781
+        width: 10
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 736a119e2ff936440800000000000000
+      internalID: 4927958282914604599
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_43
+      rect:
+        serializedVersion: 2
+        x: 406
+        y: 775
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0a08e3f42145e98a0800000000000000
+      internalID: -6296502791401733984
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_44
+      rect:
+        serializedVersion: 2
+        x: 419
+        y: 778
+        width: 11
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0b8bbff0fce85f250800000000000000
+      internalID: 5977841100381730992
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_45
+      rect:
+        serializedVersion: 2
+        x: 415
+        y: 764
+        width: 12
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 278ed97a1338a39d0800000000000000
+      internalID: -2793776369541191566
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_46
+      rect:
+        serializedVersion: 2
+        x: 306
+        y: 743
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4615b03efbc0b09a0800000000000000
+      internalID: -6265900438268456604
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_47
+      rect:
+        serializedVersion: 2
+        x: 398
+        y: 739
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d1f9eaa51d50d5520800000000000000
+      internalID: 2692314548965121821
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_48
+      rect:
+        serializedVersion: 2
+        x: 473
+        y: 731
+        width: 19
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c91398cd02b136130800000000000000
+      internalID: 3558717958505705884
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_49
+      rect:
+        serializedVersion: 2
+        x: 355
+        y: 0
+        width: 102
+        height: 727
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 28995980e80330530800000000000000
+      internalID: 3819950295527823746
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_50
+      rect:
+        serializedVersion: 2
+        x: 381
+        y: 727
+        width: 9
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c8bb47a51dd2986f0800000000000000
+      internalID: -681963491380905076
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_51
+      rect:
+        serializedVersion: 2
+        x: 417
+        y: 723
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 219b6b16d779caaa0800000000000000
+      internalID: -6148372826501498606
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_52
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 710
+        width: 8
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 459b8a5202c075e30800000000000000
+      internalID: 4492072485535660372
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_53
+      rect:
+        serializedVersion: 2
+        x: 253
+        y: 713
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5c063b695b9ccf200800000000000000
+      internalID: 215268663961542853
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_54
+      rect:
+        serializedVersion: 2
+        x: 260
+        y: 166
+        width: 26
+        height: 555
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c0821d9db7912e640800000000000000
+      internalID: 5107672947117598732
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_55
+      rect:
+        serializedVersion: 2
+        x: 481
+        y: 707
+        width: 10
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9ab3d962fea820f90800000000000000
+      internalID: -6988870911975933015
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_56
+      rect:
+        serializedVersion: 2
+        x: 23
+        y: 0
+        width: 51
+        height: 695
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ed3c9384e6f165e40800000000000000
+      internalID: 5644733741474104286
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_57
+      rect:
+        serializedVersion: 2
+        x: 218
+        y: 680
+        width: 25
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c6627c1a874e261b0800000000000000
+      internalID: -5664714174517270932
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_58
+      rect:
+        serializedVersion: 2
+        x: 246
+        y: 693
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c0dc400a10d8bbb50800000000000000
+      internalID: 6610031916215487756
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_59
+      rect:
+        serializedVersion: 2
+        x: 249
+        y: 438
+        width: 19
+        height: 264
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b18364288e6aecaa0800000000000000
+      internalID: -6138785724511143909
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_60
+      rect:
+        serializedVersion: 2
+        x: 235
+        y: 667
+        width: 14
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bc2232dab0840f9b0800000000000000
+      internalID: -5048455967295724853
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_61
+      rect:
+        serializedVersion: 2
+        x: 506
+        y: 677
+        width: 6
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d2914a021268ff7d0800000000000000
+      internalID: -2882437759654160083
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_62
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 648
+        width: 7
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6523407a0e0c94650800000000000000
+      internalID: 6217712831668957782
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_63
+      rect:
+        serializedVersion: 2
+        x: 236
+        y: 652
+        width: 15
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2d831dd5274dbddd0800000000000000
+      internalID: -2460139183762491182
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_64
+      rect:
+        serializedVersion: 2
+        x: 479
+        y: 660
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b636e5db2802ffa10800000000000000
+      internalID: 1945309309942260587
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_65
+      rect:
+        serializedVersion: 2
+        x: 286
+        y: 647
+        width: 9
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6776d3a24fa511d90800000000000000
+      internalID: -7128816730423597194
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_66
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 637
+        width: 18
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d2dd70662fdd419b0800000000000000
+      internalID: -5110215643995054803
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_67
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 629
+        width: 10
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 600ed93563c575620800000000000000
+      internalID: 2762778284815933446
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_68
+      rect:
+        serializedVersion: 2
+        x: 6
+        y: 622
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4f6fb235781b03560800000000000000
+      internalID: 7291522991486924532
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_69
+      rect:
+        serializedVersion: 2
+        x: 285
+        y: 619
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 17e37245d5c747150800000000000000
+      internalID: 5869452954656259697
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_70
+      rect:
+        serializedVersion: 2
+        x: 297
+        y: 628
+        width: 9
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e7e66339eeb3730b0800000000000000
+      internalID: -5749060503457075586
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_71
+      rect:
+        serializedVersion: 2
+        x: 227
+        y: 449
+        width: 26
+        height: 160
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 71742154c76db54d0800000000000000
+      internalID: -3144684085565044969
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_72
+      rect:
+        serializedVersion: 2
+        x: 478
+        y: 599
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5fccd281bb20abbe0800000000000000
+      internalID: -1460852126540509963
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_73
+      rect:
+        serializedVersion: 2
+        x: 491
+        y: 608
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 22c939b1938a250a0800000000000000
+      internalID: -6894263116321547230
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_74
+      rect:
+        serializedVersion: 2
+        x: 493
+        y: 594
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 21f89c939e14f2090800000000000000
+      internalID: -8057148738389831918
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_75
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 582
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 95fe7491567825170800000000000000
+      internalID: 8165737942661721945
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_76
+      rect:
+        serializedVersion: 2
+        x: 225
+        y: 579
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 12aec69fecf560130800000000000000
+      internalID: 3532616300271299105
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_77
+      rect:
+        serializedVersion: 2
+        x: 304
+        y: 585
+        width: 16
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 59fd57e83213a4150800000000000000
+      internalID: 5857548294132457365
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_78
+      rect:
+        serializedVersion: 2
+        x: 435
+        y: 588
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 87e7a4c74250c5af0800000000000000
+      internalID: -406444212107968904
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_79
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 558
+        width: 5
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c03967bdbbe406940800000000000000
+      internalID: 5287312531280794380
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_80
+      rect:
+        serializedVersion: 2
+        x: 210
+        y: 564
+        width: 12
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b48b992f4a40b580800000000000000
+      internalID: -8813462766903130958
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_81
+      rect:
+        serializedVersion: 2
+        x: 438
+        y: 567
+        width: 14
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 95e2bba51adc53480800000000000000
+      internalID: -8919997394041754023
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_82
+      rect:
+        serializedVersion: 2
+        x: 448
+        y: 301
+        width: 29
+        height: 270
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a8f92adc77ed63c0800000000000000
+      internalID: -4364577940429997916
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_83
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 544
+        width: 12
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f1289ebbae1acce80800000000000000
+      internalID: -8156966795527749089
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_84
+      rect:
+        serializedVersion: 2
+        x: 182
+        y: 195
+        width: 36
+        height: 366
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8beb1337daed434e0800000000000000
+      internalID: -2002731097729679688
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_85
+      rect:
+        serializedVersion: 2
+        x: 425
+        y: 551
+        width: 14
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6563ee6500cdc73a0800000000000000
+      internalID: -6666211454398613930
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_86
+      rect:
+        serializedVersion: 2
+        x: 471
+        y: 541
+        width: 18
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ea95d098ab599fff0800000000000000
+      internalID: -1805696441165394
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_87
+      rect:
+        serializedVersion: 2
+        x: 474
+        y: 8
+        width: 36
+        height: 544
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f84544f28c04d10f0800000000000000
+      internalID: -1144687501751593841
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_88
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 0
+        width: 37
+        height: 550
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3a82587045d35df60800000000000000
+      internalID: 8058414539362085027
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_89
+      rect:
+        serializedVersion: 2
+        x: 217
+        y: 533
+        width: 10
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1fbaba5ce3ecdffc0800000000000000
+      internalID: -3459382169751016463
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_90
+      rect:
+        serializedVersion: 2
+        x: 277
+        y: 529
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 148b7c0cea0e6cd40800000000000000
+      internalID: 5604413827472406593
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_91
+      rect:
+        serializedVersion: 2
+        x: 296
+        y: 509
+        width: 14
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 851879b2e44564c50800000000000000
+      internalID: 6649094594574647640
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_92
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 490
+        width: 11
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e5c51588beb61e390800000000000000
+      internalID: -7790827221025727394
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_93
+      rect:
+        serializedVersion: 2
+        x: 291
+        y: 488
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ed77c562d35c02a90800000000000000
+      internalID: -7340650526186637346
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_94
+      rect:
+        serializedVersion: 2
+        x: 299
+        y: 493
+        width: 15
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ad40b064a450b6320800000000000000
+      internalID: 2552139430396363994
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_95
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 120
+        width: 22
+        height: 375
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e5fbab6833ae9e20800000000000000
+      internalID: 3359301834784896483
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_96
+      rect:
+        serializedVersion: 2
+        x: 445
+        y: 493
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c1b29f8ecc4ac46e0800000000000000
+      internalID: -1851924146767189220
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_97
+      rect:
+        serializedVersion: 2
+        x: 426
+        y: 454
+        width: 23
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 026306da50cb3dca0800000000000000
+      internalID: -5993239946530376160
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_98
+      rect:
+        serializedVersion: 2
+        x: 447
+        y: 477
+        width: 13
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bca0a5c7db31d0a00800000000000000
+      internalID: 724256819632540363
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_99
+      rect:
+        serializedVersion: 2
+        x: 221
+        y: 458
+        width: 11
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2e020796ece9a4060800000000000000
+      internalID: 6938532785287078114
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_100
+      rect:
+        serializedVersion: 2
+        x: 295
+        y: 462
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: db2a46c5a99a3b220800000000000000
+      internalID: 2500528698560914109
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_101
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 447
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a659d9c51891bd900800000000000000
+      internalID: 710189409636291946
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_102
+      rect:
+        serializedVersion: 2
+        x: 68
+        y: 446
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5334c7e15fc01ab50800000000000000
+      internalID: 6602572775619838773
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_103
+      rect:
+        serializedVersion: 2
+        x: 278
+        y: 443
+        width: 11
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cc584a9dfd78f63d0800000000000000
+      internalID: -3211198613792979508
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_104
+      rect:
+        serializedVersion: 2
+        x: 294
+        y: 441
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 274828460e877c470800000000000000
+      internalID: 8414827333919343730
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_105
+      rect:
+        serializedVersion: 2
+        x: 436
+        y: 442
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 92450723e0bcba6c0800000000000000
+      internalID: -4130984971346095063
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_106
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 426
+        width: 10
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cb3894fdf703aa020800000000000000
+      internalID: 2353747081019622332
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_107
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 414
+        width: 7
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 95f562ae62c2cd650800000000000000
+      internalID: 6258926127786909529
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_108
+      rect:
+        serializedVersion: 2
+        x: 11
+        y: 417
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a33c3b8e14f48450800000000000000
+      internalID: 6090261008133927847
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_109
+      rect:
+        serializedVersion: 2
+        x: 233
+        y: 426
+        width: 11
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b521477945531b30800000000000000
+      internalID: 4256839846816982456
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_110
+      rect:
+        serializedVersion: 2
+        x: 71
+        y: 406
+        width: 12
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7efcfcfa1520e3290800000000000000
+      internalID: -7908881345750773785
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_111
+      rect:
+        serializedVersion: 2
+        x: 282
+        y: 0
+        width: 28
+        height: 424
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c7f3acd58dfbae760800000000000000
+      internalID: 7488008266464247676
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_112
+      rect:
+        serializedVersion: 2
+        x: 441
+        y: 411
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7fc942c90a3d9e5d0800000000000000
+      internalID: -3032660187289445129
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_113
+      rect:
+        serializedVersion: 2
+        x: 216
+        y: 395
+        width: 12
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8431f5ac8d412da50800000000000000
+      internalID: 6544316129863471944
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_114
+      rect:
+        serializedVersion: 2
+        x: 235
+        y: 383
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6978dabd7655bf7b0800000000000000
+      internalID: -5189460241058789482
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_115
+      rect:
+        serializedVersion: 2
+        x: 304
+        y: 391
+        width: 18
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 779e09fe799d30d90800000000000000
+      internalID: -7132618138242193033
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_116
+      rect:
+        serializedVersion: 2
+        x: 469
+        y: 383
+        width: 18
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 86c8d130343f86db0800000000000000
+      internalID: -4798317933822636952
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_117
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 378
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 49c8eee47aff446b0800000000000000
+      internalID: -5312840566341464940
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_118
+      rect:
+        serializedVersion: 2
+        x: 216
+        y: 383
+        width: 10
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3eb4a2d4c3134dfd0800000000000000
+      internalID: -2318173773126546461
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_119
+      rect:
+        serializedVersion: 2
+        x: 438
+        y: 374
+        width: 19
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3d768e4c5cb2163f0800000000000000
+      internalID: -909397521340012589
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_120
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 365
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a6c8f3025eb19b350800000000000000
+      internalID: 6032883846741986410
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_121
+      rect:
+        serializedVersion: 2
+        x: 212
+        y: 355
+        width: 12
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 65f2d8b1abfa19920800000000000000
+      internalID: 2995368441039105878
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_122
+      rect:
+        serializedVersion: 2
+        x: 305
+        y: 361
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 42021a8d43e321270800000000000000
+      internalID: 8219700666598236196
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_123
+      rect:
+        serializedVersion: 2
+        x: 71
+        y: 345
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2ccec36a0c3b3e7a0800000000000000
+      internalID: -6349033409658164030
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_124
+      rect:
+        serializedVersion: 2
+        x: 223
+        y: 343
+        width: 9
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 590d829f2e9035bc0800000000000000
+      internalID: -3795679190495735659
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_125
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 302
+        width: 16
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d411763612edc6420800000000000000
+      internalID: 2624716917833142605
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_126
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 309
+        width: 11
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e5ffea4b90d2970a0800000000000000
+      internalID: -6883421035749769378
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_127
+      rect:
+        serializedVersion: 2
+        x: 229
+        y: 0
+        width: 33
+        height: 343
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a084ca4f8a902b60800000000000000
+      internalID: 7719339701538422951
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_128
+      rect:
+        serializedVersion: 2
+        x: 505
+        y: 301
+        width: 7
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e1d895090c99c6a10800000000000000
+      internalID: 1904065794805435678
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_129
+      rect:
+        serializedVersion: 2
+        x: 309
+        y: 294
+        width: 10
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d0460208d933f47e0800000000000000
+      internalID: -1779146576235568115
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_130
+      rect:
+        serializedVersion: 2
+        x: 453
+        y: 283
+        width: 10
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 853ad53cc715b5290800000000000000
+      internalID: -7900631524995914920
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_131
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 285
+        width: 9
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5390bdb45616dd670800000000000000
+      internalID: 8565109154020788533
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_132
+      rect:
+        serializedVersion: 2
+        x: 309
+        y: 278
+        width: 11
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 03e7e74eaa87ec4e0800000000000000
+      internalID: -1959496112486318544
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_133
+      rect:
+        serializedVersion: 2
+        x: 446
+        y: 276
+        width: 11
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 58115108a1d246a00800000000000000
+      internalID: 748773029891608965
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_134
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 256
+        width: 8
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a5ce88876939b7870800000000000000
+      internalID: 8681694981163379802
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_135
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 244
+        width: 20
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b3ddba877f83d83d0800000000000000
+      internalID: -3202841124457947845
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_136
+      rect:
+        serializedVersion: 2
+        x: 145
+        y: 20
+        width: 30
+        height: 264
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b378d6a1d4a3dcea0800000000000000
+      internalID: -5850956238054127813
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_137
+      rect:
+        serializedVersion: 2
+        x: 220
+        y: 251
+        width: 16
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 97eb9517c02bf0030800000000000000
+      internalID: 3463182404982259321
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_138
+      rect:
+        serializedVersion: 2
+        x: 504
+        y: 264
+        width: 8
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ad60812b505b725d0800000000000000
+      internalID: -3087299983471802662
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_139
+      rect:
+        serializedVersion: 2
+        x: 276
+        y: 234
+        width: 14
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 24f7d56f407947020800000000000000
+      internalID: 2338660154081115970
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_140
+      rect:
+        serializedVersion: 2
+        x: 317
+        y: 236
+        width: 12
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b7b02adac4bd27900800000000000000
+      internalID: 680847616063441787
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_141
+      rect:
+        serializedVersion: 2
+        x: 348
+        y: 246
+        width: 10
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: df71c46606dcfabf0800000000000000
+      internalID: -310804035348457475
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_142
+      rect:
+        serializedVersion: 2
+        x: 452
+        y: 242
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e792eb4ef02295910800000000000000
+      internalID: 1826528575532968318
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_143
+      rect:
+        serializedVersion: 2
+        x: 173
+        y: 225
+        width: 15
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4cd8845529a944940800000000000000
+      internalID: 5279514616471784900
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_144
+      rect:
+        serializedVersion: 2
+        x: 301
+        y: 223
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b2ebf1aa9003e680800000000000000
+      internalID: -8727130988771286344
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_145
+      rect:
+        serializedVersion: 2
+        x: 445
+        y: 233
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1273ac6d752d5d850800000000000000
+      internalID: 6401253720084592417
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_146
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 29
+        height: 225
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b912e99262a7b0090800000000000000
+      internalID: -8067220003178536549
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_147
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 193
+        width: 15
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 73bbe96be253b7e60800000000000000
+      internalID: 7961015241056107319
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_148
+      rect:
+        serializedVersion: 2
+        x: 348
+        y: 208
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 410f9c179ad72ba70800000000000000
+      internalID: 8841267185193709588
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_149
+      rect:
+        serializedVersion: 2
+        x: 431
+        y: 198
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e2dba889d011daaa0800000000000000
+      internalID: -6148239166199382738
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_150
+      rect:
+        serializedVersion: 2
+        x: 173
+        y: 175
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b4ac74a3ba2112270800000000000000
+      internalID: 8223874921181727307
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_151
+      rect:
+        serializedVersion: 2
+        x: 307
+        y: 172
+        width: 10
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e039df6289563a20800000000000000
+      internalID: 3041717015092474083
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_152
+      rect:
+        serializedVersion: 2
+        x: 316
+        y: 174
+        width: 9
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5af4441712364a230800000000000000
+      internalID: 3649150593362317221
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_153
+      rect:
+        serializedVersion: 2
+        x: 455
+        y: 178
+        width: 17
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d963922d633f48a70800000000000000
+      internalID: 8828448586332714653
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_154
+      rect:
+        serializedVersion: 2
+        x: 166
+        y: 159
+        width: 12
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 323b48da1dfe5ae70800000000000000
+      internalID: 9125963903774536483
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_155
+      rect:
+        serializedVersion: 2
+        x: 209
+        y: 168
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 35611c23f8d31ecb0800000000000000
+      internalID: -4836516839578069421
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_156
+      rect:
+        serializedVersion: 2
+        x: 457
+        y: 163
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bc5a8a1f99790dff0800000000000000
+      internalID: -13344111441959477
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_157
+      rect:
+        serializedVersion: 2
+        x: 178
+        y: 148
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3f811f08f4b8e1140800000000000000
+      internalID: 4692341035348596979
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_158
+      rect:
+        serializedVersion: 2
+        x: 218
+        y: 135
+        width: 20
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ad9e28e28dac11e20800000000000000
+      internalID: 3319657430190844378
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_159
+      rect:
+        serializedVersion: 2
+        x: 257
+        y: 150
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e6388e83b04672db0800000000000000
+      internalID: -4816771277087276178
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_160
+      rect:
+        serializedVersion: 2
+        x: 277
+        y: 140
+        width: 12
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b1a686df8850df0d0800000000000000
+      internalID: -3387545258787575269
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_161
+      rect:
+        serializedVersion: 2
+        x: 299
+        y: 135
+        width: 21
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 43cb0ed2d71ea4a70800000000000000
+      internalID: 8812103548660661300
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_162
+      rect:
+        serializedVersion: 2
+        x: 456
+        y: 141
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 36b63ef0a11fd6f20800000000000000
+      internalID: 3417652786482080611
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_163
+      rect:
+        serializedVersion: 2
+        x: 172
+        y: 134
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1ac4d00fc26de6780800000000000000
+      internalID: -8687771142656799583
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_164
+      rect:
+        serializedVersion: 2
+        x: 179
+        y: 0
+        width: 17
+        height: 144
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 977d03aec8a6447e0800000000000000
+      internalID: -1782182399074838663
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_165
+      rect:
+        serializedVersion: 2
+        x: 207
+        y: 134
+        width: 11
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fd0c5e9853c2321e0800000000000000
+      internalID: -2223885182532468513
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_166
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 0
+        width: 36
+        height: 142
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 13d5ebd54f95a4a90800000000000000
+      internalID: -7328946537512411855
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_167
+      rect:
+        serializedVersion: 2
+        x: 302
+        y: 122
+        width: 13
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f9473ed6718f7d490800000000000000
+      internalID: -7721430256591866721
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_168
+      rect:
+        serializedVersion: 2
+        x: 442
+        y: 121
+        width: 12
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aa3c3f35406c5b1e0800000000000000
+      internalID: -2182620722500484182
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_169
+      rect:
+        serializedVersion: 2
+        x: 171
+        y: 120
+        width: 11
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 515c3756566efebc0800000000000000
+      internalID: -3751526641408162539
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_170
+      rect:
+        serializedVersion: 2
+        x: 228
+        y: 117
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e2a4ee93bbaf697b0800000000000000
+      internalID: -5217707436224394706
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_171
+      rect:
+        serializedVersion: 2
+        x: 318
+        y: 98
+        width: 15
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 95d2c6cd00096fd90800000000000000
+      internalID: -7064300632111567527
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_172
+      rect:
+        serializedVersion: 2
+        x: 342
+        y: 87
+        width: 13
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 45df07e6463238950800000000000000
+      internalID: 6450038005581282644
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_173
+      rect:
+        serializedVersion: 2
+        x: 428
+        y: 97
+        width: 20
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a3d76ffa70c6c6630800000000000000
+      internalID: 3921628155805596986
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_174
+      rect:
+        serializedVersion: 2
+        x: 461
+        y: 92
+        width: 23
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f7e9d0f84c7d94c30800000000000000
+      internalID: 4344240554789150335
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_175
+      rect:
+        serializedVersion: 2
+        x: 71
+        y: 54
+        width: 11
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b2daa5fd1cda26d0800000000000000
+      internalID: -3014354979337350478
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_176
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 55
+        width: 11
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8646db6bc5b8a9ab0800000000000000
+      internalID: -5000531205922397080
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_177
+      rect:
+        serializedVersion: 2
+        x: 332
+        y: 56
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c09062c9697e4f000800000000000000
+      internalID: 68934528368249100
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_178
+      rect:
+        serializedVersion: 2
+        x: 353
+        y: 57
+        width: 11
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dbac69f307da67c50800000000000000
+      internalID: 6662703396356016829
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_179
+      rect:
+        serializedVersion: 2
+        x: 503
+        y: 43
+        width: 9
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a61d7e0b0f9ae5b70800000000000000
+      internalID: 8889729565701165418
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_180
+      rect:
+        serializedVersion: 2
+        x: 65
+        y: 39
+        width: 15
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00c7eeef365effb40800000000000000
+      internalID: 5476347889547377664
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_181
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 39
+        width: 14
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a28931faa64eb7250800000000000000
+      internalID: 5943595280100464682
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_182
+      rect:
+        serializedVersion: 2
+        x: 502
+        y: 29
+        width: 10
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 180e56ae0f8f532c0800000000000000
+      internalID: -4452378942977482623
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_183
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 23
+        width: 11
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 15d4000cfd71151c0800000000000000
+      internalID: -4516802701509505711
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_184
+      rect:
+        serializedVersion: 2
+        x: 165
+        y: 19
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 37b8502dd7feb3f20800000000000000
+      internalID: 3403577267082070899
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_185
+      rect:
+        serializedVersion: 2
+        x: 202
+        y: 12
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3bf4ceea6185c9e20800000000000000
+      internalID: 3358656276558794675
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_186
+      rect:
+        serializedVersion: 2
+        x: 325
+        y: 0
+        width: 17
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c8c3a2938c8f74ea0800000000000000
+      internalID: -5888464448927417204
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_187
+      rect:
+        serializedVersion: 2
+        x: 453
+        y: 16
+        width: 12
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8fcb1e30e66b7d9d0800000000000000
+      internalID: -2749528463858615048
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_188
+      rect:
+        serializedVersion: 2
+        x: 62
+        y: 2
+        width: 13
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 22af4b1c4ea145bf0800000000000000
+      internalID: -336614502341215710
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_189
+      rect:
+        serializedVersion: 2
+        x: 278
+        y: 0
+        width: 10
+        height: 5
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cb0db60189fdef3f0800000000000000
+      internalID: -865008234205032260
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glass_rain_190
+      rect:
+        serializedVersion: 2
+        x: 348
+        y: 0
+        width: 14
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5bc9aff7293040df0800000000000000
+      internalID: -215042954459702091
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      glass_rain_0: 1923199436979702595
+      glass_rain_1: -4915467764622300493
+      glass_rain_10: -7002032028012631938
+      glass_rain_100: 2500528698560914109
+      glass_rain_101: 710189409636291946
+      glass_rain_102: 6602572775619838773
+      glass_rain_103: -3211198613792979508
+      glass_rain_104: 8414827333919343730
+      glass_rain_105: -4130984971346095063
+      glass_rain_106: 2353747081019622332
+      glass_rain_107: 6258926127786909529
+      glass_rain_108: 6090261008133927847
+      glass_rain_109: 4256839846816982456
+      glass_rain_11: -7963705662229073604
+      glass_rain_110: -7908881345750773785
+      glass_rain_111: 7488008266464247676
+      glass_rain_112: -3032660187289445129
+      glass_rain_113: 6544316129863471944
+      glass_rain_114: -5189460241058789482
+      glass_rain_115: -7132618138242193033
+      glass_rain_116: -4798317933822636952
+      glass_rain_117: -5312840566341464940
+      glass_rain_118: -2318173773126546461
+      glass_rain_119: -909397521340012589
+      glass_rain_12: 2179417422039876304
+      glass_rain_120: 6032883846741986410
+      glass_rain_121: 2995368441039105878
+      glass_rain_122: 8219700666598236196
+      glass_rain_123: -6349033409658164030
+      glass_rain_124: -3795679190495735659
+      glass_rain_125: 2624716917833142605
+      glass_rain_126: -6883421035749769378
+      glass_rain_127: 7719339701538422951
+      glass_rain_128: 1904065794805435678
+      glass_rain_129: -1779146576235568115
+      glass_rain_13: -8097687728785642301
+      glass_rain_130: -7900631524995914920
+      glass_rain_131: 8565109154020788533
+      glass_rain_132: -1959496112486318544
+      glass_rain_133: 748773029891608965
+      glass_rain_134: 8681694981163379802
+      glass_rain_135: -3202841124457947845
+      glass_rain_136: -5850956238054127813
+      glass_rain_137: 3463182404982259321
+      glass_rain_138: -3087299983471802662
+      glass_rain_139: 2338660154081115970
+      glass_rain_14: -2013946791810700794
+      glass_rain_140: 680847616063441787
+      glass_rain_141: -310804035348457475
+      glass_rain_142: 1826528575532968318
+      glass_rain_143: 5279514616471784900
+      glass_rain_144: -8727130988771286344
+      glass_rain_145: 6401253720084592417
+      glass_rain_146: -8067220003178536549
+      glass_rain_147: 7961015241056107319
+      glass_rain_148: 8841267185193709588
+      glass_rain_149: -6148239166199382738
+      glass_rain_15: 1254145745371471854
+      glass_rain_150: 8223874921181727307
+      glass_rain_151: 3041717015092474083
+      glass_rain_152: 3649150593362317221
+      glass_rain_153: 8828448586332714653
+      glass_rain_154: 9125963903774536483
+      glass_rain_155: -4836516839578069421
+      glass_rain_156: -13344111441959477
+      glass_rain_157: 4692341035348596979
+      glass_rain_158: 3319657430190844378
+      glass_rain_159: -4816771277087276178
+      glass_rain_16: -4830329554495792944
+      glass_rain_160: -3387545258787575269
+      glass_rain_161: 8812103548660661300
+      glass_rain_162: 3417652786482080611
+      glass_rain_163: -8687771142656799583
+      glass_rain_164: -1782182399074838663
+      glass_rain_165: -2223885182532468513
+      glass_rain_166: -7328946537512411855
+      glass_rain_167: -7721430256591866721
+      glass_rain_168: -2182620722500484182
+      glass_rain_169: -3751526641408162539
+      glass_rain_17: -8788434220799151688
+      glass_rain_170: -5217707436224394706
+      glass_rain_171: -7064300632111567527
+      glass_rain_172: 6450038005581282644
+      glass_rain_173: 3921628155805596986
+      glass_rain_174: 4344240554789150335
+      glass_rain_175: -3014354979337350478
+      glass_rain_176: -5000531205922397080
+      glass_rain_177: 68934528368249100
+      glass_rain_178: 6662703396356016829
+      glass_rain_179: 8889729565701165418
+      glass_rain_18: -7688989589514357418
+      glass_rain_180: 5476347889547377664
+      glass_rain_181: 5943595280100464682
+      glass_rain_182: -4452378942977482623
+      glass_rain_183: -4516802701509505711
+      glass_rain_184: 3403577267082070899
+      glass_rain_185: 3358656276558794675
+      glass_rain_186: -5888464448927417204
+      glass_rain_187: -2749528463858615048
+      glass_rain_188: -336614502341215710
+      glass_rain_189: -865008234205032260
+      glass_rain_19: 7965781893765641595
+      glass_rain_190: -215042954459702091
+      glass_rain_2: 5710149467141120638
+      glass_rain_20: 5212876255077858639
+      glass_rain_21: -5241624195844616215
+      glass_rain_22: 8613803411079130260
+      glass_rain_23: 2653303063515751540
+      glass_rain_24: -7124410595774372147
+      glass_rain_25: -6372150328684965067
+      glass_rain_26: 279042719055112205
+      glass_rain_27: -795385920870125508
+      glass_rain_28: 8393575571683061891
+      glass_rain_29: -8103726320182419062
+      glass_rain_3: -4157331043547649897
+      glass_rain_30: -2093370343045137882
+      glass_rain_31: 4519445683806826836
+      glass_rain_32: -3755565182168197685
+      glass_rain_33: -7188582014987662337
+      glass_rain_34: -3027413180066790981
+      glass_rain_35: -530534622991654306
+      glass_rain_36: -4852377392709757717
+      glass_rain_37: -7621026326243870740
+      glass_rain_38: -2444528705351312910
+      glass_rain_39: -4886457576172436921
+      glass_rain_4: -8013811756426146420
+      glass_rain_40: 2241294547418415301
+      glass_rain_41: -2991259988792911476
+      glass_rain_42: 4927958282914604599
+      glass_rain_43: -6296502791401733984
+      glass_rain_44: 5977841100381730992
+      glass_rain_45: -2793776369541191566
+      glass_rain_46: -6265900438268456604
+      glass_rain_47: 2692314548965121821
+      glass_rain_48: 3558717958505705884
+      glass_rain_49: 3819950295527823746
+      glass_rain_5: -2235268260957104028
+      glass_rain_50: -681963491380905076
+      glass_rain_51: -6148372826501498606
+      glass_rain_52: 4492072485535660372
+      glass_rain_53: 215268663961542853
+      glass_rain_54: 5107672947117598732
+      glass_rain_55: -6988870911975933015
+      glass_rain_56: 5644733741474104286
+      glass_rain_57: -5664714174517270932
+      glass_rain_58: 6610031916215487756
+      glass_rain_59: -6138785724511143909
+      glass_rain_6: -1467916745235797723
+      glass_rain_60: -5048455967295724853
+      glass_rain_61: -2882437759654160083
+      glass_rain_62: 6217712831668957782
+      glass_rain_63: -2460139183762491182
+      glass_rain_64: 1945309309942260587
+      glass_rain_65: -7128816730423597194
+      glass_rain_66: -5110215643995054803
+      glass_rain_67: 2762778284815933446
+      glass_rain_68: 7291522991486924532
+      glass_rain_69: 5869452954656259697
+      glass_rain_7: 5324905922516538857
+      glass_rain_70: -5749060503457075586
+      glass_rain_71: -3144684085565044969
+      glass_rain_72: -1460852126540509963
+      glass_rain_73: -6894263116321547230
+      glass_rain_74: -8057148738389831918
+      glass_rain_75: 8165737942661721945
+      glass_rain_76: 3532616300271299105
+      glass_rain_77: 5857548294132457365
+      glass_rain_78: -406444212107968904
+      glass_rain_79: 5287312531280794380
+      glass_rain_8: 2525361604213423480
+      glass_rain_80: -8813462766903130958
+      glass_rain_81: -8919997394041754023
+      glass_rain_82: -4364577940429997916
+      glass_rain_83: -8156966795527749089
+      glass_rain_84: -2002731097729679688
+      glass_rain_85: -6666211454398613930
+      glass_rain_86: -1805696441165394
+      glass_rain_87: -1144687501751593841
+      glass_rain_88: 8058414539362085027
+      glass_rain_89: -3459382169751016463
+      glass_rain_9: -3485026077324609048
+      glass_rain_90: 5604413827472406593
+      glass_rain_91: 6649094594574647640
+      glass_rain_92: -7790827221025727394
+      glass_rain_93: -7340650526186637346
+      glass_rain_94: 2552139430396363994
+      glass_rain_95: 3359301834784896483
+      glass_rain_96: -1851924146767189220
+      glass_rain_97: -5993239946530376160
+      glass_rain_98: 724256819632540363
+      glass_rain_99: 6938532785287078114
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

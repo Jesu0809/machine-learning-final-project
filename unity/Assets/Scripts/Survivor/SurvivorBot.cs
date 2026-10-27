@@ -86,9 +86,11 @@ namespace NightShift.Hunt.Survivor
 
     /// <summary>
     /// Replaces the human during training and evaluation. Like a player with a motion tracker, it
-    /// goes for the nearest fuse and then the exit, avoiding the room where it last saw Freddy;
+    /// goes for the nearest thing left to do (a cell, the socket for the cell it carries, the
+    /// breaker, the keycard, the reader, the tape box) and then the exit lever, avoiding the room
+    /// where it last saw Freddy;
     /// when Freddy gets close it hides or runs away, and it waits before coming out again.
-    /// It only knows what a player would know: the fuse rooms and its tracker readings.
+    /// It only knows what a player would know: where the cells, sockets and tasks are, and its tracker readings.
     /// </summary>
     public class SurvivorBot
     {
@@ -202,17 +204,24 @@ namespace NightShift.Hunt.Survivor
                 return PlayerAction.Wait();
             }
 
-            if (state.FuseIn(here))
+            if (state.CarriedCell >= 0 && state.CellFits(state.CarriedCell, HuntMap.SocketIn(here)))
             {
-                return PlayerAction.PickFuse();
+                return PlayerAction.InsertCell();
             }
-            bool allFuses = state.FusesCollected >= state.Settings.FuseCount;
-            if (allFuses && here == state.ExitRoom)
+            if (state.CarriedCell < 0 && state.CellIn(here))
+            {
+                return PlayerAction.PickCell();
+            }
+            if (state.HasWorkIn(here))
+            {
+                return PlayerAction.Work();
+            }
+            if (state.ExitUnlocked && here == state.ExitRoom)
             {
                 return PlayerAction.WorkExit();
             }
 
-            Room goal = allFuses ? state.ExitRoom : NearestFuse(state);
+            Room goal = state.ExitUnlocked ? state.ExitRoom : NextGoal(state);
             // A duct that saves at least two rooms of walking, if it does not come out next to Freddy.
             foreach (Room exit in HuntMap.DuctsFrom(here))
             {
@@ -314,26 +323,33 @@ namespace NightShift.Hunt.Survivor
             return best;
         }
 
-        private Room NearestFuse(HuntState state)
+        /// <summary>
+        /// The nearest place with something to do: with a cell in hand, a socket it fits; with free
+        /// hands, a cell; and any task of the night. A place next to Freddy waits if there is another.
+        /// </summary>
+        private Room NextGoal(HuntState state)
         {
             Room best = state.ExitRoom;
             int bestDistance = int.MaxValue;
-            for (int room = 0; room < HuntMap.RoomCount; room++)
+            for (int r = 0; r < HuntMap.RoomCount; r++)
             {
-                if (!state.FuseIn((Room)room))
+                var room = (Room)r;
+                bool useful = state.HasWorkIn(room)
+                              || (state.CarriedCell >= 0 && state.CellFits(state.CarriedCell, HuntMap.SocketIn(room)))
+                              || (state.CarriedCell < 0 && state.CellIn(room));
+                if (!useful)
                 {
                     continue;
                 }
-                int distance = HuntMap.Distance(state.PlayerRoom, (Room)room);
-                if (knownFreddy.HasValue && HuntMap.Distance((Room)room, knownFreddy.Value) <= 1)
+                int distance = HuntMap.Distance(state.PlayerRoom, room);
+                if (knownFreddy.HasValue && HuntMap.Distance(room, knownFreddy.Value) <= 1)
                 {
-                    // Leave the fuse next to Freddy for later if there is another one.
                     distance += 4;
                 }
                 if (distance < bestDistance)
                 {
                     bestDistance = distance;
-                    best = (Room)room;
+                    best = room;
                 }
             }
             return best;

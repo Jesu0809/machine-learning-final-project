@@ -69,9 +69,10 @@ namespace NightShift.Game
         private IntroCinematic intro;
         private bool wasInCall;
         private bool itemsRevealed;
-        private ObjectiveItem breaker;
-        private ObjectiveItem keycard;
-        private ObjectiveItem tape;
+        private BreakerBox breakerBox;
+        private KeycardPedestal cardPedestal;
+        private CardReader cardReader;
+        private TapeBox tapeBox;
         private readonly List<LurePickup> lures = new List<LurePickup>();
         private readonly List<NotePickup> notes = new List<NotePickup>();
         private bool pointerWasLocked;
@@ -101,8 +102,7 @@ namespace NightShift.Game
         /// <summary>"trained with ML-Agents (freddy_v3)" or "scripted baseline …", shown in the menu and the inspector.</summary>
         public string BrainDescription { get; private set; }
 
-        public int FusesCollected => State.FusesCollected;
-        public int FusesNeeded => settings.FuseCount;
+        public int CellsNeeded => settings.CellCount;
 
         /// <summary>Seconds of the night played so far (the clock on the HUD).</summary>
         public float NightSeconds { get; private set; }
@@ -191,7 +191,7 @@ namespace NightShift.Game
                 Debug.LogWarning("Resources/GameAssets.asset is missing: run Night Shift/Create Game Scene.");
             }
             // In 3D the body really walks; the brain decides again when he arrives.
-            settings = new HuntSettings { ResolveCatches = false, TravelTime = false };
+            settings = new HuntSettings { ResolveCatches = false, TravelTime = false, RandomNight = false };
             State = new HuntState(settings, System.Environment.TickCount);
             if (Assets.PolicyWeights != null)
             {
@@ -219,11 +219,17 @@ namespace NightShift.Game
             call = PhoneCall.Create(transform, Audio, Assets);
             Exterior = Exterior.Build(transform, Assets);
             intro = IntroCinematic.Create(this, Exterior);
-            // Objective objects: the breaker on the storage's south wall, the keycard lockbox on the
-            // office's north wall and the tape on the office table.
-            breaker = ObjectiveItem.Create(this, ObjectiveStep.Breaker, Level.Root, new Vector3(-20.4f, 1.4f, 2.32f), 0f, 3f);
-            keycard = ObjectiveItem.Create(this, ObjectiveStep.Keycard, Level.Root, new Vector3(-17f, 1.3f, -9.32f), 180f, 0f);
-            tape = ObjectiveItem.Create(this, ObjectiveStep.Tape, Level.Root, PizzeriaLayout.SpotPosition(Room.Office, 1) + new Vector3(0.4f, 0.86f, 0.1f), 20f, 0f);
+            // The night's tasks: the three power sockets, the breaker box on the storage's south
+            // wall, the keycard on its pedestal in the veranda, the reader on the office wall and
+            // the tape box on the ticket booth's counter.
+            for (int socket = 0; socket < Level.Sockets.Length; socket++)
+            {
+                Level.Sockets[socket] = PowerSocket.Build(this, Level.Root, socket);
+            }
+            breakerBox = BreakerBox.Create(this, Level.Root, new Vector3(-20.4f, 1.4f, 2.32f), 0f);
+            cardPedestal = KeycardPedestal.Create(this, Level.Root, PizzeriaLayout.CardPedestal);
+            cardReader = CardReader.Create(this, Level.Root, PizzeriaLayout.ReaderMount, PizzeriaLayout.ReaderFacing);
+            tapeBox = TapeBox.Create(this, Level.Root, LevelProps.TapeBoxPose.position, LevelProps.TapeBoxPose.rotation);
             GraphicsQuality.Apply();
             CreateBrain();
             UI = GameUI.Create(this);
@@ -323,13 +329,18 @@ namespace NightShift.Game
 
             StopAllCoroutines();
             ResetEffects();
+            settings.Night = Night;
             State.Reset();
             for (int room = 0; room < HuntMap.RoomCount; room++)
             {
-                if (Level.Fuses[room] != null)
+                if (Level.Cells[room] != null)
                 {
-                    Level.Fuses[room].gameObject.SetActive(false);
+                    Level.Cells[room].gameObject.SetActive(false);
                 }
+            }
+            foreach (PowerSocket socket in Level.Sockets)
+            {
+                socket.ResetSocket(Night >= 2);
             }
             TonightExit = State.ExitRoom;
             foreach (ExitPanel panel in new[] { Level.Exit, Level.BackExit })
@@ -341,15 +352,14 @@ namespace NightShift.Game
             {
                 sign.SetActive(exit == State.ExitRoom);
             }
-            ObjectiveList.Begin(Night);
-            breaker.ResetItem();
-            keycard.ResetItem();
-            tape.ResetItem();
-            breaker.gameObject.SetActive(ObjectiveList.Needs(ObjectiveStep.Breaker));
-            keycard.gameObject.SetActive(ObjectiveList.Needs(ObjectiveStep.Keycard));
-            tape.gameObject.SetActive(ObjectiveList.Needs(ObjectiveStep.Tape));
+            ObjectiveList.Begin(State);
+            breakerBox.ResetTask(Night * 97 + System.Environment.TickCount % 1000);
+            cardPedestal.ResetTask(State.NeedsCard);
+            cardReader.ResetTask();
+            tapeBox.ResetTask();
             PlaceNotes();
             Player.ResetTo(PizzeriaLayout.PlayerStart, PizzeriaLayout.PlayerFacing);
+            Player.ClearHands();
             Player.CameraLocked = false;
             Player.Controllable = true;
             Freddy.ResetTo(PizzeriaLayout.FreddyStart, PizzeriaLayout.FreddyFacing);
@@ -401,9 +411,6 @@ namespace NightShift.Game
             StartNight(1);
             call.Skip();
             wasInCall = false;
-            breaker.gameObject.SetActive(true);
-            keycard.gameObject.SetActive(true);
-            tape.gameObject.SetActive(true);
             RevealItems();
             LastDecision = "asleep (explore mode)";
         }
@@ -417,8 +424,11 @@ namespace NightShift.Game
             colorAdjustments.postExposure.Override(BaseExposure + 1.5f * Mathf.Clamp01(amount));
         }
 
-        /// <summary>The breaker box, the keycard lockbox or the tape.</summary>
-        public ObjectiveItem ItemFor(ObjectiveStep step) => step == ObjectiveStep.Breaker ? breaker : step == ObjectiveStep.Keycard ? keycard : tape;
+        /// <summary>The night's task objects (the capture tour drives them).</summary>
+        public BreakerBox Breaker => breakerBox;
+        public KeycardPedestal CardPedestal => cardPedestal;
+        public CardReader Reader => cardReader;
+        public TapeBox Tape => tapeBox;
 
         public void SetPaused(bool paused)
         {
@@ -463,7 +473,12 @@ namespace NightShift.Game
         private void Update()
         {
             Controls.Poll();
-            if (Controls.PausePressed && !InIntro)
+            if (Controls.PausePressed && !InIntro && Player.InFocus)
+            {
+                // Esc at a panel steps back from it instead of pausing.
+                Player.EndFocus();
+            }
+            else if (Controls.PausePressed && !InIntro)
             {
                 if (Phase == GamePhase.Playing)
                 {
@@ -599,6 +614,13 @@ namespace NightShift.Game
                 NeedsClickToLook = false;
                 return;
             }
+            if (Player.InFocus)
+            {
+                // Working a panel: the pointer is free on purpose.
+                NeedsClickToLook = false;
+                pointerWasLocked = false;
+                return;
+            }
             bool locked = Cursor.lockState == CursorLockMode.Locked;
             if (Controls.UsingGamepad)
             {
@@ -663,10 +685,23 @@ namespace NightShift.Game
                 }
                 SpotKind kind = PizzeriaLayout.SpotKindOf(DecisionRoom, spot);
                 string what = kind == SpotKind.Locker ? "the locker" : kind == SpotKind.Cabinet ? "cabinet" : "under table";
-                if (kind != SpotKind.Locker && HuntMap.SpotCount(DecisionRoom) == 3)
+                if (kind != SpotKind.Locker)
                 {
-                    // Two cabinets or two tables in the room: say which one.
-                    what += spot == 1 ? " A" : " B";
+                    // Several cabinets or tables in the room: say which one.
+                    int same = 0;
+                    int index = 0;
+                    for (int other = 0; other < HuntMap.SpotCount(DecisionRoom); other++)
+                    {
+                        if (PizzeriaLayout.SpotKindOf(DecisionRoom, other) == kind)
+                        {
+                            same++;
+                            index += other < spot ? 1 : 0;
+                        }
+                    }
+                    if (same > 1)
+                    {
+                        what += " " + (char)('A' + index);
+                    }
                 }
                 return "search " + what;
             }
@@ -685,11 +720,11 @@ namespace NightShift.Game
         {
             switch (step)
             {
-                case ObjectiveStep.Fuses: return "find the fuses";
-                case ObjectiveStep.Breaker: return "restore the breaker in the Storage";
-                case ObjectiveStep.Keycard: return "take the keycard from the Office lockbox";
-                case ObjectiveStep.Tape: return "take the tape from the Office";
-                default: return TonightExit == HuntMap.Exit ? "open the front doors in the Exit Lobby" : "open the loading door in the Storage";
+                case ObjectiveStep.Cells: return "power the three sockets";
+                case ObjectiveStep.Breaker: return "reset the breakers in the Storage";
+                case ObjectiveStep.Keycard: return "take the keycard from the Veranda and swipe it in the Office";
+                case ObjectiveStep.Tape: return "open the tape box in the Exit Lobby";
+                default: return TonightExit == HuntMap.Exit ? "pull the lever at the front doors" : "pull the lever at the loading door";
             }
         }
 
@@ -764,11 +799,13 @@ namespace NightShift.Game
         private void RevealItems()
         {
             itemsRevealed = true;
-            for (int room = 0; room < HuntMap.RoomCount; room++)
+            for (int cell = 0; cell < settings.CellCount; cell++)
             {
-                if (Level.Fuses[room] != null)
+                Room? room = State.CellRoom(cell);
+                if (room.HasValue && Level.Cells[(int)room.Value] != null)
                 {
-                    Level.Fuses[room].gameObject.SetActive(State.FuseIn((Room)room));
+                    Level.Cells[(int)room.Value].SetCell(cell, State.CellSocket(cell));
+                    Level.Cells[(int)room.Value].gameObject.SetActive(true);
                 }
             }
             foreach (LurePickup lure in lures)
@@ -819,7 +856,7 @@ namespace NightShift.Game
             var rooms = new List<Room>
             {
                 Room.Office, Room.Parts, Room.Restrooms, Room.BackHall, Room.Kitchen,
-                Room.DiningHall, Room.MainHall, Room.Arcade, Room.Storage, Room.PartyRoom
+                Room.DiningHall, Room.MainHall, Room.Arcade, Room.Storage, Room.PartyRoom, Room.Banquet, Room.Veranda
             };
             for (int i = first; i < first + 2 && i < StoryData.Notes.Length; i++)
             {
@@ -828,33 +865,6 @@ namespace NightShift.Game
                 int spot = HuntMap.SpotCount(room) - 1;
                 Vector3 position = PizzeriaLayout.SpotApproach(room, spot) - PizzeriaLayout.SpotFacing(room, spot) * Vector3.right * 0.8f;
                 notes.Add(NotePickup.Create(this, Level.Root, position + Vector3.up * 0.01f, Random.Range(0f, 360f), StoryData.Notes[i]));
-            }
-        }
-
-        /// <summary>An objective object was used (breaker restored, keycard or tape taken).</summary>
-        public void CompleteObjective(ObjectiveStep step, ObjectiveItem item)
-        {
-            ObjectiveList.Complete(step);
-            switch (step)
-            {
-                case ObjectiveStep.Breaker:
-                    Audio.PlayAt(Assets.FusePickup, item.transform.position, 1f, 0.8f);
-                    FlickerLight.Blackout(0.6f);
-                    UI.Toast("Power restored. The whole building heard that.");
-                    // The breaker is loud: the brain hears it like any other noise.
-                    if (State.HearNoiseAt(PizzeriaLayout.RoomAt(item.transform.position), 3))
-                    {
-                        LastHeard = PizzeriaLayout.RoomAt(item.transform.position);
-                    }
-                    break;
-                case ObjectiveStep.Keycard:
-                    Audio.Click();
-                    UI.Toast("Keycard taken. Next: " + Describe(ObjectiveList.Current) + ".");
-                    break;
-                case ObjectiveStep.Tape:
-                    Audio.Click();
-                    UI.Toast("You have the tape. Get out.");
-                    break;
             }
         }
 
@@ -884,18 +894,73 @@ namespace NightShift.Game
 
         // ------------------------------------------------------------------ events from the world
 
-        public void OnFuseTaken(FusePickup fuse)
+        public void OnCellTaken(CellPickup cell)
         {
-            State.CollectFuse(fuse.Room);
+            State.TakeCell(cell.Room);
             Player.MakeNoise(2);
-            if (State.FusesCollected >= FusesNeeded)
+            Audio.PlayAt(Assets.FusePickup, cell.transform.position, 0.8f, 1.4f);
+            UI.Toast(Night >= 2
+                ? "The " + CellColors.Name(cell.Socket) + " cell. Its socket is in the " + HuntMap.DisplayName(HuntMap.SocketRooms[cell.Socket]) + "."
+                : "A power cell. Any socket takes it: Parts & Service, Banquet Room or Party Room.");
+        }
+
+        public void OnCellInserted(PowerSocket socket)
+        {
+            State.InsertCarriedCell(socket.Index);
+            if (State.HearNoiseAt(PizzeriaLayout.RoomAt(socket.transform.position), 2))
             {
-                ObjectiveList.Complete(ObjectiveStep.Fuses);
+                LastHeard = PizzeriaLayout.RoomAt(socket.transform.position);
             }
-            Audio.PlayAt(Assets.FusePickup, fuse.transform.position, 0.8f, 1.4f);
-            UI.Toast(State.FusesCollected >= FusesNeeded
-                ? "All fuses! Next: " + Describe(ObjectiveList.Current) + ". He is faster now."
-                : "Fuse " + State.FusesCollected + " of " + FusesNeeded + ". That was loud... and he is getting faster.");
+            UI.Toast(State.CellsInserted >= CellsNeeded ? "All three sockets have power." : "Socket powered: " + State.CellsInserted + " of " + CellsNeeded + ". He is getting faster.");
+            AnnounceExitIfReady();
+        }
+
+        public void OnBreakerRestored(BreakerBox box)
+        {
+            State.CompleteBreaker();
+            Audio.PlayAt(Assets.FusePickup, box.transform.position, 1f, 0.8f);
+            FlickerLight.Blackout(0.6f);
+            // When the lights come back, they come back too bright, all over the building.
+            FlickerLight.Surge(box.transform.position, 60f, 1.5f, 0.6f);
+            UI.Toast("Power restored. The whole building heard that.");
+            // The breaker is loud: the brain hears it like any other noise.
+            Room room = PizzeriaLayout.RoomAt(box.transform.position);
+            if (State.HearNoiseAt(room, 3))
+            {
+                LastHeard = room;
+            }
+            AnnounceExitIfReady();
+        }
+
+        public void OnCardTaken()
+        {
+            State.CompleteCardTaken();
+            Player.MakeNoise(1);
+            Audio.Click();
+            UI.Toast("The staff keycard. Swipe it through the reader in the Office.");
+        }
+
+        public void OnCardSwiped()
+        {
+            State.CompleteCardSwipe();
+            UI.Toast("Card accepted.");
+            AnnounceExitIfReady();
+        }
+
+        public void OnTapeTaken()
+        {
+            State.CompleteTape();
+            Audio.Click();
+            UI.Toast("You have the tape.");
+            AnnounceExitIfReady();
+        }
+
+        private void AnnounceExitIfReady()
+        {
+            if (State.ExitUnlocked)
+            {
+                UI.Toast("Everything is done. Now " + Describe(ObjectiveStep.Exit) + ". He will hear it.");
+            }
         }
 
         public void OnExitOpened()
@@ -963,6 +1028,7 @@ namespace NightShift.Game
         /// </summary>
         private IEnumerator Jumpscare()
         {
+            Player.EndFocus();
             Player.Controllable = false;
             Player.CameraLocked = true;
             if (Player.HiddenIn != null)

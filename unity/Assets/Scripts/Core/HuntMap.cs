@@ -17,25 +17,30 @@ namespace NightShift.Hunt
         MainHall = 7,
         PartyRoom = 8,
         Arcade = 9,
-        ExitLobby = 10
+        ExitLobby = 10,
+        // The north wing: two dining rooms with tables and windows, the only way between the wings.
+        Banquet = 11,
+        Veranda = 12
     }
 
     /// <summary>
     /// The room graph the hunt is played on: one floor in two wings, the staff wing and the public
-    /// wing, each strung along its own hall; the wings meet at the door between the two halls and
-    /// at the kitchen's serving door. Air ducts cross between the wings, and only the player fits
-    /// through them. Moving along a connection takes as many decisions as its length needs
+    /// wing, each strung along its own hall; the wings meet only through the north wing, two
+    /// dining rooms with tables and windows (the banquet room off the kitchen, the veranda above
+    /// the arcade). Air ducts cross between the wings, and only the player fits through them. Moving along a connection takes as many decisions as its length needs
     /// (<see cref="Cost"/>), so the simulation runs at the pace of the 3D building.
     /// See docs/ml-design.md, section 2.
     /// </summary>
     /// <remarks>
     /// <code>
     ///   STAFF WING                                PUBLIC WING
-    ///   Storage ── Kitchen ───────────────────── DiningHall (stage) ── Arcade
-    ///      │          │                              │                   │
-    ///   ══ BackHall ══╪══════════ door ═════════ MainHall ═══════════════╡
-    ///      │       │       │                         │                   │
-    ///   Office ─ Parts  Restrooms                PartyRoom ────────── ExitLobby (front exit)
+    ///                  Banquet ═══════════════ Veranda
+    ///                     ║                       ║
+    ///   Storage ── Kitchen          DiningHall ── Arcade
+    ///      │          ║                              ║   ║
+    ///   ═══ BackHall ═╝                MainHall ═════╝   ║
+    ///    │     │     │                    │              ║
+    ///  Office─Parts Restrooms         PartyRoom ──── ExitLobby (front exit)
     ///
     ///   Exits: the front doors (Exit Lobby) or the loading door (Storage), one of them each night.
     ///
@@ -44,7 +49,7 @@ namespace NightShift.Hunt
     /// </remarks>
     public static class HuntMap
     {
-        public const int RoomCount = 11;
+        public const int RoomCount = 13;
 
         /// <summary>Most hiding spots in one room (the size of Freddy's "search spot" actions).</summary>
         public const int MaxSpots = 3;
@@ -57,19 +62,53 @@ namespace NightShift.Hunt
         /// <summary>Rooms with a door out of the building; <see cref="HuntState.ExitRoom"/> picks tonight's.</summary>
         public static IReadOnlyList<Room> Exits { get; } = new[] { Room.ExitLobby, Room.Storage };
 
+        /// <summary>
+        /// The three power sockets, always in the same rooms. A socket takes one power cell; from
+        /// night 2 each cell has the color of its socket: index 0 yellow (Parts), 1 blue (Banquet
+        /// Room), 2 green (Party Room).
+        /// </summary>
+        public static IReadOnlyList<Room> SocketRooms { get; } = new[] { Room.Parts, Room.Banquet, Room.PartyRoom };
+
+        /// <summary>The breaker box (night 3 on).</summary>
+        public const Room BreakerRoom = Room.Storage;
+
+        /// <summary>The keycard's lit pedestal (night 4 on).</summary>
+        public const Room CardRoom = Room.Veranda;
+
+        /// <summary>The card reader the keycard is swiped through.</summary>
+        public const Room ReaderRoom = Room.Office;
+
+        /// <summary>The keypad box that holds the tape (night 5).</summary>
+        public const Room TapeRoom = Room.ExitLobby;
+
+        /// <summary>Index of the socket in <paramref name="room"/>, or -1.</summary>
+        public static int SocketIn(Room room)
+        {
+            for (int i = 0; i < SocketRooms.Count; i++)
+            {
+                if (SocketRooms[i] == room)
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
         private static readonly Room[][] Neighbors =
         {
             new[] { Room.Parts, Room.BackHall },                                       // Office
             new[] { Room.Office, Room.BackHall },                                      // Parts
             new[] { Room.BackHall },                                                   // Restrooms
-            new[] { Room.Office, Room.Parts, Room.Restrooms, Room.Kitchen, Room.MainHall }, // BackHall
+            new[] { Room.Office, Room.Parts, Room.Restrooms, Room.Kitchen },           // BackHall
             new[] { Room.Kitchen },                                                    // Storage
-            new[] { Room.BackHall, Room.Storage, Room.DiningHall },                    // Kitchen
-            new[] { Room.Kitchen, Room.Arcade },                                       // DiningHall
-            new[] { Room.BackHall, Room.PartyRoom, Room.Arcade },                      // MainHall
+            new[] { Room.BackHall, Room.Storage, Room.Banquet },                       // Kitchen
+            new[] { Room.Arcade },                                                     // DiningHall
+            new[] { Room.PartyRoom, Room.Arcade },                                     // MainHall
             new[] { Room.MainHall, Room.ExitLobby },                                   // PartyRoom
-            new[] { Room.DiningHall, Room.MainHall },                                  // Arcade
-            new[] { Room.PartyRoom }                                                   // ExitLobby
+            new[] { Room.DiningHall, Room.MainHall, Room.Veranda },                    // Arcade
+            new[] { Room.PartyRoom },                                                  // ExitLobby
+            new[] { Room.Kitchen, Room.Veranda },                                      // Banquet
+            new[] { Room.Banquet, Room.Arcade }                                        // Veranda
         };
 
         /// <summary>Air ducts: crawl-only shortcuts for the player. Freddy is too big for them.</summary>
@@ -87,26 +126,26 @@ namespace NightShift.Hunt
         /// </summary>
         private static readonly (Room a, Room b, int cost)[] LongConnections =
         {
-            (Room.BackHall, Room.MainHall, 2),
             (Room.Office, Room.BackHall, 2),
             (Room.MainHall, Room.Arcade, 2),
-            (Room.Kitchen, Room.DiningHall, 2)
+            (Room.Kitchen, Room.Banquet, 2),
+            (Room.Banquet, Room.Veranda, 2)
         };
 
-        // Hiding spots per room: spot 0 is always a locker, then cabinets and under tables.
-        private static readonly int[] SpotCounts = { 2, 2, 2, 1, 3, 3, 3, 1, 2, 2, 1 };
+        // Hiding spots per room: lockers, cabinets and under tables (the banquet room and the veranda only have tables).
+        private static readonly int[] SpotCounts = { 2, 2, 2, 1, 3, 3, 3, 1, 2, 2, 1, 3, 2 };
 
-        /// <summary>Rooms with a fuse shelf (where the night's fuses can be).</summary>
-        private static readonly Room[] FuseRoomList =
+        /// <summary>Rooms with a wall shelf where the night's power cells can wait.</summary>
+        private static readonly Room[] CellRoomList =
         {
-            Room.Parts, Room.Restrooms, Room.BackHall, Room.Storage, Room.Kitchen,
-            Room.DiningHall, Room.MainHall, Room.PartyRoom, Room.Arcade
+            Room.Restrooms, Room.BackHall, Room.Storage, Room.Kitchen,
+            Room.DiningHall, Room.MainHall, Room.Arcade, Room.Veranda
         };
 
         private static readonly string[] Names =
         {
             "Office", "Parts & Service", "Restrooms", "Back Hall", "Storage", "Kitchen",
-            "Dining Hall", "Main Hall", "Party Room", "Arcade", "Exit Lobby"
+            "Dining Hall", "Main Hall", "Party Room", "Arcade", "Exit Lobby", "Banquet Room", "Veranda"
         };
 
         private static readonly int[,] Distances = ComputeDistances();
@@ -146,10 +185,10 @@ namespace NightShift.Hunt
             return false;
         }
 
-        public static IReadOnlyList<Room> FuseRooms => FuseRoomList;
+        public static IReadOnlyList<Room> CellRooms => CellRoomList;
 
         /// <summary>True for the staff wing (west), false for the public wing (east).</summary>
-        public static bool IsStaffWing(Room room) => room <= Room.Kitchen;
+        public static bool IsStaffWing(Room room) => room <= Room.Kitchen;  // the north wing counts as public
 
         /// <summary>Decisions it takes to walk from <paramref name="from"/> to its neighbor <paramref name="to"/> (1 or more).</summary>
         public static int Cost(Room from, Room to)

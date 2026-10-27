@@ -31,6 +31,8 @@ namespace NightShift.Game
                 case Room.PartyRoom: PartyRoom(root, random); break;
                 case Room.Arcade: Arcade(root, random); break;
                 case Room.ExitLobby: Lobby(root, random); break;
+                case Room.Banquet: Banquet(root, random); break;
+                case Room.Veranda: Veranda(root, random); break;
             }
             foreach (Room exit in HuntMap.Exits)
             {
@@ -118,7 +120,6 @@ namespace NightShift.Game
             PlaceNear(Room.Parts, new Vector2(-8.7f, -7.7f), 0.4f, p => BuildKit.Prop("old_drill_press", root, new Vector3(p.x, 0f, p.y), 225f), 1.5f);
             PlaceNear(Room.Parts, new Vector2(-13.4f, -12.2f), 0.4f, p => BuildKit.Prop("metal_tool_chest", root, new Vector3(p.x, 0f, p.y), 90f), 3f);
             PlaceNear(Room.Parts, new Vector2(-9.5f, -13.5f), 0.25f, p => BuildKit.Prop("metal_toolbox", root, new Vector3(p.x, 0f, p.y), 20f), 1.5f);
-            PlaceNear(Room.Parts, new Vector2(-8.7f, -10.2f), 0.5f, p => BuildKit.Prop("portable_welding_cart", root, new Vector3(p.x, 0f, p.y), 270f), 1.5f);
             Sign(root, new Vector3(-11f, 2.4f, -13.77f), 0f, "PARTS & SERVICE", new Color(0.85f, 0.85f, 0.8f), new Color(0.2f, 0.22f, 0.2f), 2.6f);
         }
 
@@ -321,17 +322,113 @@ namespace NightShift.Game
 
         private static void Arcade(Transform root, System.Random random)
         {
-            for (int i = 0; i < 4; i++)
+            // The north wall has the door to the veranda now: one cabinet on each side of it, one
+            // against the west wall past the dining hall door.
+            (Vector2 at, float yaw)[] cabinets = { (new Vector2(15.9f, 9.4f), 180f), (new Vector2(20.2f, 9.4f), 180f), (new Vector2(15.6f, 8.2f), 90f) };
+            for (int i = 0; i < cabinets.Length; i++)
             {
-                var position = new Vector2(17.6f + i * 1.1f, 9.4f);
                 int game = i;
-                PlaceNear(Room.Arcade, position, 0.5f, p => ArcadeCabinet.Build(root, p, 180f, game), 1.5f);
+                float yaw = cabinets[i].yaw;
+                PlaceNear(Room.Arcade, cabinets[i].at, 0.5f, p => ArcadeCabinet.Build(root, p, yaw, game), 0.8f);
             }
             PlaceNear(Room.Arcade, new Vector2(21f, 2.7f), 0.5f, p => ArcadeCabinet.Build(root, p, 0f, 2), 1f);
             // Neon strips along the walls, the most colorful light in the building.
             NeonStrip(root, new Vector3(19f, 3.1f, 9.74f), new Vector3(7f, 0.06f, 0.06f), new Color(1f, 0.15f, 0.7f));
             NeonStrip(root, new Vector3(22.74f, 3.1f, 6f), new Vector3(0.06f, 0.06f, 7f), new Color(0.1f, 0.85f, 1f));
             Sign(root, new Vector3(22.77f, 2.3f, 5.4f), 270f, "PRIZES", new Color(0.2f, 1f, 1f), new Color(0.1f, 0.02f, 0.15f), 1.8f);
+        }
+
+        /// <summary>The banquet room off the kitchen: long rows of windows and laid tables, some of them to hide under.</summary>
+        private static void Banquet(Transform root, System.Random random)
+        {
+            Rect area = PizzeriaLayout.Area(Room.Banquet);
+            // The real windows of the north wall (PizzeriaLayout.Windows); the west wall has the inside of the building behind it.
+            RealWindows(root, Room.Banquet);
+            foreach (Vector2 table in new[] { new Vector2(-8.5f, 20f), new Vector2(1.5f, 20.2f), new Vector2(5.5f, 19.6f) })
+            {
+                PlaceNear(Room.Banquet, table, 1.5f, p => PartyTable(root, random, p), 2.5f);
+            }
+            for (int i = 0; i < 6; i++)
+            {
+                var position = new Vector3(-14f + (float)random.NextDouble() * 22f, 2.6f + (float)random.NextDouble() * 0.5f, 15.5f + (float)random.NextDouble() * 6f);
+                Balloon(root, position, PartyColors[i % PartyColors.Length]);
+            }
+            Streamer(root, new Vector3(-15.5f, 3.1f, 16.2f), new Vector3(8.5f, 3.1f, 16.2f), PartyColors[0]);
+            Sign(root, new Vector3(-11f, 2.6f, area.yMin + 0.23f), 0f, "BANQUET ROOM", new Color(1f, 0.85f, 0.5f), new Color(0.3f, 0.1f, 0.05f), 2.8f);
+        }
+
+        /// <summary>The veranda above the arcade: windows onto the back lot, a table with its chairs pushed in.</summary>
+        private static void Veranda(Transform root, System.Random random)
+        {
+            Rect area = PizzeriaLayout.Area(Room.Veranda);
+            RealWindows(root, Room.Veranda);
+            // The keycard's pedestal stands against the north wall (see KeycardPedestal): keep it clear.
+            Occupied.Add((new Vector2(PizzeriaLayout.CardPedestal.x, PizzeriaLayout.CardPedestal.z), 0.7f));
+            PlaceNear(Room.Veranda, new Vector2(14.2f, 16.5f), 1.5f, p => PartyTable(root, random, p), 1.5f);
+            Sign(root, new Vector3(14.6f, 2.6f, area.yMin + 0.23f), 0f, "VERANDA", new Color(0.6f, 1f, 0.75f), new Color(0.05f, 0.2f, 0.12f), 2.2f);
+        }
+
+        private const float WindowInset = PizzeriaLayout.WallThickness + 0.02f;
+        // One RunningWater animates the rain material every window shares.
+        private static bool rainRunning;
+
+        /// <summary>A new level is being built.</summary>
+        public static void BeginLevel() => rainRunning = false;
+
+        /// <summary>The frames, glass and curtains of a room's real windows (the holes are cut by LevelBuilder).</summary>
+        private static void RealWindows(Transform root, Room room)
+        {
+            Rect area = PizzeriaLayout.Area(room);
+            foreach ((Room r, float x, float width, float sill, float top) in PizzeriaLayout.Windows)
+            {
+                if (r == room)
+                {
+                    Window(root, new Vector3(x, 0f, area.yMax - WindowInset), 180f, width, top - sill);
+                }
+            }
+        }
+
+        /// <summary>
+        /// A tall window set into a wall, looking out on the night: a frame with a cross, cold glass
+        /// that glows faintly, a sill and a curtain on each side. <paramref name="at"/> is on the wall
+        /// (y ignored), <paramref name="facing"/> the direction the window looks into the room.
+        /// </summary>
+        private static void Window(Transform root, Vector3 at, float facing, float width, float height)
+        {
+            Quaternion turn = Quaternion.Euler(0f, facing, 0f);
+            Vector3 P(float x, float y, float depth) => new Vector3(at.x, 0f, at.z) + turn * new Vector3(x, y, depth);
+            float bottom = 0.9f;
+            float middle = bottom + height * 0.5f;
+            Material frame = BuildKit.Plain("windowFrame", new Color(0.1f, 0.07f, 0.05f), 0.35f);
+            Material cloth = BuildKit.Plain("windowCurtain", new Color(0.36f, 0.06f, 0.1f), 0.1f);
+            // Real glass in a real hole in the wall (see PizzeriaLayout.Windows): faintly tinted,
+            // glossy enough to catch the room's lights, the back lot behind it. Rain runs down it.
+            Material glass = BuildKit.Decal("windowGlass", Texture2D.whiteTexture, new Color(0.55f, 0.62f, 0.7f, 0.12f));
+            glass.SetFloat("_Smoothness", 0.96f);
+            BuildKit.Quad("WindowGlass", root, P(0f, middle, -0.1f), new Vector2(width, height), facing, glass);
+            Texture2D rain = BuildKit.SignTexture("glass_rain");
+            if (rain != null)
+            {
+                Material water = BuildKit.Decal("glassRain", rain, new Color(0.85f, 0.9f, 1f, 0.75f));
+                water.SetFloat("_Smoothness", 0.98f);
+                GameObject wet = BuildKit.Quad("RainOnGlass", root, P(0f, middle, -0.095f), new Vector2(width, height), facing, water);
+                if (!rainRunning)
+                {
+                    rainRunning = true;
+                    wet.AddComponent<RunningWater>().Set(water);
+                }
+            }
+            BuildKit.Box("GlassMullionV", root, P(0f, middle, -0.1f), new Vector3(0.04f, height, 0.05f), frame, 1f, false, facing);
+            BuildKit.Box("GlassMullionH", root, P(0f, middle, -0.1f), new Vector3(width, 0.04f, 0.05f), frame, 1f, false, facing);
+            BuildKit.Box("FrameTop", root, P(0f, bottom + height, 0.02f), new Vector3(width + 0.12f, 0.08f, 0.09f), frame, 1f, false, facing);
+            BuildKit.Box("FrameBottom", root, P(0f, bottom, 0.02f), new Vector3(width + 0.12f, 0.08f, 0.09f), frame, 1f, false, facing);
+            BuildKit.Box("FrameLeft", root, P(-width * 0.5f, middle, 0.02f), new Vector3(0.08f, height, 0.09f), frame, 1f, false, facing);
+            BuildKit.Box("FrameRight", root, P(width * 0.5f, middle, 0.02f), new Vector3(0.08f, height, 0.09f), frame, 1f, false, facing);
+            BuildKit.Box("Sill", root, P(0f, bottom - 0.06f, 0.1f), new Vector3(width + 0.3f, 0.06f, 0.24f), frame, 1f, false, facing);
+            foreach (float side in new[] { -1f, 1f })
+            {
+                BuildKit.Box("Curtain", root, P(side * (width * 0.5f + 0.2f), bottom + height * 0.5f + 0.15f, 0.1f), new Vector3(0.4f, height + 0.5f, 0.12f), cloth, 1f, false, facing);
+            }
         }
 
         private static void Lobby(Transform root, System.Random random)
@@ -816,6 +913,9 @@ namespace NightShift.Game
             BuildKit.Box("Shelf", basin, new Vector3(0f, 1.2f, 0.06f), new Vector3(0.5f, 0.02f, 0.1f), porcelain, 1f, false);
         }
 
+        /// <summary>Where the tape box sits: on the ticket booth's counter, its keypad toward the entrance.</summary>
+        public static Pose TapeBoxPose { get; private set; } = new Pose(new Vector3(13f, 1.145f, -10.6f), Quaternion.Euler(0f, 180f, 0f));
+
         /// <summary>The ticket booth by the entrance: striped counter, glass window, TICKETS on top.</summary>
         private static void TicketBooth(Transform root, Vector3 position)
         {
@@ -829,12 +929,15 @@ namespace NightShift.Game
             Material glass = BuildKit.Decal("boothGlass", Texture2D.whiteTexture, new Color(0.55f, 0.65f, 0.7f, 0.15f));
             BuildKit.Box("Counter", booth, new Vector3(0f, 0.55f, 0f), new Vector3(2.0f, 1.1f, 1.0f), stripes);
             BuildKit.Box("CounterTop", booth, new Vector3(0f, 1.12f, 0.03f), new Vector3(2.1f, 0.05f, 1.1f), wood);
+            // The window stands back from the counter's edge: the front of the counter is the
+            // customers' side, where the tape box waits on night 5.
             foreach (float x in new[] { -0.98f, 0.98f })
             {
-                BuildKit.Box("Post", booth, new Vector3(x, 1.6f, 0.45f), new Vector3(0.06f, 0.9f, 0.06f), brass, 1f, false);
+                BuildKit.Box("Post", booth, new Vector3(x, 1.6f, -0.08f), new Vector3(0.06f, 0.9f, 0.06f), brass, 1f, false);
             }
-            BuildKit.Quad("Window", booth, new Vector3(0f, 1.6f, 0.45f), new Vector2(1.9f, 0.9f), 0f, glass);
-            BuildKit.Box("WindowSlot", booth, new Vector3(0f, 1.18f, 0.47f), new Vector3(0.4f, 0.06f, 0.04f), brass, 1f, false);
+            BuildKit.Quad("Window", booth, new Vector3(0f, 1.6f, -0.08f), new Vector2(1.9f, 0.9f), 0f, glass);
+            BuildKit.Box("WindowSlot", booth, new Vector3(0f, 1.18f, -0.06f), new Vector3(0.4f, 0.06f, 0.04f), brass, 1f, false);
+            TapeBoxPose = new Pose(booth.TransformPoint(new Vector3(-0.45f, 1.145f, 0.3f)), booth.rotation);
             BuildKit.Box("Roof", booth, new Vector3(0f, 2.08f, 0.05f), new Vector3(2.2f, 0.08f, 1.2f), wood, 1f, false);
             BuildKit.Cylinder("TicketRoll", booth, new Vector3(0.6f, 1.2f, 0.3f), 0.16f, 0.12f, BuildKit.Plain("ticketRed", new Color(0.75f, 0.12f, 0.1f), 0.3f))
                 .transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
@@ -906,6 +1009,11 @@ namespace NightShift.Game
                 Vector2 into = new Vector2(Mathf.Sin(facing * Mathf.Deg2Rad), Mathf.Cos(facing * Mathf.Deg2Rad));
                 Vector2 spotOnWall = point + into * inset;
                 if (!ClearOfOpenings(room, spotOnWall, 1.4f) || random.NextDouble() < 0.35)
+                {
+                    continue;
+                }
+                // The north wall of the north wing is windows: no posters on it.
+                if ((room == Room.Banquet || room == Room.Veranda) && Mathf.Abs(Mathf.DeltaAngle(facing, 180f)) < 1f)
                 {
                     continue;
                 }
@@ -998,6 +1106,8 @@ namespace NightShift.Game
             { "PARTY ROOM", ("title_party_room", 1.6f) },
             { "PRIZES", ("title_prizes", 1.6f) },
             { "TICKETS", ("title_tickets", 1.6f) },
+            { "BANQUET ROOM", ("title_banquet_room", 1.6f) },
+            { "VERANDA", ("title_veranda", 1.6f) },
             { "HAPPY BIRTHDAY", ("title_happy_birthday", 1.4f) },
             { "SECURITY", ("title_security", 0.3f) },
             { "PARTS & SERVICE", ("title_parts_service", 0.3f) },
@@ -1117,6 +1227,15 @@ namespace NightShift.Game
                     return false;
                 }
             }
+            int socket = HuntMap.SocketIn(room);
+            if (socket >= 0)
+            {
+                Vector3 mount = PizzeriaLayout.SocketPosition(socket);
+                if (Vector2.Distance(point, new Vector2(mount.x, mount.z)) < distance + 0.6f)
+                {
+                    return false;
+                }
+            }
             if (PizzeriaLayout.HasFuseShelf(room))
             {
                 Vector3 fuse = PizzeriaLayout.FusePosition(room);
@@ -1168,6 +1287,26 @@ namespace NightShift.Game
             float t = Time.time * 0.4f + phase;
             transform.localPosition = home + new Vector3(Mathf.Sin(t) * 0.04f, Mathf.Sin(t * 1.3f) * 0.03f, Mathf.Cos(t * 0.8f) * 0.04f);
             transform.localRotation = Quaternion.Euler(Mathf.Sin(t * 0.9f) * 4f, t * 6f, Mathf.Cos(t) * 4f);
+        }
+    }
+
+    /// <summary>Water running down the windows: the rain layer's texture slides down slowly, unevenly.</summary>
+    public class RunningWater : MonoBehaviour
+    {
+        private Material water;
+        private float offset;
+
+        public void Set(Material material) => water = material;
+
+        private void Update()
+        {
+            if (water == null)
+            {
+                return;
+            }
+            // Drops run in spurts, not at a constant speed.
+            offset += Time.deltaTime * (0.035f + 0.025f * Mathf.PerlinNoise(Time.time * 0.6f, 0.3f));
+            water.SetTextureOffset("_BaseMap", new Vector2(0f, offset % 1f));
         }
     }
 }

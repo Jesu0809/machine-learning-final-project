@@ -60,10 +60,9 @@ namespace NightShift.EditorTools
         [MenuItem("Night Shift/Build Hunt Training")]
         public static void Build()
         {
-            if (!File.Exists(ScenePath))
-            {
-                CreateScene();
-            }
+            // Always a fresh scene: an old one keeps the settings it was saved with (an old exit
+            // work count, for example) instead of the current defaults of HuntSettings.
+            CreateScene();
 
             bool windows = Application.platform == RuntimePlatform.WindowsEditor;
             string folder = HuntTrainingMenu.BuildsFolder();

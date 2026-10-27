@@ -191,7 +191,7 @@ namespace NightShift.UI
             }
             endBody.text =
                 "Time survived: " + FormatClock(director.NightSeconds) + "\n" +
-                "Fuses: " + state.FusesCollected + " / " + director.FusesNeeded + "\n" +
+                "Objectives done: " + state.ObjectivesDone + " / " + state.ObjectivesTotal + "\n" +
                 "Noises Freddy heard: " + state.TimesHeard + "\n" +
                 "Hiding spots he opened: " + state.Searches + "\n" +
                 "Times he used SENSE: " + state.SenseUses + " (found you " + state.SenseHits + ")\n" +
@@ -255,19 +255,37 @@ namespace NightShift.UI
             toastUntil = Time.time + 3f;
         }
 
-        /// <summary>The objectives of the night, done ones checked.</summary>
-        private string ObjectivesText(int fuses)
+        /// <summary>The objectives of the night, done ones checked; the exit lights up once it works.</summary>
+        private string ObjectivesText()
         {
             var text = new System.Text.StringBuilder("TONIGHT:\n");
             Objectives list = director.ObjectiveList;
+            HuntState state = director.State;
             foreach (ObjectiveStep step in list.Steps)
             {
                 bool done = list.IsDone(step);
-                bool current = !done && list.Current == step;
-                string line = step == ObjectiveStep.Fuses
-                    ? "Find the fuses  " + fuses + "/" + director.FusesNeeded
-                    : char.ToUpper(HuntDirector.Describe(step)[0]) + HuntDirector.Describe(step).Substring(1);
-                text.Append(done ? "<color=#6a8a6a>[x] " + line + "</color>" : current ? "<color=#ffc840>[ ] " + line + "</color>" : "<color=#8a8a7a>[ ] " + line + "</color>");
+                string line;
+                if (step == ObjectiveStep.Cells)
+                {
+                    line = "Power the sockets  " + state.CellsInserted + "/" + director.CellsNeeded + "  (one cell at a time)";
+                    if (director.Player.Cell.Carrying)
+                    {
+                        int socket = director.Player.Cell.Socket;
+                        line += state.Night >= 2
+                            ? "\n      In your hands: the " + CellColors.Name(socket) + " cell  ->  " + HuntMap.DisplayName(HuntMap.SocketRooms[socket])
+                            : "\n      In your hands: a cell  ->  any socket";
+                    }
+                }
+                else if (step == ObjectiveStep.Keycard && state.CardTaken && !state.CardSwiped)
+                {
+                    line = "Swipe the keycard in the Office";
+                }
+                else
+                {
+                    line = char.ToUpper(HuntDirector.Describe(step)[0]) + HuntDirector.Describe(step).Substring(1);
+                }
+                bool waiting = step == ObjectiveStep.Exit && !list.ExitUnlocked;
+                text.Append(done ? "<color=#6a8a6a>[x] " + line + "</color>" : waiting ? "<color=#8a8a7a>[ ] " + line + "</color>" : "<color=#ffc840>[ ] " + line + "</color>");
                 text.Append('\n');
             }
             return text.ToString();
@@ -377,7 +395,7 @@ namespace NightShift.UI
             UiKit.Panel("Side", m, Vector2.zero, new Vector2(0.4f, 1f), new Color(0f, 0f, 0f, 0.72f));
 
             UiKit.Label("Title", m, "NIGHT SHIFT", 150, Palette.Ink, TextAnchor.LowerLeft, new Vector2(0.05f, 0.76f), new Vector2(0.6f, 0.93f));
-            UiKit.Label("Subtitle", m, "Freddy has learned to hunt. Find the fuses. Get out.", 36, Palette.Accent,
+            UiKit.Label("Subtitle", m, "Freddy has learned to hunt. Power the sockets. Get out.", 36, Palette.Accent,
                         TextAnchor.UpperLeft, new Vector2(0.05f, 0.69f), new Vector2(0.4f, 0.76f));
 
             float top = 0.63f;
@@ -636,11 +654,15 @@ namespace NightShift.UI
         {
             PlayerController player = director.Player;
             clock.text = FormatHour(director.NightSeconds / director.NightLengthSeconds);
-            int have = director.FusesCollected;
-            fuses.text = director.InCall ? "TONIGHT: listen to the call, explore\n<color=#8a9a8a>(the objectives appear when it ends)</color>" : ObjectivesText(have);
+            fuses.text = director.InCall ? "TONIGHT: listen to the call, explore\n<color=#8a9a8a>(the objectives appear when it ends)</color>" : ObjectivesText();
 
             // While hidden the breath bar already says how to leave.
+            // At a panel the hint goes to the bottom of the screen, out of the way of what is worked on.
+            bool atPanel = player.InFocus;
+            prompt.rectTransform.anchorMin = atPanel ? new Vector2(0.15f, 0.03f) : new Vector2(0.25f, 0.33f);
+            prompt.rectTransform.anchorMax = atPanel ? new Vector2(0.85f, 0.11f) : new Vector2(0.75f, 0.4f);
             prompt.text = director.NeedsClickToLook ? "CLICK TO LOOK AROUND"
+                        : player.InFocus ? player.Focus.FocusHint + Controls.Localize("\n<size=20><color=#8a9a8a>[RIGHT CLICK] or [ESC] step back</color></size>")
                         : player.Target != null && player.HiddenIn == null ? Controls.Localize(player.Target.Prompt(player)) : "";
             keysLabel.text = Controls.Localize("TAB  AI inspector     ESC  pause");
             toast.text = Time.time < toastUntil ? toast.text : "";
