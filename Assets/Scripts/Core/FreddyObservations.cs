@@ -14,7 +14,7 @@ namespace NightShift.Hunt
     ///   ticks since the player was seen, normalized (1)
     ///   ticks since Freddy visited each room, normalized (R)
     ///   player seen right now (1)
-    ///   fuses collected, normalized (1) (the generators light up the map, so Freddy knows)
+    ///   the player's progress on tonight's objectives, 0–1 (1) (the sockets light up, so Freddy knows)
     ///   night progress (1)
     ///   spots of the current room already searched (MaxSpots = 3)
     ///   "sense" readiness, 1 = ready, falls to 0 right after using it (1)
@@ -33,7 +33,7 @@ namespace NightShift.Hunt
         private const int SinceSeenIndex = 3 * R;
         private const int VisitedOffset = 3 * R + 1;
         private const int SeenNowIndex = 4 * R + 1;
-        private const int FusesIndex = 4 * R + 2;
+        private const int ObjectivesIndex = 4 * R + 2;
         private const int ProgressIndex = 4 * R + 3;
         private const int SearchedOffset = 4 * R + 4;
         private const int SenseReadyIndex = SearchedOffset + HuntMap.MaxSpots;
@@ -61,7 +61,7 @@ namespace NightShift.Hunt
             }
             output[SinceSeenIndex] = Clamp01(state.TicksSinceSeen / window);
             output[SeenNowIndex] = state.PlayerSeen ? 1f : 0f;
-            output[FusesIndex] = Clamp01(state.FusesCollected / (float)Math.Max(1, state.Settings.FuseCount));
+            output[ObjectivesIndex] = Clamp01(state.Progress);
             output[ProgressIndex] = Clamp01(state.Tick / (float)Math.Max(1, state.Settings.MaxTicks));
             for (int spot = 0; spot < HuntMap.MaxSpots; spot++)
             {

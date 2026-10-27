@@ -67,6 +67,10 @@
     "height": 384,
     "width": 512
   },
+  "cctv_banquet_room": {
+    "height": 384,
+    "width": 512
+  },
   "cctv_dining_hall": {
     "height": 384,
     "width": 512
@@ -100,6 +104,10 @@
     "width": 512
   },
   "cctv_storage": {
+    "height": 384,
+    "width": 512
+  },
+  "cctv_veranda": {
     "height": 384,
     "width": 512
   },
@@ -167,6 +175,10 @@
     "height": 256,
     "width": 1024
   },
+  "door_banquet_room": {
+    "height": 256,
+    "width": 1024
+  },
   "door_dining_hall": {
     "height": 256,
     "width": 1024
@@ -204,6 +216,10 @@
     "width": 1024
   },
   "door_storage": {
+    "height": 256,
+    "width": 1024
+  },
+  "door_veranda": {
     "height": 256,
     "width": 1024
   },
@@ -247,6 +263,42 @@
     "height": 512,
     "width": 512
   },
+  "key_1": {
+    "height": 128,
+    "width": 128
+  },
+  "key_2": {
+    "height": 128,
+    "width": 128
+  },
+  "key_3": {
+    "height": 128,
+    "width": 128
+  },
+  "key_4": {
+    "height": 128,
+    "width": 128
+  },
+  "key_5": {
+    "height": 128,
+    "width": 128
+  },
+  "key_6": {
+    "height": 128,
+    "width": 128
+  },
+  "key_7": {
+    "height": 128,
+    "width": 128
+  },
+  "key_8": {
+    "height": 128,
+    "width": 128
+  },
+  "key_9": {
+    "height": 128,
+    "width": 128
+  },
   "label_danger": {
     "height": 640,
     "width": 512
@@ -258,6 +310,42 @@
   "label_tape": {
     "height": 256,
     "width": 768
+  },
+  "lcd_keypad_enter": {
+    "height": 128,
+    "width": 512
+  },
+  "lcd_keypad_open": {
+    "height": 128,
+    "width": 512
+  },
+  "lcd_keypad_wrong": {
+    "height": 128,
+    "width": 512
+  },
+  "lcd_reader_bad": {
+    "height": 128,
+    "width": 512
+  },
+  "lcd_reader_fast": {
+    "height": 128,
+    "width": 512
+  },
+  "lcd_reader_nocard": {
+    "height": 128,
+    "width": 512
+  },
+  "lcd_reader_ok": {
+    "height": 128,
+    "width": 512
+  },
+  "lcd_reader_slow": {
+    "height": 128,
+    "width": 512
+  },
+  "lcd_reader_swipe": {
+    "height": 128,
+    "width": 512
   },
   "map_back_hall": {
     "height": 1152,
@@ -292,6 +380,10 @@
     "width": 768
   },
   "title_arcade": {
+    "height": 384,
+    "width": 1536
+  },
+  "title_banquet_room": {
     "height": 384,
     "width": 1536
   },
@@ -343,9 +435,25 @@
     "height": 384,
     "width": 1536
   },
+  "title_veranda": {
+    "height": 384,
+    "width": 1536
+  },
   "title_welcome": {
     "height": 384,
     "width": 1536
+  },
+  "window_night_0": {
+    "height": 512,
+    "width": 512
+  },
+  "window_night_1": {
+    "height": 512,
+    "width": 512
+  },
+  "window_night_2": {
+    "height": 512,
+    "width": 512
   },
   "wrap_0": {
     "height": 256,

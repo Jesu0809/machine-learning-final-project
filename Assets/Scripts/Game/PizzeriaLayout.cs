@@ -183,16 +183,35 @@ namespace NightShift.Game
         private static readonly Dictionary<Room, (Vector2 position, float facing)> FuseShelves =
             new Dictionary<Room, (Vector2, float)>
             {
-                { Room.Parts, (new Vector2(-8.35f, -10f), 270f) },
                 { Room.Restrooms, (new Vector2(-4.5f, -13.65f), 0f) },
                 { Room.BackHall, (new Vector2(-21.65f, -1.5f), 90f) },
                 { Room.Storage, (new Vector2(-19f, 9.65f), 180f) },
                 { Room.Kitchen, (new Vector2(-5.35f, 3.5f), 270f) },
                 { Room.DiningHall, (new Vector2(12.65f, 8.6f), 270f) },
                 { Room.MainHall, (new Vector2(15f, -2.65f), 0f) },
-                { Room.PartyRoom, (new Vector2(4.35f, -9f), 90f) },
-                { Room.Arcade, (new Vector2(22.65f, 7f), 270f) }
+                { Room.Arcade, (new Vector2(22.65f, 7f), 270f) },
+                { Room.Veranda, (new Vector2(21f, 15.35f), 0f) }
             };
+
+        // The three power sockets (HuntMap.SocketRooms order: yellow, blue, green), on a wall each.
+        private static readonly (Vector2 position, float facing)[] SocketMounts =
+        {
+            (new Vector2(-8.35f, -10f), 270f),     // Parts & Service, east wall
+            (new Vector2(-13.5f, 15.35f), 0f),     // Banquet Room, south wall
+            (new Vector2(4.35f, -9f), 90f)         // Party Room, west wall
+        };
+
+        /// <summary>Where socket <paramref name="socket"/> is on its wall (the mouth's height), and which way it faces.</summary>
+        public static Vector3 SocketPosition(int socket) => new Vector3(SocketMounts[socket].position.x, 1.25f, SocketMounts[socket].position.y);
+
+        public static Quaternion SocketFacing(int socket) => Quaternion.Euler(0f, SocketMounts[socket].facing, 0f);
+
+        /// <summary>The keycard's lit pedestal in the veranda: against the north wall, between the windows, facing the room.</summary>
+        public static readonly Vector3 CardPedestal = new Vector3(17.4f, 0f, 21.2f);
+
+        /// <summary>The card reader on the office's north wall (where the keycard lockbox was), facing into the office.</summary>
+        public static readonly Vector3 ReaderMount = new Vector3(-17f, 1.35f, -9.32f);
+        public const float ReaderFacing = 180f;
 
         public static readonly Vector3 PlayerStart = new Vector3(-18f, 0.05f, -12.5f);
         public const float PlayerFacing = 0f;

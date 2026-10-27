@@ -48,7 +48,13 @@ namespace NightShift.UI
                 outline.effectColor = new Color(0.4f, 0.45f, 0.42f, 0.8f);
                 outline.effectDistance = new Vector2(1.5f, -1.5f);
                 map.labels[i] = UiKit.Label("Label", map.rooms[i].transform, HuntMap.DisplayName(room), 14, Palette.InkDim,
-                                            TextAnchor.UpperLeft, new Vector2(0.04f, 0f), new Vector2(1f, 0.96f));
+                                            TextAnchor.UpperLeft, new Vector2(0.04f, 0f), new Vector2(0.97f, 0.96f));
+                // Small rooms shrink the text instead of cutting a name in two.
+                map.labels[i].resizeTextForBestFit = true;
+                map.labels[i].resizeTextMinSize = 7;
+                map.labels[i].resizeTextMaxSize = 14;
+                map.labels[i].horizontalOverflow = HorizontalWrapMode.Wrap;
+                map.labels[i].verticalOverflow = VerticalWrapMode.Truncate;
             }
 
             // The two doors out: tonight's is green, the chained one grey (see Update).

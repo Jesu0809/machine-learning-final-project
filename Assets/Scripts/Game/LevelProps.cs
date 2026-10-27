@@ -120,7 +120,7 @@ namespace NightShift.Game
             PlaceNear(Room.Parts, new Vector2(-8.7f, -7.7f), 0.4f, p => BuildKit.Prop("old_drill_press", root, new Vector3(p.x, 0f, p.y), 225f), 1.5f);
             PlaceNear(Room.Parts, new Vector2(-13.4f, -12.2f), 0.4f, p => BuildKit.Prop("metal_tool_chest", root, new Vector3(p.x, 0f, p.y), 90f), 3f);
             PlaceNear(Room.Parts, new Vector2(-9.5f, -13.5f), 0.25f, p => BuildKit.Prop("metal_toolbox", root, new Vector3(p.x, 0f, p.y), 20f), 1.5f);
-            PlaceNear(Room.Parts, new Vector2(-8.7f, -10.2f), 0.5f, p => BuildKit.Prop("portable_welding_cart", root, new Vector3(p.x, 0f, p.y), 270f), 1.5f);
+            PlaceNear(Room.Parts, new Vector2(-10.6f, -7.7f), 0.5f, p => BuildKit.Prop("portable_welding_cart", root, new Vector3(p.x, 0f, p.y), 180f), 2.5f);
             Sign(root, new Vector3(-11f, 2.4f, -13.77f), 0f, "PARTS & SERVICE", new Color(0.85f, 0.85f, 0.8f), new Color(0.2f, 0.22f, 0.2f), 2.6f);
         }
 
@@ -323,11 +323,14 @@ namespace NightShift.Game
 
         private static void Arcade(Transform root, System.Random random)
         {
-            for (int i = 0; i < 4; i++)
+            // The north wall has the door to the veranda now: one cabinet on each side of it, one
+            // against the west wall past the dining hall door.
+            (Vector2 at, float yaw)[] cabinets = { (new Vector2(15.9f, 9.4f), 180f), (new Vector2(20.2f, 9.4f), 180f), (new Vector2(15.6f, 8.2f), 90f) };
+            for (int i = 0; i < cabinets.Length; i++)
             {
-                var position = new Vector2(17.6f + i * 1.1f, 9.4f);
                 int game = i;
-                PlaceNear(Room.Arcade, position, 0.5f, p => ArcadeCabinet.Build(root, p, 180f, game), 1.5f);
+                float yaw = cabinets[i].yaw;
+                PlaceNear(Room.Arcade, cabinets[i].at, 0.5f, p => ArcadeCabinet.Build(root, p, yaw, game), 0.8f);
             }
             PlaceNear(Room.Arcade, new Vector2(21f, 2.7f), 0.5f, p => ArcadeCabinet.Build(root, p, 0f, 2), 1f);
             // Neon strips along the walls, the most colorful light in the building.
@@ -345,7 +348,7 @@ namespace NightShift.Game
                 Window(root, new Vector3(x, 0f, area.yMax - WindowInset), 180f, 1.8f, 1.7f);
             }
             Window(root, new Vector3(area.xMin + WindowInset, 0f, 18.5f), 90f, 1.8f, 1.7f);
-            foreach (Vector2 table in new[] { new Vector2(-8.5f, 20f), new Vector2(1.5f, 20.2f), new Vector2(-8f, 16.5f) })
+            foreach (Vector2 table in new[] { new Vector2(-8.5f, 20f), new Vector2(1.5f, 20.2f), new Vector2(5.5f, 19.6f) })
             {
                 PlaceNear(Room.Banquet, table, 1.5f, p => PartyTable(root, random, p), 2.5f);
             }
@@ -355,6 +358,7 @@ namespace NightShift.Game
                 Balloon(root, position, PartyColors[i % PartyColors.Length]);
             }
             Streamer(root, new Vector3(-15.5f, 3.1f, 16.2f), new Vector3(8.5f, 3.1f, 16.2f), PartyColors[0]);
+            Sign(root, new Vector3(-11f, 2.6f, area.yMin + 0.23f), 0f, "BANQUET ROOM", new Color(1f, 0.85f, 0.5f), new Color(0.3f, 0.1f, 0.05f), 2.8f);
         }
 
         /// <summary>The veranda above the arcade: tall windows on two walls, tables with chairs pushed in.</summary>
@@ -369,8 +373,11 @@ namespace NightShift.Game
             {
                 Window(root, new Vector3(area.xMax - WindowInset, 0f, z), 270f, 1.8f, 1.9f);
             }
+            // The keycard's pedestal stands against the north wall (see KeycardPedestal): keep it clear.
+            Occupied.Add((new Vector2(PizzeriaLayout.CardPedestal.x, PizzeriaLayout.CardPedestal.z), 0.7f));
             PlaceNear(Room.Veranda, new Vector2(14.2f, 16.5f), 1.5f, p => PartyTable(root, random, p), 1.5f);
-            PlaceNear(Room.Veranda, new Vector2(20.5f, 16.5f), 1.5f, p => PartyTable(root, random, p), 1.5f);
+            PlaceNear(Room.Veranda, new Vector2(20.5f, 16.8f), 1.5f, p => PartyTable(root, random, p), 2.5f);
+            Sign(root, new Vector3(14.6f, 2.6f, area.yMin + 0.23f), 0f, "VERANDA", new Color(0.6f, 1f, 0.75f), new Color(0.05f, 0.2f, 0.12f), 2.2f);
         }
 
         private const float WindowInset = PizzeriaLayout.WallThickness + 0.02f;
@@ -390,6 +397,12 @@ namespace NightShift.Game
             Material glass = BuildKit.Glow("windowMoon", new Color(0.28f, 0.36f, 0.55f), 0.55f);
             Material cloth = BuildKit.Plain("windowCurtain", new Color(0.36f, 0.06f, 0.1f), 0.1f);
             BuildKit.Box("WindowGlass", root, P(0f, middle, 0f), new Vector3(width, height, 0.03f), glass, 1f, false, facing);
+            // The night outside: sky, the moon, the town's rooftops, rain running down the glass.
+            Texture2D view = BuildKit.SignTexture("window_night_" + Mathf.Abs(Mathf.RoundToInt(at.x * 7f + at.z * 3f)) % 3);
+            if (view != null)
+            {
+                BuildKit.Quad("WindowView", root, P(0f, middle, 0.017f), new Vector2(width, height), facing, BuildKit.Picture("sign:" + view.name, view, 0.7f));
+            }
             BuildKit.Box("FrameTop", root, P(0f, bottom + height, 0.02f), new Vector3(width + 0.12f, 0.08f, 0.09f), frame, 1f, false, facing);
             BuildKit.Box("FrameBottom", root, P(0f, bottom, 0.02f), new Vector3(width + 0.12f, 0.08f, 0.09f), frame, 1f, false, facing);
             BuildKit.Box("FrameLeft", root, P(-width * 0.5f, middle, 0.02f), new Vector3(0.08f, height, 0.09f), frame, 1f, false, facing);
@@ -885,6 +898,9 @@ namespace NightShift.Game
             BuildKit.Box("Shelf", basin, new Vector3(0f, 1.2f, 0.06f), new Vector3(0.5f, 0.02f, 0.1f), porcelain, 1f, false);
         }
 
+        /// <summary>Where the tape box sits: on the ticket booth's counter, its keypad toward the entrance.</summary>
+        public static Pose TapeBoxPose { get; private set; } = new Pose(new Vector3(13f, 1.145f, -10.6f), Quaternion.Euler(0f, 180f, 0f));
+
         /// <summary>The ticket booth by the entrance: striped counter, glass window, TICKETS on top.</summary>
         private static void TicketBooth(Transform root, Vector3 position)
         {
@@ -898,12 +914,15 @@ namespace NightShift.Game
             Material glass = BuildKit.Decal("boothGlass", Texture2D.whiteTexture, new Color(0.55f, 0.65f, 0.7f, 0.15f));
             BuildKit.Box("Counter", booth, new Vector3(0f, 0.55f, 0f), new Vector3(2.0f, 1.1f, 1.0f), stripes);
             BuildKit.Box("CounterTop", booth, new Vector3(0f, 1.12f, 0.03f), new Vector3(2.1f, 0.05f, 1.1f), wood);
+            // The window stands back from the counter's edge: the front of the counter is the
+            // customers' side, where the tape box waits on night 5.
             foreach (float x in new[] { -0.98f, 0.98f })
             {
-                BuildKit.Box("Post", booth, new Vector3(x, 1.6f, 0.45f), new Vector3(0.06f, 0.9f, 0.06f), brass, 1f, false);
+                BuildKit.Box("Post", booth, new Vector3(x, 1.6f, -0.08f), new Vector3(0.06f, 0.9f, 0.06f), brass, 1f, false);
             }
-            BuildKit.Quad("Window", booth, new Vector3(0f, 1.6f, 0.45f), new Vector2(1.9f, 0.9f), 0f, glass);
-            BuildKit.Box("WindowSlot", booth, new Vector3(0f, 1.18f, 0.47f), new Vector3(0.4f, 0.06f, 0.04f), brass, 1f, false);
+            BuildKit.Quad("Window", booth, new Vector3(0f, 1.6f, -0.08f), new Vector2(1.9f, 0.9f), 0f, glass);
+            BuildKit.Box("WindowSlot", booth, new Vector3(0f, 1.18f, -0.06f), new Vector3(0.4f, 0.06f, 0.04f), brass, 1f, false);
+            TapeBoxPose = new Pose(booth.TransformPoint(new Vector3(-0.45f, 1.145f, 0.3f)), booth.rotation);
             BuildKit.Box("Roof", booth, new Vector3(0f, 2.08f, 0.05f), new Vector3(2.2f, 0.08f, 1.2f), wood, 1f, false);
             BuildKit.Cylinder("TicketRoll", booth, new Vector3(0.6f, 1.2f, 0.3f), 0.16f, 0.12f, BuildKit.Plain("ticketRed", new Color(0.75f, 0.12f, 0.1f), 0.3f))
                 .transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
@@ -1072,6 +1091,8 @@ namespace NightShift.Game
             { "PARTY ROOM", ("title_party_room", 1.6f) },
             { "PRIZES", ("title_prizes", 1.6f) },
             { "TICKETS", ("title_tickets", 1.6f) },
+            { "BANQUET ROOM", ("title_banquet_room", 1.6f) },
+            { "VERANDA", ("title_veranda", 1.6f) },
             { "HAPPY BIRTHDAY", ("title_happy_birthday", 1.4f) },
             { "SECURITY", ("title_security", 0.3f) },
             { "PARTS & SERVICE", ("title_parts_service", 0.3f) },
@@ -1187,6 +1208,15 @@ namespace NightShift.Game
             {
                 Vector3 position = PizzeriaLayout.SpotPosition(room, spot);
                 if (Vector2.Distance(point, new Vector2(position.x, position.z)) < distance + 0.6f)
+                {
+                    return false;
+                }
+            }
+            int socket = HuntMap.SocketIn(room);
+            if (socket >= 0)
+            {
+                Vector3 mount = PizzeriaLayout.SocketPosition(socket);
+                if (Vector2.Distance(point, new Vector2(mount.x, mount.z)) < distance + 0.6f)
                 {
                     return false;
                 }

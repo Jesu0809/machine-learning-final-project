@@ -62,6 +62,38 @@ namespace NightShift.Hunt
         /// <summary>Rooms with a door out of the building; <see cref="HuntState.ExitRoom"/> picks tonight's.</summary>
         public static IReadOnlyList<Room> Exits { get; } = new[] { Room.ExitLobby, Room.Storage };
 
+        /// <summary>
+        /// The three power sockets, always in the same rooms. A socket takes one power cell; from
+        /// night 2 each cell has the color of its socket: index 0 yellow (Parts), 1 blue (Banquet
+        /// Room), 2 green (Party Room).
+        /// </summary>
+        public static IReadOnlyList<Room> SocketRooms { get; } = new[] { Room.Parts, Room.Banquet, Room.PartyRoom };
+
+        /// <summary>The breaker box (night 3 on).</summary>
+        public const Room BreakerRoom = Room.Storage;
+
+        /// <summary>The keycard's lit pedestal (night 4 on).</summary>
+        public const Room CardRoom = Room.Veranda;
+
+        /// <summary>The card reader the keycard is swiped through.</summary>
+        public const Room ReaderRoom = Room.Office;
+
+        /// <summary>The keypad box that holds the tape (night 5).</summary>
+        public const Room TapeRoom = Room.ExitLobby;
+
+        /// <summary>Index of the socket in <paramref name="room"/>, or -1.</summary>
+        public static int SocketIn(Room room)
+        {
+            for (int i = 0; i < SocketRooms.Count; i++)
+            {
+                if (SocketRooms[i] == room)
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
         private static readonly Room[][] Neighbors =
         {
             new[] { Room.Parts, Room.BackHall },                                       // Office
@@ -103,11 +135,11 @@ namespace NightShift.Hunt
         // Hiding spots per room: lockers, cabinets and under tables (the banquet room and the veranda only have tables).
         private static readonly int[] SpotCounts = { 2, 2, 2, 1, 3, 3, 3, 1, 2, 2, 1, 3, 2 };
 
-        /// <summary>Rooms with a fuse shelf (where the night's fuses can be).</summary>
-        private static readonly Room[] FuseRoomList =
+        /// <summary>Rooms with a wall shelf where the night's power cells can wait.</summary>
+        private static readonly Room[] CellRoomList =
         {
-            Room.Parts, Room.Restrooms, Room.BackHall, Room.Storage, Room.Kitchen,
-            Room.DiningHall, Room.MainHall, Room.PartyRoom, Room.Arcade
+            Room.Restrooms, Room.BackHall, Room.Storage, Room.Kitchen,
+            Room.DiningHall, Room.MainHall, Room.Arcade, Room.Veranda
         };
 
         private static readonly string[] Names =
@@ -153,7 +185,7 @@ namespace NightShift.Hunt
             return false;
         }
 
-        public static IReadOnlyList<Room> FuseRooms => FuseRoomList;
+        public static IReadOnlyList<Room> CellRooms => CellRoomList;
 
         /// <summary>True for the staff wing (west), false for the public wing (east).</summary>
         public static bool IsStaffWing(Room room) => room <= Room.Kitchen;  // the north wing counts as public

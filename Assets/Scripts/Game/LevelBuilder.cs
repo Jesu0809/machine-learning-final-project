@@ -9,7 +9,11 @@ namespace NightShift.Game
     {
         public Transform Root;
         public readonly HidingSpot[][] Spots = new HidingSpot[HuntMap.RoomCount][];
-        public readonly FusePickup[] Fuses = new FusePickup[HuntMap.RoomCount];
+        /// <summary>The power cell shelf of each room that has one (null elsewhere).</summary>
+        public readonly CellPickup[] Cells = new CellPickup[HuntMap.RoomCount];
+
+        /// <summary>The three power sockets (built by the director, which they report to).</summary>
+        public readonly PowerSocket[] Sockets = new PowerSocket[3];
         public readonly List<FlickerLight>[] Lamps = new List<FlickerLight>[HuntMap.RoomCount];
         /// <summary>The front doors' panel (the intro opens these doors).</summary>
         public ExitPanel Exit;
@@ -72,7 +76,7 @@ namespace NightShift.Game
                 }
                 if (PizzeriaLayout.HasFuseShelf(room))
                 {
-                    level.Fuses[i] = BuildFuse(room, roomRoot);
+                    level.Cells[i] = BuildCellShelf(room, roomRoot);
                 }
             }
             BuildCorridors(level, random);
@@ -720,7 +724,7 @@ namespace NightShift.Game
             return HidingSpot.Attach(go, room, index, kind, door, hide, new Vector3(0f, 0f, 1.1f));
         }
 
-        private static FusePickup BuildFuse(Room room, Transform roomRoot)
+        private static CellPickup BuildCellShelf(Room room, Transform roomRoot)
         {
             Vector3 position = PizzeriaLayout.FusePosition(room);
             Quaternion facing = PizzeriaLayout.FuseFacing(room);
@@ -750,7 +754,7 @@ namespace NightShift.Game
             glow.range = 4f;
             glow.color = new Color(1f, 0.62f, 0.18f);
             glow.intensity = 1.6f;
-            FusePickup pickup = FusePickup.Attach(fuse, room, glow);
+            CellPickup pickup = CellPickup.Attach(fuse, room, glow, halo.GetComponent<Renderer>());
             fuse.SetActive(false);
             return pickup;
         }
@@ -809,26 +813,22 @@ namespace NightShift.Game
             BuildKit.Box("Door", parts.Door, new Vector3(0.31f, 0f, 0.012f), new Vector3(0.62f, 0.8f, 0.025f), hazard, 1f, false);
             BuildKit.Box("Handle", parts.Door, new Vector3(0.56f, 0f, 0.04f), new Vector3(0.03f, 0.14f, 0.03f), chrome, 1f, false);
 
-            // Three sockets in a row, a light above each, and the cells that go in them.
+            // Three big lamps in a row, one per power socket of the building: red until its socket
+            // has a cell, then the cell's color.
             parts.SocketLights = new Renderer[3];
-            parts.Cells = new Transform[3];
             for (int i = 0; i < 3; i++)
             {
                 float x = -0.17f + i * 0.17f;
-                var socket = BuildKit.Cylinder("Socket", t, new Vector3(x, 0.12f, 0.07f), 0.11f, 0.03f, chrome);
-                socket.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-                var hole = BuildKit.Cylinder("SocketHole", t, new Vector3(x, 0.12f, 0.085f), 0.085f, 0.01f, BuildKit.Plain("black", Color.black));
-                hole.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-                GameObject light = BuildKit.Box("SocketLight", t, new Vector3(x, 0.27f, 0.085f), new Vector3(0.05f, 0.025f, 0.02f), BuildKit.Glow("socketLight", new Color(0.7f, 0f, 0f), 2f), 1f, false);
+                BuildKit.Cylinder("LampBezel", t, new Vector3(x, 0.12f, 0.08f), 0.12f, 0.02f, chrome).transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                GameObject light = BuildKit.Cylinder("SocketLight", t, new Vector3(x, 0.12f, 0.092f), 0.09f, 0.008f, BuildKit.Glow("socketLight", new Color(0.7f, 0f, 0f), 2f));
+                light.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
                 Renderer renderer = light.GetComponent<Renderer>();
                 renderer.material = new Material(renderer.sharedMaterial);
+                // Dark and matte under the glass: only its own light shows, not the flashlight's.
+                renderer.material.SetColor("_BaseColor", Color.black);
+                renderer.material.SetFloat("_Smoothness", 0.15f);
                 parts.SocketLights[i] = renderer;
-                GameObject cell = PowerCell(t);
-                cell.transform.localScale = Vector3.one * 0.45f;
-                cell.SetActive(false);
-                parts.Cells[i] = cell.transform;
             }
-            parts.SocketPositions = new[] { new Vector3(-0.17f, 0.12f, 0.12f), new Vector3(0f, 0.12f, 0.12f), new Vector3(0.17f, 0.12f, 0.12f) };
 
             // The lever: a pivot under the sockets, a steel arm and a red grip.
             parts.Lever = new GameObject("LeverPivot").transform;
