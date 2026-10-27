@@ -134,9 +134,12 @@ namespace NightShift.Game
             yield return Pose(new Vector3(-6f, 0f, 3f), new Vector3(-1f, 0f, 0.6f), "06-kitchen");
             yield return Pose(new Vector3(-17f, 0f, 3f), new Vector3(-1f, 0.2f, 1f), "09-storage");
             yield return Pose(new Vector3(-18.5f, 0f, 6.5f), new Vector3(-1f, 0.05f, 0f), "09e-loading-door");
-            // Between the wings.
-            yield return Pose(new Vector3(-4.5f, 0f, 6f), new Vector3(1f, 0f, 0f), "03b-kitchen-pass");
-            yield return Pose(new Vector3(-2.5f, 0f, -1.5f), new Vector3(1f, 0f, 0f), "07d-service-corridor");
+            // Between the wings: the north wing, and out of its windows.
+            yield return Pose(new Vector3(-6.3f, 0f, 11.5f), new Vector3(0f, 0.05f, 1f), "03b-north-corridor");
+            yield return Pose(new Vector3(9.5f, 0f, 18.5f), new Vector3(1f, 0f, 0f), "07d-veranda-corridor");
+            yield return Pose(new Vector3(-9f, 0f, 18.2f), new Vector3(0f, 0.08f, 1f), "11c-banquet-windows");
+            yield return Pose(new Vector3(19.5f, 0f, 19f), new Vector3(0.25f, 0.08f, 1f), "11d-veranda-window");
+            yield return Pose(new Vector3(2f, 0f, 24.5f), new Vector3(-0.2f, 0.1f, 1f), "11e-back-lot");
             // Public wing.
             yield return Pose(new Vector3(3f, 0f, 3f), new Vector3(0.6f, 0.1f, 1f), "03-dining");
             yield return Pose(new Vector3(7.5f, 0f, 5f), new Vector3(0f, 0.1f, 1f), "05-stage");
@@ -346,12 +349,17 @@ namespace NightShift.Game
                     yield return Shot(prefix + "c-socket");
                 }
                 target.Use(player);
-                yield return new WaitForSeconds(0.4f);
+                yield return new WaitForSeconds(0.85f);
                 if (shots)
                 {
                     yield return Shot(prefix + "d-socket-inserting");
                 }
-                yield return new WaitForSeconds(0.7f);
+                yield return new WaitForSeconds(1.0f);
+                if (shots)
+                {
+                    yield return Shot(prefix + "d2-socket-charging");
+                }
+                yield return new WaitForSeconds(0.9f);
                 if (shots)
                 {
                     yield return Shot(prefix + "e-socket-powered");

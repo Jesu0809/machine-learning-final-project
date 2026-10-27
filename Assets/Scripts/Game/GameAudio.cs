@@ -227,6 +227,54 @@ namespace NightShift.Game
             return lampHum;
         }
 
+        private static AudioClip clunk;
+        private static AudioClip ratchet;
+        private static AudioClip charge;
+
+        /// <summary>A heavy steel clunk: a low thud with a metallic ring and a burst of grit.</summary>
+        public static AudioClip Clunk()
+        {
+            if (clunk == null)
+            {
+                clunk = Synth("Clunk", 0.45f, (t, i) =>
+                {
+                    float thud = Mathf.Sin(2f * Mathf.PI * (70f - t * 40f) * t) * Mathf.Exp(-t * 18f);
+                    float ring = (Mathf.Sin(2f * Mathf.PI * 410f * t) * 0.5f + Mathf.Sin(2f * Mathf.PI * 1130f * t) * 0.3f) * Mathf.Exp(-t * 14f);
+                    float grit = Noise(i) * Mathf.Exp(-t * 60f);
+                    return thud * 0.9f + ring * 0.35f + grit * 0.5f;
+                }, 0.35f);
+            }
+            return clunk;
+        }
+
+        /// <summary>One click of a ratchet.</summary>
+        public static AudioClip Ratchet()
+        {
+            if (ratchet == null)
+            {
+                ratchet = Synth("Ratchet", 0.08f, (t, i) =>
+                    (Noise(i) * 0.6f + Mathf.Sin(2f * Mathf.PI * 2400f * t) * 0.5f) * Mathf.Exp(-t * 90f), 0.1f);
+            }
+            return ratchet;
+        }
+
+        /// <summary>A capacitor charging: a whine rising for most of a second, with a crackle.</summary>
+        public static AudioClip Charge()
+        {
+            if (charge == null)
+            {
+                float phase = 0f;
+                charge = Synth("Charge", 1f, (t, i) =>
+                {
+                    phase += 2f * Mathf.PI * (300f + t * t * 1500f) / Rate;
+                    float swell = Mathf.Clamp01(t * 3f) * (1f - Mathf.Clamp01((t - 0.9f) * 10f));
+                    float crackle = Noise(i) * (Noise(i / 300) > 0.7f ? 0.3f : 0.03f);
+                    return (Mathf.Sin(phase) * 0.35f + Mathf.Sin(phase * 2f) * 0.12f + crackle) * swell;
+                }, 0.15f);
+            }
+            return charge;
+        }
+
         private static AudioClip Synth(string name, float seconds, System.Func<float, int, float> sample, float lowPass)
         {
             int count = Mathf.CeilToInt(seconds * Rate);

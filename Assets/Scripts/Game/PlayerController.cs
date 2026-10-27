@@ -264,7 +264,7 @@ namespace NightShift.Game
             float k = Ease(focusBlend);
             Transform view = Focus.FocusView;
             head.position = Vector3.Lerp(focusFromPosition, view.position, k);
-            head.rotation = Quaternion.Slerp(focusFromRotation, view.rotation, k);
+            head.rotation = Quaternion.Slerp(focusFromRotation, view.rotation, k) * JoltShake();
             if (focusBlend < 1f || !input)
             {
                 return;
@@ -873,6 +873,27 @@ namespace NightShift.Game
             return t * t * (3f - 2f * t);
         }
 
+        /// <summary>A short knock of the view (a heavy clunk, a lever hitting its stop), in degrees; it dies away in a moment.</summary>
+        public void Jolt(float degrees)
+        {
+            jolt = Mathf.Max(jolt, degrees);
+        }
+
+        private float jolt;
+
+        private Quaternion JoltShake()
+        {
+            if (jolt <= 0.001f)
+            {
+                return Quaternion.identity;
+            }
+            jolt = Mathf.MoveTowards(jolt, 0f, Time.deltaTime * (jolt * 7f + 0.4f));
+            float t = Time.time * 40f;
+            return Quaternion.Euler((Mathf.PerlinNoise(t, 0.3f) - 0.5f) * 2f * jolt,
+                                    (Mathf.PerlinNoise(0.7f, t) - 0.5f) * 2f * jolt,
+                                    (Mathf.PerlinNoise(t, t) - 0.5f) * jolt);
+        }
+
         /// <summary>Turns the view smoothly toward a point (working a panel, looking at what the hands do).</summary>
         public void LookToward(Vector3 point, float speed)
         {
@@ -939,7 +960,7 @@ namespace NightShift.Game
             }
             float bob = Moving ? Mathf.Sin(bobPhase) * (Running ? 0.05f : 0.025f) : 0f;
             head.localPosition = Vector3.Lerp(head.localPosition, new Vector3(0f, eye + bob + BreathRise(), 0f), Time.deltaTime * 12f);
-            head.rotation = Quaternion.Euler(pitch, yaw, 0f) * BreathSway();
+            head.rotation = Quaternion.Euler(pitch, yaw, 0f) * BreathSway() * JoltShake();
         }
 
         /// <summary>

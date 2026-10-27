@@ -206,6 +206,20 @@ namespace NightShift.Game
 
         public static Quaternion SocketFacing(int socket) => Quaternion.Euler(0f, SocketMounts[socket].facing, 0f);
 
+        /// <summary>
+        /// Real windows, cut through the north wall of the north wing (the only rooms with the
+        /// outside right behind a wall): the room, the window's center along x, its width, sill and top.
+        /// </summary>
+        public static readonly (Room room, float x, float width, float sill, float top)[] Windows =
+        {
+            (Room.Banquet, -13.5f, 1.8f, 0.9f, 2.6f), (Room.Banquet, -9f, 1.8f, 0.9f, 2.6f), (Room.Banquet, -4.5f, 1.8f, 0.9f, 2.6f),
+            (Room.Banquet, 0f, 1.8f, 0.9f, 2.6f), (Room.Banquet, 4.5f, 1.8f, 0.9f, 2.6f),
+            (Room.Veranda, 14.5f, 2f, 0.9f, 2.8f), (Room.Veranda, 20.5f, 2f, 0.9f, 2.8f)
+        };
+
+        /// <summary>The outer face of the north wing's north wall (the windows' wall).</summary>
+        public const float NorthWallZ = 22f;
+
         /// <summary>The keycard's lit pedestal in the veranda: against the north wall, between the windows, facing the room.</summary>
         public static readonly Vector3 CardPedestal = new Vector3(17.4f, 0f, 21.2f);
 

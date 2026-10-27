@@ -920,6 +920,8 @@ namespace NightShift.Game
             State.CompleteBreaker();
             Audio.PlayAt(Assets.FusePickup, box.transform.position, 1f, 0.8f);
             FlickerLight.Blackout(0.6f);
+            // When the lights come back, they come back too bright, all over the building.
+            FlickerLight.Surge(box.transform.position, 60f, 1.5f, 0.6f);
             UI.Toast("Power restored. The whole building heard that.");
             // The breaker is loud: the brain hears it like any other noise.
             Room room = PizzeriaLayout.RoomAt(box.transform.position);

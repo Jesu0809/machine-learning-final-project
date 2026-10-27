@@ -255,6 +255,9 @@ namespace NightShift.Game
             pulling = false;
             parts.Sparks.transform.localPosition = parts.Lever.localPosition + new Vector3(0f, 0.15f, 0.05f);
             parts.Sparks.Emit(40);
+            player.Jolt(1.8f);
+            Director.Audio.PlayAt(GameAudio.Clunk(), transform.position, 1f, 0.8f);
+            FlickerLight.Surge(transform.position, 12f, 1.6f);
             Draw();
             Director.OnExitOpened();
         }
@@ -283,8 +286,8 @@ namespace NightShift.Game
                 bool powered = state != null && state.SocketPowered(i);
                 Color off = new Color(0.6f, 0f, 0f);
                 Color color = !Active ? new Color(0.05f, 0.05f, 0.05f) : powered ? (state.Night >= 2 ? CellColors.Of(i) : new Color(0.1f, 1f, 0.2f)) : off;
-                // Not too bright, or the bloom turns every color white.
-                parts.SocketLights[i].material.SetColor("_EmissionColor", color * 1.1f);
+                // Not too bright and saturated (each channel squared), or the bloom turns every color white.
+                parts.SocketLights[i].material.SetColor("_EmissionColor", new Color(color.r * color.r, color.g * color.g, color.b * color.b) * 0.8f);
             }
             bool ready = state != null && state.ExitUnlocked;
             bool blink = Mathf.Repeat(Time.time * 2f, 1f) < 0.5f;
@@ -384,8 +387,48 @@ namespace NightShift.Game
         }
 
         private bool dead;
+        private bool lastSurging;
         private AudioSource hum;
         private const float HumVolume = 0.06f;
+
+        private static Vector3 surgeAt;
+        private static float surgeRadius;
+        private static float surgeStart = -10f;
+        private static float surgeSeconds = 1f;
+
+        /// <summary>
+        /// Power comes back near a point: the lamps within the radius flare up, stutter and settle
+        /// (a socket powered, the breakers back on).
+        /// </summary>
+        public static void Surge(Vector3 point, float radius, float seconds, float delay = 0f)
+        {
+            surgeAt = point;
+            surgeRadius = radius;
+            surgeStart = Time.time + delay;
+            surgeSeconds = seconds;
+        }
+
+        /// <summary>How much brighter this lamp is in a surge (1 when none).</summary>
+        private float SurgeGain(float t)
+        {
+            float k = (t - surgeStart) / surgeSeconds;
+            if (k < 0f || k > 1f)
+            {
+                return 1f;
+            }
+            Vector3 offset = transform.position - surgeAt;
+            offset.y = 0f;
+            if (offset.magnitude > surgeRadius)
+            {
+                return 1f;
+            }
+            // A flash, a few stutters, then back to normal; the nearest lamps first.
+            float delay = offset.magnitude / surgeRadius * 0.15f;
+            k = Mathf.Clamp01(k - delay);
+            float flare = Mathf.Exp(-k * 4f) * 2.2f;
+            float stutter = k > 0.15f && k < 0.45f && Mathf.Repeat(t * 23f + offset.x, 1f) < 0.35f ? -0.8f : 0f;
+            return Mathf.Max(0.1f, 1f + flare + stutter);
+        }
 
         /// <summary>Every lamp goes dark for a moment.</summary>
         public static void Blackout(float seconds)
@@ -418,13 +461,24 @@ namespace NightShift.Game
             }
 
             bool on = t >= blackoutUntil && (t >= flickerUntil || Random.value < 0.5f);
-            lamp.intensity = on ? baseIntensity : baseIntensity * 0.05f;
+            float gain = SurgeGain(t);
+            lamp.intensity = on ? baseIntensity * gain : baseIntensity * 0.05f;
             if (hum != null)
             {
                 // A flickering tube crackles: louder and rougher while it struggles.
                 bool struggling = t < flickerUntil;
                 hum.volume = !on ? HumVolume * 0.1f : struggling ? HumVolume * 2.2f : HumVolume;
                 hum.pitch = struggling ? Random.Range(0.85f, 1.2f) : 1f;
+            }
+            if (gain != 1f && on && fixture != null)
+            {
+                fixture.material.SetColor("_EmissionColor", lamp.color * 2.2f * gain);
+                lastSurging = true;
+            }
+            else if (lastSurging && on && fixture != null)
+            {
+                fixture.material.SetColor("_EmissionColor", lamp.color * 2.2f);
+                lastSurging = false;
             }
             if (on != lastOn)
             {

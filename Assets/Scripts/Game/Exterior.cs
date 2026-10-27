@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using NightShift.Hunt;
 using UnityEngine;
 
 namespace NightShift.Game
@@ -64,6 +65,7 @@ namespace NightShift.Game
             exterior.BuildGround(root);
             exterior.BuildFront(root);
             exterior.BuildBackAlley(root);
+            exterior.BuildBackLot(root, assets);
             exterior.BuildSigns(root, assets);
             exterior.BuildStreetLights(root);
             exterior.BuildSkyline(root);
@@ -152,7 +154,7 @@ namespace NightShift.Game
             var dockLamp = Lamp(root, new Vector3(WestX - 0.5f, doorTop + 0.4f, loading.z), new Color(1f, 0.75f, 0.45f), 7f, 5f);
             dockLamp.shadows = LightShadows.None;
             BuildKit.Box("SideEast", root, new Vector3(EastX, FrontHeight * 0.5f, (LobbyFrontZ + BackZ) * 0.5f), new Vector3(0.3f, FrontHeight, BackZ - LobbyFrontZ), brick, 2f);
-            Wall(root, "Back", WestX, EastX, BackZ, brick);
+            BackWall(root, brick, trim);
             BuildKit.Box("Roof", root, new Vector3((WestX + EastX) * 0.5f, FrontHeight - 0.3f, (LobbyFrontZ + BackZ) * 0.5f), new Vector3(EastX - WestX, 0.2f, BackZ - LobbyFrontZ), roof, 4f, false);
 
             // Cornice along the top, and a base course.
@@ -197,6 +199,235 @@ namespace NightShift.Game
             {
                 float width = Mathf.Min(6f, toX - x);
                 BuildKit.Box(name, root, new Vector3(x + width * 0.5f, FrontHeight * 0.5f, z), new Vector3(width, FrontHeight, 0.3f), material, 2f);
+            }
+        }
+
+        // ------------------------------------------------------------------ the back wall and the lot behind it
+
+        /// <summary>
+        /// The building's back wall, with the north wing's windows cut through it (the same ones
+        /// as the rooms' wall, PizzeriaLayout.Windows) and a reveal joining the two walls, so
+        /// looking out of a window shows the lot behind the pizzeria.
+        /// </summary>
+        private static void BackWall(Transform root, Material brick, Material trim)
+        {
+            var holes = new List<(float x, float width, float sill, float top)>();
+            foreach ((Room _, float x, float width, float sill, float top) in PizzeriaLayout.Windows)
+            {
+                holes.Add((x, width, sill, top));
+            }
+            holes.Sort((a, b) => a.x.CompareTo(b.x));
+            float start = WestX;
+            float inner = PizzeriaLayout.NorthWallZ;
+            float depth = BackZ + 0.15f - inner;
+            foreach ((float x, float width, float sill, float top) in holes)
+            {
+                Wall(root, "Back", start, x - width * 0.5f, BackZ, brick);
+                BuildKit.Box("BackUnder", root, new Vector3(x, sill * 0.5f, BackZ), new Vector3(width, sill, 0.3f), brick, 2f);
+                BuildKit.Box("BackOver", root, new Vector3(x, (top + FrontHeight) * 0.5f, BackZ), new Vector3(width, FrontHeight - top, 0.3f), brick, 2f);
+                // The reveal between the rooms' wall and this one, and a stone sill outside.
+                float zMid = inner + depth * 0.5f;
+                BuildKit.Box("RevealLeft", root, new Vector3(x - width * 0.5f - 0.04f, (sill + top) * 0.5f, zMid), new Vector3(0.08f, top - sill, depth), trim, 1f, false);
+                BuildKit.Box("RevealRight", root, new Vector3(x + width * 0.5f + 0.04f, (sill + top) * 0.5f, zMid), new Vector3(0.08f, top - sill, depth), trim, 1f, false);
+                BuildKit.Box("RevealTop", root, new Vector3(x, top + 0.04f, zMid), new Vector3(width + 0.16f, 0.08f, depth), trim, 1f, false);
+                BuildKit.Box("RevealSill", root, new Vector3(x, sill - 0.04f, zMid), new Vector3(width + 0.16f, 0.08f, depth), trim, 1f, false);
+                BuildKit.Box("OutsideSill", root, new Vector3(x, sill - 0.06f, BackZ + 0.22f), new Vector3(width + 0.3f, 0.08f, 0.2f), trim, 1f, false);
+                start = x + width * 0.5f;
+            }
+            Wall(root, "Back", start, EastX, BackZ, brick);
+        }
+
+        /// <summary>
+        /// What the north windows look out on: the wet back lot under two sodium street lamps (one
+        /// stutters), an abandoned car, a dumpster, a chain-link fence with power poles and sagging
+        /// wires, small houses beyond it with a few windows still lit (one flickers with a TV), the
+        /// low sky, rain falling, and now and then lightning with its thunder.
+        /// </summary>
+        private void BuildBackLot(Transform root, GameAssets assets)
+        {
+            const float lotSouth = BackZ + 0.15f;
+            const float fenceZ = BackZ + 11f;
+            Material brick = BuildKit.Surface("bricks", () => ProceduralTextures.Bricks(new Color(0.42f, 0.17f, 0.12f), new Color(0.32f, 0.3f, 0.27f)), 0.25f);
+            Material siding = BuildKit.Pbr("wood_planks", new Color(0.45f, 0.42f, 0.4f)) ?? brick;
+            Material roof = BuildKit.Plain("roof", new Color(0.04f, 0.04f, 0.045f), 0.6f);
+            Material steel = BuildKit.Plain("frameSteel", new Color(0.12f, 0.12f, 0.13f), 0.5f, 0.7f);
+            Material wood = BuildKit.Plain("pole", new Color(0.16f, 0.12f, 0.09f), 0.2f);
+
+            // Ground in tiles, a strip of sidewalk along the wall.
+            for (float x = WestX; x < EastX; x += 10f)
+            {
+                float width = Mathf.Min(10f, EastX - x);
+                for (float z = lotSouth; z < fenceZ + 14f; z += 10f)
+                {
+                    BuildKit.Box("LotGround", root, new Vector3(x + width * 0.5f, -0.07f, z + 5f), new Vector3(width, 0.1f, 10f), asphalt, 6f);
+                }
+                BuildKit.Box("LotSidewalk", root, new Vector3(x + width * 0.5f, 0.02f, lotSouth + 0.9f), new Vector3(width, 0.12f, 1.8f), sidewalk, 2f, false);
+            }
+
+            // Two sodium lamps on poles; the far one stutters.
+            foreach ((float x, bool stutter) in new[] { (-6f, false), (14f, true) })
+            {
+                var pole = BuildKit.Cylinder("LampPole", root, new Vector3(x, 3.2f, lotSouth + 5f), 0.16f, 6.4f, steel);
+                BuildKit.Box("LampArm", root, new Vector3(x, 6.3f, lotSouth + 4.3f), new Vector3(0.08f, 0.08f, 1.4f), steel, 1f, false);
+                BuildKit.Box("LampHead", root, new Vector3(x, 6.25f, lotSouth + 3.6f), new Vector3(0.35f, 0.14f, 0.6f), steel, 1f, false);
+                BuildKit.Box("LampLens", root, new Vector3(x, 6.17f, lotSouth + 3.6f), new Vector3(0.3f, 0.02f, 0.5f), BuildKit.Glow("sodium", new Color(1f, 0.62f, 0.25f), 4f), 1f, false);
+                var lamp = new GameObject("LotLamp").AddComponent<Light>();
+                lamp.transform.SetParent(root, false);
+                lamp.transform.localPosition = new Vector3(x, 6.1f, lotSouth + 3.6f);
+                lamp.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                lamp.type = LightType.Spot;
+                lamp.spotAngle = 130f;
+                lamp.innerSpotAngle = 60f;
+                lamp.range = 24f;
+                // Bright: seen from inside, with the building's dark ambient, it is the lot's only light.
+                lamp.intensity = 80f;
+                lamp.color = new Color(1f, 0.64f, 0.3f);
+                lamp.shadows = LightShadows.Soft;
+                if (stutter)
+                {
+                    lamp.gameObject.AddComponent<SodiumFlicker>();
+                }
+            }
+
+            // An abandoned car under the near lamp, a dumpster against the wall.
+            Car wreck = Car.Create(root);
+            wreck.Place(new Vector3(-3.2f, 0f, lotSouth + 6.2f), 70f);
+            wreck.SetLights(false);
+            Dumpster(root, new Vector3(19.2f, 0f, lotSouth + 1.1f), 90f);
+
+            // The fence, with power poles behind it and wires sagging between them.
+            Texture2D link = BuildKit.SignTexture("fence_chainlink");
+            for (float x = WestX; x <= EastX; x += 3f)
+            {
+                BuildKit.Cylinder("FencePost", root, new Vector3(x, 1.1f, fenceZ), 0.06f, 2.2f, steel);
+            }
+            BuildKit.Cylinder("FenceRail", root, new Vector3((WestX + EastX) * 0.5f, 2.2f, fenceZ), 0.04f, EastX - WestX, steel).transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+            if (link != null)
+            {
+                Material mesh = BuildKit.Decal("chainLinkLot", link, Color.white);
+                mesh.SetTextureScale("_BaseMap", new Vector2((EastX - WestX) / 0.8f, 2.2f / 0.8f));
+                BuildKit.Quad("Fence", root, new Vector3((WestX + EastX) * 0.5f, 1.1f, fenceZ), new Vector2(EastX - WestX, 2.2f), 180f, mesh);
+            }
+            Material wire = BuildKit.Plain("wire", new Color(0.02f, 0.02f, 0.02f), 0.3f);
+            for (float x = WestX + 2f; x < EastX; x += 11f)
+            {
+                BuildKit.Cylinder("PowerPole", root, new Vector3(x, 4.5f, fenceZ + 2f), 0.26f, 9f, wood);
+                BuildKit.Box("CrossArm", root, new Vector3(x, 8.4f, fenceZ + 2f), new Vector3(1.8f, 0.12f, 0.12f), wood, 1f, false);
+                if (x + 11f < EastX)
+                {
+                    // A sagging wire to the next pole, in a few straight pieces.
+                    for (int wireIndex = -1; wireIndex <= 1; wireIndex += 2)
+                    {
+                        const int pieces = 6;
+                        for (int k = 0; k < pieces; k++)
+                        {
+                            float a = k / (float)pieces, b = (k + 1) / (float)pieces;
+                            var p0 = new Vector3(x + a * 11f, 8.45f - Mathf.Sin(a * Mathf.PI) * 0.6f, fenceZ + 2f + wireIndex * 0.7f);
+                            var p1 = new Vector3(x + b * 11f, 8.45f - Mathf.Sin(b * Mathf.PI) * 0.6f, fenceZ + 2f + wireIndex * 0.7f);
+                            var piece = BuildKit.Cylinder("Wire", root, (p0 + p1) * 0.5f, 0.025f, Vector3.Distance(p0, p1), wire);
+                            piece.transform.localRotation = Quaternion.FromToRotation(Vector3.up, p1 - p0);
+                        }
+                    }
+                }
+            }
+
+            // Small houses beyond the fence: a few windows lit, one with a TV flickering.
+            var random = new System.Random(77);
+            Material lit = BuildKit.Glow("houseWindowLit", new Color(1f, 0.72f, 0.4f), 0.9f);
+            Material dark = BuildKit.Plain("houseWindowDark", new Color(0.02f, 0.025f, 0.03f), 0.9f, 0.2f);
+            bool tvPlaced = false;
+            for (float x = WestX + 4f; x < EastX - 3f; x += 10.5f)
+            {
+                float width = 7f + (float)random.NextDouble() * 2f;
+                float height = 4.2f + (float)random.NextDouble() * 1.6f;
+                float z = fenceZ + 9f + (float)random.NextDouble() * 3f;
+                BuildKit.Box("House", root, new Vector3(x, height * 0.5f, z), new Vector3(width, height, 6f), random.NextDouble() < 0.5 ? siding : brick, 2f, false);
+                for (int side = -1; side <= 1; side += 2)
+                {
+                    var slope = BuildKit.Box("Roof", root, new Vector3(x, height + 0.9f, z + side * 1.55f), new Vector3(width + 0.4f, 0.15f, 3.6f), roof, 1f, false);
+                    slope.transform.localRotation = Quaternion.Euler(side * -28f, 0f, 0f);
+                }
+                // A porch light by the back door, so the house reads against the sky.
+                var porch = new GameObject("PorchLight").AddComponent<Light>();
+                porch.transform.SetParent(root, false);
+                porch.transform.localPosition = new Vector3(x + width * 0.3f, 2.4f, z - 3.4f);
+                porch.type = LightType.Point;
+                porch.range = 7f;
+                porch.intensity = 6f;
+                porch.color = new Color(1f, 0.75f, 0.45f);
+                porch.shadows = LightShadows.None;
+                BuildKit.Box("PorchLamp", root, new Vector3(x + width * 0.3f, 2.4f, z - 3.06f), new Vector3(0.14f, 0.2f, 0.08f), lit, 1f, false);
+                for (int w = 0; w < 3; w++)
+                {
+                    float wx = x - width * 0.33f + w * width * 0.33f;
+                    bool on = random.NextDouble() < 0.35;
+                    GameObject window = BuildKit.Box("HouseWindow", root, new Vector3(wx, height * 0.55f, z - 3.02f), new Vector3(1f, 1.1f, 0.04f), on ? lit : dark, 1f, false);
+                    if (!on && !tvPlaced && random.NextDouble() < 0.5)
+                    {
+                        tvPlaced = true;
+                        window.AddComponent<TvGlow>();
+                    }
+                }
+            }
+
+            // The sky behind it all: low clouds lit by the town, flashing with the lightning.
+            Texture2D skyTexture = BuildKit.SignTexture("sky_night");
+            if (skyTexture != null)
+            {
+                Material sky = BuildKit.Unlit(skyTexture, new Color(3.2f, 3.2f, 3.5f));
+                GameObject backdrop = BuildKit.Quad("Sky", root, new Vector3(0f, 12f, fenceZ + 20f), new Vector2(110f, 30f), 180f, sky);
+                var storm = backdrop.AddComponent<Lightning>();
+                storm.Set(sky, assets != null ? assets.Thunder : null);
+            }
+
+            // Rain over the lot, always falling (seen through the windows).
+            var rainObject = new GameObject("LotRain");
+            rainObject.transform.SetParent(root, false);
+            rainObject.transform.localPosition = new Vector3(0f, 9f, lotSouth + 7f);
+            rainObject.transform.localRotation = Quaternion.Euler(95f, 10f, 0f);
+            var lotRain = rainObject.AddComponent<ParticleSystem>();
+            lotRain.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            ParticleSystem.MainModule main = lotRain.main;
+            main.loop = true;
+            main.startLifetime = 0.7f;
+            main.startSpeed = 16f;
+            main.startSize = 0.025f;
+            main.startColor = new Color(0.7f, 0.75f, 0.85f, 0.35f);
+            main.maxParticles = 2500;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.prewarm = true;
+            ParticleSystem.EmissionModule emission = lotRain.emission;
+            emission.rateOverTime = 2200f;
+            ParticleSystem.ShapeModule shape = lotRain.shape;
+            shape.shapeType = ParticleSystemShapeType.Box;
+            shape.scale = new Vector3(EastX - WestX, 14f, 0.5f);
+            var rainRenderer = lotRain.GetComponent<ParticleSystemRenderer>();
+            rainRenderer.renderMode = ParticleSystemRenderMode.Stretch;
+            rainRenderer.lengthScale = 6f;
+            rainRenderer.velocityScale = 0.02f;
+            rainRenderer.sharedMaterial = BuildKit.Additive("rainStreak", ProceduralTextures.Disc(16), new Color(0.65f, 0.7f, 0.8f, 0.5f));
+            lotRain.Play();
+        }
+
+        /// <summary>A green steel dumpster, lids half open, on four casters.</summary>
+        private static void Dumpster(Transform root, Vector3 position, float yaw)
+        {
+            Material dumpster = BuildKit.Pbr("metal_green", new Color(0.75f, 0.85f, 0.75f)) ?? BuildKit.Plain("dumpster", new Color(0.12f, 0.25f, 0.15f), 0.4f, 0.5f);
+            Material rubber = BuildKit.Plain("rubber", new Color(0.03f, 0.03f, 0.03f), 0.3f);
+            var bin = new GameObject("Dumpster").transform;
+            bin.SetParent(root, false);
+            bin.localPosition = position;
+            bin.localRotation = Quaternion.Euler(0f, yaw, 0f);
+            BuildKit.Box("Body", bin, new Vector3(0f, 0.7f, 0f), new Vector3(1.1f, 1.1f, 1.9f), dumpster);
+            BuildKit.Box("Rim", bin, new Vector3(0f, 1.27f, 0f), new Vector3(1.16f, 0.06f, 1.96f), dumpster, 1f, false);
+            for (int i = 0; i < 2; i++)
+            {
+                var lid = BuildKit.Box("Lid", bin, new Vector3(-0.05f, 1.32f + i * 0.08f, -0.47f + i * 0.95f), new Vector3(1.2f, 0.04f, 0.95f), BuildKit.Plain("lidBlack", new Color(0.05f, 0.05f, 0.05f), 0.4f), 1f, false);
+                lid.transform.localRotation = Quaternion.Euler(0f, 0f, i == 0 ? 4f : -22f);
+            }
+            foreach (Vector3 wheel in new[] { new Vector3(-0.4f, 0.08f, -0.8f), new Vector3(0.4f, 0.08f, -0.8f), new Vector3(-0.4f, 0.08f, 0.8f), new Vector3(0.4f, 0.08f, 0.8f) })
+            {
+                BuildKit.Cylinder("Wheel", bin, wheel, 0.16f, 0.06f, rubber).transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
             }
         }
 
@@ -750,6 +981,79 @@ namespace NightShift.Game
                 nextStutter = Time.time + Random.Range(5f, 15f);
             }
             lamp.intensity = Time.time < stutterUntil && Random.value < 0.5f ? baseIntensity * 0.25f : baseIntensity;
+        }
+    }
+
+    /// <summary>A window lit by a television: cold blue, changing every moment.</summary>
+    public class TvGlow : MonoBehaviour
+    {
+        private Material screen;
+        private float next;
+
+        private void Start()
+        {
+            Renderer renderer = GetComponent<Renderer>();
+            screen = BuildKit.Glow("tvWindow", new Color(0.4f, 0.55f, 1f), 1f);
+            screen = new Material(screen);
+            renderer.sharedMaterial = screen;
+        }
+
+        private void Update()
+        {
+            if (Time.time < next)
+            {
+                return;
+            }
+            next = Time.time + Random.Range(0.08f, 0.5f);
+            screen.SetColor("_EmissionColor", new Color(0.35f, 0.5f, 1f) * Random.Range(0.2f, 1.1f));
+        }
+    }
+
+    /// <summary>
+    /// Lightning now and then: the sky flashes twice, and the thunder comes a moment later, from
+    /// far away (it is heard inside the building).
+    /// </summary>
+    public class Lightning : MonoBehaviour
+    {
+        private Material sky;
+        private AudioClip thunder;
+        private Color baseColor;
+        private float nextStrike;
+        private float flashAt = -10f;
+
+        public void Set(Material material, AudioClip clip)
+        {
+            sky = material;
+            thunder = clip;
+            baseColor = material.GetColor("_BaseColor");
+            nextStrike = Time.time + Random.Range(15f, 35f);
+        }
+
+        private void Update()
+        {
+            if (sky == null)
+            {
+                return;
+            }
+            if (Time.time >= nextStrike)
+            {
+                flashAt = Time.time;
+                nextStrike = Time.time + Random.Range(25f, 60f);
+                if (thunder != null)
+                {
+                    StartCoroutine(Thunder(Random.Range(0.8f, 2.5f)));
+                }
+            }
+            float t = Time.time - flashAt;
+            // Two quick flashes, then the afterglow.
+            float flash = t < 0.08f ? 1f : t < 0.16f ? 0.2f : t < 0.26f ? 0.8f : Mathf.Max(0f, 0.3f - (t - 0.26f));
+            sky.SetColor("_BaseColor", baseColor * (1f + flash * 4f));
+        }
+
+        private System.Collections.IEnumerator Thunder(float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            AudioSource.PlayClipAtPoint(thunder, transform.position, 0.8f);
         }
     }
 }

@@ -340,6 +340,7 @@ namespace NightShift.Game
             up[i] = !up[i];
             director.Player.MakeNoise(2);
             director.Audio.PlayAt(director.Assets.LockerDoor, transform.position, 0.3f, up[i] ? 2.4f : 2f);
+            director.Player.Jolt(0.25f);
             if (!up[i])
             {
                 sparks.transform.localPosition = toggles[i].localPosition + new Vector3(0f, 0f, 0.05f);
@@ -358,6 +359,8 @@ namespace NightShift.Game
             handleShown = 1f;
             sparks.transform.localPosition = handle.localPosition + new Vector3(0f, 0.1f, 0.05f);
             sparks.Emit(40);
+            director.Player.Jolt(1.2f);
+            director.Audio.PlayAt(GameAudio.Clunk(), transform.position, 1f, 0.7f);
             director.OnBreakerRestored(this);
             yield return new WaitForSeconds(0.6f);
             if (director.Player.Focus == (IFocusTask)this)
@@ -411,13 +414,14 @@ namespace NightShift.Game
     }
 
     /// <summary>
-    /// The staff keycard (night 4 on), on a pedestal in the veranda under its own spotlight, so it
-    /// is the one thing that stands out in the room. E takes it.
+    /// The staff keycard (night 4 on), in a glass case on a wooden plinth in the veranda, under its
+    /// own spotlight, so it is the one thing that stands out in the room. E lifts the lid and takes it.
     /// </summary>
     public class KeycardPedestal : MonoBehaviour, IInteractable
     {
         private HuntDirector director;
         private Transform card;
+        private Transform lid;
         private Light spot;
         private bool taking;
 
@@ -434,18 +438,41 @@ namespace NightShift.Game
             pedestal.director = director;
             Material velvet = BuildKit.Pbr("velvet", new Color(0.55f, 0.08f, 0.12f)) ?? BuildKit.Plain("pedestalRed", new Color(0.4f, 0.05f, 0.08f), 0.2f);
             Material brass = BuildKit.Plain("brass", new Color(0.62f, 0.48f, 0.24f), 0.75f, 1f);
-            BuildKit.Cylinder("Base", t, new Vector3(0f, 0.03f, 0f), 0.5f, 0.06f, brass);
-            BuildKit.Cylinder("Column", t, new Vector3(0f, 0.5f, 0f), 0.3f, 0.9f, velvet);
-            BuildKit.Cylinder("Top", t, new Vector3(0f, 0.97f, 0f), 0.44f, 0.04f, brass);
-            // A slanted stand, the card on it facing whoever walks in.
-            var stand = BuildKit.Box("Stand", t, new Vector3(0f, 1.03f, 0.02f), new Vector3(0.16f, 0.008f, 0.11f), BuildKit.Plain("standBlack", new Color(0.04f, 0.04f, 0.04f), 0.5f), 1f, false);
+            Material wood = BuildKit.Pbr("stage_wood", new Color(0.35f, 0.22f, 0.16f)) ?? BuildKit.Plain("plinthWood", new Color(0.2f, 0.12f, 0.08f), 0.4f);
+            Material glass = BuildKit.Decal("windowGlass", Texture2D.whiteTexture, new Color(0.55f, 0.62f, 0.7f, 0.12f));
+            // A wooden plinth with brass trim, like the prize stands at the ticket counter.
+            BuildKit.Box("Base", t, new Vector3(0f, 0.04f, 0f), new Vector3(0.58f, 0.08f, 0.5f), wood);
+            BuildKit.Box("Column", t, new Vector3(0f, 0.52f, 0f), new Vector3(0.46f, 0.9f, 0.38f), wood);
+            BuildKit.Box("TrimLow", t, new Vector3(0f, 0.1f, 0f), new Vector3(0.48f, 0.03f, 0.4f), brass, 1f, false);
+            BuildKit.Box("TrimHigh", t, new Vector3(0f, 0.94f, 0f), new Vector3(0.48f, 0.03f, 0.4f), brass, 1f, false);
+            BuildKit.Box("Top", t, new Vector3(0f, 0.98f, 0f), new Vector3(0.54f, 0.04f, 0.46f), wood, 1f, false);
+            BuildKit.Box("Plaque", t, new Vector3(0f, 0.72f, 0.195f), new Vector3(0.22f, 0.07f, 0.008f), brass, 1f, false);
+            // A velvet cushion, the card leaning on it.
+            BuildKit.Box("Cushion", t, new Vector3(0f, 1.02f, 0f), new Vector3(0.26f, 0.04f, 0.2f), velvet, 1f, false);
+            var stand = BuildKit.Box("Stand", t, new Vector3(0f, 1.06f, 0f), new Vector3(0.14f, 0.008f, 0.1f), BuildKit.Plain("standBlack", new Color(0.04f, 0.04f, 0.04f), 0.5f), 1f, false);
             stand.transform.localRotation = Quaternion.Euler(-30f, 0f, 0f);
             pedestal.card = new GameObject("Keycard").transform;
             pedestal.card.SetParent(t, false);
-            pedestal.card.localPosition = new Vector3(0f, 1.045f, 0.025f);
+            pedestal.card.localPosition = new Vector3(0f, 1.075f, 0.005f);
             pedestal.card.localRotation = Quaternion.Euler(-30f, 0f, 0f) * Quaternion.Euler(-90f, 0f, 0f);
-            BuildKit.Box("CardBody", pedestal.card, Vector3.zero, new Vector3(0.12f, 0.076f, 0.004f), BuildKit.Plain("cardWhite", new Color(0.75f, 0.76f, 0.78f), 0.25f), 1f, false);
+            BuildKit.Box("CardBody", pedestal.card, Vector3.zero, new Vector3(0.12f, 0.076f, 0.004f), BuildKit.Plain("cardWhite", new Color(0.55f, 0.56f, 0.58f), 0.25f), 1f, false);
             BuildKit.Quad("CardFace", pedestal.card, new Vector3(0f, 0f, 0.0025f), new Vector2(0.12f, 0.076f), 0f, TaskKit.Label("label_keycard", new Color(0.3f, 0.5f, 0.9f)));
+            // The glass case over it, brass posts at the corners; its lid lifts on a hinge at the back.
+            const float caseY = 1.0f, caseH = 0.24f, halfX = 0.16f, halfZ = 0.13f;
+            BuildKit.Box("GlassFront", t, new Vector3(0f, caseY + caseH * 0.5f, halfZ), new Vector3(halfX * 2f, caseH, 0.004f), glass, 1f, false);
+            BuildKit.Box("GlassBack", t, new Vector3(0f, caseY + caseH * 0.5f, -halfZ), new Vector3(halfX * 2f, caseH, 0.004f), glass, 1f, false);
+            BuildKit.Box("GlassLeft", t, new Vector3(-halfX, caseY + caseH * 0.5f, 0f), new Vector3(0.004f, caseH, halfZ * 2f), glass, 1f, false);
+            BuildKit.Box("GlassRight", t, new Vector3(halfX, caseY + caseH * 0.5f, 0f), new Vector3(0.004f, caseH, halfZ * 2f), glass, 1f, false);
+            foreach (Vector2 corner in new[] { new Vector2(-halfX, -halfZ), new Vector2(halfX, -halfZ), new Vector2(-halfX, halfZ), new Vector2(halfX, halfZ) })
+            {
+                BuildKit.Box("Post", t, new Vector3(corner.x, caseY + caseH * 0.5f, corner.y), new Vector3(0.014f, caseH, 0.014f), brass, 1f, false);
+            }
+            pedestal.lid = new GameObject("LidHinge").transform;
+            pedestal.lid.SetParent(t, false);
+            pedestal.lid.localPosition = new Vector3(0f, caseY + caseH, -halfZ);
+            BuildKit.Box("Lid", pedestal.lid, new Vector3(0f, 0.004f, halfZ), new Vector3(halfX * 2f + 0.01f, 0.006f, halfZ * 2f + 0.01f), glass, 1f, false);
+            BuildKit.Box("LidFrame", pedestal.lid, new Vector3(0f, 0.006f, halfZ * 2f), new Vector3(halfX * 2f + 0.02f, 0.012f, 0.012f), brass, 1f, false);
+            BuildKit.Box("LidKnob", pedestal.lid, new Vector3(0f, 0.016f, halfZ * 2f - 0.01f), new Vector3(0.03f, 0.012f, 0.012f), brass, 1f, false);
             var trigger = go.AddComponent<CapsuleCollider>();
             trigger.center = new Vector3(0f, 0.6f, 0f);
             trigger.height = 1.2f;
@@ -456,10 +483,10 @@ namespace NightShift.Game
             pedestal.spot.transform.localPosition = new Vector3(0f, 3.2f, 0f);
             pedestal.spot.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
             pedestal.spot.type = LightType.Spot;
-            pedestal.spot.spotAngle = 28f;
-            pedestal.spot.innerSpotAngle = 12f;
+            pedestal.spot.spotAngle = 30f;
+            pedestal.spot.innerSpotAngle = 14f;
             pedestal.spot.range = 5f;
-            pedestal.spot.intensity = 9f;
+            pedestal.spot.intensity = 5f;
             pedestal.spot.color = new Color(1f, 0.92f, 0.78f);
             pedestal.spot.shadows = LightShadows.Soft;
             BuildKit.Cylinder("SpotFixture", t, new Vector3(0f, 3.3f, 0f), 0.18f, 0.16f, BuildKit.Plain("fixtureBlack", new Color(0.05f, 0.05f, 0.05f), 0.4f));
@@ -471,6 +498,7 @@ namespace NightShift.Game
             StopAllCoroutines();
             taking = false;
             card.gameObject.SetActive(needed);
+            lid.localRotation = Quaternion.identity;
             spot.enabled = needed;
         }
 
@@ -496,6 +524,16 @@ namespace NightShift.Game
 
         private IEnumerator Take(PlayerController player)
         {
+            // The lid swings back on its hinge, then the hand takes the card.
+            director.Audio.PlayAt(director.Assets.LockerDoor, transform.position, 0.25f, 2.6f);
+            for (float t = 0f; t < 0.35f; t += Time.deltaTime)
+            {
+                float k = TaskKit.Ease(t / 0.35f);
+                lid.localRotation = Quaternion.Euler(-100f * k, 0f, 0f);
+                player.LookToward(card.position, 6f);
+                yield return null;
+            }
+            lid.localRotation = Quaternion.Euler(-100f, 0f, 0f);
             yield return TaskKit.Pocket(player, card, 0.5f, Quaternion.Euler(0f, 180f, 0f));
             spot.enabled = false;
             taking = false;

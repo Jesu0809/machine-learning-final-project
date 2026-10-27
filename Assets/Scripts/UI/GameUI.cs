@@ -395,7 +395,7 @@ namespace NightShift.UI
             UiKit.Panel("Side", m, Vector2.zero, new Vector2(0.4f, 1f), new Color(0f, 0f, 0f, 0.72f));
 
             UiKit.Label("Title", m, "NIGHT SHIFT", 150, Palette.Ink, TextAnchor.LowerLeft, new Vector2(0.05f, 0.76f), new Vector2(0.6f, 0.93f));
-            UiKit.Label("Subtitle", m, "Freddy has learned to hunt. Find the fuses. Get out.", 36, Palette.Accent,
+            UiKit.Label("Subtitle", m, "Freddy has learned to hunt. Power the sockets. Get out.", 36, Palette.Accent,
                         TextAnchor.UpperLeft, new Vector2(0.05f, 0.69f), new Vector2(0.4f, 0.76f));
 
             float top = 0.63f;
