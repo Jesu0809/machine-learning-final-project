@@ -2,7 +2,7 @@
 
 The weights are the same network the game uses (exported from the .onnx model by
 training/scripts/export_policy_weights.py). The observation vector is built exactly like
-FreddyObservations.cs (64 values) and the legal actions like FreddyActions.cs (15 actions), so the
+FreddyObservations.cs (74 values) and the legal actions like FreddyActions.cs (17 actions), so the
 probabilities shown on the website are the ones the game's Freddy would have in that situation.
 """
 import os
@@ -13,28 +13,32 @@ import numpy as np
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 WEIGHTS_FILE = os.path.join(DATA_DIR, "FreddyPolicy.bytes")
 
-# The map of HuntMap.cs: one floor in two wings (staff wing west, public wing east).
+# The map of HuntMap.cs: a staff wing (west) and a public wing (east), joined only through the
+# north wing (Banquet Room and Veranda).
 ROOMS = [
     "Office", "Parts & Service", "Restrooms", "Back Hall", "Storage", "Kitchen",
-    "Dining Hall", "Main Hall", "Party Room", "Arcade", "Exit Lobby",
+    "Dining Hall", "Main Hall", "Party Room", "Arcade", "Exit Lobby", "Banquet Room", "Veranda",
 ]
 NEIGHBORS = [
     [1, 3],              # Office
     [0, 3],              # Parts & Service
     [3],                 # Restrooms
-    [0, 1, 2, 5, 7],     # Back Hall
+    [0, 1, 2, 5],        # Back Hall
     [5],                 # Storage
-    [3, 4, 6],           # Kitchen
-    [5, 9],              # Dining Hall
-    [3, 8, 9],           # Main Hall
+    [3, 4, 11],          # Kitchen
+    [9],                 # Dining Hall
+    [8, 9],              # Main Hall
     [7, 10],             # Party Room
-    [6, 7],              # Arcade
+    [6, 7, 12],          # Arcade
     [8],                 # Exit Lobby
+    [5, 12],             # Banquet Room
+    [11, 9],             # Veranda
 ]
 SPOT_NAMES = [
     ["locker", "table"], ["locker", "cabinet"], ["locker", "cabinet"], ["locker"],
     ["locker", "cabinet A", "cabinet B"], ["locker", "cabinet", "table"], ["locker", "table A", "table B"],
     ["locker"], ["locker", "table"], ["locker", "cabinet"], ["locker"],
+    ["table A", "table B", "table C"], ["table A", "table B"],
 ]
 SPOTS = [len(names) for names in SPOT_NAMES]
 ROOM_COUNT = len(ROOMS)
@@ -51,7 +55,7 @@ LAST_SEEN = 2 * R
 SINCE_SEEN = 3 * R
 VISITED = 3 * R + 1
 SEEN_NOW = 4 * R + 1
-FUSES_INDEX = 4 * R + 2
+OBJECTIVES_INDEX = 4 * R + 2
 PROGRESS = 4 * R + 3
 SEARCHED = 4 * R + 4
 SENSE_READY = SEARCHED + MAX_SPOTS
@@ -62,7 +66,6 @@ SINCE_SENSED = SENSED + R
 MEMORY_WINDOW = 60
 SENSE_COOLDOWN = 30
 MAX_TICKS = 240
-FUSES = 3
 SECONDS_PER_DECISION = 3.5
 
 
@@ -84,7 +87,7 @@ _LAYERS = _load_layers() if os.path.isfile(WEIGHTS_FILE) else None
 
 
 def network_info():
-    """Sizes of the network layers, e.g. [64, 256, 256, 15]."""
+    """Sizes of the network layers, e.g. [74, 256, 256, 17]."""
     if _LAYERS is None:
         return []
     return [int(_LAYERS[0][0].shape[1])] + [int(weights.shape[0]) for weights, _ in _LAYERS]
@@ -100,7 +103,7 @@ def action_name(action, room):
 
 
 def observations(state):
-    """The 64 inputs, as FreddyObservations.cs builds them, from a description of what Freddy knows."""
+    """The 74 inputs, as FreddyObservations.cs builds them, from a description of what Freddy knows."""
     obs = np.zeros(OBS_SIZE, dtype=np.float64)
     room = int(state.get("freddy_room", FREDDY_START))
     obs[room] = 1.0
@@ -116,7 +119,13 @@ def observations(state):
     for r in range(ROOM_COUNT):
         obs[VISITED + r] = 0.0 if r == room else (1.0 if r in unchecked else 0.15)
     obs[SEEN_NOW] = 1.0 if state.get("sees_player") else 0.0
-    obs[FUSES_INDEX] = min(1.0, float(state.get("fuses", 0)) / FUSES)
+    # Share of tonight's objectives done (cells, breakers, keycard, tape); "fuses" (0-3) is still
+    # accepted from older clients and read as the three power cells.
+    if "objectives" in state:
+        done = float(state.get("objectives", 0))
+    else:
+        done = float(state.get("fuses", 0)) / 3.0
+    obs[OBJECTIVES_INDEX] = min(1.0, max(0.0, done))
     obs[PROGRESS] = min(1.0, max(0.0, float(state.get("night_progress", 0.1))))
     for spot in state.get("searched_here", []):
         if 0 <= int(spot) < MAX_SPOTS:

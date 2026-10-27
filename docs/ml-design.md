@@ -15,7 +15,7 @@ the alien in *Alien: Isolation* (a "director" that decides and a body that execu
 | **Brain** | Decides *where to go* and *which hiding spot to search*, from what Freddy has heard and seen | PPO policy trained with ML-Agents, run in the game as an `.onnx` model |
 | **Body** | Walks to the chosen room, plays the animations, looks and listens in 3D | Unity NavMesh, Animator, raycasts (no learning) |
 
-The brain is trained on an abstract version of the pizzeria: a graph of 11 rooms with hiding spots.
+The brain is trained on an abstract version of the pizzeria: a graph of 13 rooms with hiding spots.
 This makes training fast (millions of decisions in minutes) and the decisions readable for the
 report. In the 3D game the body turns each decision into movement and reports back what Freddy
 perceives.
@@ -25,8 +25,8 @@ perceives.
 | Element | Definition |
 |---|---|
 | Agent | Freddy's brain |
-| Environment | Room graph, hiding spots, fuses, exit and the player (a human when playing, `SurvivorBot` during training) |
-| State | Freddy's room, noise memory, last sighting, time since each room was visited, fuses, time (section 5) |
+| Environment | Room graph, hiding spots, power cells and sockets, the night's other objectives, exit and the player (a human when playing, `SurvivorBot` during training) |
+| State | Freddy's room, noise memory, last sighting, time since each room was visited, objectives done, time (section 5) |
 | Action | Go to a neighboring room, stay and listen, or search a hiding spot (section 4) |
 | Time step | One Freddy decision per tick (`DecisionIntervalSeconds` = 3.5 s in the 3D game) |
 | Episode | One night |
@@ -39,49 +39,64 @@ infer.
 
 ### Room graph
 
-One floor in two wings (since `freddy_v5`; v1–v3 used a 3 × 3 grid of 9 rooms, v4 two floors of 14):
+Three wings since `freddy_v7` (v1–v3 used a 3 × 3 grid of 9 rooms, v4 two floors of 14, v5–v6
+two wings of 11). The staff wing and the public wing no longer touch: the only way between them is
+the north wing, two dining rooms with windows onto the back lot.
 
 ```
-  STAFF WING                                PUBLIC WING
-  Storage ── Kitchen ═════════════════════ DiningHall (stage) ── Arcade
-     │          │                              │                   ║
-  ══ BackHall ══╪═══════════ door ═════════ MainHall ═══════════════╝
-     ║       │       │                         │
-  Office ─ Parts  Restrooms                PartyRoom ────────── ExitLobby
+           NORTH WING
+           Banquet Room ════════════════ Veranda
+              ║                             │
+  STAFF WING  ║                             │        PUBLIC WING
+  Storage ── Kitchen                     Arcade ── DiningHall (stage)
+                │                         ║   
+  ══ BackHall ══╛                      MainHall
+     ║   │    │                           │
+  Office─Parts Restrooms              PartyRoom ────────── ExitLobby
 ```
 
 `═` / `║` mark long connections: walking them takes **two decisions** (`HuntMap.Cost`): Office–Back
-Hall, Back Hall–Main Hall, Kitchen–Dining Hall and Main Hall–Arcade. Every other connection takes one.
+Hall, Main Hall–Arcade, Kitchen–Banquet Room and Banquet Room–Veranda. Every other connection takes one.
 
 | Room | Hiding spots | Notes |
 |---|---|---|
-| Office | 2 | Player start (security office) |
-| Parts & Service | 2 | |
+| Office | 2 | Player start (security office); the card reader |
+| Parts & Service | 2 | Yellow power socket |
 | Restrooms | 2 | |
 | Back Hall | 1 | Staff hall |
-| Storage | 3 | Loading door: one of the two exits |
+| Storage | 3 | Loading door (one of the two exits); the breaker box |
 | Kitchen | 3 | |
 | Dining Hall | 3 | Freddy start (on the stage) |
 | Main Hall | 1 | Public hall |
-| Party Room | 2 | The only way into the Exit Lobby |
+| Party Room | 2 | Green power socket; the only way into the Exit Lobby |
 | Arcade | 2 | |
-| Exit Lobby | 1 | Front doors: one of the two exits |
+| Exit Lobby | 1 | Front doors (one of the two exits); the tape box |
+| Banquet Room | 3 | Blue power socket; tables only |
+| Veranda | 2 | The keycard; tables only |
 
-Spot 0 is always a locker; the others are cabinets or places under tables. The map diameter is 5
-moves. **Air ducts** join Office–Storage, Restrooms–Party Room, Kitchen–Arcade and Parts–Dining
-Hall: only the player fits (4 actions to crawl through), and nobody sees into them.
+Spot 0 is a locker in the first eleven rooms; the others are cabinets or places under tables. The
+map diameter is 8 moves. **Air ducts** join Office–Storage, Restrooms–Party Room, Kitchen–Arcade
+and Parts–Dining Hall: only the player fits (4 actions to crawl through), and nobody sees into them.
 
 **Two exits (`freddy_v6`).** Each night the way out is the front doors in the Exit Lobby or the
 loading door in the Storage, chosen at random (`HuntSettings.RandomExit`). The player knows which
 (the objective list says it); Freddy does not observe it, so he cannot camp one door and has to
-hunt by sound (working an exit panel is the loudest noise in the game).
+hunt by sound (pulling the exit lever is the loudest noise in the game).
+
+**Objectives per night (`freddy_v7`).** The player has to power three sockets with power cells,
+carried one at a time from shelves in other rooms (night 1: three yellow cells that fit any socket;
+from night 2 each cell fits only the socket of its color). Night 3 adds resetting the breakers in
+the Storage, night 4 taking the keycard from the Veranda and swiping it in the Office (a swipe can
+fail and has to be repeated), night 5 opening the tape box in the Exit Lobby with a keypad (a wrong
+key makes noise). Every step makes noise. When all are done the lever at tonight's exit opens it.
+Training draws the night at random (`HuntSettings.RandomNight`), so the brain sees all five.
 
 ### Episode termination
 
 | Outcome | When |
 |---|---|
 | `Caught` | Freddy finds the player (section 3) |
-| `Escaped` | The player finishes the work on tonight's exit panel with all 3 fuses |
+| `Escaped` | The player has done tonight's objectives and pulls the lever at tonight's exit |
 | `TimeUp` | `MaxTicks` = 240 decisions (about 10 minutes) pass with the player still inside |
 
 ## 3. Rules of a hunt
@@ -103,12 +118,14 @@ the first 6 ticks (`FreddyWakeTicks`), so the player can get going.
 | Walk | Moves to a neighboring room in 2 actions | 1 |
 | Run | Moves to a neighboring room in 1 action | 2 |
 | Hide | Enters a hiding spot of the current room | 0 |
-| Pick fuse | Takes the fuse in the room | 2 |
-| Work exit | One of 6 actions on tonight's exit panel (progress is kept if the player leaves) | 3 |
+| Pick cell | Takes the power cell in the room (one carried at a time) | 2 |
+| Insert cell | Puts the carried cell in this room's socket, if it fits | 2 |
+| Work | One action on the breakers (4), the keycard (take, then swipe: may fail) or the tape keypad (5, a wrong key restarts it) | 2 |
+| Work exit | One of 2 actions on tonight's exit lever, once every objective is done | 3 |
 | Crawl | Moves through an air duct to the room at its other end in 4 actions | 0 |
 
-Three fuses are placed in random rooms with a fuse shelf at the start of each night, never in the
-Office, the Exit Lobby or tonight's exit.
+Three power cells are placed on cell shelves at the start of each night, never in a socket room or
+tonight's exit, and at least two rooms from the socket they fit.
 
 ### What Freddy perceives
 
@@ -127,14 +144,14 @@ Office, the Exit Lobby or tonight's exit.
 
 ## 4. Actions
 
-One discrete branch with R + 4 actions, R = number of rooms: 15 since `freddy_v5` (13 in v3, 18 in
-v4; "sense" was added in `freddy_v3`):
+One discrete branch with R + 4 actions, R = number of rooms: 17 since `freddy_v7` (13 in v3, 18 in
+v4, 15 in v5–v6; "sense" was added in `freddy_v3`):
 
 | Index | Action |
 |---|---|
-| 0–10 | Go to room *i* (if *i* is Freddy's room: stay and listen) |
-| 11, 12, 13 | Search hiding spot 0, 1 or 2 of the current room |
-| 14 | **Sense**: if the player's fear is at least 0.5, reveals their room. Then it recharges for 30 decisions (about 1 min 45 s) |
+| 0–12 | Go to room *i* (if *i* is Freddy's room: stay and listen) |
+| 13, 14, 15 | Search hiding spot 0, 1 or 2 of the current room |
+| 16 | **Sense**: if the player's fear is at least 0.5, reveals their room. Then it recharges for 30 decisions (about 1 min 45 s) |
 
 ### Sense and fear (from *Friday the 13th*)
 
@@ -149,28 +166,28 @@ it is something the network has to learn.
 
 Moves to rooms that are not connected and searches of spots that do not exist are masked, so the
 policy only chooses among legal actions (Huang & Ontañón, 2022). For example, in the Main Hall the
-legal actions are: stay, go to Back Hall, Party Room or Arcade, search spot 0, and sense if it has
+legal actions are: stay, go to the Party Room or the Arcade, search spot 0, and sense if it has
 recharged.
 
 ## 5. Observations
 
-5R + 9 values (64 since `freddy_v5`; 43 in v1–v2, 54 in v3, 79 in v4), all in [0, 1], built only
+5R + 9 values (74 since `freddy_v7`; 43 in v1–v2, 54 in v3, 79 in v4, 64 in v5–v6), all in [0, 1], built only
 from what Freddy knows (`FreddyObservations.cs`):
 
 | Index | Observation |
 |---|---|
-| 0–10 | Freddy's room, one-hot |
-| 11–21 | Noise memory per room (heard noise level / 3, fades ×0.8 per tick) |
-| 22–32 | Room where the player was last seen, one-hot (zeros if never seen) |
-| 33 | Ticks since the player was seen / 60 |
-| 34–44 | Ticks since Freddy visited each room / 60 |
-| 45 | Player seen this tick |
-| 46 | Fuses collected / 3 (the generators light up the map, so Freddy knows) |
-| 47 | Night progress (tick / 240) |
-| 48–50 | Hiding spots of the current room already searched since arriving |
-| 51 | Sense readiness (1 = ready, 0 right after using it) |
-| 52–62 | Room where sense last found the player, one-hot |
-| 63 | Decisions since that / 60 |
+| 0–12 | Freddy's room, one-hot |
+| 13–25 | Noise memory per room (heard noise level / 3, fades ×0.8 per tick) |
+| 26–38 | Room where the player was last seen, one-hot (zeros if never seen) |
+| 39 | Ticks since the player was seen / 60 |
+| 40–52 | Ticks since Freddy visited each room / 60 |
+| 53 | Player seen this tick |
+| 54 | Share of tonight's objectives done (the sockets light up the building, so Freddy knows) |
+| 55 | Night progress (tick / 240) |
+| 56–58 | Hiding spots of the current room already searched since arriving |
+| 59 | Sense readiness (1 = ready, 0 right after using it) |
+| 60–72 | Room where sense last found the player, one-hot |
+| 73 | Decisions since that / 60 |
 
 Tonight's exit is **not** an input: Freddy has to find it out from the noise of the panel.
 
@@ -208,7 +225,7 @@ player in the 3D game:
 2. If Freddy is next to it: it hides (chance `HideChance`), choosing the locker with chance
    `Spot0Preference`. After a loud action or in a room with a single spot it runs away first.
 3. If Freddy is 2 rooms away it waits in silence for a while (`Patience`).
-4. Otherwise it walks (or runs, chance `RunChance`) to the nearest fuse and then to the exit,
+4. Otherwise it walks (or runs, chance `RunChance`) to the nearest useful room (a cell, its socket, tonight's task) and then to the exit,
    never stepping into Freddy's last known room, and not next to it until it has waited
    `MaxWaitActions` actions (then it risks it: people do not freeze forever).
 
@@ -245,7 +262,7 @@ better than random but far from perfect, which leaves room for the trained polic
 
 1. Every `DecisionIntervalSeconds / 2` it measures the real player: the room under their feet,
    whether they hide and in which spot, and the loudest noise since the last measurement
-   (crouching 0, walking 1, running, picking up a fuse or gasping 2, the exit panel 3). This goes
+   (crouching 0, walking 1, running, a cell, a socket, a breaker, a bad swipe or a wrong key 2, the exit lever 3). This goes
    into `HuntState.ObservePlayer`, so Freddy hears with exactly the training rules.
 2. When the body has finished its action, it puts the brain in the body's real room and asks the
    policy for the next action (the `.onnx` model through ML-Agents with `BehaviorType.InferenceOnly`).
@@ -272,8 +289,8 @@ player collider.
 Inspired by *Friday the 13th: The Game*, the 3D player has **stamina** (a full sprint lasts about
 4.5 s; empty, they are winded and pant) and **fear** (rises when Freddy is near or sees them; it
 drains stamina faster, makes the flashlight sputter and the breathing audible in the room). Freddy's
-body gets a **rage** bonus as the player progresses: +10% walking and +6% chasing speed per fuse,
-and once more when the exit panel starts working. When the brain chooses to stay in a room, or
+body gets a **rage** bonus as the player progresses: +10% walking and +6% chasing speed per objective
+step (3 × the share done), and once more when the lever is pulled. When the brain chooses to stay in a room, or
 sends him to a new one, the body walks to one of the room's hiding spots or its middle at random,
 so he also covers the corners. None of this changes what the brain observes or decides; it changes
 how its decisions play out in 3D, and the panting feeds its hearing like any other noise.
@@ -321,8 +338,8 @@ acts with the `.onnx` model through ML-Agents; the probe is only for display.
 
 ML-Agents trains **offline**. The exported model is frozen inside the game and **does not learn
 during a match**. What it can learn during training is a general strategy against many survivors:
-for example to go where it heard a noise and search the right spots, to check the rooms near fuses
-and the exit late in the night, and to favor the locker when that is where survivors usually hide.
+for example to go where it heard a noise and search the right spots, to check the socket rooms and
+the exits late in the night, and to favor the locker when that is where survivors usually hide.
 
 The week 4 experiment trains a second model against survivors that **always** choose the locker
 (`Spot0Preference` = 1) and compares which spot each model searches first. This is reinforcement

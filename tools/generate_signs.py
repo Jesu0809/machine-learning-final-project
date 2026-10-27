@@ -1225,6 +1225,49 @@ def keypad_key(number):
     return grime(img, 0.25, 340 + number)
 
 
+def glass_rain():
+    """Rain on a window pane, tiling up and down: beads of water and the trails they leave.
+    White with alpha; the game scrolls it down slowly so the water runs."""
+    w, h = 512, 1024
+    rng = np.random.default_rng(350)
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    for _ in range(90):
+        x = rng.uniform(0, w)
+        y0 = rng.uniform(0, h)
+        length = rng.uniform(80, 420)
+        width = rng.uniform(1.5, 3.5)
+        # A trail wanders a little as it runs down; it is drawn twice when it crosses the bottom.
+        for offset in (0, -h):
+            px, py = x, y0 + offset
+            for k in range(int(length / 6)):
+                nx = px + rng.normal(0, 0.9)
+                ny = py + 6
+                d.line([px, py, nx, ny], fill=(235, 240, 250, int(40 + 30 * rng.random())), width=int(width))
+                px, py = nx, ny
+            d.ellipse([px - width * 1.6, py - width * 2, px + width * 1.6, py + width * 2], fill=(240, 245, 255, 150))
+    for _ in range(700):
+        x, y = rng.uniform(0, w), rng.uniform(0, h)
+        r = rng.uniform(1, 4)
+        for offset in (0, -h, h):
+            d.ellipse([x - r, y + offset - r, x + r, y + offset + r], fill=(240, 245, 255, int(70 + 80 * rng.random())))
+    return img.filter(ImageFilter.GaussianBlur(0.6))
+
+
+def night_sky():
+    """The sky behind the houses: low clouds lit orange by the town from below, a moon behind them."""
+    w, h = 1024, 512
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    t = (yy / h)[..., None]
+    sky = np.array([10, 13, 24], np.float32) * (1 - t) + np.array([44, 34, 36], np.float32) * t
+    clouds = noise((w, h), 90, 360) * 0.6 + noise((w, h), 30, 361) * 0.4
+    sky *= (0.6 + 0.6 * clouds)[..., None]
+    mx, my = 300, 120
+    moon = np.exp(-(((xx - mx) ** 2 + (yy - my) ** 2) / (2 * 90.0 ** 2)))[..., None]
+    sky += moon * np.array([60, 66, 80], np.float32) * (0.5 + 0.5 * clouds[..., None])
+    return Image.fromarray(np.clip(sky, 0, 255).astype(np.uint8))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--project", default=str(ROOT / "unity"), help="Unity project folder")
@@ -1289,6 +1332,8 @@ def main():
     save("label_tape", label_tape())
     save_rgba("decal_tag_reactivate", label_reactivate())
     save_rgba("fence_chainlink", chain_link())
+    save_rgba("glass_rain", glass_rain())
+    save("sky_night", night_sky())
     for i in range(3):
         save(f"window_night_{i}", window_night(i))
     save("pizza_box_top", pizza_box_top())

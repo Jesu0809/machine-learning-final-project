@@ -1,7 +1,8 @@
 # Night Shift
 
 A first-person horror game in an abandoned pizzeria, in the style of *Alien: Isolation*. The player
-collects three fuses, hides in lockers and escapes; **Freddy**, the NPC that hunts them, has a brain
+carries three power cells to their sockets (and from night 3 resets breakers, swipes a keycard and
+opens a tape box), hides in lockers and escapes; **Freddy**, the NPC that hunts them, has a brain
 trained with reinforcement learning using **Unity ML-Agents (PPO)**.
 
 Final project for the Machine Learning course, Universidad de Cundinamarca (Chía).
@@ -10,7 +11,7 @@ Final project for the Machine Learning course, Universidad de Cundinamarca (Chí
 
 - **Freddy's brain (learned):** a PPO policy that decides where to go, when to stop and listen,
   which hiding spot to search and when to use his "sense" (it finds afraid players), from what
-  Freddy heard and saw. It is trained on an abstract version of the pizzeria (a graph of 11 rooms
+  Freddy heard and saw. It is trained on an abstract version of the pizzeria (a graph of 13 rooms
   on one floor, in two wings) against a simulated survivor, and runs in the game as an `.onnx`
   model.
 - **Freddy's body (scripted):** walks to the chosen room, sees with a view cone, chases the player in

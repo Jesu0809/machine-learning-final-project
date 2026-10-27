@@ -212,3 +212,34 @@ After a run:
   against experts grew from 36 to 77 decisions: the hunt lasts longer.
 - **Decision:** keep. `unity/Assets/ML/Models/freddy_v6.onnx` is the game's brain. Possible next
   step: a random player start, so the network cannot rely on where the night begins.
+
+### freddy_v7 — 2026-10-27
+
+- **Changed from previous run:** the new map and the new objectives. Miguel's 13-room layout: the
+  staff and public wings are joined only through the north wing (Banquet Room and Veranda). The
+  three fuses became three power cells carried one at a time to three sockets (Parts & Service,
+  Banquet Room, Party Room), plus the breakers (night 3), the keycard (night 4) and the tape box
+  (night 5); the exit opens with a lever (`ExitWorkTicks` 6 → 2). The night is drawn at random
+  in training (`RandomNight`). Observations 64 → 74, actions 15 → 17; input 54 is now the share of
+  objectives done. Same reward. The training scene is now rebuilt on every build, after the old
+  one turned out to keep stale settings (`ExitWorkTicks` 6).
+- **Config changes:** none (5M steps).
+- **Steps trained / wall time:** 5,000,000 steps in 79 min.
+- **Final mean cumulative reward:** +0.98 (started near 0).
+- **Evaluation (400 nights per cell, catch rate with 95% Wilson interval):**
+
+  | Survivor | Trained | Scripted | Random |
+  |---|---|---|---|
+  | Novice | 100.0 % (99.1–100.0) | 90.0 % (86.7–92.6) | 81.8 % (77.7–85.2) |
+  | Normal | 99.8 % (98.6–100.0) | 74.0 % (69.5–78.1) | 75.8 % (71.3–79.7) |
+  | Expert | 99.0 % (97.5–99.6) | 50.2 % (45.4–55.1) | 55.8 % (50.8–60.5) |
+
+- **Observations:** the trained policy wins every cell with intervals far from the baselines (+10
+  to +49 points over the scripted hunter). It searches 1.6–2.6 spots per night (scripted 5–11) and
+  catches faster against Novice and Normal; against experts nights last 52 decisions on average.
+  The new map helps the hunter: every trip between the wings goes through the north wing, so even
+  the random hunter catches 56–82 % (17–47 % in v6). Part of v7's strength is that bottleneck;
+  the survivor bot also has more work per night (up to seven objectives, each one noisy).
+- **Decision:** keep. `unity/Assets/ML/Models/freddy_v7.onnx` is the game's brain. For players the
+  difficulty is set by the game (Freddy's speed and hearing per night), not by the policy.
+

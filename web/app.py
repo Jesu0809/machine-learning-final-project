@@ -38,7 +38,7 @@ OBSERVATIONS = [
     {"index": _span(freddy_brain.SINCE_SEEN, 1), "name": "Time since he saw the player", "encoding": "decisions / 60"},
     {"index": _span(freddy_brain.VISITED, R), "name": "Time since he checked each room", "encoding": "decisions / 60"},
     {"index": _span(freddy_brain.SEEN_NOW, 1), "name": "Sees the player right now", "encoding": "0 or 1"},
-    {"index": _span(freddy_brain.FUSES_INDEX, 1), "name": "Fuses the player has", "encoding": "fuses / 3"},
+    {"index": _span(freddy_brain.OBJECTIVES_INDEX, 1), "name": "Objectives the player has done", "encoding": "done / total tonight"},
     {"index": _span(freddy_brain.PROGRESS, 1), "name": "Night progress", "encoding": "decision / 240"},
     {"index": _span(freddy_brain.SEARCHED, S), "name": "Hiding spots here already searched", "encoding": "0 or 1 each"},
     {"index": _span(freddy_brain.SENSE_READY, 1), "name": "Sense readiness", "encoding": "1 - cooldown / 30"},
