@@ -600,16 +600,15 @@ namespace NightShift.Game
             director.StartNight(2);
             director.SkipCall();
             yield return new WaitForSeconds(1f);
-            Teleport(new Vector3(9f, 0f, -0.5f), new Vector3(1f, 0f, 0f));
+            Teleport(new Vector3(9f, 0f, -0.5f), new Vector3(0f, 0f, -1f));
             director.Player.Controllable = true;
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(3f);
             director.SkipToDawnForTest();
-            string[] names = { "41a-dawn-bell", "41b-dawn-dark", "41c-dawn-steps", "41d-dawn-turn", "41e-dawn-run", "41f-dawn-door", "41g-caught-whip", "41h-caught-lunge", "41i-caught-floor", "41j-caught-drag", "41k-caught-card", "41l-end" };
-            float[] waits = { 1.4f, 1.6f, 1.2f, 1.1f, 0.9f, 1.4f, 0.55f, 0.5f, 1.4f, 1.0f, 1.2f, 2f };
-            for (int i = 0; i < names.Length; i++)
+            // The whole sequence and the capture after it, every 0.6 s.
+            for (int i = 0; i < 26; i++)
             {
-                yield return new WaitForSeconds(waits[i]);
-                yield return Shot(names[i]);
+                yield return new WaitForSeconds(0.6f);
+                yield return Shot("41-dawn-" + i.ToString("00"));
             }
             Debug.Log("CAPTURE six am: phase=" + director.Phase + " reason=" + director.EndReason);
         }

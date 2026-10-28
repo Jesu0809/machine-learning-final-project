@@ -39,6 +39,7 @@ namespace NightShift.UI
         private InputAction? rebinding;
         private Text cinematicCard;
         private Text cinematicSkip;
+        private bool cinematicSkippable = true;
         private GameObject controlsScreen;
         private Image controlsPicture;
         private Button keyboardTab;
@@ -374,8 +375,10 @@ namespace NightShift.UI
 
         public void HideTape() => tape.SetActive(false);
 
-        public void ShowCinematic(bool on)
+        /// <summary>Letterboxed cinematic over everything; <paramref name="skippable"/> shows the skip hint.</summary>
+        public void ShowCinematic(bool on, bool skippable = true)
         {
+            cinematicSkippable = skippable;
             SetScreens();
             if (!on)
             {
@@ -389,7 +392,7 @@ namespace NightShift.UI
         {
             cinematicText.text = text;
             cinematicFade.color = new Color(0f, 0f, 0f, fade);
-            cinematicSkip.text = Controls.Localize("[ENTER] skip");
+            cinematicSkip.text = cinematicSkippable ? Controls.Localize("[ENTER] skip") : "";
         }
 
         /// <summary>A title card in the middle of the screen (empty to hide), with its opacity.</summary>

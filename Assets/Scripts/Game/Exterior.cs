@@ -806,13 +806,15 @@ namespace NightShift.Game
                 float angle = (float)(random.NextDouble() * Mathf.PI * 2f);
                 float distance = 95f + (float)random.NextDouble() * 110f;
                 var center = new Vector3(Mathf.Cos(angle) * distance, 0f, Mathf.Sin(angle) * distance - 10f);
-                // Keep the street in front of the pizzeria open.
-                if (center.z < RoadZ - 6f && center.z > RoadZ - 40f && Mathf.Abs(center.x) < 60f)
-                {
-                    center.z -= 40f;
-                }
                 float width = 12f + (float)random.NextDouble() * 18f;
                 float depth = 12f + (float)random.NextDouble() * 14f;
+                // Keep the road clear, all the way out west where the intro's car comes from, and the
+                // street in front of the pizzeria open: blocks too close are pushed back from it.
+                float clearance = Mathf.Sqrt(width * width + depth * depth) * 0.5f + 30f;
+                if (Mathf.Abs(center.z - RoadZ) < clearance && center.x > -320f)
+                {
+                    center.z = RoadZ + (center.z >= RoadZ ? clearance : -clearance);
+                }
                 float height = 9f + (float)(random.NextDouble() * random.NextDouble()) * 45f;
                 var block = BuildKit.Box("Building", root, center + new Vector3(0f, height * 0.5f, 0f), new Vector3(width, height, depth), facade, 6f, false);
                 block.transform.localRotation = Quaternion.Euler(0f, (float)random.NextDouble() * 20f - 10f, 0f);
