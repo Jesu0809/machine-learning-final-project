@@ -1,46 +1,89 @@
 using System.Collections;
+using System.Collections.Generic;
+using NightShift.Hunt;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 namespace NightShift.Game
 {
     /// <summary>
-    /// The story intro, about a minute long and skippable (Enter, Esc, a click, or A on a gamepad):
+    /// The story intro, about a minute and a half and skippable (Enter, Esc, a click, or A on a gamepad):
     /// <list type="number">
-    /// <item>Rain over the closed pizzeria and the title cards (1987...).</item>
-    /// <item>The guard's car on the road; a voicemail plays (<see cref="StoryData.Intro"/>).</item>
-    /// <item>The car turns into the parking lot and stops.</item>
-    /// <item>First person: out of the car, a look up at the sign under the lightning, the walk to the door.</item>
-    /// <item>The door rolls up, the guard walks in; Freddy on his stage; the title.</item>
+    /// <item>A home video, August 1987: a birthday at Freddy's, the bear on his stage under the
+    /// lights. He turns his head to the camera, the music drags, the tape tears into snow.</item>
+    /// <item>Black, two cards: the pizzeria closed after the incidents; thirty-eight years later.</item>
+    /// <item>The road at night in the rain: the guard's station wagon throws spray as it passes, the
+    /// wipers beat, the street lamps sweep through the car, and the phone on the dashboard plays a
+    /// voicemail from the agency (<see cref="StoryData.Intro"/>).</item>
+    /// <item>The car turns into the lot; its headlights sweep the boarded front and stop on the doors.
+    /// The engine, then the lights, go off.</item>
+    /// <item>On foot with the flashlight. Lightning: someone stands under the dead street lamp. The
+    /// next flash, nobody.</item>
+    /// <item>The front doors are chained: the key, the padlock, the chain drops. Inside, far away, the
+    /// office phone starts ringing. Freddy on his stage; his eyes; the title.</item>
     /// </list>
     /// Then night 1 begins.
     /// </summary>
     public class IntroCinematic : MonoBehaviour
     {
-        // The car comes from far down the road at a steady speed, turns into the lot and stops.
-        private const float CarStartX = -210f;
-        private const float CarSpeed = 8f;
-        private const float BrakingDistance = 14f;
-        private const float TurnRadius = 4.5f;
-        private const float TurnStartX = -1.5f;
+        // The car's route: east along the road's south lane, then a left turn into the lot that ends
+        // in the parking spot. Between the drive's shots the car jumps along it (cuts).
+        private const float RouteStartX = -232f;
+        private const float LaneZ = Exterior.RoadZ - 2f;
+        private const float CruiseSpeed = 11f;
+        private const float BrakingDistance = 20f;
 
-        private const float VoiceStart = 9.6f;
-        private const float WalkSpeed = 1.45f;
+        private const float TapeLength = 11f;
+        private const float CardsLength = 6f;
+        private const float VoiceDelay = 2f;      // into the drive
+        private const float Arrival = 38.5f;      // into the drive: parked
+        private const float DriveLength = 43.5f;
+
         private const float EyeHeight = 1.62f;
         private const float SidewalkHeight = 0.12f;
+        private const float SidewalkZ = -19.6f;
+        private const int TapeWidth = 320;
+        private const int TapeHeight = 240;
+
+        /// <summary>Under the dead street lamp, at the corner of the lot: where the stranger stands.</summary>
+        private static readonly Vector3 StrangerSpot = new Vector3(-12.6f, 0f, -22.3f);
 
         private HuntDirector director;
         private Exterior exterior;
         private AudioSource voice;
         private AudioSource effects;
         private AudioSource rain;
+        private AudioLowPassFilter rainMuffle;
         private AudioSource engine;
+        private AudioSource music;
         private bool skip;
         private Coroutine voicemail;
-
         private string subtitle = "";
-        private float voiceEndsAt = float.MaxValue;
+
+        // The home video: its camera, picture and the party's lights.
+        private Camera tapeCamera;
+        private RenderTexture tapeTexture;
+        private readonly List<Light> partyLights = new List<Light>();
+        private Quaternion headRest;
+        private float headTurn;
+        private int savedMask;
+
+        // Props of the night: the phone on the dashboard, the stranger, the chain on the doors.
+        private readonly List<GameObject> props = new List<GameObject>();
+        private Transform phone;
+        private Renderer[] strangerRenderers;
+        private Light strangerRim;
+        private Light strangerFill;
+        private Transform padlock;
+        private Transform shackle;
+        private Transform key;
+        private readonly List<Transform> links = new List<Transform>();
 
         public bool Playing { get; private set; }
+
+        /// <summary>Which part is playing and how far into it (the capture tour photographs along it).</summary>
+        public string Part { get; private set; } = "";
+        public float PartTime { get; private set; }
 
         public static IntroCinematic Create(HuntDirector director, Exterior exterior)
         {
@@ -51,13 +94,17 @@ namespace NightShift.Game
             intro.voice = intro.Source(false);
             intro.effects = intro.Source(false);
             intro.rain = intro.Source(true);
+            intro.rainMuffle = intro.rain.gameObject.AddComponent<AudioLowPassFilter>();
             intro.engine = intro.Source(true);
+            intro.music = intro.Source(true);
             return intro;
         }
 
         private AudioSource Source(bool loop)
         {
-            var source = gameObject.AddComponent<AudioSource>();
+            // Each on its own object, so a filter on one (the rain heard from inside the car) leaves the others clear.
+            var source = new GameObject("IntroSound").AddComponent<AudioSource>();
+            source.transform.SetParent(transform, false);
             source.playOnAwake = false;
             source.loop = loop;
             source.spatialBlend = 0f;
@@ -85,51 +132,473 @@ namespace NightShift.Game
             }
         }
 
-        // ------------------------------------------------------------------ the car's drive
-
-        private static float TotalDistance => (TurnStartX - CarStartX) + TurnRadius * Mathf.PI * 0.5f;
-
-        private static float CruiseSeconds => (TotalDistance - BrakingDistance) / CarSpeed;
-
-        /// <summary>Second at which the car stops in its parking spot.</summary>
-        private static float ArrivalTime => CruiseSeconds + 2f * BrakingDistance / CarSpeed;
-
-        private static float DistanceAt(float t)
+        private void LateUpdate()
         {
-            if (t <= CruiseSeconds)
+            // On the tape, the bear's head turns to the camera (after his animation has posed it).
+            Transform head = director != null && director.Freddy != null ? director.Freddy.Head : null;
+            if (!Playing || head == null || head == director.Freddy.transform || tapeCamera == null || !tapeCamera.enabled)
             {
-                return CarSpeed * t;
-            }
-            float braking = CarSpeed * CarSpeed / (2f * BrakingDistance);
-            float tau = Mathf.Min(t - CruiseSeconds, CarSpeed / braking);
-            return CarSpeed * CruiseSeconds + CarSpeed * tau - 0.5f * braking * tau * tau;
-        }
-
-        private static void CarPose(float t, out Vector3 position, out float yaw)
-        {
-            float s = DistanceAt(t);
-            float straight = TurnStartX - CarStartX;
-            if (s <= straight)
-            {
-                position = new Vector3(CarStartX + s, 0f, Exterior.RoadZ);
-                yaw = 90f;
                 return;
             }
-            // A left turn into the lot: from heading east to heading north.
-            float angle = Mathf.Min((s - straight) / TurnRadius, Mathf.PI * 0.5f);
-            var center = new Vector3(TurnStartX, 0f, Exterior.RoadZ + TurnRadius);
-            position = center + new Vector3(Mathf.Sin(angle), 0f, -Mathf.Cos(angle)) * TurnRadius;
-            yaw = 90f - angle * Mathf.Rad2Deg;
+            head.localRotation = headRest;
+            if (headTurn > 0f)
+            {
+                Vector3 toCamera = (tapeCamera.transform.position - head.position).normalized;
+                Quaternion turn = Quaternion.FromToRotation(director.Freddy.transform.forward, toCamera);
+                head.rotation = Quaternion.Slerp(Quaternion.identity, turn, headTurn * 0.85f) * head.rotation;
+            }
         }
 
-        // ------------------------------------------------------------------ the walk to the door
+        // ------------------------------------------------------------------ the film
 
-        // Around the front of the car, along the sidewalk, then to the door (two curves).
-        private static readonly Vector3 WalkStart = new Vector3(1.3f, 0f, -23.2f);
-        private static readonly Vector3 WalkBend1 = new Vector3(1.1f, 0f, -21.4f);
-        private static readonly Vector3 WalkMiddle = new Vector3(5f, 0f, -20.9f);
-        private static readonly Vector3 WalkBend2 = new Vector3(11.5f, 0f, -20.6f);
-        private static readonly Vector3 WalkEnd = new Vector3(PizzeriaLayout.ExitDoor.x, 0f, -18.4f);
+        private IEnumerator Run()
+        {
+            Playing = true;
+            skip = false;
+            PlayerController player = director.Player;
+            player.Controllable = false;
+            player.CameraLocked = true;
+            player.Flashlight.enabled = false;
+            director.UI.ShowCinematic(true);
+            director.Audio.PlayAmbient(false);
+            Mute();
+            Prepare();
+
+            yield return Tape(player);
+            if (!skip)
+            {
+                yield return Cards();
+            }
+            if (!skip)
+            {
+                yield return Drive(player);
+            }
+            if (!skip)
+            {
+                yield return OnFoot(player);
+            }
+            if (!skip)
+            {
+                yield return Door(player);
+            }
+            if (!skip)
+            {
+                // Freddy on his stage, then his face and the title, with the phone ringing far away.
+                yield return Interior(player, new Vector3(9.0f, 1.5f, 2.3f), new Vector3(7.9f, 1.75f, 6.6f), new Vector3(7.5f, 1.9f, 10.8f), 5f, "", 0, false);
+                yield return Interior(player, new Vector3(8.3f, 2.25f, 8.1f), new Vector3(7.9f, 2.15f, 9.2f), new Vector3(7.5f, 2.0f, 10.8f), 4.5f, "NIGHT SHIFT", 130, true);
+            }
+
+            Finish(player);
+            director.StartNight(1);
+        }
+
+        // ------------------------------------------------------------------ 1. the home video
+
+        private IEnumerator Tape(PlayerController player)
+        {
+            savedMask = player.View.cullingMask;
+            player.View.cullingMask = 0;
+            tapeCamera.enabled = true;
+            foreach (Light light in partyLights)
+            {
+                light.enabled = true;
+            }
+            Transform head = director.Freddy.Head;
+            headRest = head.localRotation;
+            headTurn = 0f;
+            music.clip = director.Assets.MenuMusic;
+            music.volume = 0.3f;
+            music.pitch = 0.94f;
+            var muffle = music.gameObject.AddComponent<AudioLowPassFilter>();
+            muffle.cutoffFrequency = 3200f;
+            music.Play();
+            director.Audio.StaticBurst();
+            director.UI.SetCinematic("", 0f);
+            director.UI.SetCinematicCard("", 0f);
+
+            bool eyes = false, tear = false;
+            for (float t = 0f; t < TapeLength && !skip; t += Time.deltaTime)
+            {
+                Mark("tape", t);
+                // The camcorder: someone at the party, walking up to the stage's corner and zooming in on the bear.
+                float k = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((t - 0.7f) / 5.5f));
+                Vector3 eye = Vector3.Lerp(new Vector3(4.6f, 1.35f, 5.9f), new Vector3(3.9f, 1.45f, 8.1f), k) + Handheld(t, 0.035f);
+                Vector3 look = Vector3.Lerp(new Vector3(6.5f, 1.2f, 7f), head.position, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((t - 1.2f) / 2.5f)));
+                tapeCamera.transform.SetPositionAndRotation(eye, Quaternion.LookRotation(look - eye));
+                tapeCamera.fieldOfView = Mathf.Lerp(54f, 30f, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((t - 3.4f) / 2.6f)));
+
+                // He turns his head to the camera; the tape drags (the music slows down) and tears.
+                headTurn = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((t - 6.4f) / 1.8f));
+                music.pitch = Mathf.Lerp(0.94f, 0.5f, Mathf.Clamp01((t - 7.3f) / 1.6f));
+                if (!eyes && t > 8f)
+                {
+                    eyes = true;
+                    director.Freddy.FlashEyes(1.6f);
+                }
+                if (!tear && t > 8.8f)
+                {
+                    tear = true;
+                    director.Audio.StaticBurst();
+                }
+                float trouble = Mathf.Clamp01((t - 6.6f) / 2.2f);
+                float jump = Random.value < 0.04f + trouble * 0.3f ? Random.Range(-0.02f, 0.02f) * (1f + trouble * 4f) : 0f;
+                float snow = t < 0.7f ? 1f : t < 8.8f ? 0.03f + trouble * 0.2f : Mathf.Lerp(0.5f, 1f, (t - 8.8f) / 1f);
+                Color tint = Color.Lerp(new Color(1.12f, 0.98f, 0.84f), new Color(1.3f, 0.7f, 0.7f), Mathf.Clamp01((t - 8.4f) / 1f));
+                if (t > 9.8f)
+                {
+                    music.volume = Mathf.MoveTowards(music.volume, 0f, Time.deltaTime * 2f);
+                }
+                if (t < 10.6f)
+                {
+                    Texture picture = t < 0.7f || t > 9.8f ? (Texture)Texture2D.blackTexture : tapeTexture;
+                    director.UI.SetTape(picture, tint, t > 0.7f && t < 9.8f ? BuildKit.SignTexture("vhs_osd_party") : null, snow, jump);
+                }
+                else
+                {
+                    director.UI.HideTape();
+                    director.UI.SetCinematic("", 1f);
+                }
+                yield return null;
+            }
+
+            music.Stop();
+            Destroy(muffle);
+            director.UI.HideTape();
+            headTurn = 0f;
+            head.localRotation = headRest;
+            tapeCamera.enabled = false;
+            foreach (Light light in partyLights)
+            {
+                light.enabled = false;
+            }
+            player.View.cullingMask = savedMask;
+        }
+
+        // ------------------------------------------------------------------ 2. the cards
+
+        private IEnumerator Cards()
+        {
+            rain.clip = director.Assets.RainLoop;
+            rain.volume = 0f;
+            rainMuffle.cutoffFrequency = 22000f;
+            rain.Play();
+            for (float t = 0f; t < CardsLength && !skip; t += Time.deltaTime)
+            {
+                Mark("cards", t);
+                string card = "";
+                float alpha = 0f;
+                int size = 64;
+                Card(t, 0.3f, 3.3f, StoryData.IntroCards[1], 44, ref card, ref alpha, ref size);
+                Card(t, 3.5f, 5.8f, StoryData.IntroCards[2], 52, ref card, ref alpha, ref size);
+                rain.volume = Mathf.Lerp(0f, 0.5f, Mathf.Clamp01((t - 3.5f) / 2.5f));
+                director.UI.SetCinematic("", 1f);
+                director.UI.SetCinematicCard(card, alpha, size);
+                yield return null;
+            }
+            director.UI.SetCinematicCard("", 0f);
+        }
+
+        // ------------------------------------------------------------------ 3–4. the drive
+
+        private static float TurnRadius => Exterior.ParkingSpot.z - LaneZ;
+        private static float TurnStartX => Exterior.ParkingSpot.x - TurnRadius;
+        private static float StraightLength => TurnStartX - RouteStartX;
+        private static float RouteLength => StraightLength + TurnRadius * Mathf.PI * 0.5f;
+
+        /// <summary>Where the car is <paramref name="s"/> meters along its route, its heading and the steering wheel's turn.</summary>
+        private static void CarPose(float s, out Vector3 position, out float yaw, out float steer)
+        {
+            if (s <= StraightLength)
+            {
+                position = new Vector3(RouteStartX + s, 0f, LaneZ);
+                yaw = 90f;
+                steer = 0f;
+                return;
+            }
+            float angle = Mathf.Min((s - StraightLength) / TurnRadius, Mathf.PI * 0.5f);
+            var center = new Vector3(TurnStartX, 0f, LaneZ + TurnRadius);
+            position = center + new Vector3(Mathf.Sin(angle), 0f, -Mathf.Cos(angle)) * TurnRadius;
+            yaw = 90f - angle * Mathf.Rad2Deg;
+            steer = -200f * Mathf.Sin(angle * 2f);
+        }
+
+        /// <summary>Meters along the route at <paramref name="u"/> seconds into the drive (each shot is a cut).</summary>
+        private static float RouteAt(float u)
+        {
+            float At(float x, float from) => x - RouteStartX + CruiseSpeed * (u - from);
+            if (u < 6f)
+            {
+                return At(-185f, 0f);
+            }
+            if (u < 17f)
+            {
+                return At(-205f, 6f);
+            }
+            if (u < 22.5f)
+            {
+                return At(-200f, 17f);
+            }
+            if (u < 30.5f)
+            {
+                return At(-150f, 22.5f);
+            }
+            // The last stretch: cruising, then braking through the turn to stop in the spot at Arrival.
+            float brakingTime = 2f * BrakingDistance / CruiseSpeed;
+            float brakesAt = Arrival - brakingTime;
+            if (u < brakesAt)
+            {
+                return RouteLength - BrakingDistance - CruiseSpeed * (brakesAt - u);
+            }
+            float tau = Mathf.Min(u - brakesAt, brakingTime);
+            return RouteLength - BrakingDistance + CruiseSpeed * tau - 0.5f * (CruiseSpeed / brakingTime) * tau * tau;
+        }
+
+        private IEnumerator Drive(PlayerController player)
+        {
+            Car car = exterior.Car;
+            exterior.SetOutdoors(true, player.View);
+            car.SetHeadlights(true);
+            car.Wipers = true;
+            engine.clip = director.Assets.CarEngine;
+            engine.volume = 0f;
+            engine.Play();
+            phone.gameObject.SetActive(true);
+            voicemail = StartCoroutine(Voicemail(VoiceDelay));
+
+            bool thunder = false, engineOff = false, lightsOff = false;
+            float nextThump = 0f;
+            for (float u = 0f; u < DriveLength && !skip; u += Time.deltaTime)
+            {
+                Mark("drive", u);
+                CarPose(RouteAt(u), out Vector3 carPosition, out float carYaw, out float steer);
+                car.Place(carPosition, carYaw);
+                car.Steer(steer + Mathf.Sin(u * 0.7f) * 3f);
+                Transform body = car.transform;
+                bool inside = u >= 6f && u < 17f || u >= 22.5f && u < Arrival + 0.4f;
+                rainMuffle.cutoffFrequency = inside ? 1300f : 22000f;
+                rain.volume = inside ? 0.7f : 0.5f;
+                if (!engineOff && u > Arrival + 1.4f)
+                {
+                    engineOff = true;
+                    car.Wipers = false;
+                    effects.PlayOneShot(GameAudio.Clunk(), 0.25f);
+                }
+                if (!lightsOff && u > Arrival + 2.8f)
+                {
+                    lightsOff = true;
+                    car.SetHeadlights(false);
+                    director.Audio.Click();
+                }
+                if (!thunder && u > 12.5f)
+                {
+                    thunder = true;
+                    exterior.Lightning();
+                    Invoke(nameof(Thunder), 1.4f);
+                }
+                if (inside && car.Wipers && u >= nextThump)
+                {
+                    // The wipers' soft knock at the end of each stroke.
+                    nextThump = u + 1.3f;
+                    effects.PlayOneShot(GameAudio.Clunk(), 0.05f);
+                }
+
+                Vector3 eye, look;
+                float fov = 55f, fade = 0f;
+                engine.pitch = 1.05f;
+                Vector3 driver = body.TransformPoint(car.DriverEyes);
+                if (u < 6f)
+                {
+                    // A. Low at the roadside: the headlights come out of the rain and the car rushes past.
+                    eye = new Vector3(-118f, 0.32f, Exterior.RoadZ - 4.6f);
+                    float pass = 1f - Mathf.Clamp01(Mathf.Abs(carPosition.x - eye.x) / 6f);
+                    eye += Handheld(u, 0.01f + pass * 0.03f);
+                    look = carPosition + Vector3.up * 0.7f;
+                    fov = 38f;
+                    fade = Mathf.Clamp01(1f - u / 1.2f);
+                    engine.volume = Mathf.Clamp01(1.6f / Mathf.Max(1f, Vector3.Distance(eye, carPosition))) * 0.9f;
+                    engine.pitch = carPosition.x < eye.x ? 1.2f : 0.92f;   // the pitch drops as it passes
+                }
+                else if (u < 17f)
+                {
+                    // B. At the wheel: the road ahead, the wipers, the lamps passing over; a glance at the phone.
+                    float glance = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((u - 9.5f) / 0.7f)) * (1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((u - 11.6f) / 0.7f)));
+                    eye = driver + Handheld(u, 0.006f) + Vector3.up * Mathf.Sin(u * 9f) * 0.002f;
+                    look = Vector3.Lerp(body.TransformPoint(car.DriverEyes + new Vector3(0.1f, -0.1f, 6f)), phone.position, glance * 0.85f);
+                    fov = 62f;
+                    engine.volume = 0.3f;
+                }
+                else if (u < 22.5f)
+                {
+                    // C. Alongside, on the passenger's side: rain streaking past, the wheels throwing spray.
+                    eye = carPosition + body.rotation * new Vector3(3.6f, 1.05f, 2.4f) + Handheld(u, 0.05f);
+                    look = carPosition + body.rotation * new Vector3(0f, 0.75f, 0.2f);
+                    fov = 44f;
+                    engine.volume = 0.55f;
+                }
+                else if (u < 30.5f)
+                {
+                    // D. The phone on the dashboard, close, then up through the glass at the road.
+                    float up = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((u - 26.5f) / 1.5f));
+                    eye = body.TransformPoint(car.DriverEyes + new Vector3(0.12f, -0.08f, 0.1f)) + Handheld(u, 0.004f);
+                    look = Vector3.Lerp(phone.position, body.TransformPoint(car.DriverEyes + new Vector3(0f, -0.05f, 6f)), up);
+                    fov = Mathf.Lerp(32f, 60f, up);
+                    engine.volume = 0.3f;
+                }
+                else if (u < Arrival + 0.4f)
+                {
+                    // E. At the wheel again: the pizzeria's sign in the rain, the turn into the lot; the
+                    //    headlights sweep the boarded front and stop on the doors.
+                    float turning = Mathf.Abs(steer) / 200f;
+                    eye = driver + Handheld(u, 0.006f);
+                    look = body.TransformPoint(car.DriverEyes + Quaternion.Euler(0f, -22f * turning, 0f) * new Vector3(0f, -0.08f, 6f));
+                    fov = 62f;
+                    engine.volume = Mathf.Lerp(0.3f, 0.18f, Mathf.Clamp01((u - 33f) / 4f));
+                }
+                else
+                {
+                    // F. From the sidewalk: the car stopped in the glare of its own lights, then dark.
+                    eye = new Vector3(5.2f, 1.0f, -19.9f) + Handheld(u, 0.012f);
+                    look = carPosition + new Vector3(0f, 0.8f, 0.6f);
+                    fov = 42f;
+                    engine.pitch = 0.8f;
+                    engine.volume = engineOff ? Mathf.MoveTowards(engine.volume, 0f, Time.deltaTime * 0.8f) : 0.22f;
+                    fade = Mathf.Clamp01((u - (DriveLength - 0.8f)) / 0.8f);
+                }
+
+                Aim(player, eye, look, fov);
+                director.UI.SetCinematic(subtitle, fade);
+                yield return null;
+            }
+            engine.Stop();
+            car.Wipers = false;
+            car.Steer(0f);
+        }
+
+        // ------------------------------------------------------------------ 5. on foot
+
+        // From the driver's door, around the front of the car, along the sidewalk to the doors.
+        private static readonly Vector3 WalkStart = new Vector3(1.55f, 0f, -24.3f);
+        private static readonly Vector3 WalkBend1 = new Vector3(1.4f, 0f, -21.0f);
+        private static readonly Vector3 WalkMiddle = new Vector3(6.5f, 0f, -20.3f);
+        private static readonly Vector3 WalkBend2 = new Vector3(13.5f, 0f, -20.0f);
+        private static readonly Vector3 WalkEnd = new Vector3(PizzeriaLayout.ExitDoor.x, 0f, -18.35f);
+
+        private const float RevealAt = 6.4f;
+
+        private IEnumerator OnFoot(PlayerController player)
+        {
+            Car car = exterior.Car;
+            float length = WalkLength();
+            float walked = 0f;
+            float stepAt = 0f;
+            bool slam = false, light = false, flash1 = false, flash2 = false, flash3 = false, gasp = false, hidden = false;
+            var doorTarget = new Vector3(PizzeriaLayout.ExitDoor.x, 1.4f, -17.3f);
+            Vector3 strangerFace = StrangerSpot + Vector3.up * 1.95f;
+            effects.PlayOneShot(director.Assets.LockerDoor, 0.25f);
+
+            for (float g = 0f; walked < length && !skip; g += Time.deltaTime)
+            {
+                Mark("foot", g);
+                // Lightning three times: the first just a flash, the second shows him, the third shows nobody.
+                if (!flash1 && g > 5.1f)
+                {
+                    flash1 = true;
+                    exterior.Lightning();
+                    Invoke(nameof(Thunder), 1.3f);
+                }
+                if (!flash2 && g > RevealAt)
+                {
+                    flash2 = true;
+                    exterior.Lightning();
+                    ShowStranger(true);
+                    director.Audio.Sting();
+                    director.Audio.Heartbeat(0.9f);
+                }
+                if (!hidden && g > RevealAt + 1.1f)
+                {
+                    hidden = true;
+                    ShowStranger(false);
+                }
+                if (!flash3 && g > RevealAt + 1.9f)
+                {
+                    flash3 = true;
+                    exterior.Lightning();
+                    Invoke(nameof(Thunder), 0.6f);
+                }
+                if (!gasp && g > RevealAt + 2.2f)
+                {
+                    gasp = true;
+                    director.Audio.Gasp();
+                }
+
+                Vector3 eye, look;
+                float fov = 68f, fade = 0f;
+                if (g < 0.9f)
+                {
+                    // Still in the seat, in the dark, reaching for the door.
+                    eye = car.transform.TransformPoint(car.DriverEyes);
+                    look = car.transform.TransformPoint(car.DriverEyes + new Vector3(-1f, -0.25f, 0.4f));
+                    fade = 1f - g / 0.9f;
+                }
+                else
+                {
+                    if (!slam && g > 1.1f)
+                    {
+                        slam = true;
+                        effects.PlayOneShot(director.Assets.LockerDoor, 0.8f);
+                    }
+                    if (!light && g > 1.8f)
+                    {
+                        light = true;
+                        player.Flashlight.enabled = true;
+                        director.Audio.Click();
+                    }
+                    // Walking: steady, stopped dead by what the lightning shows, then fast and out of breath.
+                    bool frozen = g > RevealAt - 0.1f && g < RevealAt + 2.8f;
+                    float speed = g < 2.1f || frozen ? 0f : g > RevealAt ? 1.85f : 1.3f;
+                    walked = Mathf.Min(walked + speed * Time.deltaTime, length);
+                    Vector3 feet = WalkPoint(UAtLength(walked));
+                    float bob = speed > 0f ? Mathf.Sin(walked * (speed > 1.5f ? 4.8f : 4.2f)) * (speed > 1.5f ? 0.04f : 0.028f) : Mathf.Sin(g * 1.3f) * 0.006f;
+                    eye = feet + Vector3.up * (EyeHeight + (feet.z > SidewalkZ ? SidewalkHeight : 0f) + bob);
+                    look = Vector3.Lerp(new Vector3(-2f, 4.2f, -16.4f), doorTarget, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((g - 2f) / 2f)));
+                    // The head jerks toward the corner when the lightning shows someone there, and the
+                    // eyes stay on the empty spot a moment after it is gone; later one look back over the shoulder.
+                    float stare = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((g - (RevealAt - 0.15f)) / 0.18f)) * (1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((g - (RevealAt + 2.6f)) / 0.7f)));
+                    look = Vector3.Lerp(look, strangerFace, stare);
+                    fov = Mathf.Lerp(68f, 26f, stare * Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((g - RevealAt) / 0.3f)));
+                    float back = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((g - (RevealAt + 5.2f)) / 0.4f)) * (1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((g - (RevealAt + 6.3f)) / 0.5f)));
+                    look = Vector3.Lerp(look, StrangerSpot + Vector3.up * 1.4f, back * 0.9f);
+                    eye += Handheld(g, frozen ? 0.012f : 0.006f);
+                    if (speed > 0f && g >= stepAt)
+                    {
+                        stepAt = g + (speed > 1.5f ? 0.38f : 0.55f);
+                        director.Audio.Footstep(0.55f);
+                    }
+                    if (g > RevealAt + 2.8f && Time.frameCount % 70 == 0)
+                    {
+                        director.Audio.Pant(0.35f);
+                    }
+                }
+                Aim(player, eye, look, fov);
+                director.UI.SetCinematic(subtitle, fade);
+                yield return null;
+            }
+            ShowStranger(false);
+        }
+
+        private void ShowStranger(bool on)
+        {
+            if (strangerRenderers == null)
+            {
+                return;
+            }
+            foreach (Renderer renderer in strangerRenderers)
+            {
+                renderer.enabled = on;
+            }
+            strangerRim.enabled = on;
+            strangerFill.enabled = on;
+        }
 
         private static Vector3 WalkPoint(float u)
         {
@@ -141,324 +610,7 @@ namespace NightShift.Game
             return from * ((1f - u) * (1f - u)) + control * (2f * u * (1f - u)) + to * (u * u);
         }
 
-        private static float Ground(Vector3 point) => point.z > -21.6f ? SidewalkHeight : 0f;
-
-        // ------------------------------------------------------------------ the film
-
-        private IEnumerator Run()
-        {
-            Playing = true;
-            skip = false;
-            PlayerController player = director.Player;
-            player.Controllable = false;
-            player.CameraLocked = true;
-            director.UI.ShowCinematic(true);
-            director.Audio.PlayAmbient(false);
-            exterior.SetOutdoors(true, player.View);
-            exterior.Car.SetHeadlights(true);
-            exterior.Car.SetDoor(0f);
-            Mute();
-            rain.clip = director.Assets.RainLoop;
-            rain.volume = 0.55f;
-            rain.Play();
-            engine.clip = director.Assets.CarEngine;
-            engine.volume = 0f;
-            engine.Play();
-            voicemail = StartCoroutine(Voicemail());
-
-            float t = 0f;
-            bool thunder1 = false;
-            bool thunder2 = false;
-            bool engineOff = false;
-            bool lightsOff = false;
-            bool slammed = false;
-            float stepAt = 0f;
-            float walkLength = WalkLength();
-            // The guard stays in the car while the message plays, and reaches the door as it ends.
-            float walkStartsAt = Mathf.Max(ArrivalTime + 5.2f, VoicemailLength() - walkLength / WalkSpeed + 0.6f);
-            float walkEndsAt = walkStartsAt + walkLength / WalkSpeed;
-            float getOutAt = walkStartsAt - 4.2f;
-
-            // Shots 1–5: outside, until the guard reaches the door and the message has ended.
-            while (!skip && (t < walkEndsAt || Time.time < voiceEndsAt + 0.4f))
-            {
-                t += Time.deltaTime;
-                CarPose(t, out Vector3 carPosition, out float carYaw);
-                exterior.Car.Place(carPosition, carYaw);
-                Vector3 carForward = Quaternion.Euler(0f, carYaw, 0f) * Vector3.forward;
-                Vector3 carRight = Quaternion.Euler(0f, carYaw, 0f) * Vector3.right;
-                bool driving = t < ArrivalTime;
-                engine.volume = engineOff ? Mathf.MoveTowards(engine.volume, 0f, Time.deltaTime) : (t < 9.5f ? 0.15f : 0.35f);
-                engine.pitch = driving ? 1.15f : 0.9f;
-
-                // Lightning over the building in the first shot, and again over the sign.
-                if (!thunder1 && t > 4.2f)
-                {
-                    thunder1 = true;
-                    exterior.Lightning();
-                    Invoke(nameof(Thunder), 1.1f);
-                }
-                if (!thunder2 && t > walkStartsAt + 2.4f)
-                {
-                    thunder2 = true;
-                    exterior.Lightning();
-                    Invoke(nameof(Thunder), 0.7f);
-                }
-                if (!engineOff && t > ArrivalTime + 0.6f)
-                {
-                    engineOff = true;
-                }
-                if (!lightsOff && t > ArrivalTime + 1.2f)
-                {
-                    lightsOff = true;
-                    exterior.Car.SetHeadlights(false);
-                    director.Audio.Click();
-                }
-
-                float fade = Mathf.Clamp01(1f - t / 1.8f);
-                string card = "";
-                float cardAlpha = 0f;
-                int cardSize = 64;
-                Vector3 eye;
-                Vector3 look;
-                float fov = 50f;
-
-                if (t < 9.5f)
-                {
-                    // 1. The closed pizzeria in the rain, seen from above the road.
-                    float k = Mathf.SmoothStep(0f, 1f, t / 9.5f);
-                    eye = Vector3.Lerp(new Vector3(-36f, 13f, -52f), new Vector3(-22f, 6.5f, -43f), k);
-                    look = Vector3.Lerp(new Vector3(-5f, 4.5f, -16f), new Vector3(-3f, 2.5f, -21f), k);
-                    Card(t, 0.8f, 3.2f, StoryData.IntroCards[0], 110, ref card, ref cardAlpha, ref cardSize);
-                    Card(t, 3.5f, 6.6f, StoryData.IntroCards[1], 44, ref card, ref cardAlpha, ref cardSize);
-                    Card(t, 6.9f, 9.3f, StoryData.IntroCards[2], 52, ref card, ref cardAlpha, ref cardSize);
-                }
-                else if (t < 19f)
-                {
-                    // 2. Behind the car on the road.
-                    eye = carPosition - carForward * 7.5f + Vector3.up * 2.3f + carRight * 1.3f;
-                    look = carPosition + carForward * 6f + Vector3.up * 0.8f;
-                    fade = Mathf.Clamp01(1f - (t - 9.5f) / 0.5f);
-                }
-                else if (t < 26.5f)
-                {
-                    // 3. From the roadside by the lot: the car comes and turns in.
-                    eye = new Vector3(14f, 1.2f, -34.5f);
-                    look = carPosition + Vector3.up * 0.8f;
-                    fov = 40f;
-                }
-                else if (t < Mathf.Min(ArrivalTime + 1.4f, getOutAt))
-                {
-                    // 4. Low, from the sidewalk: the car pulls up into the headlights' glare and stops.
-                    eye = new Vector3(6.6f, 0.75f, -20.9f);
-                    look = carPosition + Vector3.up * 0.7f;
-                }
-                else if (t < getOutAt)
-                {
-                    // 4b. In the driver's seat, rain on the glass, looking up at the sign while the message ends.
-                    fov = 60f;
-                    float k = Mathf.SmoothStep(0f, 1f, (t - ArrivalTime - 1.4f) / Mathf.Max(1f, getOutAt - ArrivalTime - 1.4f));
-                    eye = carPosition + Quaternion.Euler(0f, carYaw, 0f) * Car.DriverEyes + Vector3.up * Mathf.Sin(t * 1.1f) * 0.006f;
-                    look = Vector3.Lerp(new Vector3(-2f, 2.2f, -16.5f), new Vector3(-6.5f, 4.6f, -16.5f), k);
-                    fade = Mathf.Clamp01(1f - (t - ArrivalTime - 1.4f) / 0.4f);
-                }
-                else
-                {
-                    // 5. First person: open the car door, step out, shut it behind you, turn to the
-                    //    pizzeria and walk to its door (a glance up at the sign when the lightning hits).
-                    fov = 68f;
-                    float g = t - getOutAt;
-                    Quaternion carTurn = Quaternion.Euler(0f, carYaw, 0f);
-                    float doorOpen = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(g / 0.8f)) * (1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((g - 2.15f) / 0.3f)));
-                    exterior.Car.SetDoor(doorOpen);
-                    if (!slammed && g > 2.4f)
-                    {
-                        slammed = true;
-                        effects.PlayOneShot(director.Assets.LockerDoor, 0.8f);
-                    }
-                    Vector3 seat = carPosition + carTurn * Car.DriverEyes;
-                    Vector3 standing = WalkStart + Vector3.up * EyeHeight;
-                    Vector3 signTarget = new Vector3(-6.5f, 5f, -16.5f);
-                    Vector3 doorTarget = new Vector3(PizzeriaLayout.ExitDoor.x, 1.5f, -17.3f);
-                    Vector3 carDoor = carPosition + carTurn * new Vector3(-0.95f, 0.8f, -0.1f);
-                    Vector3 ground = carPosition + carTurn * new Vector3(-2.2f, 0f, 1.6f);
-                    if (t < walkStartsAt)
-                    {
-                        eye = Vector3.Lerp(seat, standing, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((g - 0.3f) / 1.3f)));
-                        // Out, looking down at the wet ground; back at the car door as it slams; then at the pizzeria.
-                        look = Vector3.Lerp(new Vector3(-6.5f, 4.6f, -16.5f), ground, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(g / 1.2f)));
-                        look = Vector3.Lerp(look, carDoor, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((g - 1.3f) / 0.8f)));
-                        look = Vector3.Lerp(look, doorTarget, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((g - 2.8f) / 1.3f)));
-                    }
-                    else
-                    {
-                        float walked = Mathf.Min((t - walkStartsAt) * WalkSpeed, walkLength);
-                        Vector3 feet = WalkPoint(UAtLength(walked));
-                        bool walking = walked < walkLength;
-                        float bob = walking ? Mathf.Sin(walked * 4.2f) * 0.03f : Mathf.Sin(t * 1.3f) * 0.008f;
-                        eye = feet + Vector3.up * (EyeHeight + Ground(feet) + bob);
-                        float glance = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((t - walkStartsAt - 1.6f) / 1f))
-                                     * (1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((t - walkStartsAt - 4f) / 1.2f)));
-                        look = Vector3.Lerp(doorTarget, signTarget, glance);
-                        if (walking && t >= stepAt)
-                        {
-                            stepAt = t + 0.55f;
-                            director.Audio.Footstep(0.5f);
-                        }
-                    }
-                }
-
-                Aim(player, eye, look, fov);
-                director.UI.SetCinematic(subtitle, Mathf.Max(fade, 0f));
-                director.UI.SetCinematicCard(card, cardAlpha, cardSize);
-                yield return null;
-            }
-
-            // 6. The guard pushes the glass doors open and walks in.
-            if (!skip)
-            {
-                effects.PlayOneShot(director.Assets.LockerDoor, 0.5f);
-                float d = 0f;
-                Vector3 outside = WalkEnd + Vector3.up * (EyeHeight + SidewalkHeight);
-                Vector3 inside = new Vector3(PizzeriaLayout.ExitDoor.x, EyeHeight, -14.6f);
-                while (d < 5f && !skip)
-                {
-                    d += Time.deltaTime;
-                    director.Level.Exit.SetLift(Mathf.SmoothStep(0f, 1f, d / 2f));
-                    float k = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((d - 1.8f) / 3f));
-                    Vector3 eye = Vector3.Lerp(outside, inside, k) + Vector3.up * Mathf.Sin(k * 18f) * 0.025f;
-                    if (eye.z > -17.2f)
-                    {
-                        exterior.SetOutdoors(false, player.View);
-                        director.Audio.PlayAmbient(true);
-                    }
-                    rain.volume = Mathf.Lerp(0.55f, 0.12f, k);
-                    Aim(player, eye, eye + new Vector3(-0.3f, -0.05f, 1f), 68f);
-                    director.UI.SetCinematic("", Mathf.Clamp01((d - 4f) / 1f));
-                    director.UI.SetCinematicCard("", 0f);
-                    if (d > 2.2f && d < 4.6f && Time.frameCount % 34 == 0)
-                    {
-                        director.Audio.Footstep(0.45f);
-                    }
-                    yield return null;
-                }
-                director.Level.Exit.SetLift(0f);
-            }
-
-            // 7–8. Inside: Freddy on his stage, then his face and the title.
-            yield return Interior(player,
-                                  new Vector3(9.0f, 1.5f, 2.3f), new Vector3(7.9f, 1.75f, 6.6f), new Vector3(7.5f, 1.9f, 10.8f), 5.5f, "", 0, false);
-            yield return Interior(player,
-                                  new Vector3(8.3f, 2.25f, 8.1f), new Vector3(7.9f, 2.15f, 9.2f), new Vector3(7.5f, 2.0f, 10.8f), 4.5f, "NIGHT SHIFT", 130, true);
-
-            Finish(player);
-            director.StartNight(1);
-        }
-
-        private IEnumerator Interior(PlayerController player, Vector3 from, Vector3 to, Vector3 target, float seconds, string title, int size, bool wake)
-        {
-            float t = 0f;
-            bool woke = false;
-            while (t < seconds && !skip)
-            {
-                t += Time.deltaTime;
-                if (wake && !woke && t > 1.1f)
-                {
-                    // Just as the title comes up, his eyes open red for a moment, with a sting.
-                    woke = true;
-                    director.Freddy.FlashEyes(1.3f);
-                    director.Audio.Sting();
-                }
-                float k = Mathf.SmoothStep(0f, 1f, t / seconds);
-                Vector3 eye = Vector3.Lerp(from, to, k);
-                Aim(player, eye, target, 55f);
-                float fade = Mathf.Max(1f - t / 0.8f, (t - (seconds - 0.7f)) / 0.7f);
-                director.UI.SetCinematic("", Mathf.Clamp01(fade));
-                float alpha = title.Length > 0 ? Mathf.Clamp01((t - 1.2f) / 0.8f) * Mathf.Clamp01((seconds - 0.4f - t) / 0.6f) : 0f;
-                director.UI.SetCinematicCard(title, alpha, size > 0 ? size : 64);
-                yield return null;
-            }
-        }
-
-        /// <summary>Plays the answering machine and the message, one line after another, with subtitles.</summary>
-        private IEnumerator Voicemail()
-        {
-            yield return new WaitForSeconds(VoiceStart);
-            AudioClip[] clips = director.Assets.IntroLines;
-            if (director.Assets.VoicemailBeep != null)
-            {
-                effects.PlayOneShot(director.Assets.VoicemailBeep, 0.6f);
-                yield return new WaitForSeconds(0.6f);
-            }
-            for (int i = 0; i < StoryData.Intro.Length && !skip; i++)
-            {
-                AudioClip clip = clips != null && i < clips.Length ? clips[i] : null;
-                subtitle = (i == 0 ? "<color=#8a9a8a>" : "") + StoryData.Intro[i] + (i == 0 ? "</color>" : "");
-                if (clip != null)
-                {
-                    voice.clip = clip;
-                    voice.volume = 1f;
-                    voice.Play();
-                    yield return new WaitForSeconds(clip.length + 0.3f);
-                }
-                else
-                {
-                    yield return new WaitForSeconds(4f);
-                }
-                if (i == 0 && director.Assets.VoicemailBeep != null)
-                {
-                    effects.PlayOneShot(director.Assets.VoicemailBeep, 0.6f);
-                    yield return new WaitForSeconds(0.5f);
-                }
-            }
-            subtitle = "";
-            voiceEndsAt = Time.time;
-        }
-
-        private void Thunder()
-        {
-            if (Playing && director.Assets.Thunder != null)
-            {
-                effects.PlayOneShot(director.Assets.Thunder, 0.9f);
-            }
-        }
-
-        private static void Card(float t, float from, float to, string text, int size, ref string card, ref float alpha, ref int cardSize)
-        {
-            if (t < from || t > to)
-            {
-                return;
-            }
-            card = text;
-            cardSize = size;
-            alpha = Mathf.Clamp01((t - from) / 0.6f) * Mathf.Clamp01((to - t) / 0.6f);
-        }
-
-        private static void Aim(PlayerController player, Vector3 eye, Vector3 target, float fov)
-        {
-            // Never perfectly still: a slow hand-held drift of under a degree, like a real camera operator.
-            float t = Time.time;
-            Quaternion drift = Quaternion.Euler((Mathf.PerlinNoise(t * 0.6f, 0.2f) - 0.5f) * 0.8f,
-                                                (Mathf.PerlinNoise(0.8f, t * 0.5f) - 0.5f) * 1f,
-                                                (Mathf.PerlinNoise(t * 0.4f, 3.1f) - 0.5f) * 0.6f);
-            player.Head.position = eye;
-            player.Head.rotation = Quaternion.LookRotation(target - eye) * drift;
-            player.View.fieldOfView = fov;
-        }
-
-        /// <summary>When the voicemail will end, in seconds from the start of the intro.</summary>
-        private float VoicemailLength()
-        {
-            float length = VoiceStart + (director.Assets.VoicemailBeep != null ? 1.1f : 0f);
-            AudioClip[] clips = director.Assets.IntroLines;
-            for (int i = 0; i < StoryData.Intro.Length; i++)
-            {
-                length += (clips != null && i < clips.Length && clips[i] != null ? clips[i].length : 4f) + 0.3f;
-            }
-            return length;
-        }
-
-        private float WalkLength()
+        private static float WalkLength()
         {
             float length = 0f;
             Vector3 previous = WalkPoint(0f);
@@ -490,10 +642,417 @@ namespace NightShift.Game
             return 1f;
         }
 
+        // ------------------------------------------------------------------ 6. the chained doors
+
+        private IEnumerator Door(PlayerController player)
+        {
+            Vector3 outside = WalkEnd + Vector3.up * (EyeHeight + SidewalkHeight);
+            var inside = new Vector3(PizzeriaLayout.ExitDoor.x, EyeHeight, -14.6f);
+            Vector3 outward = -PizzeriaLayout.ExitInward(HuntMap.Exit);
+            Vector3 keyhole = padlock.position;
+            Vector3 keyFrom = key.localPosition;
+            Vector3 lockFrom = padlock.position;
+            Quaternion lockTurn = padlock.rotation;
+            var fall = new Vector3[links.Count];
+            for (int i = 0; i < links.Count; i++)
+            {
+                fall[i] = links[i].position;
+            }
+            bool scrape = false, click = false, pop = false, drop = false, doors = false, ring1 = false, ring2 = false;
+            for (float d = 0f; d < 9f && !skip; d += Time.deltaTime)
+            {
+                Mark("door", d);
+                // The key goes in, turns; the shackle springs; the lock and then the chain fall.
+                key.localPosition = Vector3.Lerp(keyFrom, Vector3.zero, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((d - 1f) / 0.5f)));
+                key.localRotation = Quaternion.Euler(0f, 0f, 90f * Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((d - 1.7f) / 0.3f)));
+                if (!scrape && d > 1f)
+                {
+                    scrape = true;
+                    effects.PlayOneShot(GameAudio.Ratchet(), 0.35f);
+                }
+                if (!click && d > 1.95f)
+                {
+                    click = true;
+                    effects.PlayOneShot(GameAudio.Ratchet(), 0.6f);
+                }
+                if (!pop && d > 2.15f)
+                {
+                    pop = true;
+                    effects.PlayOneShot(GameAudio.Clunk(), 0.5f);
+                }
+                shackle.localPosition = new Vector3(0f, 0.014f * Mathf.Clamp01((d - 2.15f) / 0.06f), 0f);
+                if (d > 2.6f)
+                {
+                    // Gravity on the lock and on each link, a little later the farther it is from the lock.
+                    float fallen = d - 2.6f;
+                    padlock.position = lockFrom + Vector3.down * Mathf.Min(lockFrom.y - 0.03f, 4.9f * fallen * fallen) + outward * 0.1f * Mathf.Min(fallen, 0.5f);
+                    padlock.rotation = lockTurn * Quaternion.Euler(Mathf.Min(fallen, 0.45f) * 260f, 0f, Mathf.Min(fallen, 0.45f) * 90f);
+                    for (int i = 0; i < links.Count; i++)
+                    {
+                        float f = Mathf.Max(0f, fallen - Mathf.Abs(i - links.Count * 0.5f) * 0.035f);
+                        links[i].position = fall[i] + Vector3.down * Mathf.Min(fall[i].y - 0.02f, 4.9f * f * f);
+                    }
+                }
+                if (!drop && d > 3.05f)
+                {
+                    drop = true;
+                    effects.PlayOneShot(GameAudio.Ratchet(), 0.9f);
+                    effects.PlayOneShot(GameAudio.Clunk(), 0.7f);
+                }
+                if (!doors && d > 3.8f)
+                {
+                    doors = true;
+                    effects.PlayOneShot(director.Assets.ExitDoor != null ? director.Assets.ExitDoor : director.Assets.LockerDoor, 0.6f);
+                }
+                director.Level.Exit.SetLift(Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((d - 3.8f) / 1.8f)) * 0.75f);
+
+                // Far inside, the office phone starts to ring.
+                if (!ring1 && d > 6.4f)
+                {
+                    ring1 = true;
+                    director.Audio.Ring();
+                }
+                if (!ring2 && d > 8.6f)
+                {
+                    ring2 = true;
+                    director.Audio.Ring();
+                }
+
+                Vector3 eye, look;
+                float fov;
+                if (d < 3.8f)
+                {
+                    // Close on the padlock in the flashlight.
+                    eye = Vector3.Lerp(outside, keyhole + outward * 0.5f + new Vector3(0.06f, 0.14f, 0f), Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(d / 1f))) + Handheld(d, 0.004f);
+                    look = Vector3.Lerp(new Vector3(PizzeriaLayout.ExitDoor.x, 1.4f, -17.3f), keyhole, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(d / 0.9f)));
+                    look = Vector3.Lerp(look, keyhole + Vector3.down * 0.8f, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((d - 2.8f) / 0.5f)));
+                    fov = 46f;
+                }
+                else
+                {
+                    // Push in through the doors into the dark lobby.
+                    float k = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((d - 4.3f) / 3.6f));
+                    eye = Vector3.Lerp(outside, inside, k) + Vector3.up * Mathf.Sin(k * 18f) * 0.025f;
+                    look = eye + new Vector3(-0.3f * k, -0.05f, 1f);
+                    fov = 68f;
+                    if (eye.z > -17.2f)
+                    {
+                        exterior.SetOutdoors(false, player.View);
+                        director.Audio.PlayAmbient(true);
+                    }
+                    rain.volume = Mathf.Lerp(0.5f, 0.12f, k);
+                    if (d > 4.5f && d < 7.8f && Time.frameCount % 34 == 0)
+                    {
+                        director.Audio.Footstep(0.45f);
+                    }
+                }
+                Aim(player, eye, look, fov);
+                director.UI.SetCinematic(subtitle, Mathf.Clamp01((d - 8.2f) / 0.8f));
+                yield return null;
+            }
+            director.Level.Exit.SetLift(0f);
+        }
+
+        // ------------------------------------------------------------------ 7. inside
+
+        private IEnumerator Interior(PlayerController player, Vector3 from, Vector3 to, Vector3 target, float seconds, string title, int size, bool wake)
+        {
+            float t = 0f;
+            bool woke = false;
+            float ringAt = 0.8f;
+            while (t < seconds && !skip)
+            {
+                t += Time.deltaTime;
+                Mark(wake ? "title" : "inside", t);
+                if (wake && !woke && t > 1.1f)
+                {
+                    // Just as the title comes up, his eyes open red for a moment, with a sting.
+                    woke = true;
+                    director.Freddy.FlashEyes(1.3f);
+                    director.Audio.Sting();
+                }
+                if (!wake && t > ringAt)
+                {
+                    ringAt += 2.6f;
+                    director.Audio.Ring();
+                }
+                float k = Mathf.SmoothStep(0f, 1f, t / seconds);
+                Vector3 eye = Vector3.Lerp(from, to, k);
+                Aim(player, eye, target, 55f);
+                float fade = Mathf.Max(1f - t / 0.8f, (t - (seconds - 0.7f)) / 0.7f);
+                director.UI.SetCinematic("", Mathf.Clamp01(fade));
+                float alpha = title.Length > 0 ? Mathf.Clamp01((t - 1.2f) / 0.8f) * Mathf.Clamp01((seconds - 0.4f - t) / 0.6f) : 0f;
+                director.UI.SetCinematicCard(title, alpha, size > 0 ? size : 64);
+                yield return null;
+            }
+        }
+
+        // ------------------------------------------------------------------ the voicemail
+
+        /// <summary>Plays the answering machine and the message, one line after another, with subtitles.</summary>
+        private IEnumerator Voicemail(float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            AudioClip[] clips = director.Assets.IntroLines;
+            if (director.Assets.VoicemailBeep != null)
+            {
+                effects.PlayOneShot(director.Assets.VoicemailBeep, 0.6f);
+                yield return new WaitForSeconds(0.6f);
+            }
+            for (int i = 0; i < StoryData.Intro.Length && !skip; i++)
+            {
+                AudioClip clip = clips != null && i < clips.Length ? clips[i] : null;
+                subtitle = (i == 0 ? "<color=#8a9a8a>" : "") + StoryData.Intro[i] + (i == 0 ? "</color>" : "");
+                if (clip != null)
+                {
+                    voice.clip = clip;
+                    voice.volume = 1f;
+                    voice.Play();
+                    yield return new WaitForSeconds(clip.length + 0.3f);
+                }
+                else
+                {
+                    yield return new WaitForSeconds(4f);
+                }
+                if (i == 0 && director.Assets.VoicemailBeep != null)
+                {
+                    effects.PlayOneShot(director.Assets.VoicemailBeep, 0.6f);
+                    yield return new WaitForSeconds(0.5f);
+                }
+            }
+            subtitle = "";
+        }
+
+        private void Thunder()
+        {
+            if (Playing && director.Assets.Thunder != null)
+            {
+                effects.PlayOneShot(director.Assets.Thunder, 0.9f);
+            }
+        }
+
+        // ------------------------------------------------------------------ the props of the intro
+
+        private void Prepare()
+        {
+            // The camcorder of 1987: a second camera filming into a small picture, and the party's lights.
+            tapeTexture = new RenderTexture(TapeWidth, TapeHeight, 16, RenderTextureFormat.ARGB32) { name = "HomeVideo", filterMode = FilterMode.Bilinear };
+            tapeCamera = new GameObject("HomeVideoCamera").AddComponent<Camera>();
+            tapeCamera.transform.SetParent(transform, false);
+            tapeCamera.targetTexture = tapeTexture;
+            tapeCamera.nearClipPlane = 0.1f;
+            tapeCamera.farClipPlane = 40f;
+            tapeCamera.clearFlags = CameraClearFlags.SolidColor;
+            tapeCamera.backgroundColor = Color.black;
+            tapeCamera.allowMSAA = false;
+            tapeCamera.enabled = false;
+            UniversalAdditionalCameraData data = tapeCamera.GetUniversalAdditionalCameraData();
+            data.renderShadows = true;
+            // No post-processing: its film grain, blown up from this small picture, would bury it.
+            data.renderPostProcessing = false;
+            partyLights.Add(Spot(new Vector3(7.5f, 4.4f, 6.2f), PizzeriaLayout.FreddyStart + Vector3.up * 1.2f, 46f, 14f, new Color(1f, 0.86f, 0.66f), 18f));
+            partyLights.Add(Spot(new Vector3(4.2f, 4f, 7.4f), PizzeriaLayout.FreddyStart + Vector3.up * 1.5f, 30f, 12f, new Color(1f, 0.45f, 0.75f), 10f));
+            partyLights.Add(Point(new Vector3(6f, 3.2f, 5f), 12f, new Color(1f, 0.85f, 0.65f), 5f));
+            partyLights.Add(Point(new Vector3(9.5f, 2.8f, 6.5f), 8f, new Color(0.6f, 0.75f, 1f), 2.5f));
+            foreach (Light light in partyLights)
+            {
+                light.enabled = false;
+            }
+
+            // The phone in a vent clip on the dashboard, playing the message.
+            Car car = exterior.Car;
+            phone = new GameObject("Phone").transform;
+            phone.SetParent(car.transform, false);
+            // On a suction mount low on the windshield, right of the wheel, a hand's width behind the glass.
+            Bounds glass = car.Windshield;
+            float mountHeight = glass.size.y > 0f ? glass.min.y + 0.12f : car.SteeringCenter.y + 0.2f;
+            float glassZ = glass.size.y > 0f ? glass.max.z - (mountHeight - glass.min.y) * glass.size.z / glass.size.y : car.SteeringCenter.z + 0.3f;
+            phone.localPosition = new Vector3(car.SteeringCenter.x + 0.34f, mountHeight, glassZ - 0.07f);
+            phone.localRotation = Quaternion.LookRotation(phone.localPosition - car.DriverEyes);
+            BuildKit.Box("Body", phone, Vector3.zero, new Vector3(0.075f, 0.155f, 0.009f), BuildKit.Plain("phoneBody", new Color(0.03f, 0.03f, 0.035f), 0.7f, 0.3f), 1f, false);
+            Texture2D screen = BuildKit.SignTexture("screen_voicemail");
+            if (screen != null)
+            {
+                BuildKit.Quad("Screen", phone, new Vector3(0f, 0f, -0.0048f), new Vector2(0.068f, 0.143f), 180f, BuildKit.Picture("phoneScreen", screen, 1.3f));
+            }
+            var glow = new GameObject("ScreenLight").AddComponent<Light>();
+            glow.transform.SetParent(phone, false);
+            glow.transform.localPosition = new Vector3(0f, 0f, -0.02f);
+            glow.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            glow.type = LightType.Spot;
+            glow.spotAngle = 100f;
+            glow.range = 1.2f;
+            glow.intensity = 0.6f;
+            glow.color = new Color(0.7f, 0.8f, 1f);
+            glow.shadows = LightShadows.None;
+            phone.gameObject.SetActive(false);
+            props.Add(phone.gameObject);
+
+            // Who stands under the dead lamp (only while the lightning shows him).
+            if (director.Assets.FreddyPrefab != null)
+            {
+                GameObject stranger = Instantiate(director.Assets.FreddyPrefab, transform);
+                stranger.name = "Stranger";
+                stranger.transform.SetPositionAndRotation(StrangerSpot, Quaternion.LookRotation(Flat(WalkMiddle - StrangerSpot)));
+                foreach (MonoBehaviour behaviour in stranger.GetComponentsInChildren<MonoBehaviour>())
+                {
+                    behaviour.enabled = false;
+                }
+                // A cold edge of light on him from the lightning behind, so he reads against the dark.
+                strangerRim = new GameObject("Rim").AddComponent<Light>();
+                strangerRim.transform.SetParent(stranger.transform, false);
+                strangerRim.transform.localPosition = new Vector3(-1.2f, 3.2f, -2.2f);
+                strangerRim.transform.LookAt(stranger.transform.position + Vector3.up * 1.4f);
+                strangerRim.type = LightType.Spot;
+                strangerRim.spotAngle = 40f;
+                strangerRim.range = 8f;
+                strangerRim.intensity = 70f;
+                strangerRim.color = new Color(0.65f, 0.75f, 1f);
+                strangerRim.shadows = LightShadows.None;
+                strangerFill = new GameObject("Fill").AddComponent<Light>();
+                strangerFill.transform.SetParent(stranger.transform, false);
+                strangerFill.transform.localPosition = new Vector3(0.6f, 2.2f, 3f);
+                strangerFill.type = LightType.Point;
+                strangerFill.range = 5f;
+                strangerFill.intensity = 3f;
+                strangerFill.color = new Color(0.6f, 0.7f, 1f);
+                strangerFill.shadows = LightShadows.None;
+                strangerRenderers = stranger.GetComponentsInChildren<Renderer>();
+                ShowStranger(false);
+                props.Add(stranger);
+            }
+
+            BuildChain();
+        }
+
+        /// <summary>A chain looped through the front doors' push bars, a padlock on it and the key.</summary>
+        private void BuildChain()
+        {
+            Vector3 outward = -PizzeriaLayout.ExitInward(HuntMap.Exit);
+            var root = new GameObject("Chain").transform;
+            root.SetParent(transform, false);
+            root.SetPositionAndRotation(PizzeriaLayout.ExitDoor + outward * 0.11f + Vector3.up * 1.05f, Quaternion.LookRotation(-outward));
+            props.Add(root.gameObject);
+            Material steel = BuildKit.Plain("chainSteel", new Color(0.16f, 0.16f, 0.17f), 0.5f, 0.9f);
+            Material brass = BuildKit.Plain("padlockBrass", new Color(0.36f, 0.27f, 0.12f), 0.45f, 1f);
+            Material keySteel = BuildKit.Plain("keySteel", new Color(0.7f, 0.68f, 0.6f), 0.7f, 1f);
+
+            // Links sagging from bar to bar, meeting at the lock in the middle; every other one turned.
+            const int count = 30;
+            for (int i = 0; i < count; i++)
+            {
+                float u = i / (count - 1f);
+                float x = Mathf.Lerp(-0.42f, 0.42f, u);
+                float sag = -0.11f * (1f - (2f * u - 1f) * (2f * u - 1f));
+                // An oval link: two thin sides and their rounded ends, as small bars.
+                var link = new GameObject("Link").transform;
+                link.SetParent(root, false);
+                link.localPosition = new Vector3(x, sag, 0f);
+                link.localRotation = Quaternion.Euler(i % 2 == 0 ? 0f : 90f, 0f, Mathf.Atan2(-0.44f * (2f * u - 1f), 1f) * Mathf.Rad2Deg);
+                for (int side = -1; side <= 1; side += 2)
+                {
+                    BuildKit.Cylinder("Side", link, new Vector3(0f, side * 0.008f, 0f), 0.006f, 0.03f, steel).transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+                    BuildKit.Cylinder("End", link, new Vector3(side * 0.017f, 0f, 0f), 0.006f, 0.018f, steel);
+                }
+                links.Add(link);
+            }
+            padlock = new GameObject("Padlock").transform;
+            padlock.SetParent(root, false);
+            padlock.localPosition = new Vector3(0.01f, -0.17f, -0.02f);
+            BuildKit.Box("Body", padlock, Vector3.zero, new Vector3(0.06f, 0.055f, 0.024f), brass, 1f, false);
+            BuildKit.Box("Face", padlock, new Vector3(0f, -0.004f, -0.0125f), new Vector3(0.05f, 0.04f, 0.002f), BuildKit.Plain("padlockFace", new Color(0.5f, 0.38f, 0.16f), 0.5f, 1f), 1f, false);
+            shackle = new GameObject("Shackle").transform;
+            shackle.SetParent(padlock, false);
+            for (int side = -1; side <= 1; side += 2)
+            {
+                BuildKit.Cylinder("Leg", shackle, new Vector3(side * 0.019f, 0.03f, 0f), 0.009f, 0.05f, steel);
+            }
+            BuildKit.Box("Bow", shackle, new Vector3(0f, 0.056f, 0f), new Vector3(0.047f, 0.009f, 0.009f), steel, 1f, false);
+            key = new GameObject("KeyPivot").transform;
+            key.SetParent(padlock, false);
+            var blade = new GameObject("Key").transform;
+            blade.SetParent(key, false);
+            blade.localPosition = new Vector3(0f, -0.008f, -0.03f);
+            BuildKit.Box("Blade", blade, Vector3.zero, new Vector3(0.006f, 0.014f, 0.035f), keySteel, 1f, false);
+            BuildKit.Box("Bow", blade, new Vector3(0f, 0f, -0.028f), new Vector3(0.004f, 0.03f, 0.024f), keySteel, 1f, false);
+            key.localPosition = new Vector3(0f, 0f, -0.06f);
+        }
+
+        // ------------------------------------------------------------------ helpers
+
+        private void Mark(string part, float time)
+        {
+            Part = part;
+            PartTime = time;
+        }
+
+        private static void Card(float t, float from, float to, string text, int size, ref string card, ref float alpha, ref int cardSize)
+        {
+            if (t < from || t > to)
+            {
+                return;
+            }
+            card = text;
+            cardSize = size;
+            alpha = Mathf.Clamp01((t - from) / 0.6f) * Mathf.Clamp01((to - t) / 0.6f);
+        }
+
+        private static void Aim(PlayerController player, Vector3 eye, Vector3 target, float fov)
+        {
+            // Never perfectly still: a slow hand-held drift of under a degree, like a real camera operator.
+            float t = Time.time;
+            Quaternion drift = Quaternion.Euler((Mathf.PerlinNoise(t * 0.6f, 0.2f) - 0.5f) * 0.8f,
+                                                (Mathf.PerlinNoise(0.8f, t * 0.5f) - 0.5f) * 1f,
+                                                (Mathf.PerlinNoise(t * 0.4f, 3.1f) - 0.5f) * 0.6f);
+            player.Head.position = eye;
+            player.Head.rotation = Quaternion.LookRotation(target - eye) * drift;
+            player.View.fieldOfView = fov;
+        }
+
+        /// <summary>A hand-held wobble: slow drift and small shakes.</summary>
+        private static Vector3 Handheld(float t, float amount)
+        {
+            return new Vector3(Mathf.PerlinNoise(t * 0.7f, 1.3f) - 0.5f, Mathf.PerlinNoise(2.1f, t * 0.8f) - 0.5f, Mathf.PerlinNoise(t * 0.5f, 4.2f) - 0.5f) * amount * 2f
+                   + new Vector3(Mathf.PerlinNoise(t * 6f, 0.4f) - 0.5f, Mathf.PerlinNoise(0.9f, t * 6f) - 0.5f, 0f) * amount * 0.6f;
+        }
+
+        private static Vector3 Flat(Vector3 v)
+        {
+            v.y = 0f;
+            return v.sqrMagnitude > 0.0001f ? v : Vector3.forward;
+        }
+
+        private Light Spot(Vector3 position, Vector3 target, float angle, float range, Color color, float intensity)
+        {
+            var light = new GameObject("PartyLight").AddComponent<Light>();
+            light.transform.SetParent(transform, false);
+            light.transform.SetPositionAndRotation(position, Quaternion.LookRotation(target - position));
+            light.type = LightType.Spot;
+            light.spotAngle = angle;
+            light.range = range;
+            light.color = color;
+            light.intensity = intensity;
+            light.shadows = LightShadows.Soft;
+            return light;
+        }
+
+        private Light Point(Vector3 position, float range, Color color, float intensity)
+        {
+            var light = new GameObject("PartyLight").AddComponent<Light>();
+            light.transform.SetParent(transform, false);
+            light.transform.position = position;
+            light.type = LightType.Point;
+            light.range = range;
+            light.color = color;
+            light.intensity = intensity;
+            light.shadows = LightShadows.None;
+            return light;
+        }
+
         private void Mute()
         {
             bool on = SoundPrefs.EffectsOn;
-            voice.mute = effects.mute = rain.mute = engine.mute = !on;
+            voice.mute = effects.mute = rain.mute = engine.mute = music.mute = !on;
         }
 
         private void Finish(PlayerController player)
@@ -507,17 +1066,54 @@ namespace NightShift.Game
             voice.Stop();
             rain.Stop();
             engine.Stop();
+            music.Stop();
+            if (tapeCamera != null)
+            {
+                if (tapeCamera.enabled)
+                {
+                    player.View.cullingMask = savedMask;
+                    if (director.Freddy.Head != null && director.Freddy.Head != director.Freddy.transform)
+                    {
+                        director.Freddy.Head.localRotation = headRest;
+                    }
+                }
+                Destroy(tapeCamera.gameObject);
+                tapeCamera = null;
+            }
+            if (tapeTexture != null)
+            {
+                tapeTexture.Release();
+                Destroy(tapeTexture);
+                tapeTexture = null;
+            }
+            foreach (Light light in partyLights)
+            {
+                Destroy(light.gameObject);
+            }
+            partyLights.Clear();
+            foreach (GameObject prop in props)
+            {
+                Destroy(prop);
+            }
+            props.Clear();
+            links.Clear();
+            strangerRenderers = null;
+            headTurn = 0f;
             exterior.SetOutdoors(false, player.View);
             exterior.Car.Place(Exterior.ParkingSpot, 0f);
             exterior.Car.SetHeadlights(false);
+            exterior.Car.Wipers = false;
+            exterior.Car.Steer(0f);
             exterior.Car.SetDoor(0f);
+            player.Flashlight.enabled = true;
             director.Level.Exit.SetLift(0f);
             director.Audio.PlayAmbient(true);
+            director.UI.HideTape();
             director.UI.SetCinematicCard("", 0f);
             director.UI.ShowCinematic(false);
             player.View.fieldOfView = 70f;
             subtitle = "";
-            voiceEndsAt = float.MaxValue;
+            Part = "";
             Playing = false;
         }
     }

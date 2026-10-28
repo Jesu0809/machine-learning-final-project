@@ -194,6 +194,8 @@ MonoBehaviour:
   - {fileID: 2800000, guid: 424c70edc895645868931ce7fbd6e024, type: 3}
   - {fileID: 2800000, guid: ac6a2d3eda2f34782a58c6fc10915753, type: 3}
   - {fileID: 2800000, guid: 6d98704443744489e8048615d356ad98, type: 3}
+  - {fileID: 2800000, guid: 400acecb65434447da957731c33154d4, type: 3}
+  - {fileID: 2800000, guid: f28759537fe004bb6bf66d252b3bad87, type: 3}
   - {fileID: 2800000, guid: 49f038bfc8b9f44bc9aebb45cde1e267, type: 3}
   - {fileID: 2800000, guid: ede8c33e13c4946eb9159f52b5aa1426, type: 3}
   - {fileID: 2800000, guid: 2e765bef5809541d3ab4445ff83f1e0d, type: 3}
@@ -219,6 +221,7 @@ MonoBehaviour:
   - {fileID: 2800000, guid: ebbd7746dd5f141dd9e84ca96c18246d, type: 3}
   - {fileID: 2800000, guid: a8af12903724c4e0f943785dea7942a4, type: 3}
   - {fileID: 2800000, guid: 0b23ccb85565247c5a036202941c3fb0, type: 3}
+  - {fileID: 2800000, guid: 4892003b04dcc4904afefc6c01d5a1f2, type: 3}
   - {fileID: 2800000, guid: b0492e1edd89a4d29bdf35b7645db56a, type: 3}
   - {fileID: 2800000, guid: 203edcc159df941bf9bf90e1af216d40, type: 3}
   - {fileID: 2800000, guid: 67b21d9806711426ea40ba15026c75d9, type: 3}
@@ -252,6 +255,7 @@ MonoBehaviour:
   - {fileID: 2800000, guid: dd3c4c3ca5bea460f95ec86cbe5cff46, type: 3}
   - {fileID: 2800000, guid: f68fddd4f2971407681740ae2a084aec, type: 3}
   - {fileID: 2800000, guid: 42d4de8fc2a624202aee74377a60f0a3, type: 3}
+  - {fileID: 2800000, guid: f0df573a135b54659b926a37dbae7583, type: 3}
   - {fileID: 2800000, guid: 6e08a37f577e74eab8cefc8de1abc06f, type: 3}
   - {fileID: 2800000, guid: d9f60a29f73724e47a95ba394a71ef37, type: 3}
   - {fileID: 2800000, guid: 9fc076c191a1940da84cd82446a6e0c4, type: 3}
@@ -275,6 +279,7 @@ MonoBehaviour:
   - {fileID: 2800000, guid: f5fe3f736f8fd487090a7863f0b41c50, type: 3}
   - {fileID: 2800000, guid: e98bc3eb7cb85423fb353139307073b4, type: 3}
   - {fileID: 2800000, guid: 79bc6505333cb4ecca6dc93a4b19a359, type: 3}
+  - {fileID: 2800000, guid: 2632f3d534725403a9782747808c2ce5, type: 3}
   - {fileID: 2800000, guid: 29e91b00bdb9d4c56a665456667aa198, type: 3}
   - {fileID: 2800000, guid: f9e8c36f8a1ad462685d89196826bba0, type: 3}
   - {fileID: 2800000, guid: 718204889f34d407682ef748f06cd443, type: 3}
@@ -292,6 +297,11 @@ MonoBehaviour:
   ControlsGamepad: {fileID: 2800000, guid: 1754e47bb735345dea6bc17c66f20701, type: 3}
   SignMain: {fileID: 2800000, guid: 13a23439fab224116ac3092c0e55a81b, type: 3}
   SignPole: {fileID: 2800000, guid: f8c724f48701c45a1a61843538261810, type: 3}
+  CarModel: {fileID: 3052626978789218959, guid: 5cacc8a25279140ecb2be701e9cf8778, type: 3}
+  WreckModel: {fileID: -9201405901627664499, guid: 69a346208c2c04549ab128e358dac4d3, type: 3}
+  LeverModel: {fileID: 8517690851762399423, guid: df65f5b22e78449d1a2094bdf7427abd, type: 3}
+  KnifeSwitchModel: {fileID: -1256761550368166259, guid: 5708b95c910d746fcb903396020abc71, type: 3}
+  HandsModel: {fileID: -6689036041284674117, guid: 12e6af2149f9e4865948970b86e3a504, type: 3}
   AmbientLoop: {fileID: 8300000, guid: 59b9c568b212745b693f827f2e6471c8, type: 3}
   MenuMusic: {fileID: 8300000, guid: 56bbb35f5e70b425d938539da2cf086d, type: 3}
   Scream: {fileID: 8300000, guid: eaa6527724c104a50b9f0afaa0123106, type: 3}

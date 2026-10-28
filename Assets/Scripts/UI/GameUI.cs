@@ -296,6 +296,12 @@ namespace NightShift.UI
         private GameObject cinematic;
         private Text cinematicText;
         private Image cinematicFade;
+        private GameObject tape;
+        private RectTransform tapeScreen;
+        private RawImage tapePicture;
+        private RawImage tapeOsd;
+        private RawImage tapeLines;
+        private RawImage tapeSnow;
         private GameObject note;
         private Text noteText;
         private int noteOpenedFrame;
@@ -304,6 +310,15 @@ namespace NightShift.UI
         {
             cinematic = UiKit.Area("Cinematic", root, Vector2.zero, Vector2.one).gameObject;
             Transform c = cinematic.transform;
+            // A tape played full screen (the intro's home video): the low picture, the recorder's
+            // text over it, scan lines and snow. Under the fade, so it fades like the rest.
+            tape = UiKit.Panel("Tape", c, Vector2.zero, Vector2.one, Color.black).gameObject;
+            tapeScreen = UiKit.Area("Screen", tape.transform, Vector2.zero, Vector2.one);
+            tapePicture = TapeLayer("Picture");
+            tapeOsd = TapeLayer("Osd");
+            tapeLines = TapeLayer("Lines");
+            tapeSnow = TapeLayer("Snow");
+            tape.SetActive(false);
             cinematicFade = UiKit.Panel("Fade", c, Vector2.zero, Vector2.one, Color.black);
             cinematicFade.raycastTarget = false;
             UiKit.Panel("BarTop", c, new Vector2(0f, 0.88f), Vector2.one, Color.black).raycastTarget = false;
@@ -321,9 +336,51 @@ namespace NightShift.UI
             note.SetActive(false);
         }
 
+        private RawImage TapeLayer(string name)
+        {
+            RectTransform area = UiKit.Area(name, tapeScreen, Vector2.zero, Vector2.one);
+            RawImage image = area.gameObject.AddComponent<RawImage>();
+            image.raycastTarget = false;
+            return image;
+        }
+
+        /// <summary>
+        /// Plays a tape full screen: the picture (tinted, jumping up or down by <paramref name="jump"/>
+        /// of its height when the tracking slips), the recorder's text over it, and snow (0–1).
+        /// </summary>
+        public void SetTape(Texture picture, Color tint, Texture overlay, float snow, float jump)
+        {
+            tape.SetActive(true);
+            // A home video is 4:3: black bars at the sides of a wide screen.
+            float width = Mathf.Min(1f, (4f / 3f) / Mathf.Max(0.1f, (float)Screen.width / Screen.height));
+            tapeScreen.anchorMin = new Vector2(0.5f - width * 0.5f, 0f);
+            tapeScreen.anchorMax = new Vector2(0.5f + width * 0.5f, 1f);
+            tapePicture.texture = picture;
+            tapePicture.color = tint;
+            tapePicture.uvRect = new Rect(0f, jump, 1f, 1f);
+            tapeOsd.enabled = overlay != null;
+            tapeOsd.texture = overlay;
+            Texture2D lines = BuildKit.SignTexture("glass_vhs_scanlines");
+            tapeLines.enabled = lines != null;
+            tapeLines.texture = lines;
+            tapeLines.color = new Color(1f, 1f, 1f, 0.8f);
+            tapeLines.uvRect = new Rect(0f, 0f, 1f, 1f);
+            Texture2D grain = BuildKit.SignTexture("vhs_static");
+            tapeSnow.enabled = grain != null && snow > 0f;
+            tapeSnow.texture = grain;
+            tapeSnow.color = new Color(1f, 1f, 1f, snow);
+            tapeSnow.uvRect = new Rect(Random.value * 0.5f, Random.value * 0.5f, 0.5f, 0.5f);
+        }
+
+        public void HideTape() => tape.SetActive(false);
+
         public void ShowCinematic(bool on)
         {
             SetScreens();
+            if (!on)
+            {
+                tape.SetActive(false);
+            }
             cinematic.SetActive(on);
         }
 

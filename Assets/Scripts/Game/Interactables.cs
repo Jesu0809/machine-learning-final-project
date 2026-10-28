@@ -141,6 +141,9 @@ namespace NightShift.Game
             public Transform Door;
             public Renderer[] SocketLights;
             public Transform Lever;
+            /// <summary>The lever's angle about its hub (degrees, about x) before and after the pull.</summary>
+            public float LeverUp = -35f;
+            public float LeverDown = 80f;
             public Renderer Lamp;
             public ParticleSystem Sparks;
         }
@@ -245,7 +248,7 @@ namespace NightShift.Game
                 // Stiff at first, then it gives.
                 float k = t / 0.8f;
                 lever = k < 0.4f ? k * 0.5f : 0.2f + (k - 0.4f) / 0.6f * 0.8f;
-                player.LookToward(transform.position, 6f);
+                player.LookToward(parts.Lever.position, 6f);
                 player.MakeNoise(3);
                 Draw();
                 yield return null;
@@ -253,7 +256,7 @@ namespace NightShift.Game
             lever = 1f;
             Progress = 1f;
             pulling = false;
-            parts.Sparks.transform.localPosition = parts.Lever.localPosition + new Vector3(0f, 0.15f, 0.05f);
+            parts.Sparks.transform.position = parts.Lever.position + parts.Root.transform.TransformDirection(new Vector3(0f, 0.05f, 0.08f));
             parts.Sparks.Emit(40);
             player.Jolt(1.8f);
             Director.Audio.PlayAt(GameAudio.Clunk(), transform.position, 1f, 0.8f);
@@ -279,7 +282,7 @@ namespace NightShift.Game
                 return;
             }
             parts.Door.localRotation = Quaternion.Euler(0f, -115f * Ease(panelDoor), 0f);
-            parts.Lever.localRotation = Quaternion.Euler(Mathf.Lerp(-35f, 80f, Ease(lever)), 0f, 0f);
+            parts.Lever.localRotation = Quaternion.Euler(Mathf.Lerp(parts.LeverUp, parts.LeverDown, Ease(lever)), 0f, 0f);
             HuntState state = Director != null ? Director.State : null;
             for (int i = 0; i < parts.SocketLights.Length; i++)
             {

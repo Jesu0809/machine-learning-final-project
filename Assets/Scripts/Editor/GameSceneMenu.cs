@@ -97,6 +97,11 @@ namespace NightShift.EditorTools
             assets.Props = PropImporter.ImportAll();
             assets.TvScreen = PropImporter.MeasureScreen(assets.Props, "television_02");
             assets.Signs = SignImporter.ImportAll();
+            assets.CarModel = Model("car_wagon");
+            assets.WreckModel = Model("car_wreck");
+            assets.LeverModel = Model("exit_lever");
+            assets.KnifeSwitchModel = Model("knife_switch");
+            assets.HandsModel = Model("fp_hands");
             assets.AmbientOcclusion = RenderingSetup.Apply();
             assets.AmbientLoop = Clip("ambient-hum-loop");
             assets.MenuMusic = Clip("menu-music-loop");
@@ -117,6 +122,17 @@ namespace NightShift.EditorTools
             EditorUtility.SetDirty(assets);
             AssetDatabase.SaveAssets();
             Debug.Log("Game assets: model = " + (assets.FreddyModel != null ? assets.FreddyModel.name : "none (scripted Freddy)"));
+        }
+
+        /// <summary>A model prepared by tools/prepare_models.py (Assets/Art/Sketchfab), or null.</summary>
+        private static GameObject Model(string name)
+        {
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Art/Sketchfab/" + name + ".glb");
+            if (model == null)
+            {
+                Debug.LogWarning("Model missing (run tools/prepare_models.py): " + name);
+            }
+            return model;
         }
 
         /// <summary>

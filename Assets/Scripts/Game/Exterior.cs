@@ -35,6 +35,7 @@ namespace NightShift.Game
         private Light moon;
         private ParticleSystem rain;
         private Transform rainAnchor;
+        private ParticleSystem splashes;
         private bool outdoors;
         private float nextFlicker;
         private float flickerUntil;
@@ -68,8 +69,9 @@ namespace NightShift.Game
             exterior.BuildBackLot(root, assets);
             exterior.BuildSigns(root, assets);
             exterior.BuildStreetLights(root);
+            exterior.BuildRoadside(root);
             exterior.BuildSkyline(root);
-            exterior.Car = Car.Create(root);
+            exterior.Car = Car.Create(root, assets);
             exterior.Car.Place(ParkingSpot, 0f);
             exterior.BuildRain(root);
             exterior.BuildMoon(root);
@@ -90,7 +92,7 @@ namespace NightShift.Game
             // The ground sits just under the floors of the building, so it never shows inside. Near the
             // pizzeria it is cut in tiles: URP lights at most 8 lights per object, and one huge plane
             // would spend them on the lamps inside the building instead of the street lights.
-            BuildKit.Box("FarGround", root, new Vector3(0f, -0.09f, -20f), new Vector3(400f, 0.1f, 400f), asphalt, 6f, false);
+            BuildKit.Box("FarGround", root, new Vector3(-80f, -0.09f, -20f), new Vector3(560f, 0.1f, 400f), asphalt, 6f, false);
             const float tile = 10f;
             for (float x = -60f; x < 60f; x += tile)
             {
@@ -115,9 +117,9 @@ namespace NightShift.Game
             {
                 BuildKit.Box("ParkingLine", root, new Vector3(x, -0.015f, -24.2f), new Vector3(0.12f, 0.01f, 4.6f), paint, 1f, false);
             }
-            BuildKit.Box("RoadEdgeNorth", root, new Vector3(0f, -0.015f, RoadZ + 3.9f), new Vector3(360f, 0.01f, 0.15f), paint, 1f, false);
-            BuildKit.Box("RoadEdgeSouth", root, new Vector3(0f, -0.015f, RoadZ - 4.1f), new Vector3(360f, 0.01f, 0.15f), paint, 1f, false);
-            for (float x = -170f; x < 170f; x += 6f)
+            BuildKit.Box("RoadEdgeNorth", root, new Vector3(-80f, -0.015f, RoadZ + 3.9f), new Vector3(520f, 0.01f, 0.15f), paint, 1f, false);
+            BuildKit.Box("RoadEdgeSouth", root, new Vector3(-80f, -0.015f, RoadZ - 4.1f), new Vector3(520f, 0.01f, 0.15f), paint, 1f, false);
+            for (float x = -330f; x < 170f; x += 6f)
             {
                 BuildKit.Box("CenterLine", root, new Vector3(x, -0.015f, RoadZ - 0.1f), new Vector3(3f, 0.01f, 0.14f), yellow, 1f, false);
             }
@@ -290,9 +292,7 @@ namespace NightShift.Game
             }
 
             // An abandoned car under the near lamp, a dumpster against the wall.
-            Car wreck = Car.Create(root);
-            wreck.Place(new Vector3(-3.2f, 0f, lotSouth + 6.2f), 70f);
-            wreck.SetLights(false);
+            Wreck(root, assets, new Vector3(-3.2f, 0f, lotSouth + 6.2f), 70f);
             Dumpster(root, new Vector3(19.2f, 0f, lotSouth + 1.1f), 90f);
 
             // The fence, with power poles behind it and wires sagging between them.
@@ -407,6 +407,33 @@ namespace NightShift.Game
             rainRenderer.velocityScale = 0.02f;
             rainRenderer.sharedMaterial = BuildKit.Additive("rainStreak", ProceduralTextures.Disc(16), new Color(0.65f, 0.7f, 0.8f, 0.5f));
             lotRain.Play();
+        }
+
+        /// <summary>A rusted sedan left in the lot (car_wreck.glb, or the box car with its lights off).</summary>
+        private static void Wreck(Transform root, GameAssets assets, Vector3 position, float yaw)
+        {
+            if (assets == null || assets.WreckModel == null)
+            {
+                Car boxes = Car.Create(root, null);
+                boxes.Place(position, yaw);
+                boxes.SetLights(false);
+                return;
+            }
+            GameObject wreck = Object.Instantiate(assets.WreckModel, root, false);
+            wreck.name = "Wreck";
+            // Measured while it still stands unturned at the origin, then placed.
+            Renderer[] renderers = wreck.GetComponentsInChildren<Renderer>();
+            var bounds = new Bounds(wreck.transform.InverseTransformPoint(renderers[0].bounds.center), Vector3.zero);
+            foreach (Renderer renderer in renderers)
+            {
+                bounds.Encapsulate(wreck.transform.InverseTransformPoint(renderer.bounds.min));
+                bounds.Encapsulate(wreck.transform.InverseTransformPoint(renderer.bounds.max));
+            }
+            var solid = wreck.AddComponent<BoxCollider>();
+            solid.center = bounds.center;
+            solid.size = bounds.size;
+            wreck.transform.localPosition = position;
+            wreck.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
         }
 
         /// <summary>A green steel dumpster, lids half open, on four casters.</summary>
@@ -651,6 +678,123 @@ namespace NightShift.Game
             return light;
         }
 
+        // ------------------------------------------------------------------ the road into town
+
+        /// <summary>
+        /// The road west of the pizzeria, where the guard's car comes from in the intro: sodium lamps
+        /// every 30 m (their light sweeps through the car), power poles with sagging wires, small
+        /// houses and a closed shop set back from the road, a few windows still lit, and puddles.
+        /// </summary>
+        private void BuildRoadside(Transform root)
+        {
+            Material metal = BuildKit.Plain("lampPost", new Color(0.13f, 0.14f, 0.14f), 0.4f, 0.7f);
+            Material bulb = BuildKit.Glow("sodiumBulb", new Color(1f, 0.62f, 0.3f), 6f);
+            Material wood = BuildKit.Plain("pole", new Color(0.16f, 0.12f, 0.09f), 0.2f);
+            Material wire = BuildKit.Plain("wire", new Color(0.02f, 0.02f, 0.02f), 0.3f);
+            Material brick = BuildKit.Surface("bricks", () => ProceduralTextures.Bricks(new Color(0.42f, 0.17f, 0.12f), new Color(0.32f, 0.3f, 0.27f)), 0.25f);
+            Material siding = BuildKit.Pbr("wood_planks", new Color(0.45f, 0.42f, 0.4f)) ?? brick;
+            Material roof = BuildKit.Plain("roof", new Color(0.04f, 0.04f, 0.045f), 0.6f);
+            Material lit = BuildKit.Glow("houseWindowLit", new Color(1f, 0.72f, 0.4f), 0.9f);
+            Material dark = BuildKit.Plain("houseWindowDark", new Color(0.02f, 0.025f, 0.03f), 0.9f, 0.2f);
+            Material yard = BuildKit.Plain("yard", new Color(0.05f, 0.06f, 0.045f), 0.35f);
+            var random = new System.Random(91);
+
+            for (float x = -232f; x < -45f; x += 30f)
+            {
+                StreetLamp(root, new Vector3(x, 0f, RoadZ + 4.6f), -1.6f, metal, bulb, 38f);
+            }
+
+            // Power poles on the south side, the wires sagging between them.
+            const float poleZ = RoadZ - 6.2f;
+            for (float x = -236f; x < -40f; x += 34f)
+            {
+                BuildKit.Cylinder("PowerPole", root, new Vector3(x, 4.5f, poleZ), 0.26f, 9f, wood);
+                BuildKit.Box("CrossArm", root, new Vector3(x, 8.4f, poleZ), new Vector3(0.12f, 0.12f, 1.8f), wood, 1f, false);
+                for (int line = -1; line <= 1; line += 2)
+                {
+                    const int pieces = 7;
+                    for (int k = 0; k < pieces; k++)
+                    {
+                        float a = k / (float)pieces, b = (k + 1) / (float)pieces;
+                        var p0 = new Vector3(x + a * 34f, 8.45f - Mathf.Sin(a * Mathf.PI) * 0.9f, poleZ + line * 0.7f);
+                        var p1 = new Vector3(x + b * 34f, 8.45f - Mathf.Sin(b * Mathf.PI) * 0.9f, poleZ + line * 0.7f);
+                        BuildKit.Cylinder("Wire", root, (p0 + p1) * 0.5f, 0.025f, Vector3.Distance(p0, p1), wire).transform.localRotation = Quaternion.FromToRotation(Vector3.up, p1 - p0);
+                    }
+                }
+            }
+
+            // Houses on both sides, set back behind dark yards, facing the road.
+            for (float x = -228f; x < -48f; x += 15f + (float)random.NextDouble() * 9f)
+            {
+                float side = random.NextDouble() < 0.5 ? 1f : -1f;
+                float width = 7f + (float)random.NextDouble() * 3f;
+                float height = 3.8f + (float)random.NextDouble() * 1.8f;
+                float z = RoadZ + side * (15f + (float)random.NextDouble() * 6f);
+                float front = z - side * 3f;
+                BuildKit.Box("Yard", root, new Vector3(x, -0.05f, (front + RoadZ + side * 4.2f) * 0.5f), new Vector3(width + 4f, 0.1f, Mathf.Abs(front - RoadZ) - 4.2f), yard, 4f, false);
+                BuildKit.Box("House", root, new Vector3(x, height * 0.5f, z), new Vector3(width, height, 6f), random.NextDouble() < 0.6 ? siding : brick, 2f, false);
+                for (int slope = -1; slope <= 1; slope += 2)
+                {
+                    BuildKit.Box("Roof", root, new Vector3(x, height + 0.9f, z + slope * 1.55f), new Vector3(width + 0.4f, 0.15f, 3.6f), roof, 1f, false)
+                        .transform.localRotation = Quaternion.Euler(slope * -28f, 0f, 0f);
+                }
+                for (int w = 0; w < 3; w++)
+                {
+                    float wx = x - width * 0.33f + w * width * 0.33f;
+                    bool on = random.NextDouble() < 0.3;
+                    GameObject window = BuildKit.Box("HouseWindow", root, new Vector3(wx, height * 0.55f, front - side * 0.02f), new Vector3(1f, 1.1f, 0.04f), on ? lit : dark, 1f, false);
+                    if (!on && random.NextDouble() < 0.12)
+                    {
+                        window.AddComponent<TvGlow>();
+                    }
+                }
+                if (random.NextDouble() < 0.4)
+                {
+                    // A porch light on the front, so the house shows against the dark.
+                    BuildKit.Box("PorchLamp", root, new Vector3(x + width * 0.3f, 2.3f, front - side * 0.06f), new Vector3(0.14f, 0.2f, 0.08f), lit, 1f, false);
+                    Lamp(root, new Vector3(x + width * 0.3f, 2.3f, front - side * 0.6f), new Color(1f, 0.72f, 0.42f), 5f, 7f);
+                }
+            }
+
+            // Puddles on the road and in the lot, mirroring the lamps and the headlights.
+            Texture2D wet = BuildKit.SignTexture("decal_puddle");
+            if (wet != null)
+            {
+                Material water = BuildKit.Decal("roadPuddle", wet, new Color(0.3f, 0.33f, 0.36f, 1f));
+                water.SetFloat("_Smoothness", 0.97f);
+                for (int i = 0; i < 26; i++)
+                {
+                    bool lot = i >= 20;
+                    var at = lot ? new Vector3(-9f + (float)random.NextDouble() * 24f, -0.012f, -26.5f + (float)random.NextDouble() * 5f)
+                                 : new Vector3(-215f + i * 10.5f + (float)random.NextDouble() * 6f, -0.012f, RoadZ + ((float)random.NextDouble() - 0.6f) * 6f);
+                    var size = new Vector2(1.6f + (float)random.NextDouble() * 2.4f, 1.1f + (float)random.NextDouble() * 1.2f);
+                    BuildKit.Quad("Puddle", root, at, size, 0f, water).transform.localRotation = Quaternion.Euler(90f, (float)random.NextDouble() * 180f, 0f);
+                }
+            }
+        }
+
+        /// <summary>A sodium street lamp: post, arm, head, and its light (in the outdoor lights).</summary>
+        private void StreetLamp(Transform root, Vector3 p, float reach, Material metal, Material bulb, float intensity)
+        {
+            BuildKit.Cylinder("Post", root, p + new Vector3(0f, 3.4f, 0f), 0.18f, 6.8f, metal);
+            BuildKit.Box("Arm", root, p + new Vector3(0f, 6.75f, reach * 0.5f), new Vector3(0.1f, 0.1f, 1.7f), metal, 1f, false);
+            Vector3 head = p + new Vector3(0f, 6.65f, reach);
+            BuildKit.Box("Head", root, head, new Vector3(0.45f, 0.14f, 0.7f), metal, 1f, false);
+            BuildKit.Box("Bulb", root, head + new Vector3(0f, -0.09f, 0f), new Vector3(0.35f, 0.04f, 0.55f), bulb, 1f, false);
+            var light = new GameObject("StreetLight").AddComponent<Light>();
+            light.transform.SetParent(root, false);
+            light.transform.localPosition = head + new Vector3(0f, -0.2f, 0f);
+            light.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            light.type = LightType.Spot;
+            light.spotAngle = 120f;
+            light.innerSpotAngle = 60f;
+            light.range = 20f;
+            light.intensity = intensity;
+            light.color = new Color(1f, 0.6f, 0.32f);
+            light.shadows = LightShadows.None;
+            lights.Add(light);
+        }
+
         // ------------------------------------------------------------------ the town around
 
         private void BuildSkyline(Transform root)
@@ -694,11 +838,11 @@ namespace NightShift.Game
             main.startSpeed = 18f;
             main.startSize = 0.025f;
             main.startColor = new Color(0.7f, 0.75f, 0.85f, 0.35f);
-            main.maxParticles = 4000;
+            main.maxParticles = 7000;
             main.simulationSpace = ParticleSystemSimulationSpace.World;
             main.gravityModifier = 0.4f;
             ParticleSystem.EmissionModule emission = rain.emission;
-            emission.rateOverTime = 2600f;
+            emission.rateOverTime = 4600f;
             ParticleSystem.ShapeModule shape = rain.shape;
             shape.shapeType = ParticleSystemShapeType.Box;
             shape.scale = new Vector3(40f, 40f, 0.5f);
@@ -708,6 +852,37 @@ namespace NightShift.Game
             renderer.lengthScale = 6f;
             renderer.velocityScale = 0.02f;
             renderer.sharedMaterial = BuildKit.Additive("rainStreak", ProceduralTextures.Disc(16), new Color(0.65f, 0.7f, 0.8f, 0.5f));
+
+            // Where the drops land: small rings on the ground that grow and fade, around the camera.
+            var splashObject = new GameObject("Splashes");
+            splashObject.transform.SetParent(root, false);
+            splashes = splashObject.AddComponent<ParticleSystem>();
+            splashes.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            ParticleSystem.MainModule splashMain = splashes.main;
+            splashMain.loop = true;
+            splashMain.startLifetime = 0.22f;
+            splashMain.startSpeed = 0f;
+            splashMain.startSize = new ParticleSystem.MinMaxCurve(0.05f, 0.16f);
+            splashMain.startColor = new Color(0.75f, 0.8f, 0.9f, 0.5f);
+            splashMain.maxParticles = 1500;
+            splashMain.simulationSpace = ParticleSystemSimulationSpace.World;
+            ParticleSystem.EmissionModule splashRate = splashes.emission;
+            splashRate.rateOverTime = 1300f;
+            ParticleSystem.ShapeModule area = splashes.shape;
+            area.shapeType = ParticleSystemShapeType.Box;
+            area.scale = new Vector3(26f, 0f, 26f);
+            ParticleSystem.SizeOverLifetimeModule grow = splashes.sizeOverLifetime;
+            grow.enabled = true;
+            grow.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0f, 0.3f, 1f, 1f));
+            ParticleSystem.ColorOverLifetimeModule fadeOut = splashes.colorOverLifetime;
+            fadeOut.enabled = true;
+            var gradient = new Gradient();
+            gradient.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+                             new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(0f, 1f) });
+            fadeOut.color = gradient;
+            var splashRenderer = splashes.GetComponent<ParticleSystemRenderer>();
+            splashRenderer.renderMode = ParticleSystemRenderMode.HorizontalBillboard;
+            splashRenderer.sharedMaterial = BuildKit.Additive("rainSplash", ProceduralTextures.Ring(64, 0.12f), new Color(0.6f, 0.65f, 0.75f, 0.35f));
         }
 
         private void BuildMoon(Transform root)
@@ -745,7 +920,7 @@ namespace NightShift.Game
                 savedClear = camera.clearFlags;
                 savedBackground = camera.backgroundColor;
                 RenderSettings.fogColor = NightFog;
-                RenderSettings.fogDensity = 0.011f;
+                RenderSettings.fogDensity = 0.014f;
                 RenderSettings.ambientLight = new Color(0.09f, 0.095f, 0.13f);
                 // Without a sky, the default reflection is a flat grey that turns wet asphalt and the
                 // car white; the night has no sky to reflect, only the lights.
@@ -754,6 +929,7 @@ namespace NightShift.Game
                 camera.clearFlags = CameraClearFlags.SolidColor;
                 camera.backgroundColor = NightSky;
                 rain.Play();
+                splashes.Play();
             }
             else
             {
@@ -768,6 +944,7 @@ namespace NightShift.Game
                     savedCamera.backgroundColor = savedBackground;
                 }
                 rain.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                splashes.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             }
             ApplyLights(on);
         }
@@ -803,6 +980,8 @@ namespace NightShift.Game
             {
                 // Rain falls around the camera wherever it goes.
                 rainAnchor.position = camera.transform.position + new Vector3(0f, 12f, 0f) + camera.transform.forward * 8f;
+                Vector3 ahead = camera.transform.position + Vector3.ProjectOnPlane(camera.transform.forward, Vector3.up) * 9f;
+                splashes.transform.position = new Vector3(ahead.x, 0.03f, ahead.z);
             }
 
             // The sign buzzes and drops out now and then.
@@ -831,29 +1010,216 @@ namespace NightShift.Game
         }
     }
 
-    /// <summary>The guard's old sedan, built from boxes: it drives, parks and opens its door.</summary>
+    /// <summary>
+    /// The guard's car, a 1984 station wagon (car_wagon.glb, or boxes if the model is missing): it
+    /// drives, parks, turns its wheels and its steering wheel, lights its lamps with beams in the
+    /// rain, and its wipers sweep the beads of rain off the windshield.
+    /// </summary>
     public class Car : MonoBehaviour
     {
+        private const float WipeSeconds = 1.3f;
+
         private readonly List<Transform> wheels = new List<Transform>();
         private readonly List<Light> headlights = new List<Light>();
-        private Renderer[] lamps;
-        private Transform door;
+        private readonly List<Renderer> lamps = new List<Renderer>();
+        private Transform door;            // only the car made of boxes has a door that opens
+        private Transform steering;
+        private Quaternion steeringRest;
+        private float wheelRadius = 0.34f;
         private Vector3 lastPosition;
+        private Light dashboard;
+        private readonly List<ParticleSystem> spray = new List<ParticleSystem>();
+
+        // The windshield: two halves of beads, each wiped by its blade.
+        private Bounds glass;
+        private Transform[] wipers;
+        private Material[] drops;
+        private readonly float[] wet = { 1f, 1f };
+        private float wipeClock;
+        private float lastSweep;
 
         public bool HeadlightsOn { get; private set; } = true;
 
         /// <summary>Where the driver's eyes are, in the car's space.</summary>
-        public static readonly Vector3 DriverEyes = new Vector3(-0.38f, 1.12f, -0.15f);
+        public Vector3 DriverEyes { get; private set; } = new Vector3(-0.38f, 1.12f, -0.15f);
 
-        public static Car Create(Transform parent)
+        /// <summary>The steering wheel's center, in the car's space.</summary>
+        public Vector3 SteeringCenter { get; private set; } = new Vector3(-0.38f, 0.98f, 0.38f);
+
+        /// <summary>The windshield's box, in the car's space.</summary>
+        public Bounds Windshield => glass;
+
+        /// <summary>Rain beading on the windshield (the wipers sweep while it is on).</summary>
+        public bool Wipers { get; set; }
+
+        public static Car Create(Transform parent, GameAssets assets)
         {
             var car = new GameObject("Car").AddComponent<Car>();
             car.transform.SetParent(parent, false);
-            Transform t = car.transform;
+            if (assets != null && assets.CarModel != null)
+            {
+                car.BuildModel(assets.CarModel);
+            }
+            else
+            {
+                car.BuildBoxes();
+            }
+            car.BuildSpray();
+            return car;
+        }
+
+        private void BuildModel(GameObject model)
+        {
+            GameObject body = Instantiate(model, transform, false);
+            body.name = "Wagon";
+            Renderer headlightLenses = null, brakeLights = null, windshield = null;
+            foreach (Renderer renderer in body.GetComponentsInChildren<Renderer>())
+            {
+                string name = renderer.name;
+                if (name.Contains("WheelStock"))
+                {
+                    wheels.Add(renderer.transform);
+                    wheelRadius = LocalBounds(renderer).extents.y;
+                }
+                else if (name.Contains("Steering_Wheel"))
+                {
+                    steering = renderer.transform;
+                }
+                else if (name.Contains("Headlights0"))
+                {
+                    headlightLenses = renderer;
+                }
+                else if (name.Contains("Brakelights"))
+                {
+                    brakeLights = renderer;
+                }
+                else if (name.Contains("Windshield"))
+                {
+                    windshield = renderer;
+                }
+                if (name.Contains("Glass") || name.Contains("Windshield"))
+                {
+                    // Wet, smudged glass: no mirror-sharp highlights of the lights inside the car.
+                    foreach (Material material in renderer.materials)
+                    {
+                        material.SetFloat("roughnessFactor", 0.85f);
+                        material.SetFloat("metallicFactor", 0f);
+                    }
+                }
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+            }
+            if (steering != null)
+            {
+                steeringRest = steering.localRotation;
+                SteeringCenter = transform.InverseTransformPoint(steering.position);
+                DriverEyes = SteeringCenter + new Vector3(0f, 0.3f, -0.48f);
+            }
+            if (windshield != null)
+            {
+                glass = LocalBounds(windshield);
+            }
+
+            Material head = BuildKit.Glow("headlight", new Color(1f, 0.95f, 0.85f), 6f);
+            Material tail = BuildKit.Glow("taillight", new Color(1f, 0.05f, 0.03f), 4f);
+            if (headlightLenses != null)
+            {
+                Bounds lens = LocalBounds(headlightLenses);
+                for (int side = -1; side <= 1; side += 2)
+                {
+                    var at = new Vector3(lens.center.x + side * (lens.extents.x - 0.14f), lens.center.y, lens.max.z + 0.006f);
+                    lamps.Add(BuildKit.Quad("HeadlightGlow", transform, at, new Vector2(0.22f, 0.13f), 0f, head).GetComponent<Renderer>());
+                    Headlight(at + new Vector3(0f, 0f, 0.08f), side);
+                }
+            }
+            if (brakeLights != null)
+            {
+                Bounds lens = LocalBounds(brakeLights);
+                for (int side = -1; side <= 1; side += 2)
+                {
+                    var at = new Vector3(lens.center.x + side * (lens.extents.x - 0.1f), lens.center.y, lens.min.z - 0.006f);
+                    lamps.Add(BuildKit.Quad("TaillightGlow", transform, at, new Vector2(0.16f, 0.12f), 180f, tail).GetComponent<Renderer>());
+                }
+            }
+
+            // The gauges' faint glow on the driver's hands and face.
+            dashboard = new GameObject("Dashboard").AddComponent<Light>();
+            dashboard.transform.SetParent(transform, false);
+            // The glow of the gauges and the street on the wheel and dashboard, from over the driver's shoulder.
+            dashboard.transform.localPosition = DriverEyes + new Vector3(0.12f, 0.18f, -0.05f);
+            dashboard.transform.localRotation = Quaternion.LookRotation(SteeringCenter + new Vector3(0f, 0.05f, 0.15f) - dashboard.transform.localPosition);
+            dashboard.type = LightType.Spot;
+            dashboard.spotAngle = 75f;
+            dashboard.range = 1.8f;
+            dashboard.intensity = 2.2f;
+            dashboard.color = new Color(0.75f, 0.8f, 1f);
+            dashboard.shadows = LightShadows.None;
+
+            Bounds all = new Bounds(transform.position, Vector3.zero);
+            foreach (Renderer renderer in body.GetComponentsInChildren<Renderer>())
+            {
+                all.Encapsulate(LocalBounds(renderer));
+            }
+            var solid = gameObject.AddComponent<BoxCollider>();
+            solid.center = all.center + new Vector3(0f, 0.1f, 0f);
+            solid.size = all.size - new Vector3(0.05f, 0.2f, 0.1f);
+        }
+
+        /// <summary>A headlight's beam: a spot light and a faint cone of light in the rain.</summary>
+        private void Headlight(Vector3 at, int side)
+        {
+            var beam = new GameObject("Beam").AddComponent<Light>();
+            beam.transform.SetParent(transform, false);
+            beam.transform.localPosition = at;
+            beam.transform.localRotation = Quaternion.Euler(5f, side * 3f, 0f);
+            beam.type = LightType.Spot;
+            beam.spotAngle = 58f;
+            beam.innerSpotAngle = 22f;
+            beam.range = 32f;
+            beam.intensity = 16f;
+            beam.color = new Color(1f, 0.93f, 0.8f);
+            beam.shadows = LightShadows.Soft;
+            headlights.Add(beam);
+            const float length = 9f;
+            Vector3 forward = Quaternion.Euler(5f, side * 3f, 0f) * Vector3.forward;
+            GameObject cone = BuildKit.Cone("BeamCone", transform, at + forward * length, 1.6f, length,
+                                            BuildKit.Additive("headlightBeam", BeamFade(), new Color(1f, 0.93f, 0.8f, 0.07f)));
+            cone.transform.localRotation = Quaternion.FromToRotation(Vector3.up, -forward);
+            lamps.Add(cone.GetComponent<Renderer>());
+        }
+
+        /// <summary>Bright at the lamp, gone at the far end (the cone's texture runs from its base, v 0, to its apex, v 1).</summary>
+        private static Texture2D BeamFade()
+        {
+            var texture = new Texture2D(1, 64, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, name = "BeamFade" };
+            for (int y = 0; y < 64; y++)
+            {
+                float v = y / 63f;
+                texture.SetPixel(0, y, Color.white * (v * v * v));
+            }
+            texture.Apply();
+            return texture;
+        }
+
+        private Bounds LocalBounds(Renderer renderer)
+        {
+            Bounds world = renderer.bounds;
+            var local = new Bounds(transform.InverseTransformPoint(world.center), Vector3.zero);
+            for (int i = 0; i < 8; i++)
+            {
+                var corner = new Vector3(i % 2 == 0 ? world.min.x : world.max.x, (i / 2) % 2 == 0 ? world.min.y : world.max.y, i < 4 ? world.min.z : world.max.z);
+                local.Encapsulate(transform.InverseTransformPoint(corner));
+            }
+            return local;
+        }
+
+        /// <summary>The old car made of boxes, when the model is missing.</summary>
+        private void BuildBoxes()
+        {
+            Transform t = transform;
             Material paint = BuildKit.Plain("carPaint", new Color(0.18f, 0.05f, 0.05f), 0.85f, 0.6f);
             Material chrome = BuildKit.Plain("chrome", new Color(0.7f, 0.7f, 0.72f), 0.8f, 1f);
             // See-through, so the shot from the driver's seat shows the street.
-            Material glass = BuildKit.Stain("carGlass", Texture2D.whiteTexture, new Color(0.06f, 0.08f, 0.1f, 0.5f));
+            Material see = BuildKit.Stain("carGlass", Texture2D.whiteTexture, new Color(0.06f, 0.08f, 0.1f, 0.5f));
             Material tire = BuildKit.Plain("tire", new Color(0.03f, 0.03f, 0.03f), 0.3f);
             Material head = BuildKit.Glow("headlight", new Color(1f, 0.95f, 0.85f), 6f);
             Material tail = BuildKit.Glow("taillight", new Color(1f, 0.05f, 0.03f), 5f);
@@ -862,61 +1228,85 @@ namespace NightShift.Game
             BuildKit.Box("Hood", t, new Vector3(0f, 0.95f, 1.45f), new Vector3(1.76f, 0.06f, 1.5f), paint, 1f, false);
             BuildKit.Box("Trunk", t, new Vector3(0f, 0.95f, -1.75f), new Vector3(1.76f, 0.06f, 1f), paint, 1f, false);
             BuildKit.Box("Roof", t, new Vector3(0f, 1.42f, -0.25f), new Vector3(1.6f, 0.06f, 1.9f), paint, 1f, false);
-            BuildKit.Box("Windshield", t, new Vector3(0f, 1.2f, 0.85f), new Vector3(1.58f, 0.5f, 0.04f), glass, 1f, false).transform.localRotation = Quaternion.Euler(-35f, 0f, 0f);
-            BuildKit.Box("RearWindow", t, new Vector3(0f, 1.2f, -1.32f), new Vector3(1.58f, 0.48f, 0.04f), glass, 1f, false).transform.localRotation = Quaternion.Euler(35f, 0f, 0f);
-            BuildKit.Box("SideRight", t, new Vector3(0.79f, 1.18f, -0.25f), new Vector3(0.03f, 0.42f, 1.9f), glass, 1f, false);
-            BuildKit.Box("PillarLeftFront", t, new Vector3(-0.79f, 1.18f, 0.66f), new Vector3(0.05f, 0.45f, 0.08f), paint, 1f, false);
-            BuildKit.Box("PillarLeftBack", t, new Vector3(-0.79f, 1.18f, -1.15f), new Vector3(0.05f, 0.45f, 0.08f), paint, 1f, false);
-            BuildKit.Box("PillarRightFront", t, new Vector3(0.79f, 1.18f, 0.66f), new Vector3(0.05f, 0.45f, 0.08f), paint, 1f, false);
-            BuildKit.Box("PillarRightBack", t, new Vector3(0.79f, 1.18f, -1.15f), new Vector3(0.05f, 0.45f, 0.08f), paint, 1f, false);
+            BuildKit.Box("Windshield", t, new Vector3(0f, 1.2f, 0.85f), new Vector3(1.58f, 0.5f, 0.04f), see, 1f, false).transform.localRotation = Quaternion.Euler(-35f, 0f, 0f);
+            BuildKit.Box("RearWindow", t, new Vector3(0f, 1.2f, -1.32f), new Vector3(1.58f, 0.48f, 0.04f), see, 1f, false).transform.localRotation = Quaternion.Euler(35f, 0f, 0f);
+            BuildKit.Box("SideRight", t, new Vector3(0.79f, 1.18f, -0.25f), new Vector3(0.03f, 0.42f, 1.9f), see, 1f, false);
             BuildKit.Box("BumperFront", t, new Vector3(0f, 0.42f, 2.28f), new Vector3(1.84f, 0.16f, 0.1f), chrome, 1f, false);
             BuildKit.Box("BumperBack", t, new Vector3(0f, 0.42f, -2.28f), new Vector3(1.84f, 0.16f, 0.1f), chrome, 1f, false);
             BuildKit.Box("Seats", t, new Vector3(0f, 0.85f, -0.4f), new Vector3(1.5f, 0.5f, 1.2f), tire, 1f, false);
             BuildKit.Box("Dashboard", t, new Vector3(0f, 0.92f, 0.72f), new Vector3(1.56f, 0.22f, 0.4f), tire, 1f, false);
-            BuildKit.Box("Gauges", t, new Vector3(-0.38f, 1.04f, 0.56f), new Vector3(0.3f, 0.06f, 0.02f), BuildKit.Glow("gauges", new Color(0.3f, 0.8f, 1f), 1.5f), 1f, false);
-            var wheelRim = BuildKit.Cylinder("SteeringWheel", t, new Vector3(-0.38f, 0.98f, 0.38f), 0.36f, 0.03f, tire);
-            wheelRim.transform.localRotation = Quaternion.Euler(60f, 0f, 0f);
+            steering = BuildKit.Cylinder("SteeringWheel", t, SteeringCenter, 0.36f, 0.03f, tire).transform;
+            steering.localRotation = Quaternion.Euler(60f, 0f, 0f);
+            steeringRest = steering.localRotation;
 
-            // The driver's door: glass on top, panel below, hinged at the front.
-            car.door = new GameObject("DoorHinge").transform;
-            car.door.SetParent(t, false);
-            car.door.localPosition = new Vector3(-0.9f, 0f, 0.6f);
-            BuildKit.Box("DoorPanel", car.door, new Vector3(0f, 0.7f, -0.6f), new Vector3(0.05f, 0.62f, 1.15f), paint, 1f, false);
-            BuildKit.Box("DoorGlass", car.door, new Vector3(0.02f, 1.18f, -0.62f), new Vector3(0.03f, 0.42f, 1.0f), glass, 1f, false);
+            door = new GameObject("DoorHinge").transform;
+            door.SetParent(t, false);
+            door.localPosition = new Vector3(-0.9f, 0f, 0.6f);
+            BuildKit.Box("DoorPanel", door, new Vector3(0f, 0.7f, -0.6f), new Vector3(0.05f, 0.62f, 1.15f), paint, 1f, false);
+            BuildKit.Box("DoorGlass", door, new Vector3(0.02f, 1.18f, -0.62f), new Vector3(0.03f, 0.42f, 1.0f), see, 1f, false);
 
             for (int i = 0; i < 4; i++)
             {
-                float x = i % 2 == 0 ? -0.82f : 0.82f;
-                float z = i < 2 ? 1.4f : -1.4f;
                 var axle = new GameObject("Wheel").transform;
                 axle.SetParent(t, false);
-                axle.localPosition = new Vector3(x, 0.34f, z);
+                axle.localPosition = new Vector3(i % 2 == 0 ? -0.82f : 0.82f, 0.34f, i < 2 ? 1.4f : -1.4f);
                 var wheel = BuildKit.Cylinder("Tire", axle, Vector3.zero, 0.68f, 0.24f, tire);
                 wheel.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
                 BuildKit.Cylinder("Hub", wheel.transform, new Vector3(0f, 1.02f, 0f), 0.6f, 0.05f, chrome);
-                car.wheels.Add(axle);
+                wheels.Add(axle);
             }
-
-            var lampList = new List<Renderer>();
             for (int side = -1; side <= 1; side += 2)
             {
-                lampList.Add(BuildKit.Box("Headlight", t, new Vector3(side * 0.62f, 0.68f, 2.26f), new Vector3(0.38f, 0.16f, 0.06f), head, 1f, false).GetComponent<Renderer>());
-                lampList.Add(BuildKit.Box("Taillight", t, new Vector3(side * 0.66f, 0.72f, -2.26f), new Vector3(0.32f, 0.14f, 0.06f), tail, 1f, false).GetComponent<Renderer>());
-                var beam = new GameObject("Beam").AddComponent<Light>();
-                beam.transform.SetParent(t, false);
-                beam.transform.localPosition = new Vector3(side * 0.62f, 0.7f, 2.4f);
-                beam.transform.localRotation = Quaternion.Euler(6f, side * 4f, 0f);
-                beam.type = LightType.Spot;
-                beam.spotAngle = 55f;
-                beam.innerSpotAngle = 25f;
-                beam.range = 30f;
-                beam.intensity = 14f;
-                beam.color = new Color(1f, 0.95f, 0.85f);
-                beam.shadows = LightShadows.None;
-                car.headlights.Add(beam);
+                lamps.Add(BuildKit.Box("Headlight", t, new Vector3(side * 0.62f, 0.68f, 2.26f), new Vector3(0.38f, 0.16f, 0.06f), head, 1f, false).GetComponent<Renderer>());
+                lamps.Add(BuildKit.Box("Taillight", t, new Vector3(side * 0.66f, 0.72f, -2.26f), new Vector3(0.32f, 0.14f, 0.06f), tail, 1f, false).GetComponent<Renderer>());
+                Headlight(new Vector3(side * 0.62f, 0.7f, 2.4f), side);
             }
-            car.lamps = lampList.ToArray();
-            return car;
+        }
+
+        /// <summary>Mist thrown up behind the rear tires on the wet road (thicker the faster it goes).</summary>
+        private void BuildSpray()
+        {
+            Material mist = BuildKit.Additive("tireSpray", ProceduralTextures.Disc(32), new Color(0.55f, 0.58f, 0.64f, 0.16f));
+            foreach (Transform wheel in wheels)
+            {
+                Vector3 at = transform.InverseTransformPoint(wheel.position);
+                if (at.z > 0f)
+                {
+                    continue;
+                }
+                var go = new GameObject("Spray");
+                go.transform.SetParent(transform, false);
+                go.transform.localPosition = new Vector3(at.x, 0.1f, at.z - wheelRadius * 0.8f);
+                go.transform.localRotation = Quaternion.Euler(-18f, 180f, 0f);
+                var mistSystem = go.AddComponent<ParticleSystem>();
+                mistSystem.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                ParticleSystem.MainModule main = mistSystem.main;
+                main.loop = true;
+                main.startLifetime = new ParticleSystem.MinMaxCurve(0.35f, 0.7f);
+                main.startSpeed = new ParticleSystem.MinMaxCurve(1.2f, 3.5f);
+                main.startSize = new ParticleSystem.MinMaxCurve(0.2f, 0.5f);
+                main.maxParticles = 300;
+                main.simulationSpace = ParticleSystemSimulationSpace.World;
+                main.gravityModifier = 0.25f;
+                ParticleSystem.EmissionModule emission = mistSystem.emission;
+                emission.rateOverTime = 0f;
+                ParticleSystem.ShapeModule shape = mistSystem.shape;
+                shape.shapeType = ParticleSystemShapeType.Cone;
+                shape.angle = 28f;
+                shape.radius = 0.12f;
+                ParticleSystem.SizeOverLifetimeModule grow = mistSystem.sizeOverLifetime;
+                grow.enabled = true;
+                grow.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0f, 0.5f, 1f, 1.6f));
+                ParticleSystem.ColorOverLifetimeModule fade = mistSystem.colorOverLifetime;
+                fade.enabled = true;
+                var gradient = new Gradient();
+                gradient.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+                                 new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(0f, 1f) });
+                fade.color = gradient;
+                go.GetComponent<ParticleSystemRenderer>().sharedMaterial = mist;
+                mistSystem.Play();
+                spray.Add(mistSystem);
+            }
         }
 
         /// <summary>Puts the car somewhere, turning the wheels by the distance it moved.</summary>
@@ -924,19 +1314,37 @@ namespace NightShift.Game
         {
             float moved = Vector3.Distance(position, lastPosition);
             lastPosition = position;
+            float speed = moved < 5f && Time.deltaTime > 0f ? moved / Time.deltaTime : 0f;
+            foreach (ParticleSystem mist in spray)
+            {
+                ParticleSystem.EmissionModule emission = mist.emission;
+                emission.rateOverTime = speed > 1.5f ? speed * 12f : 0f;
+            }
             transform.localPosition = position;
             transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
-            float spin = moved < 5f ? moved / (0.34f * Mathf.PI * 2f) * 360f : 0f;
+            float spin = moved < 5f ? moved / (wheelRadius * Mathf.PI * 2f) * 360f : 0f;
             foreach (Transform wheel in wheels)
             {
                 wheel.Rotate(spin, 0f, 0f, Space.Self);
             }
         }
 
-        /// <summary>0 shut, 1 wide open.</summary>
+        /// <summary>Turns the steering wheel (degrees, positive to the right).</summary>
+        public void Steer(float degrees)
+        {
+            if (steering != null)
+            {
+                steering.localRotation = door != null ? steeringRest * Quaternion.Euler(0f, degrees, 0f) : steeringRest * Quaternion.Euler(0f, 0f, -degrees);
+            }
+        }
+
+        /// <summary>0 shut, 1 wide open (the model's doors are part of its body: only the box car's opens).</summary>
         public void SetDoor(float open)
         {
-            door.localRotation = Quaternion.Euler(0f, 70f * open, 0f);
+            if (door != null)
+            {
+                door.localRotation = Quaternion.Euler(0f, 70f * open, 0f);
+            }
         }
 
         public void SetHeadlights(bool on)
@@ -954,6 +1362,89 @@ namespace NightShift.Game
             foreach (Renderer lamp in lamps)
             {
                 lamp.enabled = on;
+            }
+            if (dashboard != null)
+            {
+                dashboard.enabled = on;
+            }
+        }
+
+        private void Update()
+        {
+            if (glass.size == Vector3.zero || (!Wipers && wipers == null))
+            {
+                return;
+            }
+            if (wipers == null)
+            {
+                BuildWindshieldRain();
+            }
+            for (int i = 0; i < 2; i++)
+            {
+                wet[i] = Mathf.Min(1f, wet[i] + Time.deltaTime * 0.8f);
+            }
+            // Up and back in one stroke, then a short rest; each half is wiped as its blade crosses it.
+            float sweep = 0f;
+            if (Wipers || wipeClock > 0f)
+            {
+                wipeClock += Time.deltaTime;
+                float phase = wipeClock % WipeSeconds / WipeSeconds;
+                sweep = phase < 0.85f ? Mathf.Sin(phase / 0.85f * Mathf.PI) : 0f;
+                if (!Wipers && phase >= 0.85f)
+                {
+                    wipeClock = 0f;
+                }
+            }
+            if (lastSweep < 0.5f && sweep >= 0.5f || lastSweep > 0.5f && sweep <= 0.5f)
+            {
+                wet[0] = wet[1] = 0f;
+            }
+            lastSweep = sweep;
+            foreach (Transform wiper in wipers)
+            {
+                wiper.localRotation = Quaternion.Euler(0f, 0f, sweep * 98f);
+            }
+            for (int i = 0; i < 2; i++)
+            {
+                drops[i].SetColor("_BaseColor", new Color(1f, 1f, 1f, Wipers ? wet[i] * 0.9f : 0.9f));
+            }
+        }
+
+        /// <summary>Beads on the inside face of the windshield's plane, and the two wiper blades lying on it.</summary>
+        private void BuildWindshieldRain()
+        {
+            // The glass runs from its bottom front edge up and back to the roof.
+            var up = new Vector3(0f, glass.size.y, -glass.size.z);
+            float height = up.magnitude;
+            up /= height;
+            Vector3 outward = Vector3.Cross(Vector3.right, up);
+            Quaternion plane = Quaternion.LookRotation(outward, up);
+            Texture2D beads = BuildKit.SignTexture("glass_drops");
+            drops = new Material[2];
+            for (int i = 0; i < 2; i++)
+            {
+                drops[i] = new Material(BuildKit.Stain("windshieldDrops", beads != null ? beads : Texture2D.whiteTexture, Color.white));
+                drops[i].SetTextureScale("_BaseMap", new Vector2(glass.size.x * 0.5f / 0.35f, height / 0.35f));
+                drops[i].SetTextureOffset("_BaseMap", new Vector2(i * 0.5f, 0f));
+                GameObject half = BuildKit.Quad("Drops", transform, Vector3.zero, new Vector2(glass.size.x * 0.48f, height * 0.94f), 0f, drops[i]);
+                half.transform.localRotation = plane;
+                half.transform.localPosition = glass.center + Vector3.right * ((i - 0.5f) * glass.size.x * 0.48f) - outward * 0.015f;
+            }
+            Material rubber = BuildKit.Plain("wiperBlade", new Color(0.02f, 0.02f, 0.02f), 0.25f);
+            Vector3 bottom = new Vector3(glass.center.x, glass.min.y, glass.max.z) + up * 0.05f - outward * 0.01f;
+            float blade = glass.size.x * 0.4f;
+            wipers = new Transform[2];
+            for (int i = 0; i < 2; i++)
+            {
+                var pivot = new GameObject("WiperPivot").transform;
+                pivot.SetParent(transform, false);
+                pivot.localPosition = bottom + Vector3.right * ((i == 0 ? -0.36f : 0.08f) * glass.size.x);
+                var arm = new GameObject("Wiper").transform;
+                arm.SetParent(pivot, false);
+                arm.localRotation = Quaternion.identity;
+                pivot.localRotation = plane;
+                BuildKit.Box("Blade", arm, new Vector3(blade * 0.5f, 0f, 0.012f), new Vector3(blade, 0.022f, 0.016f), rubber, 1f, false);
+                wipers[i] = arm;
             }
         }
     }
