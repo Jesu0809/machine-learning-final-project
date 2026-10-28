@@ -492,6 +492,47 @@ namespace NightShift.Game
             return go;
         }
 
+        /// <summary>A five-pointed star standing upright and facing -Z (into the room from a back wall), with some thickness.</summary>
+        public static GameObject Star(string name, Transform parent, Vector3 localPosition, float outer, float inner, float depth, Material material)
+        {
+            var vertices = new List<Vector3>();
+            var triangles = new List<int>();
+            var rim = new Vector2[10];
+            for (int i = 0; i < 10; i++)
+            {
+                float angle = Mathf.PI * 0.5f + i * Mathf.PI / 5f;
+                float radius = i % 2 == 0 ? outer : inner;
+                rim[i] = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
+            }
+            // Front (toward -Z): a fan from a center raised a little, so the faces catch the light like a pressed star.
+            vertices.Add(new Vector3(0f, 0f, -depth));
+            for (int i = 0; i < 10; i++)
+            {
+                vertices.Add(new Vector3(rim[i].x, rim[i].y, 0f));
+            }
+            for (int i = 0; i < 10; i++)
+            {
+                int a = 1 + i, b = 1 + (i + 1) % 10;
+                // Separate vertices per face for flat shading.
+                int start = vertices.Count;
+                vertices.Add(vertices[0]);
+                vertices.Add(vertices[b]);
+                vertices.Add(vertices[a]);
+                triangles.AddRange(new[] { start, start + 1, start + 2 });
+            }
+            var mesh = new Mesh { name = "Star" };
+            mesh.SetVertices(vertices);
+            mesh.SetTriangles(triangles, 0);
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPosition;
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            go.AddComponent<MeshRenderer>().sharedMaterial = material;
+            return go;
+        }
+
         public static GameObject Sphere(string name, Transform parent, Vector3 localPosition, float diameter, Material material)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);

@@ -288,7 +288,7 @@ namespace NightShift.Game
             }
             BuildKit.Box("Valance", root, new Vector3(stage.center.x, height - 0.4f, stage.yMax - 0.3f), new Vector3(stage.width + 0.6f, 0.7f, 0.3f), curtain, 1f, false);
             Sign(root, new Vector3(stage.center.x, height - 0.4f, stage.yMax - 0.47f), 180f, "SHOWTIME", new Color(1f, 0.85f, 0.25f), new Color(0.2f, 0.02f, 0.12f), 2.6f);
-            BuildKit.Cone("Star", root, new Vector3(stage.center.x, 2.9f, stage.yMax - 0.22f), 0.4f, 0.01f, BuildKit.Glow("star", new Color(1f, 0.8f, 0.2f), 1.5f)).transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+            BuildKit.Star("Star", root, new Vector3(stage.center.x, 2.9f, stage.yMax - 0.24f), 0.42f, 0.18f, 0.06f, BuildKit.Glow("star", new Color(1f, 0.8f, 0.2f), 1.2f));
             // Two theatre spots on the ceiling aimed at Freddy, with hard shadows.
             Vector3 freddy = PizzeriaLayout.FreddyStart;
             StageSpot(root, new Vector3(4.2f, height - 0.3f, 4.5f), freddy, new Color(1f, 0.75f, 0.45f));

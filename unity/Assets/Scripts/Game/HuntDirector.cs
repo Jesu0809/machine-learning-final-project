@@ -401,6 +401,10 @@ namespace NightShift.Game
             decisionPending = false;
             NightSeconds = 0f;
             sixAM = false;
+            if (emergency != null)
+            {
+                emergency.enabled = false;
+            }
             lastHour = 0;
             Player.Fatigue = 0f;
             LastHeard = null;
@@ -1082,6 +1086,7 @@ namespace NightShift.Game
         // ------------------------------------------------------------------ fatigue and 6 AM
 
         private bool sixAM;
+        private Light emergency;
         private int lastHour;
 
         private static readonly string[] HourLines =
@@ -1112,6 +1117,12 @@ namespace NightShift.Game
         /// Six in the morning with the guard still inside: the bell, the lights die, heavy steps
         /// behind. The guard turns, sees him, runs for it; a door slams shut ahead; he is there.
         /// </summary>
+        /// <summary>
+        /// Six o'clock and still inside. The bells, a breath of relief, then the building locks
+        /// itself bolt by bolt and the power dies with the flashlight. A red emergency strobe: each
+        /// flash shows him closer, between them only his eyes. The guard runs for the clearest way
+        /// out, finds it locked, turns around, and he is there.
+        /// </summary>
         private IEnumerator SixAM()
         {
             sixAM = true;
@@ -1121,59 +1132,168 @@ namespace NightShift.Game
                 Player.HiddenIn.Use(Player);
             }
             Player.Controllable = false;
-            UI.Toast("6:00 AM. The doors are locking.");
+            // From here it is a scene: letterbox, no HUD, the words as captions.
+            UI.ShowCinematic(true, false);
+            UI.SetCinematic("6:00 AM", 0f);
             for (int i = 0; i < 3; i++)
             {
                 Audio.PlayAt(GameAudio.Bell(), Player.transform.position + Vector3.up * 3f, 0.6f, 1f);
-                if (i == 1)
-                {
-                    FlickerLight.Blackout(14f);
-                    Audio.PlayAmbient(false);
-                }
                 yield return new WaitForSeconds(0.9f);
             }
-            // Steps behind, coming closer.
-            Vector3 forward = Player.transform.forward;
-            forward.y = 0f;
-            forward = forward.sqrMagnitude > 0.01f ? forward.normalized : Vector3.forward;
-            for (int i = 0; i < 3; i++)
+            Audio.Pant(0.45f);
+            UI.SetCinematic("", 0f);
+            yield return new WaitForSeconds(0.9f);
+
+            // The lockdown: bolts slamming home across the building, nearer to farther, then no power.
+            for (int i = 0; i < 5; i++)
             {
-                Audio.PlayAt(Assets.LockerDoor, Player.transform.position - forward * (6f - i * 1.5f), 0.6f + i * 0.15f, 0.35f);
-                yield return new WaitForSeconds(0.55f);
+                Vector3 bolt = Player.transform.position + Quaternion.Euler(0f, i * 97f, 0f) * Vector3.forward * (3f + i * 3.5f);
+                Audio.PlayAt(GameAudio.Clunk(), bolt, 1f - i * 0.13f, 0.55f);
+                Player.Jolt(0.4f);
+                yield return new WaitForSeconds(0.28f);
             }
-            // He is behind: the guard turns around and sees him.
-            Vector3 behind = Player.transform.position - forward * 4.5f;
-            Freddy.ResetTo(new Vector3(behind.x, Freddy.transform.position.y, behind.z), Quaternion.LookRotation(forward).eulerAngles.y);
-            Freddy.WakeUp();
-            // The scene moves him from here on, not his hunt.
-            Freddy.ScriptedWalk = 0f;
-            Freddy.FlashEyes(3f);
-            for (float t = 0f; t < 0.45f; t += Time.deltaTime)
+            FlickerLight.Blackout(30f);
+            Audio.PlayAmbient(false);
+            for (int i = 0; i < 5; i++)
             {
-                Player.LookToward(Freddy.EyePosition, 14f);
-                yield return null;
+                Player.Flashlight.enabled = i % 2 == 1;
+                yield return new WaitForSeconds(0.07f);
+            }
+            Player.Flashlight.enabled = false;
+            UI.SetCinematic("<color=#c03030>LOCKDOWN  ·  SHIFT DATA SAVED</color>", 0f);
+            yield return new WaitForSeconds(0.7f);
+
+            // He comes along the longest clear line behind the guard; the guard will run along the clearest line away from him.
+            Vector3 facing = Flat(Player.transform.forward);
+            Vector3 chest = Player.transform.position + Vector3.up * 1f;
+            Vector3 from = ClearestWay(chest, -facing, 180f, out float behind);
+            Vector3 runTo = ClearestWay(chest, -from, 80f, out float ahead);
+            float start = Mathf.Clamp(behind - 0.6f, 2.5f, 9f);
+            Vector3 PointBehind(float distance) => Player.transform.position + from * distance;
+            Vector3 spot = PointBehind(start);
+            Freddy.ResetTo(new Vector3(spot.x, Freddy.transform.position.y, spot.z), Quaternion.LookRotation(-from).eulerAngles.y);
+            Freddy.WakeUp();
+            Freddy.ScriptedWalk = 0f;
+            Freddy.FlashEyes(14f);
+            if (emergency == null)
+            {
+                emergency = new GameObject("EmergencyStrobe").AddComponent<Light>();
+                emergency.transform.SetParent(transform, false);
+                emergency.type = LightType.Point;
+                emergency.color = new Color(1f, 0.08f, 0.05f);
+                emergency.range = 16f;
+                emergency.shadows = LightShadows.Soft;
+            }
+            emergency.enabled = true;
+            emergency.intensity = 0f;
+
+            // The strobe: four flashes, each one showing him nearer. The guard turns at the first steps.
+            const float near = 2.4f;
+            for (int flash = 0; flash < 4; flash++)
+            {
+                float distance = Mathf.Lerp(start, near, flash / 3f);
+                spot = PointBehind(distance);
+                Freddy.transform.position = new Vector3(spot.x, Freddy.transform.position.y, spot.z);
+                Audio.FreddyStep(spot, false);
+                for (float t = 0f; t < 0.72f; t += Time.deltaTime)
+                {
+                    emergency.transform.position = (Player.transform.position + spot) * 0.5f + Vector3.up * 2.6f;
+                    emergency.intensity = t < 0.13f ? 9f : 0f;
+                    Player.LookToward(Freddy.EyePosition, flash == 0 ? 5f : 9f);
+                    yield return null;
+                }
+                if (flash == 2)
+                {
+                    Audio.Heartbeat(1f);
+                }
             }
             Audio.Sting();
-            Player.Jolt(1.2f);
-            yield return new WaitForSeconds(0.6f);
-            // Run.
-            for (float t = 0f; t < 1.6f; t += Time.deltaTime)
+            Player.Jolt(1.6f);
+            UI.SetCinematic("", 0f);
+
+            // Run: faster strobe, him right behind; one look back over the shoulder.
+            float runTime = Mathf.Clamp((ahead - 1f) / (PlayerController.RunSpeed * 0.9f), 0.8f, 2.2f);
+            for (float t = 0f; t < runTime; t += Time.deltaTime)
             {
-                Player.LookToward(Player.transform.position + forward * 6f + Vector3.up * 1.5f, 10f);
-                Player.ScriptedRun(forward, PlayerController.RunSpeed * 0.9f);
-                Vector3 follow = Player.transform.position - forward * Mathf.Lerp(4.5f, 2.2f, t / 1.6f);
-                Freddy.transform.position = new Vector3(follow.x, Freddy.transform.position.y, follow.z);
+                bool lookBack = t > runTime * 0.45f && t < runTime * 0.45f + 0.45f;
+                Player.LookToward(lookBack ? Freddy.EyePosition : Player.transform.position + runTo * 6f + Vector3.up * 1.5f, lookBack ? 16f : 12f);
+                Player.ScriptedRun(runTo, PlayerController.RunSpeed * 0.9f);
+                Vector3 chase = Player.transform.position - runTo * Mathf.Lerp(near, 1.8f, t / runTime);
+                Freddy.transform.position = new Vector3(chase.x, Freddy.transform.position.y, chase.z);
+                Freddy.transform.rotation = Quaternion.LookRotation(runTo);
                 Freddy.ScriptedWalk = FreddyBody.ChaseSpeed;
+                emergency.transform.position = Player.transform.position + Vector3.up * 2.6f - runTo;
+                emergency.intensity = Mathf.Repeat(t, 0.34f) < 0.09f ? 9f : 0.4f;
+                if (Mathf.Repeat(t, 0.32f) < Time.deltaTime)
+                {
+                    Audio.Pant(0.6f);
+                }
                 yield return null;
             }
-            // A door slams shut ahead.
-            Audio.PlayAt(Assets.LockerDoor, Player.transform.position + forward * 2.5f, 1f, 0.5f);
-            Player.Jolt(1.6f);
-            yield return new WaitForSeconds(0.45f);
-            Vector3 close = Player.transform.position - forward * 1.3f;
+
+            // The way out is locked: the guard hits it, shakes it, turns around.
+            Freddy.ScriptedWalk = 0f;
+            Player.Jolt(2.2f);
+            for (int i = 0; i < 3; i++)
+            {
+                Audio.PlayAt(Assets.LockerDoor, Player.transform.position + runTo * 0.8f, 0.9f, 0.55f + i * 0.07f);
+                Player.Jolt(0.8f);
+                emergency.intensity = i % 2 == 0 ? 9f : 0.4f;
+                yield return new WaitForSeconds(0.2f);
+            }
+            UI.SetCinematic("Locked.", 0f);
+            Vector3 close = Player.transform.position - runTo * 1.25f;
             Freddy.transform.position = new Vector3(close.x, Freddy.transform.position.y, close.z);
-            Freddy.transform.rotation = Quaternion.LookRotation(forward);
-            Freddy.Grab("6 AM came and you were still inside. The doors locked, the lights went out, and he found you in the dark.");
+            Freddy.transform.rotation = Quaternion.LookRotation(runTo);
+            emergency.intensity = 0f;
+            for (float t = 0f; t < 0.5f; t += Time.deltaTime)
+            {
+                Player.LookToward(Freddy.EyePosition, 7f);
+                yield return null;
+            }
+            emergency.intensity = 9f;
+            emergency.transform.position = (Player.transform.position + close) * 0.5f + Vector3.up * 2.4f;
+            yield return new WaitForSeconds(0.15f);
+            emergency.enabled = false;
+            UI.SetCinematic("", 0f);
+            UI.ShowCinematic(false);
+            Freddy.Grab("6 AM came and you were still inside. The building locked itself, the power died, and he found you at the door.");
+        }
+
+        /// <summary>
+        /// Of sixteen horizontal directions within <paramref name="maxOff"/> degrees of
+        /// <paramref name="prefer"/>, the one with the longest clear line from <paramref name="from"/>
+        /// (up to 14 m); <paramref name="distance"/> is how far that line is clear.
+        /// </summary>
+        private static Vector3 ClearestWay(Vector3 from, Vector3 prefer, float maxOff, out float distance)
+        {
+            Vector3 best = Flat(prefer);
+            distance = -1f;
+            for (int i = 0; i < 16; i++)
+            {
+                Vector3 direction = Quaternion.Euler(0f, i * 22.5f, 0f) * Vector3.forward;
+                float off = Vector3.Angle(direction, prefer);
+                if (off > maxOff)
+                {
+                    continue;
+                }
+                float free = Physics.Raycast(from, direction, out RaycastHit hit, 14f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore) ? hit.distance : 14f;
+                // Prefer the asked-for direction a little when two are about as clear.
+                float score = free - off * 0.01f;
+                if (score > distance)
+                {
+                    distance = score;
+                    best = direction;
+                }
+            }
+            distance = Physics.Raycast(from, best, out RaycastHit end, 14f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore) ? end.distance : 14f;
+            return best;
+        }
+
+        private static Vector3 Flat(Vector3 v)
+        {
+            v.y = 0f;
+            return v.sqrMagnitude > 0.0001f ? v.normalized : Vector3.forward;
         }
 
         private IEnumerator Jumpscare()

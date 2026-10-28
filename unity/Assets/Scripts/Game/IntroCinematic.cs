@@ -66,6 +66,16 @@ namespace NightShift.Game
         private readonly List<Light> partyLights = new List<Light>();
         private Quaternion headRest;
         private float headTurn;
+
+        // The bear's show on the tape: his bones (humanoid), their rest pose, and how much he performs (0–1).
+        private Transform[] showBones;
+        private Quaternion[] showRest;
+        private float perform;
+        private float lean;
+        private float showClock;
+        private readonly List<Transform> kids = new List<Transform>();
+        private Light[] sweepers;
+        private readonly List<ParticleSystem> confetti = new List<ParticleSystem>();
         private int savedMask;
 
         // Props of the night: the phone on the dashboard, the stranger, the chain on the doors.
@@ -134,18 +144,37 @@ namespace NightShift.Game
 
         private void LateUpdate()
         {
-            // On the tape, the bear's head turns to the camera (after his animation has posed it).
+            // On the tape the bear performs, then stops and turns to the camera (posed after his animation).
             Transform head = director != null && director.Freddy != null ? director.Freddy.Head : null;
             if (!Playing || head == null || head == director.Freddy.transform || tapeCamera == null || !tapeCamera.enabled)
             {
                 return;
             }
             head.localRotation = headRest;
+            Transform body = director.Freddy.transform;
+            Vector3 forward = body.forward, right = body.right;
+            float beat = showClock * Mathf.PI * 2f;     // two beats a second
+            if (showBones != null)
+            {
+                for (int i = 0; i < showBones.Length; i++)
+                {
+                    showBones[i].localRotation = showRest[i];
+                }
+                Transform spine = showBones[0], rightUpper = showBones[1], rightLower = showBones[2], leftUpper = showBones[3], leftLower = showBones[4];
+                // Swaying to the song, the right paw up and waving, the left holding the microphone.
+                spine.rotation = Quaternion.AngleAxis(Mathf.Sin(beat * 0.5f) * 7f * perform, forward) * Quaternion.AngleAxis(lean * 14f, right) * spine.rotation;
+                rightUpper.rotation = Quaternion.AngleAxis(125f * perform, forward) * rightUpper.rotation;
+                rightLower.rotation = Quaternion.AngleAxis((Mathf.Sin(beat) * 28f + 20f) * perform, forward) * rightLower.rotation;
+                leftUpper.rotation = Quaternion.AngleAxis(-25f * perform, forward) * Quaternion.AngleAxis(-35f * perform, right) * leftUpper.rotation;
+                leftLower.rotation = Quaternion.AngleAxis(-95f * perform, right) * leftLower.rotation;
+            }
+            head.rotation = Quaternion.AngleAxis(Mathf.Sin(beat) * 9f * perform, right) * head.rotation;
             if (headTurn > 0f)
             {
+                // Then the head turns to the lens, tilted, like something curious.
                 Vector3 toCamera = (tapeCamera.transform.position - head.position).normalized;
-                Quaternion turn = Quaternion.FromToRotation(director.Freddy.transform.forward, toCamera);
-                head.rotation = Quaternion.Slerp(Quaternion.identity, turn, headTurn * 0.85f) * head.rotation;
+                Quaternion turn = Quaternion.FromToRotation(forward, toCamera) * Quaternion.AngleAxis(-20f, forward);
+                head.rotation = Quaternion.Slerp(Quaternion.identity, turn, headTurn) * head.rotation;
             }
         }
 
@@ -203,51 +232,108 @@ namespace NightShift.Game
             {
                 light.enabled = true;
             }
+            foreach (Light light in sweepers)
+            {
+                light.enabled = true;
+            }
             Transform head = director.Freddy.Head;
             headRest = head.localRotation;
             headTurn = 0f;
+            Animator animator = director.Freddy.GetComponentInChildren<Animator>();
+            if (animator != null && animator.isHuman)
+            {
+                showBones = new[]
+                {
+                    animator.GetBoneTransform(HumanBodyBones.Spine), animator.GetBoneTransform(HumanBodyBones.RightUpperArm),
+                    animator.GetBoneTransform(HumanBodyBones.RightLowerArm), animator.GetBoneTransform(HumanBodyBones.LeftUpperArm),
+                    animator.GetBoneTransform(HumanBodyBones.LeftLowerArm)
+                };
+                if (System.Array.IndexOf(showBones, null) >= 0)
+                {
+                    showBones = null;
+                }
+                else
+                {
+                    showRest = System.Array.ConvertAll(showBones, b => b.localRotation);
+                }
+            }
             music.clip = director.Assets.MenuMusic;
-            music.volume = 0.3f;
-            music.pitch = 0.94f;
+            music.volume = 0.32f;
+            music.pitch = 1f;
             var muffle = music.gameObject.AddComponent<AudioLowPassFilter>();
-            muffle.cutoffFrequency = 3200f;
+            muffle.cutoffFrequency = 3600f;
             music.Play();
+            showClock = 0f;
+            foreach (ParticleSystem system in confetti)
+            {
+                system.Play();
+            }
             director.Audio.StaticBurst();
             director.UI.SetCinematic("", 0f);
             director.UI.SetCinematicCard("", 0f);
 
+            const float freezeAt = 6.2f;
             bool eyes = false, tear = false;
             for (float t = 0f; t < TapeLength && !skip; t += Time.deltaTime)
             {
                 Mark("tape", t);
-                // The camcorder: someone at the party, walking up to the stage's corner and zooming in on the bear.
-                float k = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((t - 0.7f) / 5.5f));
-                Vector3 eye = Vector3.Lerp(new Vector3(4.6f, 1.35f, 5.9f), new Vector3(3.9f, 1.45f, 8.1f), k) + Handheld(t, 0.035f);
-                Vector3 look = Vector3.Lerp(new Vector3(6.5f, 1.2f, 7f), head.position, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((t - 1.2f) / 2.5f)));
-                tapeCamera.transform.SetPositionAndRotation(eye, Quaternion.LookRotation(look - eye));
-                tapeCamera.fieldOfView = Mathf.Lerp(54f, 30f, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((t - 3.4f) / 2.6f)));
+                bool show = t < freezeAt;
+                if (show)
+                {
+                    showClock += Time.deltaTime;
+                }
+                // The show: the bear sings, the kids in front jump and sway, the colored spots sweep.
+                perform = Mathf.Clamp01((t - 0.4f) / 0.4f) * (1f - Mathf.Clamp01((t - freezeAt) / 0.25f));
+                for (int i = 0; i < kids.Count; i++)
+                {
+                    float hop = Mathf.Max(0f, Mathf.Sin(showClock * Mathf.PI * 2f + i * 1.7f)) * 0.07f * perform;
+                    kids[i].localPosition = new Vector3(kids[i].localPosition.x, hop, kids[i].localPosition.z);
+                    kids[i].localRotation = Quaternion.Euler(0f, Mathf.Sin(showClock * 2.4f + i) * 12f * perform, Mathf.Sin(showClock * 3f + i * 2f) * 6f * perform);
+                }
+                for (int i = 0; i < sweepers.Length; i++)
+                {
+                    float swing = Mathf.Sin(showClock * 1.3f + i * 2.1f) * 18f;
+                    sweepers[i].transform.rotation = Quaternion.LookRotation(PizzeriaLayout.FreddyStart + Vector3.up * 1.2f - sweepers[i].transform.position) * Quaternion.Euler(0f, swing, 0f);
+                    sweepers[i].intensity = show ? 12f : 0f;
+                }
+                partyLights[0].intensity = show ? 18f : 15f;
+                foreach (ParticleSystem system in confetti)
+                {
+                    // When he stops, so does the room: the confetti hangs in the air.
+                    ParticleSystem.MainModule fall = system.main;
+                    fall.simulationSpeed = show ? 1f : 0.03f;
+                }
 
-                // He turns his head to the camera; the tape drags (the music slows down) and tears.
-                headTurn = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((t - 6.4f) / 1.8f));
-                music.pitch = Mathf.Lerp(0.94f, 0.5f, Mathf.Clamp01((t - 7.3f) / 1.6f));
+                // He stops dead mid-song; the music dies. He leans and turns his head to the lens,
+                // his eyes go red, the camera zooms in on him, and the tape tears.
+                lean = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((t - 6.9f) / 1.4f));
+                headTurn = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((t - 6.9f) / 1.5f));
+                music.pitch = show ? 1f : Mathf.Lerp(1f, 0.35f, Mathf.Clamp01((t - freezeAt) / 0.6f));
+                music.volume = show ? 0.32f : Mathf.Lerp(0.32f, 0f, Mathf.Clamp01((t - freezeAt) / 0.8f));
                 if (!eyes && t > 8f)
                 {
                     eyes = true;
-                    director.Freddy.FlashEyes(1.6f);
+                    director.Freddy.FlashEyes(1.8f);
+                    director.Audio.Sting();
                 }
                 if (!tear && t > 8.8f)
                 {
                     tear = true;
                     director.Audio.StaticBurst();
                 }
-                float trouble = Mathf.Clamp01((t - 6.6f) / 2.2f);
-                float jump = Random.value < 0.04f + trouble * 0.3f ? Random.Range(-0.02f, 0.02f) * (1f + trouble * 4f) : 0f;
-                float snow = t < 0.7f ? 1f : t < 8.8f ? 0.03f + trouble * 0.2f : Mathf.Lerp(0.5f, 1f, (t - 8.8f) / 1f);
-                Color tint = Color.Lerp(new Color(1.12f, 0.98f, 0.84f), new Color(1.3f, 0.7f, 0.7f), Mathf.Clamp01((t - 8.4f) / 1f));
-                if (t > 9.8f)
-                {
-                    music.volume = Mathf.MoveTowards(music.volume, 0f, Time.deltaTime * 2f);
-                }
+
+                // The camcorder: a parent behind the kids, filming the stage, walking up between them.
+                float walk = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((t - 0.7f) / 5.3f));
+                Vector3 eye = Vector3.Lerp(new Vector3(6.2f, 1.42f, 5.4f), new Vector3(6.8f, 1.45f, 7.3f), walk) + Handheld(t, 0.03f);
+                Vector3 look = Vector3.Lerp(PizzeriaLayout.FreddyStart + Vector3.up * 1.1f, head.position, Mathf.Clamp01((t - 3f) / 3f));
+                tapeCamera.transform.SetPositionAndRotation(eye, Quaternion.LookRotation(look - eye));
+                float zoom = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((t - 8.2f) / 0.5f));
+                tapeCamera.fieldOfView = Mathf.Lerp(Mathf.Lerp(48f, 34f, walk), 13f, zoom);
+
+                float trouble = Mathf.Clamp01((t - freezeAt) / 2.6f);
+                float jump = Random.value < 0.03f + trouble * 0.3f ? Random.Range(-0.02f, 0.02f) * (1f + trouble * 4f) : 0f;
+                float snow = t < 0.7f ? 1f : t < 8.8f ? 0.02f + trouble * 0.06f : Mathf.Lerp(0.5f, 1f, (t - 8.8f) / 1f);
+                Color tint = Color.Lerp(new Color(1.15f, 1.0f, 0.85f), new Color(1.3f, 0.75f, 0.75f), Mathf.Clamp01((t - 8.2f) / 1f));
                 if (t < 10.6f)
                 {
                     Texture picture = t < 0.7f || t > 9.8f ? (Texture)Texture2D.blackTexture : tapeTexture;
@@ -261,6 +347,23 @@ namespace NightShift.Game
                 yield return null;
             }
 
+            foreach (ParticleSystem system in confetti)
+            {
+                system.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            }
+            perform = 0f;
+            lean = 0f;
+            if (showBones != null)
+            {
+                for (int i = 0; i < showBones.Length; i++)
+                {
+                    showBones[i].localRotation = showRest[i];
+                }
+            }
+            foreach (Transform kid in kids)
+            {
+                kid.gameObject.SetActive(false);
+            }
             music.Stop();
             Destroy(muffle);
             director.UI.HideTape();
@@ -268,6 +371,10 @@ namespace NightShift.Game
             head.localRotation = headRest;
             tapeCamera.enabled = false;
             foreach (Light light in partyLights)
+            {
+                light.enabled = false;
+            }
+            foreach (Light light in sweepers)
             {
                 light.enabled = false;
             }
@@ -850,14 +957,25 @@ namespace NightShift.Game
             data.renderShadows = true;
             // No post-processing: its film grain, blown up from this small picture, would bury it.
             data.renderPostProcessing = false;
-            partyLights.Add(Spot(new Vector3(7.5f, 4.4f, 6.2f), PizzeriaLayout.FreddyStart + Vector3.up * 1.2f, 46f, 14f, new Color(1f, 0.86f, 0.66f), 18f));
-            partyLights.Add(Spot(new Vector3(4.2f, 4f, 7.4f), PizzeriaLayout.FreddyStart + Vector3.up * 1.5f, 30f, 12f, new Color(1f, 0.45f, 0.75f), 10f));
-            partyLights.Add(Point(new Vector3(6f, 3.2f, 5f), 12f, new Color(1f, 0.85f, 0.65f), 5f));
-            partyLights.Add(Point(new Vector3(9.5f, 2.8f, 6.5f), 8f, new Color(0.6f, 0.75f, 1f), 2.5f));
+            partyLights.Add(Spot(new Vector3(7.3f, 4.6f, 6.4f), PizzeriaLayout.FreddyStart + Vector3.up * 1.2f, 26f, 14f, new Color(1f, 0.9f, 0.72f), 18f));
+            partyLights.Add(Point(new Vector3(6.6f, 2.6f, 5.6f), 10f, new Color(1f, 0.8f, 0.6f), 3.5f));
+            partyLights.Add(Point(new Vector3(9.5f, 2.8f, 6.5f), 8f, new Color(0.6f, 0.75f, 1f), 2f));
             foreach (Light light in partyLights)
             {
                 light.enabled = false;
             }
+            // Two colored spots sweeping across the stage, from the ceiling at either side.
+            sweepers = new[]
+            {
+                Spot(new Vector3(4.3f, 4f, 7.6f), PizzeriaLayout.FreddyStart, 22f, 13f, new Color(1f, 0.25f, 0.6f), 12f),
+                Spot(new Vector3(10.7f, 4f, 7.6f), PizzeriaLayout.FreddyStart, 22f, 13f, new Color(0.25f, 0.5f, 1f), 12f)
+            };
+            foreach (Light light in sweepers)
+            {
+                light.enabled = false;
+                props.Add(light.gameObject);
+            }
+            BuildParty();
 
             // The phone in a vent clip on the dashboard, playing the message.
             Car car = exterior.Car;
@@ -923,6 +1041,75 @@ namespace NightShift.Game
             }
 
             BuildChain();
+        }
+
+        /// <summary>
+        /// The birthday on the tape: kids in party hats in front of the stage (seen from behind, over
+        /// their heads) and confetti drifting down through the stage lights.
+        /// </summary>
+        private void BuildParty()
+        {
+            var party = new GameObject("Party").transform;
+            party.SetParent(transform, false);
+            props.Add(party.gameObject);
+            Color[] shirts = { new Color(0.7f, 0.12f, 0.1f), new Color(0.15f, 0.3f, 0.7f), new Color(0.9f, 0.75f, 0.2f), new Color(0.2f, 0.55f, 0.25f), new Color(0.6f, 0.2f, 0.6f), new Color(0.9f, 0.45f, 0.15f), new Color(0.35f, 0.35f, 0.4f) };
+            Color[] hats = { new Color(1f, 0.3f, 0.5f), new Color(0.3f, 0.8f, 1f), new Color(1f, 0.85f, 0.2f), new Color(0.5f, 1f, 0.4f) };
+            Material skin = BuildKit.Plain("kidSkin", new Color(0.72f, 0.52f, 0.4f), 0.3f);
+            Material hair = BuildKit.Plain("kidHair", new Color(0.12f, 0.08f, 0.05f), 0.25f);
+            var random = new System.Random(8);
+            for (int i = 0; i < 9; i++)
+            {
+                var spot = new Vector3(5.2f + i * 0.58f + (float)random.NextDouble() * 0.2f, 0f, 8.5f + (float)random.NextDouble() * 0.9f - (i % 2) * 0.5f);
+                var root = new GameObject("KidSpot").transform;
+                root.SetParent(party, false);
+                root.localPosition = spot;
+                var kid = new GameObject("Kid").transform;
+                kid.SetParent(root, false);
+                float height = 1f + (float)random.NextDouble() * 0.25f;
+                Material shirt = BuildKit.Plain("kidShirt" + i % shirts.Length, shirts[i % shirts.Length], 0.3f);
+                var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                Destroy(body.GetComponent<Collider>());
+                body.transform.SetParent(kid, false);
+                body.transform.localPosition = new Vector3(0f, height * 0.42f, 0f);
+                body.transform.localScale = new Vector3(0.3f, height * 0.42f, 0.22f);
+                body.GetComponent<Renderer>().sharedMaterial = shirt;
+                BuildKit.Sphere("Head", kid, new Vector3(0f, height * 0.88f, 0f), 0.21f, skin);
+                BuildKit.Sphere("Hair", kid, new Vector3(0f, height * 0.9f, -0.02f), 0.215f, hair);
+                BuildKit.Cone("Hat", kid, new Vector3(0f, height * 0.97f, 0f), 0.07f, 0.2f, BuildKit.Plain("hat" + i % hats.Length, hats[i % hats.Length], 0.3f));
+                kids.Add(kid);
+            }
+
+            // Confetti in four colors (one system each: the lit material takes no per-particle color).
+            Color[] papers = { new Color(1f, 0.3f, 0.5f), new Color(1f, 0.85f, 0.2f), new Color(0.3f, 0.75f, 1f), new Color(0.45f, 0.95f, 0.4f) };
+            for (int c = 0; c < papers.Length; c++)
+            {
+                var drift = new GameObject("Confetti");
+                drift.transform.SetParent(party, false);
+                drift.transform.position = PizzeriaLayout.FreddyStart + new Vector3(0f, 3.6f, -1.8f);
+                ParticleSystem system = drift.AddComponent<ParticleSystem>();
+                system.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                ParticleSystem.MainModule main = system.main;
+                main.loop = true;
+                main.prewarm = true;
+                main.startLifetime = 7f;
+                main.startSpeed = 0.1f;
+                main.startSize = new ParticleSystem.MinMaxCurve(0.025f, 0.045f);
+                main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+                main.gravityModifier = 0.03f;
+                main.maxParticles = 160;
+                main.simulationSpace = ParticleSystemSimulationSpace.World;
+                ParticleSystem.EmissionModule emission = system.emission;
+                emission.rateOverTime = 18f;
+                ParticleSystem.ShapeModule shape = system.shape;
+                shape.shapeType = ParticleSystemShapeType.Box;
+                shape.scale = new Vector3(7f, 0.1f, 3.5f);
+                ParticleSystem.NoiseModule flutter = system.noise;
+                flutter.enabled = true;
+                flutter.strength = 0.25f;
+                flutter.frequency = 0.8f;
+                system.GetComponent<ParticleSystemRenderer>().sharedMaterial = BuildKit.Glow("confetti" + c, papers[c], 0.6f);
+                confetti.Add(system);
+            }
         }
 
         /// <summary>A chain looped through the front doors' push bars, a padlock on it and the key.</summary>
@@ -1097,6 +1284,9 @@ namespace NightShift.Game
             }
             props.Clear();
             links.Clear();
+            kids.Clear();
+            confetti.Clear();
+            showBones = null;
             strangerRenderers = null;
             headTurn = 0f;
             exterior.SetOutdoors(false, player.View);
