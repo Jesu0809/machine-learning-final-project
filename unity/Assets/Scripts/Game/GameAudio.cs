@@ -251,6 +251,69 @@ namespace NightShift.Game
             return honk;
         }
 
+        private static AudioClip hiss;
+
+        /// <summary>A seal letting go: a short burst of air, bright, falling away.</summary>
+        public static AudioClip Hiss()
+        {
+            if (hiss == null)
+            {
+                hiss = Synth("Hiss", 0.6f, (t, i) => Noise(i) * Mathf.Exp(-t * 6f) * Mathf.Clamp01(t / 0.01f) * 0.7f, 0.05f);
+            }
+            return hiss;
+        }
+
+        private static AudioClip bell;
+        private static AudioClip drag;
+
+        /// <summary>One strike of an old clock's bell: inharmonic partials ringing away.</summary>
+        public static AudioClip Bell()
+        {
+            if (bell == null)
+            {
+                bell = Synth("Bell", 2.6f, (t, i) =>
+                {
+                    float w = 2f * Mathf.PI * 330f * t;
+                    float ring = Mathf.Sin(w) * 0.5f * Mathf.Exp(-t * 1.4f) + Mathf.Sin(w * 2.76f) * 0.25f * Mathf.Exp(-t * 2.5f)
+                                 + Mathf.Sin(w * 5.4f) * 0.12f * Mathf.Exp(-t * 4f) + Mathf.Sin(w * 0.5f) * 0.2f * Mathf.Exp(-t * 0.9f);
+                    return ring * Mathf.Clamp01(t / 0.004f) * 0.8f;
+                }, 0f);
+            }
+            return bell;
+        }
+
+        /// <summary>A body dragged over a tiled floor: a rough, low scrape in pulls.</summary>
+        public static AudioClip Drag()
+        {
+            if (drag == null)
+            {
+                drag = Synth("Drag", 1.2f, (t, i) =>
+                {
+                    float pull = Mathf.Pow(Mathf.Max(0f, Mathf.Sin(t * Mathf.PI * 2.5f)), 2f);
+                    return Noise(i) * pull * 0.6f;
+                }, 0.7f);
+            }
+            return drag;
+        }
+
+        private static AudioClip crank;
+
+        /// <summary>An old starter motor turning over and not catching: a strained, uneven whirr.</summary>
+        public static AudioClip Crank()
+        {
+            if (crank == null)
+            {
+                crank = Synth("Crank", 1.3f, (t, i) =>
+                {
+                    float labor = 0.6f + 0.4f * Mathf.Sin(2f * Mathf.PI * (5.5f - t * 1.5f) * t);
+                    float motor = Mathf.Sign(Mathf.Sin(2f * Mathf.PI * 95f * t)) * 0.3f + Noise(i) * 0.25f;
+                    float envelope = Mathf.Clamp01(t / 0.05f) * Mathf.Clamp01((1.3f - t) / 0.2f);
+                    return motor * labor * envelope;
+                }, 0.55f);
+            }
+            return crank;
+        }
+
         private static AudioClip clunk;
         private static AudioClip ratchet;
         private static AudioClip charge;

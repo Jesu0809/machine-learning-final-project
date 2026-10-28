@@ -144,6 +144,7 @@ namespace NightShift.Game
         public void ResetTo(Vector3 position, float facing)
         {
             transform.SetPositionAndRotation(position, Quaternion.Euler(0f, facing, 0f));
+            ScriptedWalk = -1f;
             path.Clear();
             searchTarget = null;
             seenHidingIn = null;
@@ -206,9 +207,20 @@ namespace NightShift.Game
             Activity = "walking to " + HuntMap.DisplayName(target);
         }
 
+        /// <summary>
+        /// For scripted scenes (the ending): when 0 or more, his legs walk at this speed and nothing
+        /// else moves him; the scene places him. -1 gives him back to the hunt.
+        /// </summary>
+        public float ScriptedWalk { get; set; } = -1f;
+
         private void Update()
         {
             UpdateEyes();
+            if (ScriptedWalk >= 0f)
+            {
+                SetAnimatorSpeed(ScriptedWalk);
+                return;
+            }
             if (!director.Playing)
             {
                 if (mode != Mode.Attacking)
@@ -464,6 +476,13 @@ namespace NightShift.Game
                 return;
             }
             SetMode(Mode.Idle, "arrived");
+        }
+
+        /// <summary>He catches the guard now, wherever they are (scripted scenes: 6 AM).</summary>
+        public void Grab(string how)
+        {
+            ScriptedWalk = -1f;
+            Attack(how);
         }
 
         private void Attack(string how)

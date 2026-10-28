@@ -18,6 +18,22 @@ namespace NightShift.Game
         private static GameAssets assets;
         private static Mesh cone;
 
+        /// <summary>The game's imported assets (null in a scene built without them).</summary>
+        public static GameAssets Assets => assets;
+
+        /// <summary>A model's part by name (the first transform under root whose name contains it), or null.</summary>
+        public static Transform Part(GameObject root, string name)
+        {
+            foreach (Transform t in root.GetComponentsInChildren<Transform>())
+            {
+                if (t.name.Contains(name))
+                {
+                    return t;
+                }
+            }
+            return null;
+        }
+
         public static void Init(GameAssets gameAssets)
         {
             assets = gameAssets;

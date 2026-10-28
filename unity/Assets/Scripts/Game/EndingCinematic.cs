@@ -84,13 +84,15 @@ namespace NightShift.Game
         {
             Playing = true;
             skip = false;
+            visitorEverywhere = false;
             Elapsed = 0f;
             PlayerController player = director.Player;
             player.Controllable = false;
             player.CameraLocked = true;
-            director.Exterior.SetOutdoors(false, player.View);
             director.Audio.PlayAmbient(false);
             director.UI.ShowCinematic(true);
+            yield return Escape(player);
+            director.Exterior.SetOutdoors(false, player.View);
             Build();
             rain = Source(director.Assets.RainLoop, true, 0.45f);
             snow = Snow();
@@ -102,7 +104,7 @@ namespace NightShift.Game
 
             bool tapeIn = false, clicked = false, playing = false, music = false, burst = false, lightsOut = false, step = false;
             int lastFrame = -1;
-            while (!skip && Elapsed < 60f)
+            while (!skip && Elapsed < 64f)
             {
                 Elapsed += Time.deltaTime;
                 float t = Elapsed;
@@ -289,43 +291,82 @@ namespace NightShift.Game
                         fov = 50f;
                     }
                 }
-                else if (t < 53.5f)
+                else if (t < 50.5f)
                 {
                     // 7. The blue screen: what the tape is for.
                     float g = t - 46f;
                     tvSound.volume = 0f;
-                    eye = tvGlass + new Vector3(0.05f, 0.02f, -0.75f + g * 0.03f) + Handheld(t, 0.003f);
+                    eye = tvGlass + new Vector3(0.05f, 0.02f, -0.75f + g * 0.04f) + Handheld(t, 0.003f);
                     look = tvGlass;
                     fov = 42f;
                     SetScreen(Sign("vhs_blue_end"), Color.white, null);
-                    if (g > 5f && !lightsOut)
+                }
+                else if (t < 51.2f)
+                {
+                    Snow(1f);
+                    if (!lightsOut)
                     {
                         lightsOut = true;
                         director.Audio.StaticBurst();
-                    }
-                    if (lightsOut)
-                    {
-                        // The lamp and the TV stutter and die; a heavy step behind.
-                        bool on = Random.value < 0.3f;
-                        lamp.enabled = on;
-                        SetScreen(on ? Sign("vhs_blue_end") : null, on ? Color.white : Color.black, null);
-                        if (!step && g > 6.4f)
+                        // He is in the room now, right behind the chair.
+                        if (visitor != null)
                         {
-                            step = true;
-                            director.Audio.PlayAt(director.Assets.LockerDoor, room + new Vector3(1.4f, 0f, -1.5f), 0.9f, 0.4f);
+                            visitor.transform.localPosition = new Vector3(0.25f, 0f, -1.3f);
+                            visitor.transform.localRotation = Quaternion.identity;
                         }
                     }
-                    fade = Mathf.Clamp01((g - 6.9f) / 0.4f);
+                    eye = room + new Vector3(0.25f, 1.15f, -0.35f) + Handheld(t, 0.004f);
+                    look = tvGlass;
+                    fov = 46f;
+                }
+                else if (t < 55.4f)
+                {
+                    // 8. LIVE again, from the corner: someone stands behind the guard's chair.
+                    //    The guard looks at the doorway (empty), back at the TV...
+                    float g = t - 51.2f;
+                    Film(room + new Vector3(1.95f, 2.35f, 1.2f), room + new Vector3(0.3f, 1f, -0.9f), 62f, false);
+                    SetScreen(feedTexture, new Color(0.8f, 0.85f, 0.95f), "vhs_osd_guard5");
+                    Vector3 seat = room + new Vector3(0.25f, 1.15f, -0.35f);
+                    Vector3 doorway = room + new Vector3(1.45f, 1.2f, -1.8f);
+                    float glance = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((g - 1.2f) / 0.6f)) * (1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((g - 2.4f) / 0.5f)));
+                    eye = seat + Handheld(t, 0.005f);
+                    look = Vector3.Lerp(tvGlass, doorway, glance);
+                    fov = Mathf.Lerp(46f, 40f, Mathf.Clamp01((g - 2.9f) / 1.3f));
+                    lamp.enabled = Random.value < 0.85f;
+                }
+                else if (t < 56.6f)
+                {
+                    // 9. He turns around. He is there.
+                    float g = t - 55.4f;
+                    if (!step)
+                    {
+                        step = true;
+                        visitorEverywhere = true;
+                        director.Audio.Scream();
+                        director.Audio.StaticBurst();
+                        director.Audio.Impact();
+                        lamp.enabled = false;
+                        // Red light on his face, from his own eyes.
+                        PointLight(apartment.transform, VisitorFace() - Home + Vector3.back * 0.35f, 2.2f, new Color(1f, 0.12f, 0.06f), 3.5f);
+                    }
+                    Vector3 seat = room + new Vector3(0.25f, 1.15f, -0.35f);
+                    Vector3 face = VisitorFace();
+                    float whip = Mathf.Clamp01(g / 0.16f);
+                    eye = seat + (face - seat) * 0.35f * whip + new Vector3(Mathf.PerlinNoise(t * 30f, 1f) - 0.5f, Mathf.PerlinNoise(2f, t * 30f) - 0.5f, 0f) * 0.06f;
+                    look = Vector3.Lerp(tvGlass, face, 1f - (1f - whip) * (1f - whip));
+                    fov = Mathf.Lerp(46f, 34f, whip);
+                    tvLight.color = new Color(1f, 0.1f, 0.05f);
+                    fade = g > 0.9f ? 1f : 0f;
                 }
                 else
                 {
-                    // 8. Black. The title, and who it learns from now.
-                    float g = t - 53.5f;
+                    // 10. Black. The title, and who it learns from now.
+                    float g = t - 56.6f;
                     eye = tvGlass + new Vector3(0f, 0f, -0.6f);
                     look = tvGlass;
                     fade = 1f;
-                    Card(g, 0.3f, 3.2f, "NIGHT SHIFT", 130, ref card, ref cardAlpha, ref cardSize);
-                    Card(g, 3.4f, 6.3f, "freddy_v8 is learning from you.", 40, ref card, ref cardAlpha, ref cardSize);
+                    Card(g, 0.6f, 3.6f, "NIGHT SHIFT", 130, ref card, ref cardAlpha, ref cardSize);
+                    Card(g, 3.8f, 6.8f, "freddy_v8 is learning from you.", 40, ref card, ref cardAlpha, ref cardSize);
                     rain.volume = Mathf.MoveTowards(rain.volume, 0f, Time.deltaTime * 0.15f);
                 }
 
@@ -370,6 +411,174 @@ namespace NightShift.Game
         {
             RenderPipelineManager.beginCameraRendering -= BeginCamera;
             RenderPipelineManager.endCameraRendering -= EndCamera;
+        }
+
+        // ------------------------------------------------------------------ the escape
+
+        /// <summary>
+        /// Out of the building with the tape (about 15 s): he steps out of the doorway behind you
+        /// under the lightning; you run for the car in the rain; in the headlights he is standing
+        /// in front of it; the engine will not catch, twice, while he comes closer; the third time
+        /// it does, and you reverse away from him into the night.
+        /// </summary>
+        private IEnumerator Escape(PlayerController player)
+        {
+            Exterior outside = director.Exterior;
+            Car car = outside.Car;
+            FreddyBody freddy = director.Freddy;
+            outside.SetOutdoors(true, player.View);
+            car.Place(Exterior.ParkingSpot, 0f);
+            car.SetHeadlights(false);
+            car.SetDoor(0f);
+            director.Level.Exit.SetLift(1f);
+            AudioSource rainSound = Source(director.Assets.RainLoop, true, 0.6f);
+            AudioSource engine = Source(director.Assets.CarEngine, true, 0f);
+            Vector3 door = PizzeriaLayout.ExitDoor;
+            Vector3 start = Exterior.Entrance + new Vector3(0f, 0f, -1.2f);
+            Vector3 carSide = Exterior.ParkingSpot + new Vector3(-1.35f, 0f, 0.3f);
+            Vector3 inFront = Exterior.ParkingSpot + new Vector3(0f, 0f, 7.5f);
+            freddy.ResetTo(door + new Vector3(0f, 0f, 0.6f), 180f);
+            freddy.WakeUp();
+            freddy.FlashEyes(30f);
+            freddy.ScriptedWalk = 0f;
+            float t = 0f;
+            bool flash = false, slam = false, lights = false, lookedBack = false;
+            int crank = 0;
+            float nextStep = 0f, nextPant = 0f;
+            while (!skip && t < 15.5f)
+            {
+                t += Time.deltaTime;
+                Vector3 eye, look;
+                float fov = 62f, fade = Mathf.Clamp01(1f - t / 0.4f);
+                if (t < 2.4f)
+                {
+                    // 1. Over the shoulder: he steps out of the doorway into the rain.
+                    float k = Mathf.Clamp01((t - 0.5f) / 1.6f);
+                    freddy.transform.position = Vector3.Lerp(door + new Vector3(0f, 0f, 0.6f), door + new Vector3(0f, 0f, -1.4f), k);
+                    freddy.ScriptedWalk = k > 0f && k < 1f ? FreddyBody.WalkSpeed : 0f;
+                    if (!flash && t > 0.9f)
+                    {
+                        flash = true;
+                        outside.Lightning();
+                        director.Audio.Sting();
+                        if (director.Assets.Thunder != null)
+                        {
+                            director.Audio.PlayAt(director.Assets.Thunder, start, 0.9f);
+                        }
+                    }
+                    eye = start + new Vector3(0.5f, 1.6f, -2.2f) + Handheld(t, 0.03f);
+                    look = freddy.EyePosition - new Vector3(0f, 0.2f, 0f);
+                    fov = 48f;
+                }
+                else if (t < 5.6f)
+                {
+                    // 2. Run for the car: hand-held, breath, the splash of each step, a look back.
+                    float k = Mathf.SmoothStep(0f, 1f, (t - 2.4f) / 3.2f);
+                    Vector3 feet = Vector3.Lerp(start, carSide, k);
+                    float bob = Mathf.Sin(t * 15f) * 0.05f;
+                    eye = feet + new Vector3(0f, 1.55f + bob, 0f) + Handheld(t, 0.04f);
+                    bool glance = t > 3.9f && t < 4.6f;
+                    if (glance && !lookedBack)
+                    {
+                        // Lightning as you look back: there he is, walking after you.
+                        lookedBack = true;
+                        outside.Lightning();
+                        director.Audio.Sting();
+                    }
+                    look = glance ? freddy.EyePosition : carSide + new Vector3(0.6f, 1.1f, 0f);
+                    freddy.transform.position = Vector3.MoveTowards(freddy.transform.position, carSide, Time.deltaTime * FreddyBody.WalkSpeed);
+                    freddy.transform.rotation = Quaternion.LookRotation(Flat(carSide - freddy.transform.position));
+                    freddy.ScriptedWalk = FreddyBody.WalkSpeed;
+                    fov = 66f;
+                    if (t >= nextStep)
+                    {
+                        nextStep = t + 0.3f;
+                        director.Audio.Footstep(0.9f);
+                    }
+                    if (t >= nextPant)
+                    {
+                        nextPant = t + 0.7f;
+                        director.Audio.Pant(0.6f);
+                    }
+                }
+                else
+                {
+                    // 3. In the driver's seat. The door slams; the headlights find him in front of the car.
+                    if (!slam)
+                    {
+                        slam = true;
+                        car.SetDoor(0f);
+                        director.Audio.PlayAt(director.Assets.LockerDoor, carSide, 1f, 0.8f);
+                        freddy.transform.SetPositionAndRotation(inFront, Quaternion.Euler(0f, 180f, 0f));
+                        freddy.ScriptedWalk = 0f;
+                    }
+                    if (!lights && t > 6.4f)
+                    {
+                        lights = true;
+                        car.SetHeadlights(true);
+                        director.Audio.Click();
+                        director.Audio.Sting();
+                    }
+                    // The key: two cranks that do not catch (he walks closer through each), then it starts.
+                    float[] cranks = { 7.2f, 9.0f, 10.8f };
+                    if (crank < cranks.Length && t > cranks[crank])
+                    {
+                        if (crank < 2)
+                        {
+                            director.Audio.PlayAt(GameAudio.Crank(), car.transform.position, 0.9f, 1f - crank * 0.08f);
+                        }
+                        else
+                        {
+                            director.Audio.PlayAt(GameAudio.Crank(), car.transform.position, 0.9f, 1.1f);
+                            engine.volume = 0.5f;
+                            engine.pitch = 1.25f;
+                        }
+                        crank++;
+                    }
+                    bool walking = (t > 7.4f && t < 8.6f) || (t > 9.2f && t < 10.4f);
+                    if (walking)
+                    {
+                        freddy.transform.position += Vector3.back * Time.deltaTime * 1.4f;
+                    }
+                    freddy.ScriptedWalk = walking ? FreddyBody.WalkSpeed : 0f;
+                    // Reverse away once it catches, turning out of the lot.
+                    if (t > 11.6f)
+                    {
+                        float r = Mathf.Clamp01((t - 11.6f) / 3.4f);
+                        float back = r * r * 11f;
+                        float yaw = -55f * Mathf.SmoothStep(0f, 1f, r);
+                        car.Place(Exterior.ParkingSpot + Quaternion.Euler(0f, yaw * 0.5f, 0f) * new Vector3(0f, 0f, -back), yaw);
+                    }
+                    Transform body = car.transform;
+                    eye = body.TransformPoint(car.DriverEyes) + Handheld(t, t < 11.6f ? 0.004f : 0.012f);
+                    look = Vector3.Lerp(body.TransformPoint(car.DriverEyes + new Vector3(0.3f, -0.05f, 4f)), freddy.EyePosition, t < 11.6f ? 0.85f : 0.6f);
+                    fov = 58f;
+                    if (t > 6.4f && t < 6.6f)
+                    {
+                        fade = 0f;
+                    }
+                    fade = Mathf.Max(fade, Mathf.Clamp01((t - 14.6f) / 0.9f));
+                }
+                Aim(player, eye, look, fov);
+                director.UI.SetCinematic("", fade);
+                director.UI.SetCinematicCard("", 0f);
+                yield return null;
+            }
+            engine.Stop();
+            rainSound.Stop();
+            Destroy(engine.gameObject);
+            Destroy(rainSound.gameObject);
+            freddy.ScriptedWalk = -1f;
+            car.SetHeadlights(false);
+            car.Place(Exterior.ParkingSpot, 0f);
+            director.Level.Exit.SetLift(0f);
+            director.UI.SetCinematic("", 1f);
+        }
+
+        private static Vector3 Flat(Vector3 v)
+        {
+            v.y = 0f;
+            return v.sqrMagnitude > 0.0001f ? v : Vector3.forward;
         }
 
         // ------------------------------------------------------------------ the TV and the footage
@@ -449,8 +658,23 @@ namespace NightShift.Game
             footageLights[footageLights.Length - 1].enabled = filming && !footageLightsOn;
             foreach (Renderer renderer in visitorRenderers)
             {
-                renderer.enabled = filming;
+                renderer.enabled = filming || visitorEverywhere;
             }
+        }
+
+        /// <summary>From the last moment on, the visitor is not only on the tape.</summary>
+        private bool visitorEverywhere;
+
+        /// <summary>Where the visitor's face is (his head bone, or about head height).</summary>
+        private Vector3 VisitorFace()
+        {
+            if (visitor == null)
+            {
+                return Home + new Vector3(0.25f, 1.9f, -1.3f);
+            }
+            Animator animator = visitor.GetComponentInChildren<Animator>();
+            Transform head = animator != null && animator.isHuman ? animator.GetBoneTransform(HumanBodyBones.Head) : null;
+            return head != null ? head.position + visitor.transform.forward * 0.12f : visitor.transform.position + Vector3.up * 1.9f;
         }
 
         private void EndCamera(ScriptableRenderContext context, Camera camera)
@@ -463,7 +687,7 @@ namespace NightShift.Game
                 }
                 foreach (Renderer renderer in visitorRenderers)
                 {
-                    renderer.enabled = false;
+                    renderer.enabled = visitorEverywhere;
                 }
             }
         }

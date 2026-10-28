@@ -72,6 +72,22 @@ namespace NightShift.Game
         public Texture2D SignMain;
         public Texture2D SignPole;
 
+        [Header("Sketchfab models (tools/prepare_models.py, imported by glTFast; credits in docs/credits.md)")]
+        [Tooltip("The guard's 1984 station wagon: wheels and steering wheel are nodes pivoting on their centers.")]
+        public GameObject CarModel;
+
+        [Tooltip("A rusted sedan left in the back lot.")]
+        public GameObject WreckModel;
+
+        [Tooltip("The exit panel's lever: \"Base\" and \"Handle\" (pivot on the hub, axis x).")]
+        public GameObject LeverModel;
+
+        [Tooltip("The breaker box's main knife switch: \"Base\" and \"Blade\" (pivot on the hinge, axis x).")]
+        public GameObject KnifeSwitchModel;
+
+        [Tooltip("First-person arms, rigged.")]
+        public GameObject HandsModel;
+
         public AudioClip AmbientLoop;
         public AudioClip MenuMusic;
         public AudioClip Scream;

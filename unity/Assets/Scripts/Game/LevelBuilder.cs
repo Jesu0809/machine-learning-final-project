@@ -864,13 +864,28 @@ namespace NightShift.Game
                 parts.SocketLights[i] = renderer;
             }
 
-            // The lever: a pivot under the sockets, a steel arm and a red grip.
-            parts.Lever = new GameObject("LeverPivot").transform;
-            parts.Lever.SetParent(t, false);
-            parts.Lever.localPosition = new Vector3(0f, -0.2f, 0.1f);
-            BuildKit.Cylinder("LeverHub", t, new Vector3(0f, -0.2f, 0.09f), 0.07f, 0.04f, chrome).transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            BuildKit.Box("LeverArm", parts.Lever, new Vector3(0f, 0.12f, 0.02f), new Vector3(0.035f, 0.24f, 0.03f), chrome, 1f, false);
-            BuildKit.Box("LeverGrip", parts.Lever, new Vector3(0f, 0.25f, 0.03f), new Vector3(0.12f, 0.05f, 0.05f), BuildKit.Plain("leverGrip", new Color(0.6f, 0.05f, 0.04f), 0.4f), 1f, false);
+            // The lever: a heavy industrial one on the wall beside the box (the model's handle swings
+            // on its hub), or a steel arm and red grip under the sockets if the model is missing.
+            GameObject leverModel = BuildKit.Assets != null ? BuildKit.Assets.LeverModel : null;
+            if (leverModel != null)
+            {
+                GameObject lever = Object.Instantiate(leverModel, t, false);
+                lever.name = "Lever";
+                lever.transform.localPosition = new Vector3(0.52f, -0.1f, -0.075f);
+                lever.transform.localScale = Vector3.one * 1.3f;
+                parts.Lever = BuildKit.Part(lever, "Handle");
+                parts.LeverUp = 0f;
+                parts.LeverDown = 108f;
+            }
+            if (parts.Lever == null)
+            {
+                parts.Lever = new GameObject("LeverPivot").transform;
+                parts.Lever.SetParent(t, false);
+                parts.Lever.localPosition = new Vector3(0f, -0.2f, 0.1f);
+                BuildKit.Cylinder("LeverHub", t, new Vector3(0f, -0.2f, 0.09f), 0.07f, 0.04f, chrome).transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                BuildKit.Box("LeverArm", parts.Lever, new Vector3(0f, 0.12f, 0.02f), new Vector3(0.035f, 0.24f, 0.03f), chrome, 1f, false);
+                BuildKit.Box("LeverGrip", parts.Lever, new Vector3(0f, 0.25f, 0.03f), new Vector3(0.12f, 0.05f, 0.05f), BuildKit.Plain("leverGrip", new Color(0.6f, 0.05f, 0.04f), 0.4f), 1f, false);
+            }
 
             // The status lamp on top, and sparks for when a cell clicks in.
             GameObject lamp = BuildKit.Box("PanelLamp", t, new Vector3(0f, 0.36f, 0.085f), new Vector3(0.3f, 0.05f, 0.03f), BuildKit.Glow("panelLamp", new Color(0.7f, 0f, 0f), 2f), 1f, false);

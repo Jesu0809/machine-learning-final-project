@@ -22,6 +22,14 @@ namespace NightShift.Game
         public static void AttachIfRequested(HuntDirector director)
         {
             string[] args = System.Environment.GetCommandLineArgs();
+            if (System.Array.IndexOf(args, "-showcase") >= 0)
+            {
+                // The showcase plays in the window for people to watch; it takes no screenshots.
+                Active = true;
+                Application.runInBackground = true;
+                director.gameObject.AddComponent<CaptureMode>().director = director;
+                return;
+            }
             for (int i = 0; i < args.Length - 1; i++)
             {
                 if (args[i] == "-capture")
@@ -38,6 +46,11 @@ namespace NightShift.Game
 
         private IEnumerator Start()
         {
+            if (folder == null)
+            {
+                yield return Showcase();
+                yield break;
+            }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-itemtest") >= 0)
             {
                 yield return ItemTest();
@@ -47,6 +60,12 @@ namespace NightShift.Game
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-audit") >= 0)
             {
                 yield return WalkAudit();
+                Application.Quit();
+                yield break;
+            }
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-sixam") >= 0)
+            {
+                yield return SixAMTest();
                 Application.Quit();
                 yield break;
             }
@@ -69,18 +88,29 @@ namespace NightShift.Game
                 director.SkipIntro();
             }
             float introStart = Time.time;
-            (float at, string name)[] introShots =
+            (string part, float at, string name)[] introShots =
             {
-                (3f, "01b-intro-rain"), (7.8f, "01c-intro-card"), (14f, "01d-intro-road"), (23f, "01e-intro-turn"),
-                (28.3f, "01f-intro-arrive"), (33f, "01g-intro-in-car"), (35.4f, "01h1-intro-out"), (37f, "01h2-intro-car-door"), (38.4f, "01h3-intro-turn"), (41.5f, "01i-intro-walk"), (47f, "01i2-intro-walk")
+                ("tape", 2.5f, "01b-tape-party"), ("tape", 5.8f, "01c-tape-zoom"), ("tape", 7.9f, "01d-tape-turn"), ("tape", 9.2f, "01e-tape-tear"),
+                ("cards", 1.5f, "01f-card"), ("drive", 1.6f, "01g-road-lights"), ("drive", 5.1f, "01h-road-pass"), ("drive", 8f, "01i-wheel"),
+                ("drive", 10.8f, "01j-glance-phone"), ("drive", 15f, "01k-wheel-lamp"), ("drive", 19.5f, "01l-alongside"), ("drive", 24f, "01m-phone"),
+                ("drive", 29f, "01n-road-ahead"), ("drive", 33f, "01o-approach"), ("drive", 36.4f, "01p-turn-sweep"), ("drive", 38.3f, "01q-parked"),
+                ("drive", 40f, "01r-glare"), ("foot", 1.5f, "01s-out"), ("foot", 4f, "01t-walk"), ("foot", 6.55f, "01u-reveal"), ("foot", 6.9f, "01v-reveal-zoom"),
+                ("foot", 8.6f, "01w-gone"), ("foot", 11.5f, "01x-hurry"), ("door", 0.9f, "01y-padlock"), ("door", 1.9f, "01y2-key"), ("door", 2.9f, "01y3-chain"),
+                ("door", 4.6f, "01z-doors"), ("door", 7.5f, "01z2-lobby"), ("inside", 2.5f, "01z3-stage"), ("title", 2.4f, "01z4-title")
             };
-            foreach ((float at, string name) in skipIntro ? new (float, string)[0] : introShots)
+            string[] order = { "tape", "cards", "drive", "foot", "door", "inside", "title" };
+            foreach ((string part, float at, string name) in skipIntro ? new (string, float, string)[0] : introShots)
             {
-                while (Time.time - introStart < at)
+                // Wait for that moment of that part (skipped if the intro has gone past it).
+                while (director.InIntro && (System.Array.IndexOf(order, director.IntroPart.part) < System.Array.IndexOf(order, part)
+                                            || director.IntroPart.part == part && director.IntroPart.time < at))
                 {
                     yield return null;
                 }
-                yield return Shot(name);
+                if (director.InIntro && director.IntroPart.part == part)
+                {
+                    yield return Shot(name);
+                }
             }
             int insideShot = 0;
             while (director.InIntro && Time.time - introStart < 90f)
@@ -396,6 +426,194 @@ namespace NightShift.Game
         /// 1 to 9) and the lever. Then a locker, a cabinet and the explore mode. Run with
         /// "-capture folder -itemtest". Freddy is left out.
         /// </summary>
+        /// <summary>
+        /// The showcase (<c>Night Shift -showcase</c>): everything worth seeing, played in real time
+        /// with sound for a person to watch, each part under a title card. The intro, the first
+        /// night's call in the locked office (the chair, the plush), the fifth night's tasks one by
+        /// one, the windows, hiding, the lever, the tape at home, and a catch. It ends on the end screen.
+        /// </summary>
+        private IEnumerator Showcase()
+        {
+            PlayerController player = director.Player;
+            yield return new WaitForSeconds(1.5f);
+            yield return Title("NIGHT SHIFT  —  SHOWCASE", "the intro (ENTER skips it)", null);
+            director.PlayStory();
+            yield return new WaitForSeconds(1f);
+            while (director.InIntro)
+            {
+                yield return null;
+            }
+
+            // Night 1: the call, the office locked, the chair and the plush.
+            yield return Title("1 · THE FIRST CALL", "the office stays locked until the call ends", () => { });
+            OfficeSeat seat = FindAnyObjectByType<OfficeSeat>();
+            Plush plush = FindAnyObjectByType<Plush>();
+            Teleport(new Vector3(-19.5f, 0f, -12.4f), new Vector3(0.2f, 0f, 1f));
+            yield return Aim(new Vector3(-19f, 1.3f, -9f));
+            yield return new WaitForSeconds(2.5f);
+            if (plush != null)
+            {
+                Vector3 toward = plush.transform.position;
+                Teleport(new Vector3(toward.x + 1.0f, 0f, toward.z - 0.6f), new Vector3(-1f, 0f, 0.6f));
+                yield return Aim(toward + Vector3.up * 0.15f);
+                yield return new WaitForSeconds(0.8f);
+                for (int i = 0; i < 3; i++)
+                {
+                    plush.Use(player);
+                    yield return new WaitForSeconds(i == 1 ? 0.35f : 0.9f);
+                }
+            }
+            if (seat != null)
+            {
+                Vector3 chair = seat.transform.position;
+                Teleport(new Vector3(chair.x + 0.8f, 0f, chair.z), new Vector3(-1f, 0f, 0f));
+                yield return new WaitForSeconds(0.5f);
+                seat.Use(player);
+                yield return new WaitForSeconds(7f);
+                player.EndFocus();
+            }
+
+            // Night 5, every task.
+            yield return Title("2 · POWER CELLS", "one at a time, each to the socket of its color", () =>
+            {
+                director.StartNight(5);
+                director.SkipCall();
+                director.Freddy.gameObject.SetActive(false);
+            });
+            yield return new WaitForSeconds(0.6f);
+            yield return PowerTheSockets(null);
+            yield return new WaitForSeconds(1f);
+
+            yield return Title("3 · THE BREAKERS", "flip the tripped ones by hand, then push the handle", null);
+            BreakerBox breaker = director.Breaker;
+            Vector3 front = breaker.transform.forward;
+            Teleport(breaker.transform.position + front * 1.1f - Vector3.up * breaker.transform.position.y, -front);
+            yield return Aim(breaker.transform.position);
+            breaker.Use(player);
+            yield return new WaitForSeconds(1f);
+            yield return breaker.AutoPlay(player);
+            yield return new WaitForSeconds(2.5f);
+
+            yield return Title("4 · THE KEYCARD", "from its case in the veranda to the reader in the office", null);
+            Vector3 pedestal = PizzeriaLayout.CardPedestal;
+            Teleport(new Vector3(pedestal.x, 0f, pedestal.z - 1.3f), Vector3.forward);
+            yield return Aim(pedestal + Vector3.up * 1.05f);
+            yield return new WaitForSeconds(1f);
+            director.CardPedestal.Use(player);
+            yield return new WaitForSeconds(2f);
+            CardReader reader = director.Reader;
+            front = reader.transform.forward;
+            Vector3 stand = reader.transform.position + front * 1.0f;
+            Teleport(new Vector3(stand.x, 0f, stand.z), -front);
+            yield return Aim(reader.transform.position);
+            reader.Use(player);
+            yield return new WaitForSeconds(1.2f);
+            yield return reader.AutoSwipe(0.15f);
+            yield return new WaitForSeconds(2f);
+            yield return reader.AutoSwipe(0.65f);
+            yield return new WaitForSeconds(2f);
+
+            yield return Title("5 · THE TAPE BOX", "1 to 9 in order; a wrong key buzzes and reshuffles", null);
+            TapeBox box = director.Tape;
+            front = box.transform.forward;
+            stand = box.transform.position + front * 1.0f;
+            Teleport(new Vector3(stand.x, 0f, stand.z), -front);
+            yield return Aim(box.transform.position);
+            yield return box.AutoPlay(player, "", null, 0.45f);
+            while (player.Focus == (IFocusTask)box)
+            {
+                yield return null;
+            }
+            yield return new WaitForSeconds(0.4f);
+            box.Use(player);
+            yield return new WaitForSeconds(2f);
+
+            yield return Title("6 · THE WINDOWS", "the back lot in the rain, from the north wing", null);
+            Teleport(new Vector3(-9f, 0f, 18.6f), new Vector3(0f, 0f, 1f));
+            yield return Aim(new Vector3(-9f, 1.75f, 22f));
+            yield return new WaitForSeconds(5f);
+            Teleport(new Vector3(19.2f, 0f, 19.4f), new Vector3(0.25f, 0f, 1f));
+            yield return Aim(new Vector3(20.5f, 1.8f, 22f));
+            yield return new WaitForSeconds(5f);
+
+            yield return Title("7 · HIDING", "a locker in the office", null);
+            HidingSpot locker = director.Level.Spot(Room.Office, 0);
+            Vector3 lockerFront = locker.ExitPoint.position + locker.transform.forward * 0.6f;
+            Teleport(new Vector3(lockerFront.x, 0f, lockerFront.z), -locker.transform.forward);
+            yield return new WaitForSeconds(1f);
+            locker.Use(player);
+            yield return new WaitForSeconds(5f);
+            locker.Use(player);
+            yield return new WaitForSeconds(2f);
+
+            yield return Title("8 · THE LEVER", "everything done: the way out opens", null);
+            yield return PullTheLever("");
+            yield return new WaitForSeconds(3f);
+
+            yield return Title("9 · THE TAPE", "what the guard takes home", null);
+            director.EscapeForTest();
+            yield return null;
+            while (director.Ending.Playing)
+            {
+                yield return null;
+            }
+            yield return new WaitForSeconds(3f);
+
+            yield return Title("10 · 6 AM", "still inside when the night ends: the doors lock, and he finds you", () =>
+            {
+                director.StartNight(2);
+                director.SkipCall();
+                director.Freddy.gameObject.SetActive(true);
+            });
+            Teleport(new Vector3(9f, 0f, -0.5f), new Vector3(1f, 0f, 0f));
+            yield return new WaitForSeconds(1.2f);
+            director.SkipToDawnForTest();
+        }
+
+        /// <summary>A title card on black between the showcase's parts; <paramref name="whileBlack"/> runs unseen.</summary>
+        private IEnumerator Title(string title, string line, System.Action whileBlack)
+        {
+            NightShift.UI.GameUI ui = director.UI;
+            ui.ShowCinematic(true);
+            for (float t = 0f; t < 0.4f; t += Time.deltaTime)
+            {
+                ui.SetCinematic("", t / 0.4f);
+                yield return null;
+            }
+            ui.SetCinematic("", 1f);
+            whileBlack?.Invoke();
+            ui.SetCinematicCard(title + "\n<size=30>" + line + "</size>", 1f, 66);
+            yield return new WaitForSeconds(2.6f);
+            ui.SetCinematicCard("", 0f);
+            for (float t = 0f; t < 0.5f; t += Time.deltaTime)
+            {
+                ui.SetCinematic("", 1f - t / 0.5f);
+                yield return null;
+            }
+            ui.ShowCinematic(false);
+        }
+
+        /// <summary>6 AM with the guard still inside, and the catch that follows, photographed.</summary>
+        private IEnumerator SixAMTest()
+        {
+            yield return new WaitForSeconds(1f);
+            director.StartNight(2);
+            director.SkipCall();
+            yield return new WaitForSeconds(1f);
+            Teleport(new Vector3(9f, 0f, -0.5f), new Vector3(1f, 0f, 0f));
+            director.Player.Controllable = true;
+            yield return new WaitForSeconds(0.5f);
+            director.SkipToDawnForTest();
+            string[] names = { "41a-dawn-bell", "41b-dawn-dark", "41c-dawn-steps", "41d-dawn-turn", "41e-dawn-run", "41f-dawn-door", "41g-caught-whip", "41h-caught-lunge", "41i-caught-floor", "41j-caught-drag", "41k-caught-card", "41l-end" };
+            float[] waits = { 1.4f, 1.6f, 1.2f, 1.1f, 0.9f, 1.4f, 0.55f, 0.5f, 1.4f, 1.0f, 1.2f, 2f };
+            for (int i = 0; i < names.Length; i++)
+            {
+                yield return new WaitForSeconds(waits[i]);
+                yield return Shot(names[i]);
+            }
+            Debug.Log("CAPTURE six am: phase=" + director.Phase + " reason=" + director.EndReason);
+        }
+
         /// <summary>The tape played at home after night 5, photographed along the way.</summary>
         private IEnumerator EndingTest()
         {
@@ -406,7 +624,13 @@ namespace NightShift.Game
             EndingCinematic ending = director.Ending;
             director.EscapeForTest();
             yield return null;
-            float[] at = { 3f, 6.5f, 8f, 8.9f, 10f, 11f, 12.5f, 16f, 20f, 25f, 26.3f, 28f, 31f, 33.5f, 35.8f, 37f, 39.5f, 43f, 47f, 51f, 52.5f, 55f, 58f };
+            // The escape, before the apartment (Elapsed starts with the apartment).
+            foreach ((float wait, string name) in new[] { (1.3f, "39a-escape-doorway"), (2.2f, "39b-escape-run"), (1.2f, "39c-escape-look-back"), (2.4f, "39d-escape-headlights"), (2.6f, "39e-escape-cranks"), (3.5f, "39f-escape-reverse") })
+            {
+                yield return new WaitForSeconds(wait);
+                yield return Shot(name);
+            }
+            float[] at = { 3f, 6.5f, 8f, 8.9f, 10f, 11f, 12.5f, 16f, 20f, 25f, 26.3f, 28f, 31f, 33.5f, 35.8f, 37f, 39.5f, 43f, 47f, 52f, 54.5f, 55.6f, 56f, 59f };
             int shot = 0;
             while (ending.Playing && shot < at.Length)
             {
@@ -513,6 +737,12 @@ namespace NightShift.Game
             yield return Aim(box.transform.position);
             yield return Shot("34-tapebox");
             yield return box.AutoPlay(player, "34", Shot);
+            yield return new WaitForSeconds(1.6f);
+            yield return Shot("34c2-tapebox-latches");
+            while (director.Player.Focus == (IFocusTask)box)
+            {
+                yield return null;
+            }
             yield return Shot("34d-tapebox-open");
             box.Use(player);
             yield return new WaitForSeconds(0.35f);
@@ -742,6 +972,10 @@ namespace NightShift.Game
 
         private IEnumerator Shot(string name)
         {
+            if (folder == null)
+            {
+                yield break;
+            }
             yield return new WaitForEndOfFrame();
             string path = Path.Combine(folder, name + ".png");
             ScreenCapture.CaptureScreenshot(path);

@@ -47,32 +47,65 @@ namespace NightShift.Game
         }
 
         /// <summary>
-        /// Something small goes from where it is up in front of the eyes, then down into a pocket.
-        /// Darkened as it comes close, or the flashlight would burn it white.
+        /// Something small is taken: first straight out of where it lies, along <paramref name="outOf"/>
+        /// (up out of an open case or box, never through its walls), then up in front of the eyes for
+        /// a moment, then down into a pocket. Darkened as it comes close, or the flashlight would burn it white.
         /// </summary>
-        public static IEnumerator Pocket(PlayerController player, Transform thing, float seconds, Quaternion shown)
+        public static IEnumerator Pocket(PlayerController player, Transform thing, Vector3 outOf, float clearance, Quaternion shown)
         {
             Vector3 start = thing.position;
             Quaternion startRotation = thing.rotation;
             Vector3 startScale = thing.localScale;
+            Vector3 lifted = start + outOf.normalized * clearance;
             Renderer[] renderers = thing.GetComponentsInChildren<Renderer>();
             var shade = new MaterialPropertyBlock();
-            for (float t = 0f; t < seconds; t += Time.deltaTime)
+            const float liftSeconds = 0.4f, bringSeconds = 0.45f, holdSeconds = 0.35f, pocketSeconds = 0.3f;
+            float total = liftSeconds + bringSeconds + holdSeconds + pocketSeconds;
+            for (float t = 0f; t < total; t += Time.deltaTime)
             {
-                float k = Ease(t / seconds);
+                Transform view = player.View.transform;
+                Vector3 look = view.TransformPoint(new Vector3(0.05f, -0.1f, 0.5f));
+                Vector3 hand = view.TransformPoint(new Vector3(0.22f, -0.45f, 0.25f));
+                float darken;
+                if (t < liftSeconds)
+                {
+                    // Out along the opening, slowing at the top; a slight tilt as the fingers pull it.
+                    float k = Ease(t / liftSeconds);
+                    thing.position = Vector3.Lerp(start, lifted, 1f - (1f - k) * (1f - k));
+                    thing.rotation = startRotation * Quaternion.Euler(Mathf.Sin(k * Mathf.PI) * 6f, 0f, Mathf.Sin(k * Mathf.PI) * 4f);
+                    player.LookToward(thing.position, 5f);
+                    darken = 0f;
+                }
+                else if (t < liftSeconds + bringSeconds)
+                {
+                    // To the eyes, in an arc, turning to show its face.
+                    float k = Ease((t - liftSeconds) / bringSeconds);
+                    thing.position = Vector3.Lerp(lifted, look, k) + Vector3.up * Mathf.Sin(k * Mathf.PI) * 0.05f;
+                    thing.rotation = Quaternion.Slerp(startRotation, view.rotation * shown, k);
+                    darken = k * 0.6f;
+                }
+                else if (t < liftSeconds + bringSeconds + holdSeconds)
+                {
+                    // A look at it, held in a hand that is not quite still.
+                    float wobble = Time.time * 7f;
+                    thing.position = look + view.TransformVector(new Vector3(Mathf.Sin(wobble) * 0.003f, Mathf.Cos(wobble * 1.3f) * 0.003f, 0f));
+                    thing.rotation = view.rotation * shown;
+                    darken = 0.6f;
+                }
+                else
+                {
+                    // Away into the pocket.
+                    float k = Ease((t - liftSeconds - bringSeconds - holdSeconds) / pocketSeconds);
+                    thing.position = Vector3.Lerp(look, hand, k);
+                    thing.rotation = view.rotation * shown * Quaternion.Euler(k * 50f, 0f, 0f);
+                    thing.localScale = startScale * Mathf.Lerp(1f, 0.8f, k);
+                    darken = 0.6f + k * 0.4f;
+                }
                 foreach (Renderer renderer in renderers)
                 {
-                    shade.SetColor("_BaseColor", renderer.sharedMaterial.GetColor("_BaseColor") * Mathf.Lerp(1f, 0.3f, k));
+                    shade.SetColor("_BaseColor", renderer.sharedMaterial.GetColor("_BaseColor") * Mathf.Lerp(1f, 0.3f, darken));
                     renderer.SetPropertyBlock(shade);
                 }
-                Transform view = player.View.transform;
-                Vector3 look = view.TransformPoint(new Vector3(0.06f, -0.12f, 0.55f));
-                Vector3 hand = view.TransformPoint(new Vector3(0.22f, -0.32f, 0.3f));
-                Vector3 target = k < 0.7f ? look : Vector3.Lerp(look, hand, (k - 0.7f) / 0.3f);
-                float up = Mathf.Min(1f, k / 0.7f);
-                thing.position = Vector3.Lerp(start, target, up) + Vector3.up * Mathf.Sin(up * Mathf.PI) * 0.06f;
-                thing.rotation = Quaternion.Slerp(startRotation, view.rotation * shown, up);
-                thing.localScale = startScale * Mathf.Lerp(1f, 0.7f, k);
                 yield return null;
             }
             foreach (Renderer renderer in renderers)
@@ -107,6 +140,8 @@ namespace NightShift.Game
         private ParticleSystem sparks;
         private float doorShown;
         private float handleShown;
+        private float handleOpen = 150f;    // the main handle's angle (about x) when off, and when on
+        private float handleClosed = 15f;
         private bool opening;
 
         public bool Done { get; private set; }
@@ -129,7 +164,7 @@ namespace NightShift.Game
         }
 
         public string FocusControls => "[MOUSE] or [WASD] move your hand";
-        public string FocusHint => AllUp ? "Every breaker is up: push the main handle up  [E]" : "Flip the tripped breakers up  [E]   (each one is loud)";
+        public string FocusHint => AllUp ? "Every breaker is up: throw the main switch  [E]" : "Flip the tripped breakers up  [E]   (each one is loud)";
 
         public static BreakerBox Create(HuntDirector director, Transform parent, Vector3 position, float facing)
         {
@@ -140,7 +175,7 @@ namespace NightShift.Game
             var box = go.AddComponent<BreakerBox>();
             box.director = director;
             box.Build();
-            box.FocusView = TaskKit.View(go.transform, new Vector3(0.05f, 0f, 0.1f), 0.95f, 0.05f);
+            box.FocusView = TaskKit.View(go.transform, new Vector3(0.16f, 0f, 0.1f), 1.1f, 0.05f);
             box.ResetTask(3);
             return box;
         }
@@ -206,17 +241,44 @@ namespace NightShift.Game
                 BuildKit.Quad("Directory", door, new Vector3(0.39f, 0.08f, -0.0005f), new Vector2(0.3f, 0.4f), 180f, TaskKit.Label("breaker_directory", Color.white));
             }
 
-            BuildKit.Cylinder("HandleHub", t, new Vector3(0.43f, -0.1f, 0.04f), 0.09f, 0.06f, chrome).transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
-            handle = new GameObject("HandlePivot").transform;
-            handle.SetParent(t, false);
-            handle.localPosition = new Vector3(0.47f, -0.1f, 0.04f);
-            BuildKit.Box("HandleArm", handle, new Vector3(0f, 0.14f, 0f), new Vector3(0.035f, 0.28f, 0.035f), chrome, 1f, false);
-            BuildKit.Box("HandleGrip", handle, new Vector3(0f, 0.3f, 0f), new Vector3(0.05f, 0.09f, 0.06f), BuildKit.Plain("leverGrip", new Color(0.6f, 0.05f, 0.04f), 0.4f), 1f, false);
+            // The main switch on the wall beside the box: an old knife switch, open (its blade
+            // hanging out of the jaws) until every breaker is up. A red-gripped handle if the model is missing.
+            GameObject knife = director.Assets != null ? director.Assets.KnifeSwitchModel : null;
             var grip = new GameObject("HandleReach").transform;
-            grip.SetParent(t, false);
-            grip.localPosition = new Vector3(0.47f, -0.05f, 0.06f);
+            if (knife != null)
+            {
+                GameObject main = Instantiate(knife, t, false);
+                main.name = "MainSwitch";
+                main.transform.localPosition = new Vector3(0.56f, -0.36f, -0.098f);
+                handle = BuildKit.Part(main, "Blade");
+                handleOpen = 55f;
+                // A caged bulb over it, so the switch reads in the dark beside the box.
+                var bulb = new GameObject("SwitchLight").AddComponent<Light>();
+                bulb.transform.SetParent(t, false);
+                bulb.transform.localPosition = new Vector3(0.56f, 0.35f, 0.3f);
+                bulb.type = LightType.Point;
+                bulb.range = 1.3f;
+                bulb.intensity = 1.2f;
+                bulb.color = new Color(1f, 0.78f, 0.5f);
+                bulb.shadows = LightShadows.None;
+                handleClosed = 0f;
+                grip.SetParent(handle, false);
+                grip.localPosition = new Vector3(0f, 0.36f, 0.02f);
+                sizes[6] = new Vector2(0.14f, 0.3f);
+            }
+            if (handle == null)
+            {
+                BuildKit.Cylinder("HandleHub", t, new Vector3(0.43f, -0.1f, 0.04f), 0.09f, 0.06f, chrome).transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+                handle = new GameObject("HandlePivot").transform;
+                handle.SetParent(t, false);
+                handle.localPosition = new Vector3(0.47f, -0.1f, 0.04f);
+                BuildKit.Box("HandleArm", handle, new Vector3(0f, 0.14f, 0f), new Vector3(0.035f, 0.28f, 0.035f), chrome, 1f, false);
+                BuildKit.Box("HandleGrip", handle, new Vector3(0f, 0.3f, 0f), new Vector3(0.05f, 0.09f, 0.06f), BuildKit.Plain("leverGrip", new Color(0.6f, 0.05f, 0.04f), 0.4f), 1f, false);
+                grip.SetParent(t, false);
+                grip.localPosition = new Vector3(0.47f, -0.05f, 0.06f);
+                sizes[6] = new Vector2(0.12f, 0.42f);
+            }
             reach[6] = grip;
-            sizes[6] = new Vector2(0.12f, 0.42f);
             selector = new FocusSelector(t, reach, sizes);
 
             lamp = TaskKit.Lamp(t, new Vector3(0f, 0.54f, 0.04f), new Vector3(0.22f, 0.06f, 0.06f));
@@ -323,7 +385,7 @@ namespace NightShift.Game
                 {
                     // It will not stay up with a breaker still down: it springs back with a spark.
                     handleShown = 0.4f;
-                    sparks.transform.localPosition = handle.localPosition + new Vector3(0f, 0.1f, 0.05f);
+                    sparks.transform.position = handle.position + transform.TransformDirection(new Vector3(0f, 0.1f, 0.05f));
                     sparks.Emit(10);
                     director.Player.MakeNoise(2);
                     director.Audio.Beep(0.5f);
@@ -358,7 +420,7 @@ namespace NightShift.Game
                 yield return null;
             }
             handleShown = 1f;
-            sparks.transform.localPosition = handle.localPosition + new Vector3(0f, 0.1f, 0.05f);
+            sparks.transform.position = handle.position + transform.TransformDirection(new Vector3(0f, 0.1f, 0.05f));
             sparks.Emit(40);
             director.Player.Jolt(1.2f);
             director.Audio.PlayAt(GameAudio.Clunk(), transform.position, 1f, 0.7f);
@@ -409,7 +471,7 @@ namespace NightShift.Game
                 toggles[i].localRotation = Quaternion.Euler(Mathf.Lerp(35f, -35f, TaskKit.Ease(shown[i])), 0f, 0f);
                 flags[i].enabled = !up[i];
             }
-            handle.localRotation = Quaternion.Euler(Mathf.Lerp(150f, 15f, TaskKit.Ease(handleShown)), 0f, 0f);
+            handle.localRotation = Quaternion.Euler(Mathf.Lerp(handleOpen, handleClosed, TaskKit.Ease(handleShown)), 0f, 0f);
             bool blink = Mathf.Repeat(Time.time * 3f, 1f) < 0.5f;
             TaskKit.SetLamp(lamp, Done ? new Color(0.1f, 1f, 0.2f) : doorShown > 0f ? (blink ? new Color(1f, 0.55f, 0f) : new Color(0.3f, 0.12f, 0f)) : new Color(1f, 0.1f, 0.05f));
         }
@@ -536,7 +598,8 @@ namespace NightShift.Game
                 yield return null;
             }
             lid.localRotation = Quaternion.Euler(-100f, 0f, 0f);
-            yield return TaskKit.Pocket(player, card, 0.5f, Quaternion.Euler(0f, 180f, 0f));
+            // Up out of the open case (its lid is back), then to the eyes.
+            yield return TaskKit.Pocket(player, card, Vector3.up, 0.34f, Quaternion.Euler(0f, 180f, 0f));
             spot.enabled = false;
             taking = false;
         }
@@ -791,8 +854,14 @@ namespace NightShift.Game
         private readonly bool[] pressed = new bool[9];
         private Renderer screen;
         private Renderer led;
+        private readonly Transform[] latches = new Transform[2];
+        private readonly Transform[] strutBodies = new Transform[2];
+        private readonly Transform[] strutRods = new Transform[2];
+        private Light inside;
+        private Pose keypadView;
         private int next = 1;
         private float lidShown;
+        private float latchShown;
         private bool opened;
         private bool taking;
         private float wrongUntil;
@@ -812,21 +881,66 @@ namespace NightShift.Game
             Transform t = go.transform;
             var box = go.AddComponent<TapeBox>();
             box.director = director;
-            Material steel = BuildKit.Pbr("metal_worn", new Color(0.42f, 0.44f, 0.46f)) ?? BuildKit.Plain("tapeBoxSteel", new Color(0.28f, 0.29f, 0.3f), 0.45f, 0.7f);
+            Material steel = BuildKit.Pbr("metal_worn", new Color(0.26f, 0.27f, 0.29f)) ?? BuildKit.Plain("tapeBoxSteel", new Color(0.2f, 0.21f, 0.22f), 0.45f, 0.7f);
             Material dark = BuildKit.Plain("tapeBoxInside", new Color(0.04f, 0.04f, 0.045f), 0.3f);
             Material chrome = BuildKit.Plain("chrome", new Color(0.7f, 0.7f, 0.72f), 0.8f, 1f);
-            // The box: a steel shell, open at the top under the lid.
-            BuildKit.Box("Bottom", t, new Vector3(0f, 0.01f, 0f), new Vector3(0.4f, 0.02f, 0.3f), steel);
-            BuildKit.Box("Back", t, new Vector3(0f, 0.13f, -0.14f), new Vector3(0.4f, 0.26f, 0.02f), steel);
-            BuildKit.Box("Front", t, new Vector3(0f, 0.13f, 0.14f), new Vector3(0.4f, 0.26f, 0.02f), steel);
-            BuildKit.Box("Left", t, new Vector3(-0.19f, 0.13f, 0f), new Vector3(0.02f, 0.26f, 0.3f), steel);
-            BuildKit.Box("Right", t, new Vector3(0.19f, 0.13f, 0f), new Vector3(0.02f, 0.26f, 0.3f), steel);
-            BuildKit.Box("Inside", t, new Vector3(0f, 0.025f, 0f), new Vector3(0.36f, 0.01f, 0.26f), dark, 1f, false);
+            Material foam = BuildKit.Plain("foam", new Color(0.09f, 0.09f, 0.095f), 0.05f);
+            // A tape safe: thick steel walls, guarded corners, open at the top under a heavy lid.
+            BuildKit.Box("Bottom", t, new Vector3(0f, 0.015f, 0f), new Vector3(0.4f, 0.03f, 0.3f), steel);
+            BuildKit.Box("Back", t, new Vector3(0f, 0.13f, -0.135f), new Vector3(0.4f, 0.26f, 0.03f), steel);
+            BuildKit.Box("Front", t, new Vector3(0f, 0.13f, 0.135f), new Vector3(0.4f, 0.26f, 0.03f), steel);
+            BuildKit.Box("Left", t, new Vector3(-0.185f, 0.13f, 0f), new Vector3(0.03f, 0.26f, 0.3f), steel);
+            BuildKit.Box("Right", t, new Vector3(0.185f, 0.13f, 0f), new Vector3(0.03f, 0.26f, 0.3f), steel);
+            foreach (Vector2 corner in new[] { new Vector2(-1f, -1f), new Vector2(1f, -1f), new Vector2(-1f, 1f), new Vector2(1f, 1f) })
+            {
+                BuildKit.Box("CornerGuard", t, new Vector3(corner.x * 0.198f, 0.13f, corner.y * 0.148f), new Vector3(0.012f, 0.27f, 0.012f), chrome, 1f, false);
+            }
+            // Inside: grey foam with the cassette's cut-out, and a small lamp that comes on with the lid.
+            BuildKit.Box("Foam", t, new Vector3(0f, 0.05f, 0f), new Vector3(0.34f, 0.04f, 0.24f), foam, 1f, false);
+            BuildKit.Box("CutOut", t, new Vector3(0f, 0.0705f, 0f), new Vector3(0.2f, 0.002f, 0.115f), dark, 1f, false);
+            box.inside = new GameObject("InsideLamp").AddComponent<Light>();
+            box.inside.transform.SetParent(t, false);
+            box.inside.transform.localPosition = new Vector3(0f, 0.22f, -0.08f);
+            box.inside.type = LightType.Point;
+            box.inside.range = 0.7f;
+            box.inside.color = new Color(0.8f, 0.9f, 1f);
+            box.inside.shadows = LightShadows.None;
+            box.inside.intensity = 0f;
+            // Hinge barrels at the back, the lid with its handle and stenciled words.
+            for (int i = 0; i < 2; i++)
+            {
+                BuildKit.Cylinder("HingeBarrel", t, new Vector3(i == 0 ? -0.12f : 0.12f, 0.265f, -0.155f), 0.022f, 0.08f, chrome).transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+            }
             box.lid = new GameObject("LidHinge").transform;
             box.lid.SetParent(t, false);
             box.lid.localPosition = new Vector3(0f, 0.26f, -0.15f);
-            BuildKit.Box("Lid", box.lid, new Vector3(0f, 0.01f, 0.15f), new Vector3(0.41f, 0.02f, 0.31f), steel, 1f, false);
-            BuildKit.Box("Handle", box.lid, new Vector3(0f, 0.03f, 0.27f), new Vector3(0.12f, 0.015f, 0.02f), chrome, 1f, false);
+            BuildKit.Box("Lid", box.lid, new Vector3(0f, 0.012f, 0.15f), new Vector3(0.41f, 0.024f, 0.31f), steel, 1f, false);
+            BuildKit.Box("LidRim", box.lid, new Vector3(0f, -0.006f, 0.15f), new Vector3(0.37f, 0.012f, 0.27f), dark, 1f, false);
+            BuildKit.Box("Handle", box.lid, new Vector3(0f, 0.04f, 0.15f), new Vector3(0.16f, 0.015f, 0.022f), chrome, 1f, false);
+            BuildKit.Box("HandlePostL", box.lid, new Vector3(-0.07f, 0.03f, 0.15f), new Vector3(0.015f, 0.02f, 0.02f), chrome, 1f, false);
+            BuildKit.Box("HandlePostR", box.lid, new Vector3(0.07f, 0.03f, 0.15f), new Vector3(0.015f, 0.02f, 0.02f), chrome, 1f, false);
+            Texture2D stencil = BuildKit.SignTexture("decal_stencil_tapes");
+            if (stencil != null)
+            {
+                BuildKit.Quad("Stencil", box.lid, new Vector3(0f, 0.0245f, 0.07f), new Vector2(0.3f, 0.1f), 0f, BuildKit.Decal("stencilTapes", stencil, Color.white))
+                    .transform.localRotation = Quaternion.Euler(90f, 180f, 0f);
+            }
+            // Two gas struts hold the lid up; they stretch as it opens (see Draw).
+            for (int i = 0; i < 2; i++)
+            {
+                box.strutBodies[i] = BuildKit.Cylinder("StrutBody", t, Vector3.zero, 0.016f, 0.1f, dark).transform;
+                box.strutRods[i] = BuildKit.Cylinder("StrutRod", t, Vector3.zero, 0.007f, 0.1f, chrome).transform;
+            }
+            // Two latches on the sides hold the lid down; they flip open when the code is right.
+            for (int i = 0; i < 2; i++)
+            {
+                float side = i == 0 ? -1f : 1f;
+                box.latches[i] = new GameObject("LatchPivot").transform;
+                box.latches[i].SetParent(t, false);
+                box.latches[i].localPosition = new Vector3(side * 0.203f, 0.225f, 0.06f);
+                BuildKit.Box("Latch", box.latches[i], new Vector3(side * 0.004f, 0.03f, 0f), new Vector3(0.01f, 0.07f, 0.045f), chrome, 1f, false);
+                BuildKit.Box("LatchHook", box.latches[i], new Vector3(side * -0.004f, 0.062f, 0f), new Vector3(0.014f, 0.008f, 0.04f), chrome, 1f, false);
+            }
             // The keypad on the front: a recessed panel, nine keys, a little screen and a lamp.
             BuildKit.Box("KeypadPanel", t, new Vector3(0.06f, 0.13f, 0.151f), new Vector3(0.24f, 0.22f, 0.004f), dark, 1f, false);
             GameObject lcd = BuildKit.Quad("Screen", t, new Vector3(-0.12f, 0.2f, 0.152f), new Vector2(0.12f, 0.03f), 0f, TaskKit.Label("lcd_keypad_enter", Color.black, 1.2f));
@@ -854,7 +968,7 @@ namespace NightShift.Game
             // The tape inside.
             box.tape = new GameObject("Cassette").transform;
             box.tape.SetParent(t, false);
-            box.tape.localPosition = new Vector3(0f, 0.045f, 0f);
+            box.tape.localPosition = new Vector3(0f, 0.08f, 0f);
             Material plastic = BuildKit.Plain("vhsPlastic", new Color(0.05f, 0.05f, 0.05f), 0.55f);
             BuildKit.Box("Body", box.tape, Vector3.zero, new Vector3(0.187f, 0.025f, 0.103f), plastic, 1f, false);
             BuildKit.Box("Window", box.tape, new Vector3(0f, 0.0128f, -0.012f), new Vector3(0.1f, 0.001f, 0.035f), BuildKit.Plain("vhsWindow", new Color(0.12f, 0.1f, 0.09f), 0.9f), 1f, false);
@@ -865,6 +979,7 @@ namespace NightShift.Game
             trigger.size = new Vector3(0.5f, 0.35f, 0.4f);
             trigger.isTrigger = true;
             box.FocusView = TaskKit.View(t, new Vector3(0.02f, 0.14f, 0.15f), 0.42f, 0.12f);
+            box.keypadView = new Pose(box.FocusView.localPosition, box.FocusView.localRotation);
             box.ResetTask();
             return box;
         }
@@ -875,6 +990,9 @@ namespace NightShift.Game
             opened = false;
             taking = false;
             lidShown = 0f;
+            latchShown = 0f;
+            FocusView.localPosition = keypadView.position;
+            FocusView.localRotation = keypadView.rotation;
             tape.gameObject.SetActive(true);
             Shuffle();
             Show("lcd_keypad_enter");
@@ -929,7 +1047,8 @@ namespace NightShift.Game
         private IEnumerator Take(PlayerController player)
         {
             director.OnTapeTaken();
-            yield return TaskKit.Pocket(player, tape, 0.6f, Quaternion.Euler(-60f, 0f, 0f));
+            // Up out of the open box, then to the eyes.
+            yield return TaskKit.Pocket(player, tape, transform.up, 0.36f, Quaternion.Euler(-60f, 0f, 0f));
             taking = false;
         }
 
@@ -989,14 +1108,50 @@ namespace NightShift.Game
             opened = true;
             Show("lcd_keypad_open");
             TaskKit.SetLamp(led, new Color(0.1f, 1f, 0.2f));
-            director.Audio.PlayAt(director.Assets.LockerDoor, transform.position, 0.35f, 1.8f);
+            yield return new WaitForSeconds(0.25f);
+            // The eyes leave the keypad: up and back, to watch the whole box open.
+            var overlook = new Vector3(0.04f, 0.78f, 0.36f);
+            Quaternion down = Quaternion.LookRotation(new Vector3(0f, 0.1f, -0.03f) - overlook);
             for (float t = 0f; t < 0.6f; t += Time.deltaTime)
             {
-                lidShown = t / 0.6f;
+                float k = TaskKit.Ease(t / 0.6f);
+                FocusView.localPosition = Vector3.Lerp(keypadView.position, overlook, k);
+                FocusView.localRotation = Quaternion.Slerp(keypadView.rotation, down, k);
+                yield return null;
+            }
+            // The latches flip open, one, then the other: two heavy clacks.
+            for (int i = 0; i < 2; i++)
+            {
+                director.Audio.PlayAt(GameAudio.Clunk(), transform.position, 0.55f, 1.6f + i * 0.15f);
+                director.Player.Jolt(0.35f);
+                for (float t = 0f; t < 0.12f; t += Time.deltaTime)
+                {
+                    latchShown = Mathf.Max(latchShown, (i + t / 0.12f) / 2f);
+                    yield return null;
+                }
+                latchShown = (i + 1) / 2f;
+                yield return new WaitForSeconds(0.18f);
+            }
+            // The seal lets go: the lid jumps a finger's width with a hiss of air.
+            director.Audio.PlayAt(GameAudio.Hiss(), transform.position, 0.6f);
+            for (float t = 0f; t < 0.12f; t += Time.deltaTime)
+            {
+                lidShown = 0.05f * (t / 0.12f);
+                yield return null;
+            }
+            yield return new WaitForSeconds(0.35f);
+            // Then up on its struts, slowing to the top, the light inside coming on.
+            director.Audio.PlayAt(director.Assets.LockerDoor, transform.position, 0.3f, 1.4f);
+            for (float t = 0f; t < 1.1f; t += Time.deltaTime)
+            {
+                float k = t / 1.1f;
+                lidShown = Mathf.Lerp(0.05f, 1f, 1f - (1f - k) * (1f - k) * (1f - k));
+                inside.intensity = Mathf.Clamp01(k * 2f) * 1.6f * (Random.value < 0.08f && k < 0.5f ? 0.2f : 1f);
                 yield return null;
             }
             lidShown = 1f;
-            yield return new WaitForSeconds(0.3f);
+            inside.intensity = 1.6f;
+            yield return new WaitForSeconds(0.9f);
             if (director.Player.Focus == (IFocusTask)this)
             {
                 director.Player.EndFocus();
@@ -1004,7 +1159,7 @@ namespace NightShift.Game
         }
 
         /// <summary>Test helper (capture tour): a wrong key, then 1 to 9 in order.</summary>
-        public IEnumerator AutoPlay(PlayerController player, string shotPrefix, System.Func<string, IEnumerator> shot)
+        public IEnumerator AutoPlay(PlayerController player, string shotPrefix, System.Func<string, IEnumerator> shot, float pace = 0.15f)
         {
             player.BeginFocus(this);
             yield return new WaitForSeconds(0.5f);
@@ -1022,7 +1177,7 @@ namespace NightShift.Game
             for (int n = 1; n <= 9; n++)
             {
                 yield return selector.Press(this, player.View, System.Array.IndexOf(numberOn, n));
-                yield return new WaitForSeconds(0.15f);
+                yield return new WaitForSeconds(pace);
                 if (n == 5 && shot != null)
                 {
                     yield return shot(shotPrefix + "c-keypad-half");
@@ -1048,7 +1203,26 @@ namespace NightShift.Game
 
         private void Draw()
         {
-            lid.localRotation = Quaternion.Euler(-100f * TaskKit.Ease(lidShown), 0f, 0f);
+            lid.localRotation = Quaternion.Euler(-100f * lidShown, 0f, 0f);
+            for (int i = 0; i < 2; i++)
+            {
+                float side = i == 0 ? -1f : 1f;
+                latches[i].localRotation = Quaternion.Euler(0f, 0f, side * 115f * TaskKit.Ease(latchShown * 2f - i));
+                // Each strut from its foot on the side wall to its pin under the lid: a body and a rod.
+                Vector3 foot = new Vector3(side * 0.155f, 0.12f, -0.1f);
+                Vector3 pin = transform.InverseTransformPoint(lid.TransformPoint(new Vector3(side * 0.155f, -0.005f, 0.1f)));
+                Vector3 along = pin - foot;
+                float length = along.magnitude;
+                Quaternion turn = Quaternion.FromToRotation(Vector3.up, along);
+                const float body = 0.1f;
+                strutBodies[i].localPosition = foot + along.normalized * body * 0.5f;
+                strutBodies[i].localRotation = turn;
+                strutBodies[i].localScale = new Vector3(0.016f, body * 0.5f, 0.016f);
+                float rod = Mathf.Max(0.01f, length - body);
+                strutRods[i].localPosition = foot + along.normalized * (body + rod * 0.5f);
+                strutRods[i].localRotation = turn;
+                strutRods[i].localScale = new Vector3(0.007f, rod * 0.5f, 0.007f);
+            }
             bool wrong = Time.time < wrongUntil;
             for (int i = 0; i < 9; i++)
             {

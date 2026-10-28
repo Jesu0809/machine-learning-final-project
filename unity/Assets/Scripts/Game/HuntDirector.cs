@@ -160,6 +160,9 @@ namespace NightShift.Game
         /// <summary>True while the intro cinematic plays.</summary>
         public bool InIntro => intro != null && intro.Playing;
 
+        /// <summary>The part of the intro playing ("tape", "cards", "drive", "foot", "door", "inside") and seconds into it.</summary>
+        public (string part, float time) IntroPart => intro != null ? (intro.Part, intro.PartTime) : ("", 0f);
+
         /// <summary>
         /// True while the phone call plays and the night has not started (nights 1–4): Freddy sleeps,
         /// the objectives are hidden and the building is free to explore. On night 5 he hunts during the call.
@@ -397,6 +400,9 @@ namespace NightShift.Game
             trailTimer = 0f;
             decisionPending = false;
             NightSeconds = 0f;
+            sixAM = false;
+            lastHour = 0;
+            Player.Fatigue = 0f;
             LastHeard = null;
             LastDecision = "asleep on the stage";
             HasProbabilities = false;
@@ -541,6 +547,16 @@ namespace NightShift.Game
             }
 
             NightSeconds += Time.deltaTime;
+            UpdateFatigue();
+            if (!sixAM && NightSeconds >= NightLengthSeconds)
+            {
+                StartCoroutine(SixAM());
+            }
+            if (sixAM)
+            {
+                // The 6 AM sequence drives everything from here.
+                return;
+            }
             float actionInterval = settings.DecisionIntervalSeconds / settings.PlayerActionsPerTick;
             sampleTimer += Time.deltaTime;
             if (sampleTimer >= actionInterval && !State.FreddyTurn)
@@ -771,10 +787,9 @@ namespace NightShift.Game
                 EndReason = Night >= LastNight ? "You got out with the tape." : "You powered the exit and got out.";
                 Finish(HuntOutcome.Escaped);
             }
-            else if (State.Outcome == HuntOutcome.TimeUp)
+            else if (State.Outcome == HuntOutcome.TimeUp && !sixAM)
             {
-                EndReason = "The night is over and you are still inside.";
-                Finish(HuntOutcome.TimeUp);
+                StartCoroutine(SixAM());
             }
         }
 
@@ -1040,6 +1055,9 @@ namespace NightShift.Game
             UI.ShowEnd(outcome);
         }
 
+        /// <summary>Test helper (capture tour): a second before 6 AM.</summary>
+        public void SkipToDawnForTest() => NightSeconds = NightLengthSeconds - 1f;
+
         /// <summary>Test helper (capture tour): the guard gets out on the last night, as if through the door.</summary>
         public void EscapeForTest()
         {
@@ -1061,6 +1079,103 @@ namespace NightShift.Game
         /// Lights die, Freddy's face fills the screen in red light while the camera shakes and the
         /// lens warps, he screams over static, and the camera falls to the floor.
         /// </summary>
+        // ------------------------------------------------------------------ fatigue and 6 AM
+
+        private bool sixAM;
+        private int lastHour;
+
+        private static readonly string[] HourLines =
+        {
+            "",
+            "1 AM. Your legs are starting to feel it.",
+            "2 AM. Running takes more out of you now.",
+            "3 AM. Your breath is getting short.",
+            "4 AM. Everything is heavy. Pick your runs.",
+            "5 AM. One more hour. You can barely run."
+        };
+
+        /// <summary>The guard tires with every hour (and a little with every night); a word at each hour.</summary>
+        private void UpdateFatigue()
+        {
+            float progress = Mathf.Clamp01(NightSeconds / NightLengthSeconds);
+            Player.Fatigue = Mathf.Clamp01(progress * 0.75f + (Night - 1) * 0.05f);
+            int hour = Mathf.FloorToInt(progress * 6f);
+            if (hour != lastHour && hour >= 1 && hour < HourLines.Length)
+            {
+                lastHour = hour;
+                UI.Toast(HourLines[hour]);
+                Audio.PlayAt(GameAudio.Bell(), Player.transform.position + Vector3.up * 3f, 0.25f, 1.2f);
+            }
+        }
+
+        /// <summary>
+        /// Six in the morning with the guard still inside: the bell, the lights die, heavy steps
+        /// behind. The guard turns, sees him, runs for it; a door slams shut ahead; he is there.
+        /// </summary>
+        private IEnumerator SixAM()
+        {
+            sixAM = true;
+            Player.EndFocus();
+            if (Player.HiddenIn != null)
+            {
+                Player.HiddenIn.Use(Player);
+            }
+            Player.Controllable = false;
+            UI.Toast("6:00 AM. The doors are locking.");
+            for (int i = 0; i < 3; i++)
+            {
+                Audio.PlayAt(GameAudio.Bell(), Player.transform.position + Vector3.up * 3f, 0.6f, 1f);
+                if (i == 1)
+                {
+                    FlickerLight.Blackout(14f);
+                    Audio.PlayAmbient(false);
+                }
+                yield return new WaitForSeconds(0.9f);
+            }
+            // Steps behind, coming closer.
+            Vector3 forward = Player.transform.forward;
+            forward.y = 0f;
+            forward = forward.sqrMagnitude > 0.01f ? forward.normalized : Vector3.forward;
+            for (int i = 0; i < 3; i++)
+            {
+                Audio.PlayAt(Assets.LockerDoor, Player.transform.position - forward * (6f - i * 1.5f), 0.6f + i * 0.15f, 0.35f);
+                yield return new WaitForSeconds(0.55f);
+            }
+            // He is behind: the guard turns around and sees him.
+            Vector3 behind = Player.transform.position - forward * 4.5f;
+            Freddy.ResetTo(new Vector3(behind.x, Freddy.transform.position.y, behind.z), Quaternion.LookRotation(forward).eulerAngles.y);
+            Freddy.WakeUp();
+            // The scene moves him from here on, not his hunt.
+            Freddy.ScriptedWalk = 0f;
+            Freddy.FlashEyes(3f);
+            for (float t = 0f; t < 0.45f; t += Time.deltaTime)
+            {
+                Player.LookToward(Freddy.EyePosition, 14f);
+                yield return null;
+            }
+            Audio.Sting();
+            Player.Jolt(1.2f);
+            yield return new WaitForSeconds(0.6f);
+            // Run.
+            for (float t = 0f; t < 1.6f; t += Time.deltaTime)
+            {
+                Player.LookToward(Player.transform.position + forward * 6f + Vector3.up * 1.5f, 10f);
+                Player.ScriptedRun(forward, PlayerController.RunSpeed * 0.9f);
+                Vector3 follow = Player.transform.position - forward * Mathf.Lerp(4.5f, 2.2f, t / 1.6f);
+                Freddy.transform.position = new Vector3(follow.x, Freddy.transform.position.y, follow.z);
+                Freddy.ScriptedWalk = FreddyBody.ChaseSpeed;
+                yield return null;
+            }
+            // A door slams shut ahead.
+            Audio.PlayAt(Assets.LockerDoor, Player.transform.position + forward * 2.5f, 1f, 0.5f);
+            Player.Jolt(1.6f);
+            yield return new WaitForSeconds(0.45f);
+            Vector3 close = Player.transform.position - forward * 1.3f;
+            Freddy.transform.position = new Vector3(close.x, Freddy.transform.position.y, close.z);
+            Freddy.transform.rotation = Quaternion.LookRotation(forward);
+            Freddy.Grab("6 AM came and you were still inside. The doors locked, the lights went out, and he found you in the dark.");
+        }
+
         private IEnumerator Jumpscare()
         {
             Player.EndFocus();
@@ -1078,6 +1193,18 @@ namespace NightShift.Game
             }
             Transform head = Freddy.Head;
             Camera view = Player.View;
+
+            // A beat first: the view whips to him, silence, his eyes flare. Then the scream.
+            Freddy.FlashEyes(3f);
+            Audio.PlayAmbient(false);
+            Quaternion from = Player.Head.rotation;
+            for (float w = 0f; w < 0.22f; w += Time.deltaTime)
+            {
+                Vector3 face0 = head.position + Vector3.up * 0.05f;
+                Player.Head.rotation = Quaternion.Slerp(from, Quaternion.LookRotation(face0 - Player.Head.position), TaskKit.Ease(w / 0.22f));
+                yield return null;
+            }
+            yield return new WaitForSeconds(0.18f);
 
             FlickerLight.Blackout(3f);
             Player.Flashlight.enabled = false;
@@ -1125,6 +1252,31 @@ namespace NightShift.Game
                 jumpscareLight.intensity = Mathf.Lerp(6f, 0f, t / 0.9f);
                 yield return null;
             }
+            // Dragged away along the floor, the view sliding back and jerking with each pull,
+            // while the lab's verdict comes up.
+            Vector3 ground = Player.Head.position;
+            Quaternion lying = Player.Head.rotation;
+            Vector3 away = Freddy.transform.forward;
+            away.y = 0f;
+            Audio.PlayAt(GameAudio.Drag(), ground, 0.8f, 0.9f);
+            UI.ShowCinematic(true);
+            for (t = 0f; t < 2.6f; t += Time.deltaTime)
+            {
+                float pulls = t * 2.5f;
+                float pulled = Mathf.Floor(pulls) + Mathf.SmoothStep(0f, 1f, Mathf.Repeat(pulls, 1f));
+                Player.Head.position = ground + away.normalized * pulled * 0.45f;
+                Player.Head.rotation = lying * Quaternion.Euler(Mathf.Sin(pulls * Mathf.PI * 2f) * 2f, 0f, 0f);
+                jumpscareLight.intensity = 0f;
+                UI.SetCinematic("", Mathf.Clamp01((t - 1.4f) / 1.2f));
+                UI.SetCinematicCard("GUARD ADDED TO THE TRAINING SET", Mathf.Clamp01((t - 0.6f) / 0.6f), 40);
+                if (Mathf.Repeat(pulls, 1f) < Time.deltaTime * 2.5f && t > 0.3f)
+                {
+                    Audio.PlayAt(GameAudio.Drag(), Player.Head.position, 0.6f, Random.Range(0.85f, 1f));
+                }
+                yield return null;
+            }
+            UI.SetCinematicCard("", 0f);
+            UI.ShowCinematic(false);
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
             UI.ShowEnd(HuntOutcome.Caught);

@@ -299,12 +299,34 @@ namespace NightShift.Game
 
             // Back plate on the wall, the housing, a hazard band along the bottom.
             BuildKit.Box("Plate", t, new Vector3(0f, -0.05f, 0.02f), new Vector3(0.62f, 0.95f, 0.04f), steel);
-            BuildKit.Box("Housing", t, new Vector3(0f, 0f, 0.13f), new Vector3(0.46f, 0.56f, 0.2f), steel);
             BuildKit.Box("Hazard", t, new Vector3(0f, -0.43f, 0.07f), new Vector3(0.62f, 0.1f, 0.06f), hazard, 1f, false);
-            // The mouth: a chrome collar, a dark track for the gauge, the bore.
-            BuildKit.Cylinder("Collar", t, new Vector3(0f, 0.02f, 0.235f), 0.24f, 0.03f, chrome).transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            BuildKit.Cylinder("Track", t, new Vector3(0f, 0.02f, 0.251f), 0.225f, 0.003f, dark).transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            BuildKit.Cylinder("Bore", t, new Vector3(0f, 0.02f, 0.253f), 0.17f, 0.004f, dark).transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            // The housing is a hollow box: four walls, and a front plate with a round hole in it
+            // (drawn, with the hole cut out in its alpha), so the cell really goes in.
+            BuildKit.Box("HousingTop", t, new Vector3(0f, 0.27f, 0.13f), new Vector3(0.46f, 0.02f, 0.2f), steel);
+            BuildKit.Box("HousingBottom", t, new Vector3(0f, -0.27f, 0.13f), new Vector3(0.46f, 0.02f, 0.2f), steel);
+            BuildKit.Box("HousingLeft", t, new Vector3(-0.22f, 0f, 0.13f), new Vector3(0.02f, 0.56f, 0.2f), steel);
+            BuildKit.Box("HousingRight", t, new Vector3(0.22f, 0f, 0.13f), new Vector3(0.02f, 0.56f, 0.2f), steel);
+            Texture2D faceTexture = BuildKit.SignTexture("decal_socket_face");
+            Material face = faceTexture != null ? BuildKit.Decal("socketFace", faceTexture, Color.white) : steel;
+            BuildKit.Quad("Face", t, new Vector3(0f, 0f, 0.231f), new Vector2(0.46f, 0.56f), 0f, face);
+            // Behind the hole, a steel tube (twenty staves, so its inside shows) and a dark floor
+            // with the two copper contacts the cell is pushed against.
+            Material bore = BuildKit.Plain("boreSteel", new Color(0.09f, 0.09f, 0.1f), 0.55f, 0.6f);
+            const float boreRadius = 0.167f;
+            for (int i = 0; i < 20; i++)
+            {
+                float a = i * 18f;
+                Vector3 at = Quaternion.Euler(0f, 0f, a) * new Vector3(0f, boreRadius + 0.005f, 0f);
+                BuildKit.Box("BoreWall", t, new Vector3(at.x, 0.02f + at.y, 0.13f), new Vector3(0.056f, 0.01f, 0.2f), bore, 1f, false)
+                    .transform.localRotation = Quaternion.Euler(0f, 0f, a);
+            }
+            BuildKit.Cylinder("BoreFloor", t, new Vector3(0f, 0.02f, 0.035f), 0.35f, 0.01f, dark).transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            Material copper = BuildKit.Plain("copper", new Color(0.72f, 0.42f, 0.25f), 0.7f, 1f);
+            BuildKit.Box("ContactPlus", t, new Vector3(0.035f, 0.02f, 0.045f), new Vector3(0.03f, 0.03f, 0.01f), copper, 1f, false);
+            BuildKit.Box("ContactMinus", t, new Vector3(-0.035f, 0.02f, 0.045f), new Vector3(0.03f, 0.03f, 0.01f), copper, 1f, false);
+            var reach = go.AddComponent<BoxCollider>();
+            reach.center = new Vector3(0f, 0f, 0.13f);
+            reach.size = new Vector3(0.46f, 0.56f, 0.2f);
 
             // The gauge: two arcs of segments, up the left and the right of the mouth, filled from
             // the bottom (the jaws sit at the sides, between the arcs).
@@ -315,7 +337,7 @@ namespace NightShift.Game
                 float side = i < Segments / 2 ? 1f : -1f;
                 float angle = (-60f + step * 20f) * Mathf.Deg2Rad;
                 // Right arc from -60 to 60 degrees mirrored for the left, so both rise together.
-                var local = new Vector3(Mathf.Cos(angle) * 0.2f * side, 0.02f + Mathf.Sin(angle) * 0.2f, 0.255f);
+                var local = new Vector3(Mathf.Cos(angle) * 0.2f * side, 0.02f + Mathf.Sin(angle) * 0.2f, 0.236f);
                 // Only the upper and lower parts: the jaws cover the middle of each side.
                 GameObject piece = BuildKit.Box("Segment", t, local, new Vector3(0.016f, 0.05f, 0.006f), segment, 1f, false);
                 piece.transform.localRotation = Quaternion.Euler(0f, 0f, angle * Mathf.Rad2Deg * side);
@@ -328,10 +350,11 @@ namespace NightShift.Game
             // The hinged hatch over the bore, hazard-striped, hinge at the top.
             socket.hatch = new GameObject("HatchHinge").transform;
             socket.hatch.SetParent(t, false);
-            socket.hatch.localPosition = new Vector3(0f, 0.02f + 0.175f, 0.27f);
-            BuildKit.Cylinder("Hatch", socket.hatch, new Vector3(0f, -0.175f, 0f), 0.165f, 0.02f, stripes).transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            BuildKit.Box("Hinge", socket.hatch, Vector3.zero, new Vector3(0.12f, 0.025f, 0.025f), chrome, 1f, false);
-            BuildKit.Box("Handle", socket.hatch, new Vector3(0f, -0.3f, 0.018f), new Vector3(0.07f, 0.022f, 0.02f), chrome, 1f, false);
+            // Cylinder sizes are diameters: the hatch is 36 cm across, over the 33 cm hole.
+            socket.hatch.localPosition = new Vector3(0f, 0.02f + 0.18f, 0.245f);
+            BuildKit.Cylinder("Hatch", socket.hatch, new Vector3(0f, -0.18f, 0f), 0.36f, 0.02f, stripes).transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            BuildKit.Box("Hinge", socket.hatch, Vector3.zero, new Vector3(0.14f, 0.025f, 0.025f), chrome, 1f, false);
+            BuildKit.Box("Handle", socket.hatch, new Vector3(0f, -0.33f, 0.018f), new Vector3(0.08f, 0.022f, 0.02f), chrome, 1f, false);
 
             // Clamp jaws at the sides, on short rails.
             for (int i = 0; i < 2; i++)

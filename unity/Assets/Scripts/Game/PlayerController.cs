@@ -103,6 +103,13 @@ namespace NightShift.Game
 
         public Transform Head => head;
         public bool Running { get; private set; }
+
+        /// <summary>
+        /// How tired the guard is, 0–1: it grows with every hour of the night and a little with
+        /// every night (set by the director). Slower running, breath that runs out sooner and comes
+        /// back slower, heavier breathing. Only the guard's body: Freddy's brain never sees it.
+        /// </summary>
+        public float Fatigue { get; set; }
         public bool Crouching { get; private set; }
         public bool Sliding { get; private set; }
         public bool Moving { get; private set; }
@@ -646,7 +653,7 @@ namespace NightShift.Game
             wasRunning = Running;
             UpdateStamina();
             float speed = Sliding ? Mathf.Lerp(CrouchSpeed, SlideStartSpeed, slideTimer / SlideDuration)
-                        : Crouching ? CrouchSpeed : Running ? RunSpeed : WalkSpeed;
+                        : Crouching ? CrouchSpeed : Running ? RunSpeed * (1f - 0.28f * Fatigue) : WalkSpeed * (1f - 0.08f * Fatigue);
             if (Time.time < doorSlowUntil)
             {
                 speed *= 1f - DoorBumpSlow;
@@ -678,7 +685,7 @@ namespace NightShift.Game
             if (Running)
             {
                 lastSprintAt = Time.time;
-                Stamina = Mathf.Max(0f, Stamina - Time.deltaTime / 4.5f * (1f + Fear * 0.5f));
+                Stamina = Mathf.Max(0f, Stamina - Time.deltaTime / 4.5f * (1f + Fear * 0.5f) * (1f + 0.9f * Fatigue));
                 if (Stamina <= 0f)
                 {
                     Winded = true;
@@ -686,7 +693,7 @@ namespace NightShift.Game
             }
             else if (Time.time - lastSprintAt > 1.2f)
             {
-                Stamina = Mathf.Min(1f, Stamina + Time.deltaTime * (Moving ? 0.12f : 0.22f));
+                Stamina = Mathf.Min(1f, Stamina + Time.deltaTime * (Moving ? 0.12f : 0.22f) * (1f - 0.55f * Fatigue));
             }
             if (Winded && Stamina >= 0.35f)
             {
@@ -946,6 +953,21 @@ namespace NightShift.Game
 
         private float BreathRise() => Mathf.Sin(breathPhase) * 0.004f * BreathAmount();
 
-        private float BreathAmount() => (0.25f + Fear * 0.6f + (1f - Stamina) * 0.7f) * (HoldingBreath ? 0.15f : 1f);
+        private float BreathAmount() => (0.25f + Fear * 0.6f + (1f - Stamina) * 0.7f + Fatigue * 0.35f) * (HoldingBreath ? 0.15f : 1f);
+
+        /// <summary>Moves the body as if running, for scripted moments (the 6 AM sequence); walls still stop it.</summary>
+        public void ScriptedRun(Vector3 direction, float speed)
+        {
+            Moving = true;
+            Running = true;
+            body.Move((direction.normalized * speed + Vector3.down) * Time.deltaTime);
+            bobPhase += Time.deltaTime * speed * 2.2f;
+            stepDistance += speed * Time.deltaTime;
+            if (stepDistance >= 2f)
+            {
+                stepDistance = 0f;
+                Director.Audio.Footstep(0.85f);
+            }
+        }
     }
 }
