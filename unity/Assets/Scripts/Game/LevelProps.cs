@@ -70,7 +70,11 @@ namespace NightShift.Game
                 {
                     Chair(root, new Vector2(p.x + 0.8f, p.y), 270f);
                 }
-                BuildKit.Box("Papers", root, new Vector3(p.x + 0.1f, 0.81f, p.y + 0.6f), new Vector3(0.3f, 0.02f, 0.4f), BuildKit.Plain("paper", new Color(0.85f, 0.83f, 0.75f)), 1f, false);
+                // A Freddy plush at the end of the desk, looking at whoever sits there (see Plush).
+                OfficePlushPose = new Pose(new Vector3(p.x + 0.05f, deskTop, p.y + 0.78f), Quaternion.Euler(0f, 90f + 25f, 0f));
+                // The guard's seat, facing the monitors (see OfficeSeat).
+                OfficeChairPose = new Pose(new Vector3(p.x + 0.85f, 0f, p.y), Quaternion.Euler(0f, 270f, 0f));
+                BuildKit.Box("Papers", root, new Vector3(p.x + 0.1f, deskTop + 0.01f, p.y + 0.35f), new Vector3(0.3f, 0.02f, 0.4f), BuildKit.Plain("paper", new Color(0.85f, 0.83f, 0.75f)), 1f, false);
             });
             PlaceNear(Room.Office, new Vector2(-21.2f, -12.8f), 0.5f, p => FilingCabinet(root, new Vector3(p.x, 0f, p.y), 90f));
             Sign(root, new Vector3(-19f, 2.3f, -15.77f), 0f, "SECURITY", new Color(0.8f, 0.8f, 0.7f), new Color(0.12f, 0.15f, 0.25f), 1.8f);
@@ -665,6 +669,21 @@ namespace NightShift.Game
         /// </summary>
         public static GameObject Monitor(Transform root, Vector3 position, float yaw)
         {
+            GameObject tv = TvSet(root, position, yaw, out GameObject screen);
+            if (screen != null)
+            {
+                SecurityFeeds.RegisterScreen(screen.GetComponent<Renderer>());
+            }
+            return tv;
+        }
+
+        /// <summary>
+        /// An old television set facing <paramref name="yaw"/>, and a quad laid on its glass to show
+        /// a picture (null, and no screen, if the model is missing).
+        /// </summary>
+        public static GameObject TvSet(Transform root, Vector3 position, float yaw, out GameObject screen)
+        {
+            screen = null;
             GameObject tv = BuildKit.Prop("television_02", root, position, yaw + ScreenFront, 1f, false);
             if (tv == null)
             {
@@ -695,8 +714,27 @@ namespace NightShift.Game
             // Seen from the front (looking down -z), the set's left edge is at +x.
             var center = new Vector3(box.max.x - TvScreenCenter.x * box.size.x, box.min.y + TvScreenCenter.y * box.size.y, box.max.z + TvScreenOffset);
             var size = new Vector2(TvScreenSize.x * box.size.x, TvScreenSize.y * box.size.y);
-            GameObject screen = BuildKit.Quad("Screen", frame, center, size, 0f, BuildKit.Glow("screenGreen", new Color(0.2f, 0.9f, 0.5f), 1.2f));
-            SecurityFeeds.RegisterScreen(screen.GetComponent<Renderer>());
+            // Better: the glass itself, measured on the model when it was imported.
+            GameAssets assets = GameAssets.Load();
+            if (assets != null && assets.TvScreen.size.sqrMagnitude > 0f)
+            {
+                Bounds glass = assets.TvScreen;
+                var onFrame = new Bounds();
+                for (int corner = 0; corner < 8; corner++)
+                {
+                    var local = new Vector3((corner & 1) == 0 ? glass.min.x : glass.max.x, (corner & 2) == 0 ? glass.min.y : glass.max.y, (corner & 4) == 0 ? glass.min.z : glass.max.z);
+                    Vector3 point = frame.InverseTransformPoint(tv.transform.TransformPoint(local));
+                    if (corner == 0)
+                    {
+                        onFrame = new Bounds(point, Vector3.zero);
+                    }
+                    onFrame.Encapsulate(point);
+                }
+                // A hair inside the bezel, a hair in front of the glass.
+                center = new Vector3(onFrame.center.x, onFrame.center.y, onFrame.max.z + TvScreenOffset);
+                size = new Vector2(onFrame.size.x * 0.97f, onFrame.size.y * 0.97f);
+            }
+            screen = BuildKit.Quad("Screen", frame, center, size, 0f, BuildKit.Glow("screenGreen", new Color(0.2f, 0.9f, 0.5f), 1.2f));
             return tv;
         }
 
@@ -914,6 +952,12 @@ namespace NightShift.Game
         }
 
         /// <summary>Where the tape box sits: on the ticket booth's counter, its keypad toward the entrance.</summary>
+        /// <summary>Where the plush sits on the office desk.</summary>
+        public static Pose OfficePlushPose { get; private set; } = new Pose(new Vector3(-20.95f, 0.71f, -9.55f), Quaternion.Euler(0f, 115f, 0f));
+
+        /// <summary>Where the guard's chair stands in the office, facing the desk.</summary>
+        public static Pose OfficeChairPose { get; private set; } = new Pose(new Vector3(-20f, 0f, -10.25f), Quaternion.Euler(0f, 270f, 0f));
+
         public static Pose TapeBoxPose { get; private set; } = new Pose(new Vector3(13f, 1.145f, -10.6f), Quaternion.Euler(0f, 180f, 0f));
 
         /// <summary>The ticket booth by the entrance: striped counter, glass window, TICKETS on top.</summary>

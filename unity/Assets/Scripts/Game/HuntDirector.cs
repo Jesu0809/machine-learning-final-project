@@ -154,6 +154,9 @@ namespace NightShift.Game
         /// <summary>The street, the front of the building and the car (seen in the intro).</summary>
         public Exterior Exterior { get; private set; }
 
+        /// <summary>The tape, after the last night (see EndingCinematic).</summary>
+        public EndingCinematic Ending { get; private set; }
+
         /// <summary>True while the intro cinematic plays.</summary>
         public bool InIntro => intro != null && intro.Playing;
 
@@ -211,12 +214,15 @@ namespace NightShift.Game
             Freddy = FreddyBody.Create(this, Assets.FreddyPrefab, PizzeriaLayout.FreddyStart, PizzeriaLayout.FreddyFacing);
             SecurityFeeds.Create(this);
             Material doorSteel = BuildKit.Surface("doorSteel", () => ProceduralTextures.SteelPanel(new Color(0.42f, 0.09f, 0.08f)), 0.4f, 0.35f);
-            foreach ((Room _, Room _, Vector3 door, bool alongX, Vector3 corridor) in PizzeriaLayout.Doorways())
+            foreach ((Room a, Room b, Vector3 door, bool alongX, Vector3 corridor) in PizzeriaLayout.Doorways())
             {
-                Door.Create(this, Level.Root, door, alongX, corridor, doorSteel);
+                Door.Create(this, Level.Root, a, b, door, alongX, corridor, doorSteel);
             }
+            OfficeSeat.Create(this, Level.Root, LevelProps.OfficeChairPose);
+            Plush.Create(this, Level.Root, LevelProps.OfficePlushPose);
             AiVision.Create(this);
             call = PhoneCall.Create(transform, Audio, Assets);
+            Ending = EndingCinematic.Create(this);
             Exterior = Exterior.Build(transform, Assets);
             intro = IntroCinematic.Create(this, Exterior);
             // The night's tasks: the three power sockets, the breaker box on the storage's south
@@ -369,6 +375,11 @@ namespace NightShift.Game
             call.Begin(Night);
             wasInCall = InCall;
             itemsRevealed = false;
+            if (InCall)
+            {
+                // The guard listens to the call in the office: its doors are locked until it ends.
+                Door.LockRoom(Room.Office, true);
+            }
             if (!InCall)
             {
                 RevealItems();
@@ -411,6 +422,7 @@ namespace NightShift.Game
             StartNight(1);
             call.Skip();
             wasInCall = false;
+            Door.LockRoom(Room.Office, false);
             RevealItems();
             LastDecision = "asleep (explore mode)";
         }
@@ -517,6 +529,7 @@ namespace NightShift.Game
             if (wasInCall)
             {
                 wasInCall = false;
+                Door.LockRoom(Room.Office, false);
                 while (!State.FreddyAwake && !State.IsOver)
                 {
                     State.SkipFreddyTurn();
@@ -1014,9 +1027,31 @@ namespace NightShift.Game
                 BestNight = Mathf.Min(Night + 1, LastNight);
             }
             Player.Controllable = false;
+            Audio.PlayAmbient(false);
+            if (outcome == HuntOutcome.Escaped && Night >= LastNight && Ending != null)
+            {
+                // Out with the tape: it is played at home before the end screen.
+                Player.EndFocus();
+                StartCoroutine(EndWithTape(outcome));
+                return;
+            }
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
-            Audio.PlayAmbient(false);
+            UI.ShowEnd(outcome);
+        }
+
+        /// <summary>Test helper (capture tour): the guard gets out on the last night, as if through the door.</summary>
+        public void EscapeForTest()
+        {
+            EndReason = "You got out with the tape.";
+            Finish(HuntOutcome.Escaped);
+        }
+
+        private IEnumerator EndWithTape(HuntOutcome outcome)
+        {
+            yield return Ending.Play();
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
             UI.ShowEnd(outcome);
         }
 

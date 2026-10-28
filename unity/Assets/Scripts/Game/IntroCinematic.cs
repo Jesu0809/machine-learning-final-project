@@ -347,20 +347,28 @@ namespace NightShift.Game
 
             // 7–8. Inside: Freddy on his stage, then his face and the title.
             yield return Interior(player,
-                                  new Vector3(9.0f, 1.5f, 2.3f), new Vector3(7.9f, 1.75f, 6.6f), new Vector3(7.5f, 1.9f, 10.8f), 5.5f, "", 0);
+                                  new Vector3(9.0f, 1.5f, 2.3f), new Vector3(7.9f, 1.75f, 6.6f), new Vector3(7.5f, 1.9f, 10.8f), 5.5f, "", 0, false);
             yield return Interior(player,
-                                  new Vector3(8.3f, 2.25f, 8.1f), new Vector3(7.9f, 2.15f, 9.2f), new Vector3(7.5f, 2.0f, 10.8f), 4.5f, "NIGHT SHIFT", 130);
+                                  new Vector3(8.3f, 2.25f, 8.1f), new Vector3(7.9f, 2.15f, 9.2f), new Vector3(7.5f, 2.0f, 10.8f), 4.5f, "NIGHT SHIFT", 130, true);
 
             Finish(player);
             director.StartNight(1);
         }
 
-        private IEnumerator Interior(PlayerController player, Vector3 from, Vector3 to, Vector3 target, float seconds, string title, int size)
+        private IEnumerator Interior(PlayerController player, Vector3 from, Vector3 to, Vector3 target, float seconds, string title, int size, bool wake)
         {
             float t = 0f;
+            bool woke = false;
             while (t < seconds && !skip)
             {
                 t += Time.deltaTime;
+                if (wake && !woke && t > 1.1f)
+                {
+                    // Just as the title comes up, his eyes open red for a moment, with a sting.
+                    woke = true;
+                    director.Freddy.FlashEyes(1.3f);
+                    director.Audio.Sting();
+                }
                 float k = Mathf.SmoothStep(0f, 1f, t / seconds);
                 Vector3 eye = Vector3.Lerp(from, to, k);
                 Aim(player, eye, target, 55f);
@@ -428,8 +436,13 @@ namespace NightShift.Game
 
         private static void Aim(PlayerController player, Vector3 eye, Vector3 target, float fov)
         {
+            // Never perfectly still: a slow hand-held drift of under a degree, like a real camera operator.
+            float t = Time.time;
+            Quaternion drift = Quaternion.Euler((Mathf.PerlinNoise(t * 0.6f, 0.2f) - 0.5f) * 0.8f,
+                                                (Mathf.PerlinNoise(0.8f, t * 0.5f) - 0.5f) * 1f,
+                                                (Mathf.PerlinNoise(t * 0.4f, 3.1f) - 0.5f) * 0.6f);
             player.Head.position = eye;
-            player.Head.rotation = Quaternion.LookRotation(target - eye);
+            player.Head.rotation = Quaternion.LookRotation(target - eye) * drift;
             player.View.fieldOfView = fov;
         }
 

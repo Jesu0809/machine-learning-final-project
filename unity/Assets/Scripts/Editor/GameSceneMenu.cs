@@ -26,7 +26,7 @@ namespace NightShift.EditorTools
         public const string ModelsFolder = "Assets/ML/Models";
 
         /// <summary>Model used by the game; the newest freddy_v*.onnx if this one does not exist.</summary>
-        public const string PreferredModel = "freddy_v7";
+        public const string PreferredModel = "freddy_v8";
 
         [MenuItem("Night Shift/Create Game Scene")]
         public static void CreateGameScene()
@@ -95,6 +95,7 @@ namespace NightShift.EditorTools
             assets.MaterialTemplates = CreateMaterialTemplates();
             assets.Surfaces = SurfaceImporter.ImportAll();
             assets.Props = PropImporter.ImportAll();
+            assets.TvScreen = PropImporter.MeasureScreen(assets.Props, "television_02");
             assets.Signs = SignImporter.ImportAll();
             assets.AmbientOcclusion = RenderingSetup.Apply();
             assets.AmbientLoop = Clip("ambient-hum-loop");

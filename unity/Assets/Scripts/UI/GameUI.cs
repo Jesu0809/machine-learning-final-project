@@ -654,7 +654,7 @@ namespace NightShift.UI
         {
             PlayerController player = director.Player;
             clock.text = FormatHour(director.NightSeconds / director.NightLengthSeconds);
-            fuses.text = director.InCall ? "TONIGHT: listen to the call, explore\n<color=#8a9a8a>(the objectives appear when it ends)</color>" : ObjectivesText();
+            fuses.text = director.InCall ? "TONIGHT: listen to the call  (the office is locked until it ends)\n<color=#8a9a8a>(sit at the monitors; the objectives appear when it ends)</color>" : ObjectivesText();
 
             // While hidden the breath bar already says how to leave.
             // At a panel the hint goes to the bottom of the screen, out of the way of what is worked on.
@@ -662,7 +662,7 @@ namespace NightShift.UI
             prompt.rectTransform.anchorMin = atPanel ? new Vector2(0.15f, 0.03f) : new Vector2(0.25f, 0.33f);
             prompt.rectTransform.anchorMax = atPanel ? new Vector2(0.85f, 0.11f) : new Vector2(0.75f, 0.4f);
             prompt.text = director.NeedsClickToLook ? "CLICK TO LOOK AROUND"
-                        : player.InFocus ? player.Focus.FocusHint + Controls.Localize("\n<size=20><color=#8a9a8a>[RIGHT CLICK] or [ESC] step back</color></size>")
+                        : player.InFocus ? Controls.Localize(player.Focus.FocusHint + "\n<size=20><color=#8a9a8a>" + player.Focus.FocusControls + "    [RIGHT CLICK] or [ESC] step back</color></size>")
                         : player.Target != null && player.HiddenIn == null ? Controls.Localize(player.Target.Prompt(player)) : "";
             keysLabel.text = Controls.Localize("TAB  AI inspector     ESC  pause");
             toast.text = Time.time < toastUntil ? toast.text : "";

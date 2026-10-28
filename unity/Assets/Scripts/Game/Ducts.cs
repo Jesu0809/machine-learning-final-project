@@ -71,13 +71,17 @@ namespace NightShift.Game
             {
                 return "";
             }
+            if (player.Director.InCall)
+            {
+                return "The grate is screwed shut.  Listen to the call first.";
+            }
             string where = Hunt.HuntMap.DisplayName(EndA ? Duct.B : Duct.A);
             return "[E] Crawl into the vent  (to the " + where + " — he can't follow you)";
         }
 
         public void Use(PlayerController player)
         {
-            if (player.HiddenIn == null && !player.Crawling)
+            if (player.HiddenIn == null && !player.Crawling && !player.Director.InCall)
             {
                 player.StartCrawl(CrawlPath(), EndA ? Duct.B : Duct.A, this, Other);
             }

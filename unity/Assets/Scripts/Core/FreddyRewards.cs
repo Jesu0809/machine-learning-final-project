@@ -25,6 +25,15 @@ namespace NightShift.Hunt
         /// hiding spot is dull to play against, so he should open the spots or move on.
         /// </summary>
         public const float WaitedOutsideHiding = -0.05f;
+        /// <summary>
+        /// Walking into a room where he just heard a noise (freddy_v8). Without it, v7 learned to
+        /// cut the survivor off at the north wing and ignored most noises: unbeatable for the bot,
+        /// but the stealth and the party horns no longer mattered to a person. A small bonus: he
+        /// hunts by ear, as the game tells the player he does.
+        /// </summary>
+        public const float InvestigatedNoise = 0.02f;
+        /// <summary>Noise memory (level / 3, fading ×0.8 a tick) above which a noise counts as fresh.</summary>
+        public const float FreshNoise = 0.3f;
         public const float ShapingScale = 0.1f;
         public const float Gamma = 0.99f;
 
@@ -47,6 +56,10 @@ namespace NightShift.Hunt
             if (step.WaitedOutsideHiding)
             {
                 reward += WaitedOutsideHiding;
+            }
+            if (step.InvestigatedNoise)
+            {
+                reward += InvestigatedNoise;
             }
             if (step.Outcome == HuntOutcome.InProgress)
             {

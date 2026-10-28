@@ -338,7 +338,8 @@ namespace NightShift.Game
             if (UsingGamepad)
             {
                 return text.Replace("[Hold E]", "(Hold A)").Replace("[E]", "(A)").Replace("hold E", "hold A").Replace("[G]", "(RB)").Replace("[F]", "(Y)")
-                           .Replace("[ENTER]", "(D-PAD DOWN)").Replace("[SPACE]", "(X)").Replace("SPACE", "X")
+                           .Replace("[ENTER]", "(D-PAD DOWN)").Replace("[MOUSE] or [WASD]", "(STICK) or (D-PAD)").Replace("[MOUSE] or [D]", "(STICK)")
+                           .Replace("[MOUSE]", "(STICK)").Replace("[RIGHT CLICK] or [ESC]", "(B)").Replace("[SPACE]", "(X)").Replace("SPACE", "X")
                            .Replace("TAB", "VIEW").Replace("ESC", "MENU");
             }
             string use = KeyName(Binding(InputAction.Use));

@@ -227,6 +227,30 @@ namespace NightShift.Game
             return lampHum;
         }
 
+        private static AudioClip honk;
+
+        /// <summary>
+        /// A plush's squeeze horn: a reedy, nasal honk that bends up and back down, with the
+        /// rattle of the reed in it.
+        /// </summary>
+        public static AudioClip Honk()
+        {
+            if (honk == null)
+            {
+                float phase = 0f;
+                honk = Synth("Honk", 0.42f, (t, i) =>
+                {
+                    float pitch = 330f + 70f * Mathf.Sin(Mathf.PI * Mathf.Clamp01(t / 0.36f));
+                    phase += 2f * Mathf.PI * pitch / Rate;
+                    float reed = Mathf.Sign(Mathf.Sin(phase)) * 0.35f + Mathf.Sin(phase * 2f) * 0.3f + Mathf.Sin(phase * 3f) * 0.22f + Mathf.Sin(phase * 5f) * 0.1f;
+                    float rattle = 0.78f + 0.22f * Mathf.Sin(2f * Mathf.PI * 34f * t);
+                    float envelope = Mathf.Clamp01(t / 0.015f) * Mathf.Clamp01((0.42f - t) / 0.08f);
+                    return reed * rattle * envelope * 0.8f + Noise(i) * 0.02f * envelope;
+                }, 0.45f);
+            }
+            return honk;
+        }
+
         private static AudioClip clunk;
         private static AudioClip ratchet;
         private static AudioClip charge;

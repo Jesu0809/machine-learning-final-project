@@ -88,9 +88,10 @@ namespace NightShift.Game
 
     /// <summary>
     /// The breaker box in the storage (night 3 on). E opens its door and steps up to it; some of
-    /// the six breakers have tripped (different ones every night). Each one is flipped up by hand
-    /// with a click (a loud clack Freddy can hear); clicking one that is on trips it again. With
-    /// every breaker up, the main handle on the side is pushed up and the power comes back.
+    /// the six breakers have tripped (different ones every night). The fingers go from breaker to
+    /// breaker (mouse, arrows or WASD) and E or a click flips the one they are on (a loud clack
+    /// Freddy can hear); flipping one that is on trips it again. With every breaker up, the main
+    /// handle on the side is pushed up and the power comes back.
     /// </summary>
     public class BreakerBox : MonoBehaviour, IInteractable, IFocusTask
     {
@@ -98,8 +99,7 @@ namespace NightShift.Game
         private Transform door;
         private Transform handle;
         private readonly Transform[] toggles = new Transform[6];
-        private readonly Collider[] toggleColliders = new Collider[6];
-        private Collider handleCollider;
+        private FocusSelector selector;
         private readonly bool[] up = new bool[6];
         private readonly Renderer[] flags = new Renderer[6];
         private readonly float[] shown = new float[6];
@@ -128,7 +128,8 @@ namespace NightShift.Game
             }
         }
 
-        public string FocusHint => AllUp ? "Every breaker is up: push the main handle up (click it)" : "Click the tripped breakers to flip them up  (each one is loud)";
+        public string FocusControls => "[MOUSE] or [WASD] move your hand";
+        public string FocusHint => AllUp ? "Every breaker is up: push the main handle up  [E]" : "Flip the tripped breakers up  [E]   (each one is loud)";
 
         public static BreakerBox Create(HuntDirector director, Transform parent, Vector3 position, float facing)
         {
@@ -167,7 +168,9 @@ namespace NightShift.Game
             BuildKit.Box("Conduit", t, new Vector3(-0.25f, 0.85f, -0.02f), new Vector3(0.07f, 0.7f, 0.07f), chrome, 1f, false);
             BuildKit.Box("Conduit", t, new Vector3(0.25f, 0.85f, -0.02f), new Vector3(0.07f, 0.7f, 0.07f), chrome, 1f, false);
 
-            // Six breakers in two columns; each toggle can be clicked.
+            // Six breakers in two columns, and the main handle: what the fingers can reach.
+            var reach = new Transform[7];
+            var sizes = new Vector2[7];
             for (int i = 0; i < 6; i++)
             {
                 var place = new Vector3(i < 3 ? -0.13f : 0.13f, 0.2f - (i % 3) * 0.2f, 0.12f);
@@ -187,14 +190,9 @@ namespace NightShift.Game
                 // The trip flag: a red window that shows while the breaker is off.
                 flags[i] = BuildKit.Box("TripFlag", t, place + new Vector3(0.062f, 0.032f, 0.0215f), new Vector3(0.026f, 0.018f, 0.002f),
                                         BuildKit.Glow("tripFlag", new Color(1f, 0.15f, 0.05f), 1.6f), 1f, false).GetComponent<Renderer>();
-                // A generous target for the pointer: the whole breaker face.
-                var hit = new GameObject("ToggleHit");
-                hit.transform.SetParent(t, false);
-                hit.transform.localPosition = place + new Vector3(0f, 0f, 0.03f);
-                var box = hit.AddComponent<BoxCollider>();
-                box.size = new Vector3(0.17f, 0.11f, 0.03f);
                 toggles[i] = pivot;
-                toggleColliders[i] = box;
+                reach[i] = pivot;
+                sizes[i] = new Vector2(0.17f, 0.11f);
             }
 
             door = new GameObject("DoorHinge").transform;
@@ -214,12 +212,12 @@ namespace NightShift.Game
             handle.localPosition = new Vector3(0.47f, -0.1f, 0.04f);
             BuildKit.Box("HandleArm", handle, new Vector3(0f, 0.14f, 0f), new Vector3(0.035f, 0.28f, 0.035f), chrome, 1f, false);
             BuildKit.Box("HandleGrip", handle, new Vector3(0f, 0.3f, 0f), new Vector3(0.05f, 0.09f, 0.06f), BuildKit.Plain("leverGrip", new Color(0.6f, 0.05f, 0.04f), 0.4f), 1f, false);
-            var handleHit = new GameObject("HandleHit");
-            handleHit.transform.SetParent(t, false);
-            handleHit.transform.localPosition = new Vector3(0.47f, -0.05f, 0.06f);
-            var handleBox = handleHit.AddComponent<BoxCollider>();
-            handleBox.size = new Vector3(0.1f, 0.42f, 0.12f);
-            handleCollider = handleBox;
+            var grip = new GameObject("HandleReach").transform;
+            grip.SetParent(t, false);
+            grip.localPosition = new Vector3(0.47f, -0.05f, 0.06f);
+            reach[6] = grip;
+            sizes[6] = new Vector2(0.12f, 0.42f);
+            selector = new FocusSelector(t, reach, sizes);
 
             lamp = TaskKit.Lamp(t, new Vector3(0f, 0.54f, 0.04f), new Vector3(0.22f, 0.06f, 0.06f));
             var sparksRoot = new GameObject("BreakerSparks");
@@ -301,19 +299,21 @@ namespace NightShift.Game
 
         public void FocusUpdate(FocusInput input)
         {
-            if (Done || !input.Pressed || !Physics.Raycast(input.Ray, out RaycastHit hit, 3f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide))
+            if (Done)
+            {
+                selector.Hide();
+                return;
+            }
+            int on = selector.Update(input, director.Player.View, i => true);
+            if (!input.Pressed || on < 0)
             {
                 return;
             }
-            for (int i = 0; i < 6; i++)
+            if (on < 6)
             {
-                if (hit.collider == toggleColliders[i])
-                {
-                    Flip(i);
-                    return;
-                }
+                Flip(on);
             }
-            if (hit.collider == handleCollider)
+            else
             {
                 if (AllUp)
                 {
@@ -333,6 +333,7 @@ namespace NightShift.Game
 
         public void FocusEnded()
         {
+            selector.Hide();
         }
 
         private void Flip(int i)
@@ -378,11 +379,12 @@ namespace NightShift.Game
             {
                 if (!up[i])
                 {
-                    Flip(i);
+                    yield return selector.Press(this, player.View, i);
                     yield return new WaitForSeconds(0.35f);
                 }
             }
-            yield return Restore();
+            yield return selector.Press(this, player.View, 6);
+            yield return new WaitForSeconds(1.2f);
         }
 
         private void Update()
@@ -542,8 +544,9 @@ namespace NightShift.Game
 
     /// <summary>
     /// The card reader on the office wall. With the keycard, E steps up to it: the card is held at
-    /// the start of the slot and has to be dragged through at a steady speed, like a real reader.
-    /// Too fast, too slow or stopping halfway: an error beep (loud) and another try.
+    /// the start of the slot; holding E (or the mouse button) grips it and moving the mouse right,
+    /// or holding D, slides it through. It has to go at a steady speed, like a real reader. Too
+    /// fast, too slow or letting go halfway: an error beep (loud) and another try.
     /// </summary>
     public class CardReader : MonoBehaviour, IInteractable, IFocusTask
     {
@@ -557,7 +560,7 @@ namespace NightShift.Game
 
         private HuntDirector director;
         private Transform card;
-        private Collider cardCollider;
+        private float cardX;
         private Renderer screen;
         private Renderer red;
         private Renderer green;
@@ -568,7 +571,8 @@ namespace NightShift.Game
 
         public bool HoldToUse => false;
         public Transform FocusView { get; private set; }
-        public string FocusHint => "Drag the card through the reader at a steady speed";
+        public string FocusControls => "[MOUSE] or [D] slide the card";
+        public string FocusHint => "Hold [E] and slide the card right at a steady speed  (mouse or D)";
 
         public static CardReader Create(HuntDirector director, Transform parent, Vector3 position, float facing)
         {
@@ -596,9 +600,6 @@ namespace NightShift.Game
             reader.card.SetParent(t, false);
             BuildKit.Box("CardBody", reader.card, Vector3.zero, new Vector3(0.12f, 0.076f, 0.004f), BuildKit.Plain("cardWhite", new Color(0.75f, 0.76f, 0.78f), 0.25f), 1f, false);
             BuildKit.Quad("CardFace", reader.card, new Vector3(0f, 0f, 0.0025f), new Vector2(0.12f, 0.076f), 0f, TaskKit.Label("label_keycard", new Color(0.3f, 0.5f, 0.9f)));
-            var cardBox = reader.card.gameObject.AddComponent<BoxCollider>();
-            cardBox.size = new Vector3(0.14f, 0.1f, 0.03f);
-            reader.cardCollider = cardBox;
             reader.card.gameObject.SetActive(false);
             // Looking a little below the reader, so it sits above the hint at the bottom of the screen.
             reader.FocusView = TaskKit.View(t, new Vector3(0f, -0.04f, 0.08f), 0.5f, 0.02f);
@@ -644,6 +645,7 @@ namespace NightShift.Game
         private void PlaceCard(float x)
         {
             // Standing in the groove, its lower part hidden behind the lip.
+            cardX = x;
             card.localPosition = new Vector3(x, SlotY + 0.012f, 0.08f);
             card.localRotation = Quaternion.identity;
         }
@@ -660,7 +662,7 @@ namespace NightShift.Game
                 Show("lcd_reader_swipe", 0f);
                 TaskKit.SetLamp(red, new Color(0.4f, 0.02f, 0.02f));
             }
-            if (input.Pressed && Physics.Raycast(input.Ray, out RaycastHit hit, 2f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide) && hit.collider == cardCollider)
+            if (input.Pressed)
             {
                 dragging = true;
                 enteredAt = -1f;
@@ -669,22 +671,18 @@ namespace NightShift.Game
             {
                 return;
             }
-            // The card follows the pointer along the slot.
-            var front = new Plane(transform.forward, transform.TransformPoint(new Vector3(0f, 0f, 0.08f)));
-            if (front.Raycast(input.Ray, out float enter))
+            // Gripped, the card slides with the hand along the slot.
+            float x = Mathf.Clamp(cardX + input.Slide, StartX, EndX);
+            PlaceCard(x);
+            if (x >= EnterX && enteredAt < 0f)
             {
-                float x = Mathf.Clamp(transform.InverseTransformPoint(input.Ray.GetPoint(enter)).x, StartX, EndX);
-                PlaceCard(x);
-                if (x >= EnterX && enteredAt < 0f)
-                {
-                    enteredAt = Time.time;
-                }
-                if (x >= ExitX && enteredAt >= 0f)
-                {
-                    dragging = false;
-                    Judge(Time.time - enteredAt);
-                    return;
-                }
+                enteredAt = Time.time;
+            }
+            if (x >= ExitX && enteredAt >= 0f)
+            {
+                dragging = false;
+                Judge(Time.time - enteredAt);
+                return;
             }
             if (input.Released)
             {
@@ -700,8 +698,22 @@ namespace NightShift.Game
             }
         }
 
-        /// <summary>Test helper (capture tour): one swipe that took <paramref name="seconds"/>.</summary>
-        public void Judge(float seconds)
+        /// <summary>
+        /// Test helper (capture tour): grips the card and slides it through the slot in about
+        /// <paramref name="seconds"/>, through the same input path as the player's hand.
+        /// </summary>
+        public IEnumerator AutoSwipe(float seconds)
+        {
+            FocusUpdate(new FocusInput { Pressed = true, Held = true });
+            float speed = (ExitX - EnterX) / seconds;
+            for (float t = 0f; t < seconds * 2f + 1f && dragging; t += Time.deltaTime)
+            {
+                yield return null;
+                FocusUpdate(new FocusInput { Held = true, Slide = speed * Time.deltaTime });
+            }
+        }
+
+        private void Judge(float seconds)
         {
             if (seconds < MinSeconds)
             {
@@ -774,7 +786,7 @@ namespace NightShift.Game
         private readonly Transform[] keys = new Transform[9];
         private readonly Renderer[] keyFaces = new Renderer[9];
         private readonly Renderer[] keyGlows = new Renderer[9];
-        private readonly Collider[] keyColliders = new Collider[9];
+        private FocusSelector selector;
         private readonly int[] numberOn = new int[9];
         private readonly bool[] pressed = new bool[9];
         private Renderer screen;
@@ -788,7 +800,8 @@ namespace NightShift.Game
 
         public bool HoldToUse => false;
         public Transform FocusView { get; private set; }
-        public string FocusHint => "Press 1 to 9 in order  (a wrong key buzzes and starts over)";
+        public string FocusControls => "[MOUSE] or [WASD] move your hand";
+        public string FocusHint => "Press 1 to 9 in order  [E]   (a wrong key buzzes and starts over)";
 
         public static TapeBox Create(HuntDirector director, Transform parent, Vector3 position, Quaternion rotation)
         {
@@ -830,11 +843,14 @@ namespace NightShift.Game
                 GameObject glow = BuildKit.Quad("Glow", key, new Vector3(0f, 0f, 0.0072f), new Vector2(0.056f, 0.056f), 0f, BuildKit.Additive("keyGlow", ProceduralTextures.Ring(64, 0.2f), new Color(0.3f, 1f, 0.4f, 0.9f)));
                 box.keyGlows[i] = glow.GetComponent<Renderer>();
                 box.keyGlows[i].material = new Material(box.keyGlows[i].sharedMaterial);
-                var collider = key.gameObject.AddComponent<BoxCollider>();
-                collider.size = new Vector3(0.058f, 0.058f, 0.02f);
                 box.keys[i] = key;
-                box.keyColliders[i] = collider;
             }
+            var keySizes = new Vector2[9];
+            for (int i = 0; i < 9; i++)
+            {
+                keySizes[i] = new Vector2(0.056f, 0.056f);
+            }
+            box.selector = new FocusSelector(t, box.keys, keySizes);
             // The tape inside.
             box.tape = new GameObject("Cassette").transform;
             box.tape.SetParent(t, false);
@@ -919,23 +935,20 @@ namespace NightShift.Game
 
         public void FocusUpdate(FocusInput input)
         {
-            if (opened || Time.time < wrongUntil || !input.Pressed
-                || !Physics.Raycast(input.Ray, out RaycastHit hit, 2f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide))
+            if (opened)
             {
+                selector.Hide();
                 return;
             }
-            for (int i = 0; i < 9; i++)
+            int on = selector.Update(input, director.Player.View, i => true);
+            if (input.Pressed && on >= 0 && Time.time >= wrongUntil)
             {
-                if (hit.collider == keyColliders[i])
-                {
-                    Press(i);
-                    return;
-                }
+                Press(on);
             }
         }
 
         /// <summary>A key pressed: the next number lights up, any other buzzes and starts over.</summary>
-        public void Press(int key)
+        private void Press(int key)
         {
             if (pressed[key])
             {
@@ -999,7 +1012,7 @@ namespace NightShift.Game
             {
                 yield return shot(shotPrefix + "a-keypad");
             }
-            Press(System.Array.IndexOf(numberOn, 5));
+            yield return selector.Press(this, player.View, System.Array.IndexOf(numberOn, 5));
             yield return new WaitForSeconds(0.2f);
             if (shot != null)
             {
@@ -1008,7 +1021,7 @@ namespace NightShift.Game
             yield return new WaitForSeconds(0.6f);
             for (int n = 1; n <= 9; n++)
             {
-                Press(System.Array.IndexOf(numberOn, n));
+                yield return selector.Press(this, player.View, System.Array.IndexOf(numberOn, n));
                 yield return new WaitForSeconds(0.15f);
                 if (n == 5 && shot != null)
                 {
@@ -1020,6 +1033,7 @@ namespace NightShift.Game
 
         public void FocusEnded()
         {
+            selector.Hide();
         }
 
         private void Show(string message)
@@ -1038,7 +1052,9 @@ namespace NightShift.Game
             bool wrong = Time.time < wrongUntil;
             for (int i = 0; i < 9; i++)
             {
-                keys[i].localPosition = new Vector3(keys[i].localPosition.x, keys[i].localPosition.y, pressed[i] ? 0.153f : 0.158f);
+                // Pressed keys stay in; the one under the fingers stands out a little.
+                bool under = selector != null && selector.Selected == i && director != null && director.Player.Focus == (IFocusTask)this;
+                keys[i].localPosition = new Vector3(keys[i].localPosition.x, keys[i].localPosition.y, pressed[i] ? 0.153f : under ? 0.161f : 0.158f);
                 keyGlows[i].enabled = pressed[i] || wrong;
                 keyGlows[i].material.SetColor("_BaseColor", wrong ? new Color(1f, 0.15f, 0.1f, 0.9f) : new Color(0.3f, 1f, 0.4f, 0.9f));
             }

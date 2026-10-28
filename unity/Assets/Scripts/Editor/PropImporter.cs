@@ -65,5 +65,46 @@ namespace NightShift.EditorTools
             AssetDatabase.SaveAssets();
             return props.ToArray();
         }
+
+        /// <summary>
+        /// The bounds of a set's screen glass in the model's space: the triangles whose texture is
+        /// the glass, the dark square in the top right corner of television_02's atlas.
+        /// </summary>
+        public static Bounds MeasureScreen(GameAssets.Prop[] props, string name)
+        {
+            GameAssets.Prop tv = System.Array.Find(props, p => p.Name == name);
+            if (tv == null || tv.Model == null)
+            {
+                return new Bounds();
+            }
+            Transform root = tv.Model.transform;
+            var bounds = new Bounds();
+            int found = 0;
+            foreach (MeshFilter filter in tv.Model.GetComponentsInChildren<MeshFilter>())
+            {
+                Mesh mesh = filter.sharedMesh;
+                if (mesh == null)
+                {
+                    continue;
+                }
+                Vector3[] vertices = mesh.vertices;
+                Vector2[] uvs = mesh.uv;
+                for (int i = 0; i < vertices.Length && i < uvs.Length; i++)
+                {
+                    if (uvs[i].x < 0.68f || uvs[i].y < 0.765f)
+                    {
+                        continue;
+                    }
+                    Vector3 point = root.InverseTransformPoint(filter.transform.TransformPoint(vertices[i]));
+                    if (found++ == 0)
+                    {
+                        bounds = new Bounds(point, Vector3.zero);
+                    }
+                    bounds.Encapsulate(point);
+                }
+            }
+            Debug.Log("Screen of " + name + ": " + found + " vertices, center " + bounds.center.ToString("F3") + ", size " + bounds.size.ToString("F3"));
+            return found > 0 ? bounds : new Bounds();
+        }
     }
 }

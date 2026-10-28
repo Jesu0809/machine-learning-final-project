@@ -50,6 +50,12 @@ namespace NightShift.Game
                 Application.Quit();
                 yield break;
             }
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-ending") >= 0)
+            {
+                yield return EndingTest();
+                Application.Quit();
+                yield break;
+            }
             Debug.Log("CAPTURE start, brain: " + director.BrainDescription);
             yield return new WaitForSeconds(2f);
             yield return Shot("01-menu");
@@ -390,10 +396,66 @@ namespace NightShift.Game
         /// 1 to 9) and the lever. Then a locker, a cabinet and the explore mode. Run with
         /// "-capture folder -itemtest". Freddy is left out.
         /// </summary>
+        /// <summary>The tape played at home after night 5, photographed along the way.</summary>
+        private IEnumerator EndingTest()
+        {
+            yield return new WaitForSeconds(1f);
+            director.StartNight(5);
+            director.SkipCall();
+            yield return new WaitForSeconds(0.5f);
+            EndingCinematic ending = director.Ending;
+            director.EscapeForTest();
+            yield return null;
+            float[] at = { 3f, 6.5f, 8f, 8.9f, 10f, 11f, 12.5f, 16f, 20f, 25f, 26.3f, 28f, 31f, 33.5f, 35.8f, 37f, 39.5f, 43f, 47f, 51f, 52.5f, 55f, 58f };
+            int shot = 0;
+            while (ending.Playing && shot < at.Length)
+            {
+                if (ending.Elapsed >= at[shot])
+                {
+                    yield return Shot("40-ending-" + shot.ToString("00") + "-" + at[shot].ToString("0.0"));
+                    shot++;
+                }
+                yield return null;
+            }
+            Debug.Log("CAPTURE ending shots=" + shot + " playing=" + ending.Playing);
+        }
+
         private IEnumerator ItemTest()
         {
             PlayerController player = director.Player;
             yield return new WaitForSeconds(1f);
+
+            // Night 1's call: the office is locked; the chair and the plush still work.
+            director.StartNight(1);
+            yield return new WaitForSeconds(0.6f);
+            Debug.Log("CAPTURE call: in call=" + director.InCall + ", office locked=" + Door.RoomLocked(Room.Office));
+            Plush plush = FindAnyObjectByType<Plush>();
+            if (plush != null)
+            {
+                Vector3 toward = plush.transform.position;
+                Teleport(new Vector3(toward.x + 1.0f, 0f, toward.z - 0.6f), new Vector3(-1f, 0f, 0.6f));
+                yield return Aim(toward + Vector3.up * 0.15f);
+                yield return Shot("29a-plush");
+                plush.Use(player);
+                yield return new WaitForSeconds(0.06f);
+                yield return Shot("29b-plush-honk");
+            }
+            Debug.Log("CAPTURE plush=" + (plush != null));
+            OfficeSeat seat = FindAnyObjectByType<OfficeSeat>();
+            if (seat != null)
+            {
+                Vector3 chair = seat.transform.position;
+                Teleport(new Vector3(chair.x + 0.8f, 0f, chair.z), new Vector3(-1f, 0f, 0f));
+                yield return new WaitForSeconds(0.3f);
+                seat.Use(player);
+                yield return new WaitForSeconds(1f);
+                yield return Shot("29c-seated");
+                player.EndFocus();
+            }
+            Debug.Log("CAPTURE seat=" + (seat != null));
+            director.SkipCall();
+            yield return new WaitForSeconds(0.4f);
+            Debug.Log("CAPTURE after call: office locked=" + Door.RoomLocked(Room.Office));
             director.StartNight(5);
             director.SkipCall();
             director.Freddy.gameObject.SetActive(false);
@@ -412,7 +474,7 @@ namespace NightShift.Game
             StartCoroutine(breaker.AutoPlay(player));
             yield return new WaitForSeconds(1.2f);
             yield return Shot("31c-breaker-flipping");
-            yield return new WaitForSeconds(2.2f);
+            yield return new WaitForSeconds(3.2f);
             yield return Shot("31d-breaker-done");
             Debug.Log("CAPTURE breaker done=" + director.State.BreakerDone);
 
@@ -434,12 +496,12 @@ namespace NightShift.Game
             reader.Use(player);
             yield return new WaitForSeconds(0.6f);
             yield return Shot("33b-reader-focus");
-            reader.Judge(0.1f);
-            yield return new WaitForSeconds(0.2f);
+            yield return reader.AutoSwipe(0.15f);
+            yield return new WaitForSeconds(0.1f);
             yield return Shot("33c-reader-too-fast");
             yield return new WaitForSeconds(1.4f);
-            reader.Judge(0.6f);
-            yield return new WaitForSeconds(0.3f);
+            yield return reader.AutoSwipe(0.6f);
+            yield return new WaitForSeconds(0.1f);
             yield return Shot("33d-reader-accepted");
             yield return new WaitForSeconds(1.1f);
             Debug.Log("CAPTURE card swiped=" + director.State.CardSwiped);

@@ -110,11 +110,16 @@ namespace NightShift.Game
         /// <summary>Head bone (the jumpscare camera looks at it).</summary>
         public Transform Head { get; private set; }
 
+        private float eyesFlashUntil;
+
+        /// <summary>His eyes come on red for a moment, even asleep (the intro's last shot).</summary>
+        public void FlashEyes(float seconds) => eyesFlashUntil = Time.time + seconds;
+
         private void UpdateEyes()
         {
-            bool hunting = mode == Mode.Chasing || mode == Mode.Attacking;
+            bool hunting = mode == Mode.Chasing || mode == Mode.Attacking || Time.time < eyesFlashUntil;
             Color color = hunting ? new Color(1f, 0.08f, 0.05f) : new Color(0.75f, 0.85f, 1f);
-            float pulse = mode == Mode.Asleep ? 0.15f : hunting ? 2.2f : 1f;
+            float pulse = mode == Mode.Asleep && Time.time >= eyesFlashUntil ? 0.15f : hunting ? 2.2f : 1f;
             if (Time.time < sensingUntil)
             {
                 color = new Color(0.8f, 0.2f, 1f);

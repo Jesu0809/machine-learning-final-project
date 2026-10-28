@@ -30,7 +30,7 @@ namespace NightShift.EditorTools
                     int webSize = name.StartsWith("map_") ? 1024 : 512;
                     // Fences, wrapping paper and rain on glass tile; everything with see-through parts keeps clean edges.
                     TextureWrapMode wrap = name.StartsWith("fence_") || name.StartsWith("wrap_") || name.StartsWith("glass_") ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
-                    bool transparent = name.StartsWith("decal_") || name.StartsWith("cctv_") || name.StartsWith("fence_") || name.StartsWith("glass_");
+                    bool transparent = name.StartsWith("decal_") || name.StartsWith("cctv_") || name.StartsWith("fence_") || name.StartsWith("glass_") || name.StartsWith("vhs_osd_");
                     bool changed = importer.textureType != TextureImporterType.Default || importer.wrapMode != wrap || importer.anisoLevel != 8
                                    || importer.alphaIsTransparency != transparent;
                     importer.textureType = TextureImporterType.Default;
