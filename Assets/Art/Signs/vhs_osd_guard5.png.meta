@@ -1,0 +1,468 @@
+fileFormatVersion: 2
+guid: 79bc6505333cb4ecca6dc93a4b19a359
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 5193249948592233357
+    second: vhs_osd_guard5_0
+  - first:
+      213: 7528295634797483484
+    second: vhs_osd_guard5_1
+  - first:
+      213: 148022799932769694
+    second: vhs_osd_guard5_2
+  - first:
+      213: -8854007675479830354
+    second: vhs_osd_guard5_3
+  - first:
+      213: 7557557649782121823
+    second: vhs_osd_guard5_4
+  - first:
+      213: -2873660861562198781
+    second: vhs_osd_guard5_5
+  - first:
+      213: -56403662685289827
+    second: vhs_osd_guard5_6
+  - first:
+      213: 2266960639301898573
+    second: vhs_osd_guard5_7
+  - first:
+      213: -2758759002924030316
+    second: vhs_osd_guard5_8
+  - first:
+      213: 8112493523909340593
+    second: vhs_osd_guard5_9
+  - first:
+      213: -1002632594852587756
+    second: vhs_osd_guard5_10
+  - first:
+      213: 73520326541336021
+    second: vhs_osd_guard5_11
+  - first:
+      213: -6034363041867584094
+    second: vhs_osd_guard5_12
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 1
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 8
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 1
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 0
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 512
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 70
+    crunchedCompression: 1
+    allowsAlphaSplitting: 0
+    overridden: 1
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: vhs_osd_guard5_0
+      rect:
+        serializedVersion: 2
+        x: 61
+        y: 672
+        width: 45
+        height: 45
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d8bd7af2051221840800000000000000
+      internalID: 5193249948592233357
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard5_1
+      rect:
+        serializedVersion: 2
+        x: 131
+        y: 671
+        width: 26
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cd55a344ef0e97860800000000000000
+      internalID: 7528295634797483484
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard5_2
+      rect:
+        serializedVersion: 2
+        x: 159
+        y: 671
+        width: 20
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e95c6a8c3f1ed0200800000000000000
+      internalID: 148022799932769694
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard5_3
+      rect:
+        serializedVersion: 2
+        x: 181
+        y: 671
+        width: 28
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ea051700eee302580800000000000000
+      internalID: -8854007675479830354
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard5_4
+      rect:
+        serializedVersion: 2
+        x: 209
+        y: 671
+        width: 23
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f55accc04a6d1e860800000000000000
+      internalID: 7557557649782121823
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard5_5
+      rect:
+        serializedVersion: 2
+        x: 61
+        y: 58
+        width: 118
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 30564a5fba4be18d0800000000000000
+      internalID: -2873660861562198781
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard5_6
+      rect:
+        serializedVersion: 2
+        x: 199
+        y: 58
+        width: 49
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d92cc99ea2d973ff0800000000000000
+      internalID: -56403662685289827
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard5_7
+      rect:
+        serializedVersion: 2
+        x: 853
+        y: 72
+        width: 19
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d41d169c0bcd57f10800000000000000
+      internalID: 2266960639301898573
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard5_8
+      rect:
+        serializedVersion: 2
+        x: 876
+        y: 72
+        width: 19
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4966dc9ad4be6b9d0800000000000000
+      internalID: -2758759002924030316
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard5_9
+      rect:
+        serializedVersion: 2
+        x: 902
+        y: 77
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1bde54fc0ed559070800000000000000
+      internalID: 8112493523909340593
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard5_10
+      rect:
+        serializedVersion: 2
+        x: 922
+        y: 72
+        width: 19
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 417559797fee512f0800000000000000
+      internalID: -1002632594852587756
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard5_11
+      rect:
+        serializedVersion: 2
+        x: 945
+        y: 72
+        width: 19
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5dd5443f852350100800000000000000
+      internalID: 73520326541336021
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard5_12
+      rect:
+        serializedVersion: 2
+        x: 902
+        y: 58
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2adacbbe8c2a14ca0800000000000000
+      internalID: -6034363041867584094
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      vhs_osd_guard5_0: 5193249948592233357
+      vhs_osd_guard5_1: 7528295634797483484
+      vhs_osd_guard5_10: -1002632594852587756
+      vhs_osd_guard5_11: 73520326541336021
+      vhs_osd_guard5_12: -6034363041867584094
+      vhs_osd_guard5_2: 148022799932769694
+      vhs_osd_guard5_3: -8854007675479830354
+      vhs_osd_guard5_4: 7557557649782121823
+      vhs_osd_guard5_5: -2873660861562198781
+      vhs_osd_guard5_6: -56403662685289827
+      vhs_osd_guard5_7: 2266960639301898573
+      vhs_osd_guard5_8: -2758759002924030316
+      vhs_osd_guard5_9: 8112493523909340593
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

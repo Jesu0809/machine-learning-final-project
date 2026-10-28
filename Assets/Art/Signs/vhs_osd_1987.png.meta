@@ -1,0 +1,702 @@
+fileFormatVersion: 2
+guid: f5fe3f736f8fd487090a7863f0b41c50
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -8798973518893012359
+    second: vhs_osd_1987_0
+  - first:
+      213: -4652919757123874957
+    second: vhs_osd_1987_1
+  - first:
+      213: -6411919365778129875
+    second: vhs_osd_1987_2
+  - first:
+      213: 3487997196488033959
+    second: vhs_osd_1987_3
+  - first:
+      213: -1090293299428622414
+    second: vhs_osd_1987_4
+  - first:
+      213: -6933118095737949578
+    second: vhs_osd_1987_5
+  - first:
+      213: -595276959031794485
+    second: vhs_osd_1987_6
+  - first:
+      213: -3667994319734703422
+    second: vhs_osd_1987_7
+  - first:
+      213: 2309807798199375569
+    second: vhs_osd_1987_8
+  - first:
+      213: -5587076464452517125
+    second: vhs_osd_1987_9
+  - first:
+      213: -6473993360402246362
+    second: vhs_osd_1987_10
+  - first:
+      213: -7507563216463843380
+    second: vhs_osd_1987_11
+  - first:
+      213: 2313008139439437302
+    second: vhs_osd_1987_12
+  - first:
+      213: -8886038903479182242
+    second: vhs_osd_1987_13
+  - first:
+      213: -864270265440365648
+    second: vhs_osd_1987_14
+  - first:
+      213: 4971524788822662838
+    second: vhs_osd_1987_15
+  - first:
+      213: -6933355119286463330
+    second: vhs_osd_1987_16
+  - first:
+      213: -9097737596741665268
+    second: vhs_osd_1987_17
+  - first:
+      213: 127186147139487880
+    second: vhs_osd_1987_18
+  - first:
+      213: -5519878340830015245
+    second: vhs_osd_1987_19
+  - first:
+      213: 6841457111249476013
+    second: vhs_osd_1987_20
+  - first:
+      213: 3543264715366051280
+    second: vhs_osd_1987_21
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 1
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 8
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 1
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 0
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 512
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 70
+    crunchedCompression: 1
+    allowsAlphaSplitting: 0
+    overridden: 1
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: vhs_osd_1987_0
+      rect:
+        serializedVersion: 2
+        x: 57
+        y: 668
+        width: 46
+        height: 53
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 97a205a1434c3e580800000000000000
+      internalID: -8798973518893012359
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_1987_1
+      rect:
+        serializedVersion: 2
+        x: 129
+        y: 671
+        width: 132
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 37f0c3412228d6fb0800000000000000
+      internalID: -4652919757123874957
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_1987_2
+      rect:
+        serializedVersion: 2
+        x: 285
+        y: 671
+        width: 54
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d2cb8520f494407a0800000000000000
+      internalID: -6411919365778129875
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_1987_3
+      rect:
+        serializedVersion: 2
+        x: 339
+        y: 671
+        width: 23
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a64a3258fad76030800000000000000
+      internalID: 3487997196488033959
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_1987_4
+      rect:
+        serializedVersion: 2
+        x: 363
+        y: 671
+        width: 28
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2bf719255008ed0f0800000000000000
+      internalID: -1090293299428622414
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_1987_5
+      rect:
+        serializedVersion: 2
+        x: 393
+        y: 671
+        width: 20
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 672f4bd33dd98cf90800000000000000
+      internalID: -6933118095737949578
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_1987_6
+      rect:
+        serializedVersion: 2
+        x: 415
+        y: 671
+        width: 54
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bc46fe972c62db7f0800000000000000
+      internalID: -595276959031794485
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_1987_7
+      rect:
+        serializedVersion: 2
+        x: 913
+        y: 671
+        width: 54
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2caff0e999aa81dc0800000000000000
+      internalID: -3667994319734703422
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_1987_8
+      rect:
+        serializedVersion: 2
+        x: 61
+        y: 58
+        width: 24
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1d6d91f54f51e0020800000000000000
+      internalID: 2309807798199375569
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_1987_9
+      rect:
+        serializedVersion: 2
+        x: 84
+        y: 58
+        width: 49
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bf2cc53ae87b672b0800000000000000
+      internalID: -5587076464452517125
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_1987_10
+      rect:
+        serializedVersion: 2
+        x: 155
+        y: 58
+        width: 21
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6259cf2e651c726a0800000000000000
+      internalID: -6473993360402246362
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_1987_11
+      rect:
+        serializedVersion: 2
+        x: 177
+        y: 58
+        width: 23
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ccf22e90807cfc790800000000000000
+      internalID: -7507563216463843380
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_1987_12
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 58
+        width: 21
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6f5ffd1e5a4791020800000000000000
+      internalID: 2313008139439437302
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_1987_13
+      rect:
+        serializedVersion: 2
+        x: 245
+        y: 58
+        width: 25
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e5c52d192b27ea480800000000000000
+      internalID: -8886038903479182242
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_1987_14
+      rect:
+        serializedVersion: 2
+        x: 269
+        y: 58
+        width: 23
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0b39e7ec5ce7104f0800000000000000
+      internalID: -864270265440365648
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_1987_15
+      rect:
+        serializedVersion: 2
+        x: 292
+        y: 58
+        width: 23
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6bed2d584776ef440800000000000000
+      internalID: 4971524788822662838
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_1987_16
+      rect:
+        serializedVersion: 2
+        x: 805
+        y: 58
+        width: 23
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e945b45e046c7cf90800000000000000
+      internalID: -6933355119286463330
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_1987_17
+      rect:
+        serializedVersion: 2
+        x: 833
+        y: 77
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c0e3f7e8bd75eb180800000000000000
+      internalID: -9097737596741665268
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_1987_18
+      rect:
+        serializedVersion: 2
+        x: 850
+        y: 58
+        width: 26
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8888990802bd3c100800000000000000
+      internalID: 127186147139487880
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_1987_19
+      rect:
+        serializedVersion: 2
+        x: 874
+        y: 58
+        width: 23
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3f0547305e37563b0800000000000000
+      internalID: -5519878340830015245
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_1987_20
+      rect:
+        serializedVersion: 2
+        x: 919
+        y: 58
+        width: 49
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: da9581ebefcb1fe50800000000000000
+      internalID: 6841457111249476013
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_1987_21
+      rect:
+        serializedVersion: 2
+        x: 833
+        y: 58
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0dda1905c743c2130800000000000000
+      internalID: 3543264715366051280
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      vhs_osd_1987_0: -8798973518893012359
+      vhs_osd_1987_1: -4652919757123874957
+      vhs_osd_1987_10: -6473993360402246362
+      vhs_osd_1987_11: -7507563216463843380
+      vhs_osd_1987_12: 2313008139439437302
+      vhs_osd_1987_13: -8886038903479182242
+      vhs_osd_1987_14: -864270265440365648
+      vhs_osd_1987_15: 4971524788822662838
+      vhs_osd_1987_16: -6933355119286463330
+      vhs_osd_1987_17: -9097737596741665268
+      vhs_osd_1987_18: 127186147139487880
+      vhs_osd_1987_19: -5519878340830015245
+      vhs_osd_1987_2: -6411919365778129875
+      vhs_osd_1987_20: 6841457111249476013
+      vhs_osd_1987_21: 3543264715366051280
+      vhs_osd_1987_3: 3487997196488033959
+      vhs_osd_1987_4: -1090293299428622414
+      vhs_osd_1987_5: -6933118095737949578
+      vhs_osd_1987_6: -595276959031794485
+      vhs_osd_1987_7: -3667994319734703422
+      vhs_osd_1987_8: 2309807798199375569
+      vhs_osd_1987_9: -5587076464452517125
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

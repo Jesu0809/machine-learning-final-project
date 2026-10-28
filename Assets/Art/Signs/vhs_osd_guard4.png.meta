@@ -1,0 +1,806 @@
+fileFormatVersion: 2
+guid: e98bc3eb7cb85423fb353139307073b4
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -2798276564761207432
+    second: vhs_osd_guard4_0
+  - first:
+      213: 3294785473195131524
+    second: vhs_osd_guard4_1
+  - first:
+      213: -228405306524693906
+    second: vhs_osd_guard4_2
+  - first:
+      213: 324922091959602151
+    second: vhs_osd_guard4_3
+  - first:
+      213: -8251113778865050516
+    second: vhs_osd_guard4_4
+  - first:
+      213: 2114809952660623138
+    second: vhs_osd_guard4_5
+  - first:
+      213: -1726227776172345451
+    second: vhs_osd_guard4_6
+  - first:
+      213: -7231991371736677021
+    second: vhs_osd_guard4_7
+  - first:
+      213: 5818951431376073526
+    second: vhs_osd_guard4_8
+  - first:
+      213: -5808242228799635504
+    second: vhs_osd_guard4_9
+  - first:
+      213: 3356487054892572766
+    second: vhs_osd_guard4_10
+  - first:
+      213: -7009351468814377829
+    second: vhs_osd_guard4_11
+  - first:
+      213: 2280264792067566484
+    second: vhs_osd_guard4_12
+  - first:
+      213: 5975980745887812662
+    second: vhs_osd_guard4_13
+  - first:
+      213: 1955424554749389591
+    second: vhs_osd_guard4_14
+  - first:
+      213: 9036257181135535385
+    second: vhs_osd_guard4_15
+  - first:
+      213: -1707605140797862193
+    second: vhs_osd_guard4_16
+  - first:
+      213: -7446301009318068472
+    second: vhs_osd_guard4_17
+  - first:
+      213: -2403336878279328644
+    second: vhs_osd_guard4_18
+  - first:
+      213: -9101615756348936096
+    second: vhs_osd_guard4_19
+  - first:
+      213: 1470341764419015712
+    second: vhs_osd_guard4_20
+  - first:
+      213: 3092605677880325454
+    second: vhs_osd_guard4_21
+  - first:
+      213: -2110165028435985629
+    second: vhs_osd_guard4_22
+  - first:
+      213: 6481311784393214521
+    second: vhs_osd_guard4_23
+  - first:
+      213: -6818426771704549041
+    second: vhs_osd_guard4_24
+  - first:
+      213: -7615585502315266154
+    second: vhs_osd_guard4_25
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 1
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 8
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 1
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 0
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 512
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 70
+    crunchedCompression: 1
+    allowsAlphaSplitting: 0
+    overridden: 1
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: vhs_osd_guard4_0
+      rect:
+        serializedVersion: 2
+        x: 61
+        y: 672
+        width: 45
+        height: 45
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 87d9b1e4a468a29d0800000000000000
+      internalID: -2798276564761207432
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard4_1
+      rect:
+        serializedVersion: 2
+        x: 129
+        y: 671
+        width: 80
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 482c9ec6eed69bd20800000000000000
+      internalID: 3294785473195131524
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard4_2
+      rect:
+        serializedVersion: 2
+        x: 235
+        y: 671
+        width: 24
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e6a08c7759a84dcf0800000000000000
+      internalID: -228405306524693906
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard4_3
+      rect:
+        serializedVersion: 2
+        x: 261
+        y: 671
+        width: 23
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7ebcdeecbea528400800000000000000
+      internalID: 324922091959602151
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard4_4
+      rect:
+        serializedVersion: 2
+        x: 337
+        y: 671
+        width: 28
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c6cea610cb72e7d80800000000000000
+      internalID: -8251113778865050516
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard4_5
+      rect:
+        serializedVersion: 2
+        x: 365
+        y: 671
+        width: 23
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 22f0ccb7270595d10800000000000000
+      internalID: 2114809952660623138
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard4_6
+      rect:
+        serializedVersion: 2
+        x: 391
+        y: 671
+        width: 23
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 597b5d7cbf43b08e0800000000000000
+      internalID: -1726227776172345451
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard4_7
+      rect:
+        serializedVersion: 2
+        x: 419
+        y: 671
+        width: 20
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 36502f40a2ec2ab90800000000000000
+      internalID: -7231991371736677021
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard4_8
+      rect:
+        serializedVersion: 2
+        x: 441
+        y: 671
+        width: 28
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 633fb682f7111c050800000000000000
+      internalID: 5818951431376073526
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard4_9
+      rect:
+        serializedVersion: 2
+        x: 469
+        y: 671
+        width: 23
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0df79fe577af46fa0800000000000000
+      internalID: -5808242228799635504
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard4_10
+      rect:
+        serializedVersion: 2
+        x: 783
+        y: 671
+        width: 28
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e50a1186133a49e20800000000000000
+      internalID: 3356487054892572766
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard4_11
+      rect:
+        serializedVersion: 2
+        x: 813
+        y: 671
+        width: 20
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b9cd47be9f7c9be90800000000000000
+      internalID: -7009351468814377829
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard4_12
+      rect:
+        serializedVersion: 2
+        x: 835
+        y: 671
+        width: 80
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 49b640d3fb025af10800000000000000
+      internalID: 2280264792067566484
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard4_13
+      rect:
+        serializedVersion: 2
+        x: 940
+        y: 671
+        width: 27
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 63c873783d2fee250800000000000000
+      internalID: 5975980745887812662
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard4_14
+      rect:
+        serializedVersion: 2
+        x: 61
+        y: 58
+        width: 118
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 71be9e2b540132b10800000000000000
+      internalID: 1955424554749389591
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard4_15
+      rect:
+        serializedVersion: 2
+        x: 199
+        y: 58
+        width: 49
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 91df7a4b70c376d70800000000000000
+      internalID: 9036257181135535385
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard4_16
+      rect:
+        serializedVersion: 2
+        x: 713
+        y: 58
+        width: 23
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fcecc16fb2e5d48e0800000000000000
+      internalID: -1707605140797862193
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard4_17
+      rect:
+        serializedVersion: 2
+        x: 736
+        y: 58
+        width: 23
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 80fb6f82fac69a890800000000000000
+      internalID: -7446301009318068472
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard4_18
+      rect:
+        serializedVersion: 2
+        x: 764
+        y: 77
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c7c7096b7d1a5aed0800000000000000
+      internalID: -2403336878279328644
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard4_19
+      rect:
+        serializedVersion: 2
+        x: 783
+        y: 58
+        width: 21
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 06039b821b090b180800000000000000
+      internalID: -9101615756348936096
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard4_20
+      rect:
+        serializedVersion: 2
+        x: 805
+        y: 58
+        width: 23
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 024dd966b04b76410800000000000000
+      internalID: 1470341764419015712
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard4_21
+      rect:
+        serializedVersion: 2
+        x: 833
+        y: 77
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e45b96c8a742bea20800000000000000
+      internalID: 3092605677880325454
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard4_22
+      rect:
+        serializedVersion: 2
+        x: 850
+        y: 58
+        width: 49
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 32bfe96361037b2e0800000000000000
+      internalID: -2110165028435985629
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard4_23
+      rect:
+        serializedVersion: 2
+        x: 919
+        y: 58
+        width: 49
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 93a8f4b7abe32f950800000000000000
+      internalID: 6481311784393214521
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard4_24
+      rect:
+        serializedVersion: 2
+        x: 764
+        y: 58
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f4179890af41061a0800000000000000
+      internalID: -6818426771704549041
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_guard4_25
+      rect:
+        serializedVersion: 2
+        x: 833
+        y: 58
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 69f32e1b551005690800000000000000
+      internalID: -7615585502315266154
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      vhs_osd_guard4_0: -2798276564761207432
+      vhs_osd_guard4_1: 3294785473195131524
+      vhs_osd_guard4_10: 3356487054892572766
+      vhs_osd_guard4_11: -7009351468814377829
+      vhs_osd_guard4_12: 2280264792067566484
+      vhs_osd_guard4_13: 5975980745887812662
+      vhs_osd_guard4_14: 1955424554749389591
+      vhs_osd_guard4_15: 9036257181135535385
+      vhs_osd_guard4_16: -1707605140797862193
+      vhs_osd_guard4_17: -7446301009318068472
+      vhs_osd_guard4_18: -2403336878279328644
+      vhs_osd_guard4_19: -9101615756348936096
+      vhs_osd_guard4_2: -228405306524693906
+      vhs_osd_guard4_20: 1470341764419015712
+      vhs_osd_guard4_21: 3092605677880325454
+      vhs_osd_guard4_22: -2110165028435985629
+      vhs_osd_guard4_23: 6481311784393214521
+      vhs_osd_guard4_24: -6818426771704549041
+      vhs_osd_guard4_25: -7615585502315266154
+      vhs_osd_guard4_3: 324922091959602151
+      vhs_osd_guard4_4: -8251113778865050516
+      vhs_osd_guard4_5: 2114809952660623138
+      vhs_osd_guard4_6: -1726227776172345451
+      vhs_osd_guard4_7: -7231991371736677021
+      vhs_osd_guard4_8: 5818951431376073526
+      vhs_osd_guard4_9: -5808242228799635504
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

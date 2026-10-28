@@ -96,11 +96,15 @@ namespace NightShift.Hunt
         /// <summary>He stayed or sensed in the room where the player hides, instead of searching (privileged; reward only).</summary>
         public readonly bool WaitedOutsideHiding;
 
+        /// <summary>He walked into a room where he had just heard a noise (see FreddyRewards.InvestigatedNoise).</summary>
+        public readonly bool InvestigatedNoise;
+
         public FreddyStep(int action, Room from, Room to, int distanceBefore, int distanceAfter,
                           bool failedSearch, bool repeatedSearch, HuntOutcome outcome, bool senseUsed = false, bool senseFound = false,
-                          bool waitedOutsideHiding = false)
+                          bool waitedOutsideHiding = false, bool investigatedNoise = false)
         {
             WaitedOutsideHiding = waitedOutsideHiding;
+            InvestigatedNoise = investigatedNoise;
             SenseUsed = senseUsed;
             SenseFound = senseFound;
             Action = action;
@@ -829,6 +833,7 @@ namespace NightShift.Hunt
             // Standing (or sensing) next to the spot the player hides in, instead of opening it.
             bool waitedOutsideHiding = PlayerHidden && PlayerRoom == FreddyRoom
                                        && (FreddyActions.IsSense(action) || action == FreddyActions.GoTo(FreddyRoom));
+            bool investigatedNoise = false;
 
             if (FreddyActions.IsSense(action))
             {
@@ -847,6 +852,8 @@ namespace NightShift.Hunt
             else if (FreddyActions.IsMove(action))
             {
                 var target = (Room)action;
+                // Going to see what made a noise he heard there a moment ago (what Freddy knows, not where the player is).
+                investigatedNoise = target != FreddyRoom && NoiseMemory[(int)target] >= FreddyRewards.FreshNoise;
                 if (target != FreddyRoom)
                 {
                     // A long connection keeps him walking for its extra decisions (see FreddyCanDecide).
@@ -879,7 +886,7 @@ namespace NightShift.Hunt
 
             AdvanceClock();
             int distanceAfter = HuntMap.Distance(FreddyRoom, PlayerRoom);
-            return new FreddyStep(action, from, FreddyRoom, distanceBefore, distanceAfter, failedSearch, repeatedSearch, Outcome, senseUsed, senseFound, waitedOutsideHiding);
+            return new FreddyStep(action, from, FreddyRoom, distanceBefore, distanceAfter, failedSearch, repeatedSearch, Outcome, senseUsed, senseFound, waitedOutsideHiding, investigatedNoise);
         }
 
         private void AdvanceClock()

@@ -97,8 +97,6 @@ namespace NightShift.Game
         private float focusBlend;
         private Vector3 focusFromPosition;
         private Quaternion focusFromRotation;
-        private Vector2 virtualCursor;
-        private static Texture2D cursorRing;
 
         /// <summary>While true the camera is placed by someone else (menu view, jumpscare).</summary>
         public bool CameraLocked { get; set; }
@@ -233,9 +231,9 @@ namespace NightShift.Game
             focusFromPosition = head.position;
             focusFromRotation = head.rotation;
             Sliding = false;
-            virtualCursor = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
+            // Hands, not a pointer: the cursor stays hidden (see FocusInput).
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
         }
 
         /// <summary>Steps back from the panel: the view keeps looking where it looked, the pointer goes away.</summary>
@@ -269,48 +267,18 @@ namespace NightShift.Game
             {
                 return;
             }
-            // Step back: right click, the gamepad's B, or walking away (Esc pauses, see HuntDirector).
+            // Step back: right click, backspace or the gamepad's B (Esc too, see HuntDirector). The
+            // movement keys work the panel now, so walking away no longer leaves it.
             Mouse mouse = Mouse.current;
             Gamepad pad = Gamepad.current;
+            Keyboard keys = Keyboard.current;
             if ((mouse != null && mouse.rightButton.wasPressedThisFrame) || (pad != null && pad.buttonEast.wasPressedThisFrame)
-                || Controls.Move.sqrMagnitude > 0.5f)
+                || (keys != null && keys.backspaceKey.wasPressedThisFrame))
             {
                 EndFocus();
                 return;
             }
-            // The pointer: the mouse, or on a gamepad a cursor moved with the left stick.
-            Vector2 point;
-            if (Controls.UsingGamepad && pad != null)
-            {
-                virtualCursor += pad.leftStick.ReadValue() * Screen.height * 0.9f * Time.unscaledDeltaTime;
-                virtualCursor = new Vector2(Mathf.Clamp(virtualCursor.x, 0f, Screen.width), Mathf.Clamp(virtualCursor.y, 0f, Screen.height));
-                point = virtualCursor;
-            }
-            else
-            {
-                point = mouse != null ? mouse.position.ReadValue() : new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
-            }
-            bool pressed = (mouse != null && mouse.leftButton.wasPressedThisFrame) || (pad != null && pad.buttonSouth.wasPressedThisFrame);
-            bool held = (mouse != null && mouse.leftButton.isPressed) || (pad != null && pad.buttonSouth.isPressed);
-            bool released = (mouse != null && mouse.leftButton.wasReleasedThisFrame) || (pad != null && pad.buttonSouth.wasReleasedThisFrame);
-            Focus.FocusUpdate(new FocusInput { Ray = View.ScreenPointToRay(point), Screen = point, Pressed = pressed, Held = held, Released = released });
-        }
-
-        private void OnGUI()
-        {
-            if (!InFocus || !Controls.UsingGamepad || focusBlend < 1f)
-            {
-                return;
-            }
-            // The gamepad's cursor: a small ring.
-            var rect = new Rect(virtualCursor.x - 9f, Screen.height - virtualCursor.y - 9f, 18f, 18f);
-            GUI.color = new Color(1f, 0.85f, 0.4f, 0.9f);
-            if (cursorRing == null)
-            {
-                cursorRing = ProceduralTextures.Ring(64, 0.18f);
-            }
-            GUI.DrawTexture(rect, cursorRing);
-            GUI.color = Color.white;
+            Focus.FocusUpdate(FocusInput.Read());
         }
 
         /// <summary>Noise level since the last call (0 silent … 3 very loud), then resets.</summary>

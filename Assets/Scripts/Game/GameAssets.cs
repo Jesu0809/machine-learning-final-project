@@ -43,6 +43,13 @@ namespace NightShift.Game
         [Tooltip("Scanned 3D props the level places by name.")]
         public Prop[] Props;
 
+        /// <summary>
+        /// The glass of the television_02 model, measured in the model's own space when the props
+        /// are imported (see PropImporter.MeasureScreen); the monitors' live feeds are laid on it.
+        /// Size zero if it was not found.
+        /// </summary>
+        public Bounds TvScreen;
+
         [Tooltip("Signs and posters drawn by tools/generate_signs.py (Assets/Art/Signs).")]
         public Texture2D[] Signs;
 

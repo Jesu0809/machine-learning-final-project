@@ -87,7 +87,23 @@ namespace NightShift.Game
         {
             return Cached(key, () =>
             {
-                Material material = FromTemplate("LitPlain", "Universal Render Pipeline/Lit");
+                // Never perfectly clean: soft grime from a photo and a faint grain in the surface.
+                Texture2D grime = SignTexture("wrap_wear");
+                Material grain = grime != null ? Pbr("concrete_wall", Color.white) : null;
+                Texture bump = grain != null && grain.HasProperty("_BumpMap") ? grain.GetTexture("_BumpMap") : null;
+                Material material = bump != null
+                    ? FromTemplate("LitNormal", "Universal Render Pipeline/Lit", "_NORMALMAP")
+                    : FromTemplate("LitPlain", "Universal Render Pipeline/Lit");
+                if (grime != null)
+                {
+                    material.SetTexture("_BaseMap", grime);
+                    material.SetTextureScale("_BaseMap", new Vector2(1.3f, 1.3f));
+                }
+                if (bump != null)
+                {
+                    material.SetTexture("_BumpMap", bump);
+                    material.SetFloat("_BumpScale", 0.25f);
+                }
                 material.SetColor("_BaseColor", color);
                 material.SetFloat("_Smoothness", smoothness);
                 material.SetFloat("_Metallic", metallic);

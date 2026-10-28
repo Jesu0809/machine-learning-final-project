@@ -1,0 +1,988 @@
+fileFormatVersion: 2
+guid: 29e91b00bdb9d4c56a665456667aa198
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 5717246032278019185
+    second: vhs_osd_sim_0
+  - first:
+      213: 4274650394977857306
+    second: vhs_osd_sim_1
+  - first:
+      213: -30416016096536081
+    second: vhs_osd_sim_2
+  - first:
+      213: -4045550908044078467
+    second: vhs_osd_sim_3
+  - first:
+      213: -6792175929552179001
+    second: vhs_osd_sim_4
+  - first:
+      213: 2584768203801107288
+    second: vhs_osd_sim_5
+  - first:
+      213: -3132583248610378984
+    second: vhs_osd_sim_6
+  - first:
+      213: -3555530633990785387
+    second: vhs_osd_sim_7
+  - first:
+      213: -831077845347866051
+    second: vhs_osd_sim_8
+  - first:
+      213: 4583472526679650144
+    second: vhs_osd_sim_9
+  - first:
+      213: 5717446806659440752
+    second: vhs_osd_sim_10
+  - first:
+      213: 1068572814397271215
+    second: vhs_osd_sim_11
+  - first:
+      213: -262353056686798334
+    second: vhs_osd_sim_12
+  - first:
+      213: 7051229104575707312
+    second: vhs_osd_sim_13
+  - first:
+      213: -1700407367463657355
+    second: vhs_osd_sim_14
+  - first:
+      213: -4579045590253196469
+    second: vhs_osd_sim_15
+  - first:
+      213: 8183645560863592994
+    second: vhs_osd_sim_16
+  - first:
+      213: 6013430613686043675
+    second: vhs_osd_sim_17
+  - first:
+      213: 6490883245680541334
+    second: vhs_osd_sim_18
+  - first:
+      213: 8158914116125532962
+    second: vhs_osd_sim_19
+  - first:
+      213: -1495448524714963169
+    second: vhs_osd_sim_20
+  - first:
+      213: 4938163147361889032
+    second: vhs_osd_sim_21
+  - first:
+      213: 345494218743450901
+    second: vhs_osd_sim_22
+  - first:
+      213: 3200871825654534746
+    second: vhs_osd_sim_23
+  - first:
+      213: -5209877867251053432
+    second: vhs_osd_sim_24
+  - first:
+      213: 1503358748445437894
+    second: vhs_osd_sim_25
+  - first:
+      213: -5008516911833936942
+    second: vhs_osd_sim_26
+  - first:
+      213: -7722685244096452611
+    second: vhs_osd_sim_27
+  - first:
+      213: 6957339726450241174
+    second: vhs_osd_sim_28
+  - first:
+      213: 3838997758897067111
+    second: vhs_osd_sim_29
+  - first:
+      213: -5027040864517667484
+    second: vhs_osd_sim_30
+  - first:
+      213: -8857865028106563909
+    second: vhs_osd_sim_31
+  - first:
+      213: -4943620681932560862
+    second: vhs_osd_sim_32
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 1
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 8
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 1
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 0
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 512
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 70
+    crunchedCompression: 1
+    allowsAlphaSplitting: 0
+    overridden: 1
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: vhs_osd_sim_0
+      rect:
+        serializedVersion: 2
+        x: 57
+        y: 668
+        width: 46
+        height: 53
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 17c517f99fcb75f40800000000000000
+      internalID: 5717246032278019185
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_1
+      rect:
+        serializedVersion: 2
+        x: 129
+        y: 671
+        width: 80
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a1f63abd2eb925b30800000000000000
+      internalID: 4274650394977857306
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_2
+      rect:
+        serializedVersion: 2
+        x: 235
+        y: 671
+        width: 24
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fe955156bc0f39ff0800000000000000
+      internalID: -30416016096536081
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_3
+      rect:
+        serializedVersion: 2
+        x: 260
+        y: 671
+        width: 26
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d72164522e05bd7c0800000000000000
+      internalID: -4045550908044078467
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_4
+      rect:
+        serializedVersion: 2
+        x: 337
+        y: 671
+        width: 28
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7c075138af75db1a0800000000000000
+      internalID: -6792175929552179001
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_5
+      rect:
+        serializedVersion: 2
+        x: 367
+        y: 671
+        width: 20
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 85b1a469cf0fed320800000000000000
+      internalID: 2584768203801107288
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_6
+      rect:
+        serializedVersion: 2
+        x: 389
+        y: 671
+        width: 28
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 81b3d3de124d684d0800000000000000
+      internalID: -3132583248610378984
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_7
+      rect:
+        serializedVersion: 2
+        x: 419
+        y: 671
+        width: 20
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 596b5f4f9b738aec0800000000000000
+      internalID: -3555530633990785387
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_8
+      rect:
+        serializedVersion: 2
+        x: 441
+        y: 671
+        width: 54
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d3ae7575a1b6774f0800000000000000
+      internalID: -831077845347866051
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_9
+      rect:
+        serializedVersion: 2
+        x: 519
+        y: 671
+        width: 54
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 06fa08e8af3cb9f30800000000000000
+      internalID: 4583472526679650144
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_10
+      rect:
+        serializedVersion: 2
+        x: 573
+        y: 671
+        width: 26
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 070a02d0493785f40800000000000000
+      internalID: 5717446806659440752
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_11
+      rect:
+        serializedVersion: 2
+        x: 599
+        y: 671
+        width: 26
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: face9ca205554de00800000000000000
+      internalID: 1068572814397271215
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_12
+      rect:
+        serializedVersion: 2
+        x: 757
+        y: 671
+        width: 28
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 20a0272f84feb5cf0800000000000000
+      internalID: -262353056686798334
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_13
+      rect:
+        serializedVersion: 2
+        x: 787
+        y: 671
+        width: 20
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0b87128f28ffad160800000000000000
+      internalID: 7051229104575707312
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_14
+      rect:
+        serializedVersion: 2
+        x: 809
+        y: 671
+        width: 28
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5702fd82280f668e0800000000000000
+      internalID: -1700407367463657355
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_15
+      rect:
+        serializedVersion: 2
+        x: 863
+        y: 671
+        width: 24
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b4ba3a6eb46f370c0800000000000000
+      internalID: -4579045590253196469
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_16
+      rect:
+        serializedVersion: 2
+        x: 889
+        y: 671
+        width: 24
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2221afe5746229170800000000000000
+      internalID: 8183645560863592994
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_17
+      rect:
+        serializedVersion: 2
+        x: 915
+        y: 671
+        width: 24
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b14473a584ff37350800000000000000
+      internalID: 6013430613686043675
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_18
+      rect:
+        serializedVersion: 2
+        x: 941
+        y: 671
+        width: 23
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 69eb259fbef341a50800000000000000
+      internalID: 6490883245680541334
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_19
+      rect:
+        serializedVersion: 2
+        x: 61
+        y: 58
+        width: 26
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 223259c29294a3170800000000000000
+      internalID: 8158914116125532962
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_20
+      rect:
+        serializedVersion: 2
+        x: 87
+        y: 58
+        width: 19
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f1f8b707d791f3be0800000000000000
+      internalID: -1495448524714963169
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_21
+      rect:
+        serializedVersion: 2
+        x: 107
+        y: 58
+        width: 118
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 80b2e611831e78440800000000000000
+      internalID: 4938163147361889032
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_22
+      rect:
+        serializedVersion: 2
+        x: 225
+        y: 58
+        width: 19
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 51d872459217bc400800000000000000
+      internalID: 345494218743450901
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_23
+      rect:
+        serializedVersion: 2
+        x: 247
+        y: 58
+        width: 21
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a52d1bb67f7cb6c20800000000000000
+      internalID: 3200871825654534746
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_24
+      rect:
+        serializedVersion: 2
+        x: 268
+        y: 58
+        width: 26
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 88cc45fceabc2b7b0800000000000000
+      internalID: -5209877867251053432
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_25
+      rect:
+        serializedVersion: 2
+        x: 316
+        y: 58
+        width: 93
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6cfe01b01d00dd410800000000000000
+      internalID: 1503358748445437894
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_26
+      rect:
+        serializedVersion: 2
+        x: 689
+        y: 58
+        width: 26
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2db0a9aa76c2e7ab0800000000000000
+      internalID: -5008516911833936942
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_27
+      rect:
+        serializedVersion: 2
+        x: 714
+        y: 58
+        width: 21
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: df7ea71efa283d490800000000000000
+      internalID: -7722685244096452611
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_28
+      rect:
+        serializedVersion: 2
+        x: 735
+        y: 58
+        width: 95
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 69ea7c0ae9f6d8060800000000000000
+      internalID: 6957339726450241174
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_29
+      rect:
+        serializedVersion: 2
+        x: 853
+        y: 72
+        width: 19
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 76494903f1cd64530800000000000000
+      internalID: 3838997758897067111
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_30
+      rect:
+        serializedVersion: 2
+        x: 874
+        y: 58
+        width: 23
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4654d07d7fc5c3ab0800000000000000
+      internalID: -5027040864517667484
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_31
+      rect:
+        serializedVersion: 2
+        x: 902
+        y: 58
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bbe4a5b10ba821580800000000000000
+      internalID: -8857865028106563909
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: vhs_osd_sim_32
+      rect:
+        serializedVersion: 2
+        x: 919
+        y: 58
+        width: 48
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 226a225ae2bb46bb0800000000000000
+      internalID: -4943620681932560862
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      vhs_osd_sim_0: 5717246032278019185
+      vhs_osd_sim_1: 4274650394977857306
+      vhs_osd_sim_10: 5717446806659440752
+      vhs_osd_sim_11: 1068572814397271215
+      vhs_osd_sim_12: -262353056686798334
+      vhs_osd_sim_13: 7051229104575707312
+      vhs_osd_sim_14: -1700407367463657355
+      vhs_osd_sim_15: -4579045590253196469
+      vhs_osd_sim_16: 8183645560863592994
+      vhs_osd_sim_17: 6013430613686043675
+      vhs_osd_sim_18: 6490883245680541334
+      vhs_osd_sim_19: 8158914116125532962
+      vhs_osd_sim_2: -30416016096536081
+      vhs_osd_sim_20: -1495448524714963169
+      vhs_osd_sim_21: 4938163147361889032
+      vhs_osd_sim_22: 345494218743450901
+      vhs_osd_sim_23: 3200871825654534746
+      vhs_osd_sim_24: -5209877867251053432
+      vhs_osd_sim_25: 1503358748445437894
+      vhs_osd_sim_26: -5008516911833936942
+      vhs_osd_sim_27: -7722685244096452611
+      vhs_osd_sim_28: 6957339726450241174
+      vhs_osd_sim_29: 3838997758897067111
+      vhs_osd_sim_3: -4045550908044078467
+      vhs_osd_sim_30: -5027040864517667484
+      vhs_osd_sim_31: -8857865028106563909
+      vhs_osd_sim_32: -4943620681932560862
+      vhs_osd_sim_4: -6792175929552179001
+      vhs_osd_sim_5: 2584768203801107288
+      vhs_osd_sim_6: -3132583248610378984
+      vhs_osd_sim_7: -3555530633990785387
+      vhs_osd_sim_8: -831077845347866051
+      vhs_osd_sim_9: 4583472526679650144
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -30,16 +30,25 @@ namespace NightShift.Game
 
         public bool Closed { get; private set; }
         public bool Broken { get; private set; }
+
+        /// <summary>Locked shut from the other side (the office during the phone call): it cannot be opened or shoved.</summary>
+        public bool Locked { get; private set; }
+
+        /// <summary>The two rooms this doorway joins.</summary>
+        public Room RoomA { get; private set; }
+        public Room RoomB { get; private set; }
         public bool HoldToUse => false;
 
         /// <summary>Double doors in a doorway; <paramref name="alongX"/> if the wall runs along x.</summary>
-        public static Door Create(HuntDirector director, Transform parent, Vector3 doorway, bool alongX, Vector3 corridor, Material material)
+        public static Door Create(HuntDirector director, Transform parent, Room a, Room b, Vector3 doorway, bool alongX, Vector3 corridor, Material material)
         {
             var go = new GameObject("Door");
             go.transform.SetParent(parent, false);
             go.transform.position = doorway;
             var door = go.AddComponent<Door>();
             door.director = director;
+            door.RoomA = a;
+            door.RoomB = b;
             door.axisYaw = alongX ? 0f : 90f;
             // Open, the leaves rest against the corridor's walls, not in the room or across the doorway.
             door.openSign = Vector3.Dot(corridor, Quaternion.Euler(0f, door.axisYaw, 0f) * Vector3.forward) >= 0f ? 1f : -1f;
@@ -107,10 +116,51 @@ namespace NightShift.Game
             {
                 door.Closed = false;
                 door.Broken = false;
+                door.Locked = false;
                 door.leaves[0].SetActive(true);
                 door.leaves[1].SetActive(true);
                 door.swing = 1f;
             }
+        }
+
+        /// <summary>
+        /// Locks (shut, with a heavy clack) or unlocks (and swings open) every door of a room: the
+        /// office is locked while the phone call plays, so the night starts where the guard sits.
+        /// </summary>
+        public static void LockRoom(Room room, bool locked)
+        {
+            foreach (Door door in All)
+            {
+                if (door.Broken || (door.RoomA != room && door.RoomB != room) || door.Locked == locked)
+                {
+                    continue;
+                }
+                door.Locked = locked;
+                door.Closed = locked;
+                if (!locked)
+                {
+                    door.SwingAwayFrom(PizzeriaLayout.Center(room));
+                }
+                door.director.Audio.PlayAt(door.director.Assets.LockerDoor, door.transform.position, 0.8f, locked ? 0.55f : 0.75f);
+            }
+        }
+
+        /// <summary>True if every door of the room is locked (test helper).</summary>
+        public static bool RoomLocked(Room room)
+        {
+            bool any = false;
+            foreach (Door door in All)
+            {
+                if (door.RoomA == room || door.RoomB == room)
+                {
+                    any = true;
+                    if (!door.Locked)
+                    {
+                        return false;
+                    }
+                }
+            }
+            return any;
         }
 
         /// <summary>A closed, unbroken door within <paramref name="distance"/> of the point, or null.</summary>
@@ -132,12 +182,16 @@ namespace NightShift.Game
             {
                 return "";
             }
+            if (Locked)
+            {
+                return "Locked from outside until the call ends.  Sit down and listen.";
+            }
             return Closed ? "[E] Open the door" : "[E] Close the door  (he will have to break it down)";
         }
 
         public void Use(PlayerController player)
         {
-            if (Broken)
+            if (Broken || Locked)
             {
                 return;
             }
@@ -153,7 +207,7 @@ namespace NightShift.Game
         /// <summary>The player crashes into the closed door (running or sliding): it is pushed open, loudly. True if it was.</summary>
         public bool Bump(PlayerController player)
         {
-            if (Broken || !Closed)
+            if (Broken || !Closed || Locked)
             {
                 return false;
             }
