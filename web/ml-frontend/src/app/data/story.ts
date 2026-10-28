@@ -19,33 +19,34 @@ export const INTRO: string[] = [
 export const CALLS: string[][] = [
   [
     "Hello? Hello, hello! Uh, welcome to your first night at the pizzeria. They asked me to walk you through it, since the last guy... well. Let's not get into that.",
-    "So. The power is out, and three fuses are missing. Find them, put them in the exit panel, and the door opens. Some nights it is the front doors, some nights the loading door in the storage. Your list tells you which.",
+    "So. The power is out. There are three power sockets: in the parts room, the banquet room and the party room. Find the power cells, carry them one at a time, and plug one into each socket. Then pull the lever at the exit. Some nights it is the front doors, some nights the loading door in the storage. Your list tells you which.",
     "Now, about Freddy. Management installed a new brain in him. A neural network. They trained it on thousands of nights against people like you. It does not follow a script. It learned.",
-    "It cannot see through walls, but it listens. Running, picking up a fuse, working that exit panel. All loud. Walk when you can, and crouch when you really need to be quiet.",
+    "It cannot see through walls, but it listens. Running, grabbing a cell, plugging it in, that lever. All loud. Walk when you can, and crouch when you really need to be quiet.",
     "If he gets close, hide. Lockers, cabinets, under the tables. And if he opens your locker, hold your breath with the space bar. Not for too long.",
     "Oh, and the air vents. There are grates all over the building, in the floor and in the walls. Crawl in and you come out in another room. He is too big for them, so in there he cannot reach you.",
-    "Sprinting will not save you for long, you will run out of breath. And every fuse you take makes him angrier. Faster.",
+    "Sprinting will not save you for long, you will run out of breath. And every socket you power makes him angrier. Faster.",
     "One more thing. If you panic, he can sense it. The engineers added that. He decides on his own when to use it. So, stay calm.",
     "If you want to see what it is thinking, press TAB. They left their debug screen in. It shows what he heard, where he is going, and how sure the network is about every move. Use that.",
     "He is asleep on the stage right now. Look around while I am talking. When I hang up... he wakes up. Okay. Good luck. Talk to you tomorrow. Hopefully."
   ],
   [
     "Hey! You made it. Wow. Okay. Management is... thrilled. They want more data.",
-    "So tonight is a little different. The fuses do not go into the exit panel anymore. They go into the breaker box in the storage room. Restore the breaker, then the exit gets power.",
+    "So tonight is a little different. The cells are colored now. Yellow, blue and green. Each one only fits the socket of its color. The maps on the walls show where they go.",
     "I looked at last night's logs. Here is the thing: Freddy does not remember you. The network is frozen, it cannot learn during the night.",
     "But it was trained against thousands of guards. It knows what people do. People hide when they hear him. People run straight for the exit.",
     "So, do something people do not do. Throw one of those party horns. It cannot tell a horn from a person. To the network, a noise is a noise.",
     "And he is a little faster tonight. They tuned him. Okay. I will let you go."
   ],
   [
-    "Night three. Okay. Security upgrade, apparently. The exit needs a keycard now. It is in the office drawer, but the drawer runs on the same power line. Breaker first, then the card.",
+    "Night three. Okay. The breakers in the storage keep tripping. You have to flip them back up by hand, one by one, then push the main handle up. Every click is loud. Sorry.",
     "And some of the lights are dying. Nobody wants to pay for bulbs in a building that is officially closed.",
     "I found the old training notes. Early on, Freddy was useless. He walked in circles. He opened empty lockers all night. The reward was negative.",
     "It took about a million steps before he started checking the rooms next to where he heard you. Three million before he learned when to use his sense.",
     "The reward curve... it just goes up. It never goes back down. I do not like that. Anyway. Keep moving."
   ],
   [
-    "Hey. Night four. I need to tell you something and I need you to keep working while I do.",
+    "Hey. Night four. Security wants the keycard swiped tonight. It is on a pedestal in the veranda, you cannot miss it. Swipe it through the reader in the office. Slow and steady, that reader is picky.",
+    "I need to tell you something else, and I need you to keep working while I do.",
     "The guard before you. Management said he quit. I found his name today. It was in the training data.",
     "They did not just simulate guards. They recorded the real ones. Every night he worked here became more practice for Freddy.",
     "The lights are worse tonight, and your tracker is losing range. And Freddy senses fear more often now. They changed the settings after your last night.",
@@ -53,8 +54,8 @@ export const CALLS: string[][] = [
   ],
   [
     "This is the last night. Tomorrow they retrain Freddy with everything you did this week. Every hiding spot. Every horn. Every route.",
-    "There is a tape in the office. The recordings. All of them. Take it with you. If anyone sees it, this place closes for good.",
-    "Breaker, keycard, tape, then the exit. He will be fast tonight. Faster than you have seen. And he is awake already. I am sorry.",
+    "There is a tape. The recordings. All of them. It is locked in a box on the ticket booth counter. Press the numbers one to nine, in order. Take it with you. If anyone sees it, this place closes for good.",
+    "Cells, breakers, keycard, tape, then the lever. He will be fast tonight. Faster than you have seen. And he is awake already. I am sorry.",
     "If he catches you... well. At least he will have learned from the best. Go. Go now."
   ]
 ];
@@ -72,8 +73,8 @@ export const NOTES: string[] = [
 
 export const NIGHT_CHANGES: string[] = [
   "",
-  "Freddy is faster  ·  the breaker must be restored",
-  "Freddy is faster  ·  lights are failing  ·  the exit needs a keycard",
-  "Freddy senses more often  ·  the tracker loses range  ·  half the lights are dead",
-  "Freddy is awake from the start  ·  find the tape  ·  get out"
+  "Freddy is faster  ·  each cell fits only the socket of its color",
+  "Freddy is faster  ·  lights are failing  ·  reset the breakers by hand",
+  "Freddy senses more often  ·  the tracker loses range  ·  swipe the keycard",
+  "Freddy is awake from the start  ·  open the tape box  ·  get out"
 ];

@@ -240,6 +240,36 @@ After a run:
   The new map helps the hunter: every trip between the wings goes through the north wing, so even
   the random hunter catches 56–82 % (17–47 % in v6). Part of v7's strength is that bottleneck;
   the survivor bot also has more work per night (up to seven objectives, each one noisy).
-- **Decision:** keep. `unity/Assets/ML/Models/freddy_v7.onnx` is the game's brain. For players the
-  difficulty is set by the game (Freddy's speed and hearing per night), not by the policy.
+- **Decision:** kept at first, replaced by freddy_v8 the next day (see below).
+
+### freddy_v8 — 2026-10-28
+
+- **Changed from previous run:** one new reward term, +0.02 when Freddy walks into a room where he
+  has just heard a noise (noise memory at least 0.3, `FreddyRewards.InvestigatedNoise`). Same map,
+  objectives, observations (74) and actions (17).
+- **Why:** measuring v7 in the simulation (a console harness running the exported weights against
+  the survivor bot, 300 nights per preset) showed that it went to a noise in the next room only
+  35 % of the time, against 95 % for the scripted hunter. It caught the bot by cutting it off in the
+  north wing and predicting its route from the objectives done. That wins against the bot, but for
+  a person the stealth and the party horns stop mattering, and the story tells the player that
+  Freddy hunts by ear.
+- **Config changes:** none (5M steps).
+- **Steps trained / wall time:** 5,000,000 steps in 80 min.
+- **Final mean cumulative reward:** +0.99 (the bonus adds a little to v7's +0.98).
+- **Behavior (harness, 900 nights):** goes to a noise in the next room 93 % of the time (v7: 35 %),
+  moves closer to a noise two or more rooms away 87 % (v7: 35 %); 2.2 searches and 1.2 senses per
+  night; caught 99.8 %. Already at 2M steps the noise-following was 86 %.
+- **Evaluation (400 nights per cell, catch rate with 95% Wilson interval):**
+
+  | Survivor | Trained | Scripted | Random |
+  |---|---|---|---|
+  | Novice | 99.8 % (98.6–100.0) | 90.0 % (86.7–92.6) | 81.8 % (77.7–85.2) |
+  | Normal | 99.8 % (98.6–100.0) | 74.0 % (69.5–78.1) | 75.8 % (71.3–79.7) |
+  | Expert | 99.5 % (98.2–99.9) | 50.2 % (45.4–55.1) | 55.8 % (50.8–60.5) |
+
+- **Observations:** the same strength as v7 with the behavior the game needs: he answers noises,
+  so walking, crouching and the party horns matter again. The lesson for the report: a policy can
+  be optimal against its training opponent and still wrong for the people who will play against
+  it; catch rate alone did not show it, a behavioral measurement did.
+- **Decision:** keep. `unity/Assets/ML/Models/freddy_v8.onnx` is the game's brain.
 

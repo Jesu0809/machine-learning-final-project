@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-10-27T08:19:28Z",
-  "model": "freddy_v7",
+  "generated_at": "2026-10-28T05:40:55Z",
+  "model": "freddy_v8",
   "nights_per_run": 400,
   "runs": [
-    {"policy": "trained", "survivor": "Novice", "nights": 400, "catch_rate": 1.0000, "catch_ci_low": 0.9905, "catch_ci_high": 1.0000, "escape_rate": 0.0000, "timeup_rate": 0.0000, "avg_ticks": 28.78, "avg_ticks_to_catch": 28.78, "avg_searches": 1.65, "failed_search_rate": 0.6197, "search_spot0_share": 0.5015},
-    {"policy": "trained", "survivor": "Normal", "nights": 400, "catch_rate": 0.9975, "catch_ci_low": 0.9860, "catch_ci_high": 0.9996, "escape_rate": 0.0025, "timeup_rate": 0.0000, "avg_ticks": 35.11, "avg_ticks_to_catch": 35.06, "avg_searches": 2.02, "failed_search_rate": 0.6258, "search_spot0_share": 0.5056},
-    {"policy": "trained", "survivor": "Expert", "nights": 400, "catch_rate": 0.9900, "catch_ci_low": 0.9746, "catch_ci_high": 0.9961, "escape_rate": 0.0100, "timeup_rate": 0.0000, "avg_ticks": 52.54, "avg_ticks_to_catch": 51.98, "avg_searches": 2.61, "failed_search_rate": 0.7121, "search_spot0_share": 0.4942},
+    {"policy": "trained", "survivor": "Novice", "nights": 400, "catch_rate": 0.9975, "catch_ci_low": 0.9860, "catch_ci_high": 0.9996, "escape_rate": 0.0025, "timeup_rate": 0.0000, "avg_ticks": 27.25, "avg_ticks_to_catch": 27.16, "avg_searches": 1.43, "failed_search_rate": 0.6140, "search_spot0_share": 0.5088},
+    {"policy": "trained", "survivor": "Normal", "nights": 400, "catch_rate": 0.9975, "catch_ci_low": 0.9860, "catch_ci_high": 0.9996, "escape_rate": 0.0025, "timeup_rate": 0.0000, "avg_ticks": 36.46, "avg_ticks_to_catch": 36.08, "avg_searches": 2.10, "failed_search_rate": 0.6544, "search_spot0_share": 0.4982},
+    {"policy": "trained", "survivor": "Expert", "nights": 400, "catch_rate": 0.9950, "catch_ci_low": 0.9820, "catch_ci_high": 0.9986, "escape_rate": 0.0050, "timeup_rate": 0.0000, "avg_ticks": 53.00, "avg_ticks_to_catch": 53.02, "avg_searches": 2.59, "failed_search_rate": 0.7210, "search_spot0_share": 0.5010},
     {"policy": "scripted", "survivor": "Novice", "nights": 400, "catch_rate": 0.9000, "catch_ci_low": 0.8667, "catch_ci_high": 0.9257, "escape_rate": 0.1000, "timeup_rate": 0.0000, "avg_ticks": 29.42, "avg_ticks_to_catch": 26.34, "avg_searches": 5.02, "failed_search_rate": 0.9143, "search_spot0_share": 0.4855},
     {"policy": "scripted", "survivor": "Normal", "nights": 400, "catch_rate": 0.7400, "catch_ci_low": 0.6949, "catch_ci_high": 0.7806, "escape_rate": 0.2600, "timeup_rate": 0.0000, "avg_ticks": 45.35, "avg_ticks_to_catch": 35.45, "avg_searches": 8.00, "failed_search_rate": 0.9428, "search_spot0_share": 0.4817},
     {"policy": "scripted", "survivor": "Expert", "nights": 400, "catch_rate": 0.5025, "catch_ci_low": 0.4537, "catch_ci_high": 0.5512, "escape_rate": 0.4975, "timeup_rate": 0.0000, "avg_ticks": 59.95, "avg_ticks_to_catch": 41.40, "avg_searches": 10.62, "failed_search_rate": 0.9701, "search_spot0_share": 0.4965},

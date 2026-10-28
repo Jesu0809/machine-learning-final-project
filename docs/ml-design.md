@@ -203,12 +203,21 @@ Tonight's exit is **not** an input: Freddy has to find it out from the noise of 
 | Search of a spot already searched since arriving | −0.02 extra |
 | Sense that finds nothing (`freddy_v3`) | −0.01 |
 | Staying or sensing in the room where the player hides, instead of searching (`freddy_v6`) | −0.05 |
+| Walking into a room where he has just heard a noise, noise memory ≥ 0.3 (`freddy_v8`) | +0.02 |
 | Distance shaping | 0.1 · (γ·Φ(s′) − Φ(s)), with Φ(s) = −distance(Freddy, player) / diameter |
 
 The `freddy_v6` term exists because a policy can win by **waiting**: next to a hidden player he
 only has to stand still until they come out. That is a valid strategy in the simulation and a dull
 one to play against, so waiting there now costs more than opening a spot (−0.01 if it is empty).
 It does not stop him from searching: the catch (+1) still comes from opening the right spot.
+
+The `freddy_v8` term comes from measuring v7's behaviour in the simulation. v7 caught the bot
+99.6 % of the time, but when it heard a noise in the next room it went there only 35 % of the time
+(the scripted hunter: 95 %). It had learned to cut the survivor off in the north wing, the only
+way between the wings, and to predict the bot's route from the objectives it had done. That beats
+the bot, but for a person the stealth and the party horns stop mattering, and the game tells the
+player that Freddy hunts by ear. The bonus is small and uses only what Freddy knows (his noise
+memory), not where the player really is.
 
 The shaping term is **potential-based** (Ng et al., 1999), so it speeds up learning without
 changing the optimal policy. It uses the player's real room, which Freddy never observes:

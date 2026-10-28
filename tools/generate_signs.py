@@ -1195,6 +1195,8 @@ LCD_MESSAGES = {
     "keypad_enter": ("ENTER 1 - 9", (110, 255, 140)),
     "keypad_wrong": ("WRONG CODE", (255, 90, 70)),
     "keypad_open": ("OPEN", (110, 255, 140)),
+    "vcr_clock": ("12:00", (90, 230, 255)),
+    "vcr_play": ("PLAY  0:00:12", (90, 230, 255)),
 }
 
 
@@ -1266,6 +1268,140 @@ def night_sky():
     moon = np.exp(-(((xx - mx) ** 2 + (yy - my) ** 2) / (2 * 90.0 ** 2)))[..., None]
     sky += moon * np.array([60, 66, 80], np.float32) * (0.5 + 0.5 * clouds[..., None])
     return Image.fromarray(np.clip(sky, 0, 255).astype(np.uint8))
+
+
+# ---------------------------------------------------------------- wear for plain surfaces
+
+def wear(project):
+    """Grime for every plain-colored surface in the game, taken from a photo (the scanned concrete
+    wall): near white with soft darker patches, so a colored box is never perfectly clean. Tiles."""
+    src = Path(project) / "Assets" / "Art" / "Surfaces" / "concrete_wall" / "concrete_wall_albedo.jpg"
+    if not src.exists():
+        return None
+    img = Image.open(src).convert("L").resize((512, 512), Image.LANCZOS)
+    a = np.asarray(img, np.float32) / 255.0
+    a = (a - a.mean()) / (a.std() + 1e-6)
+    blotch = noise((512, 512), 120, 380) - 0.5
+    value = np.clip(0.93 + a * 0.05 + blotch * 0.12, 0.7, 1.0)
+    rgb = np.stack([value * 1.0, value * 0.985, value * 0.965], axis=-1)
+    return Image.fromarray((rgb * 255).astype(np.uint8))
+
+
+# ---------------------------------------------------------------- the ending: a VCR and its tape
+
+VCR_BLUE = (16, 24, 168)
+
+
+def vcr_front():
+    """The face of an old VHS recorder: brushed dark metal, the cassette door, the clock window,
+    a row of piano-key buttons with their names, and the maker's badge."""
+    w, h = 1024, 192
+    rng = np.random.default_rng(370)
+    base = np.full((h, w, 3), 46, np.float32)
+    # Brushed: thin horizontal streaks.
+    streaks = rng.normal(0, 1, (h, 1)) * 5 + rng.normal(0, 1, (h, w)) * 2.5
+    base += streaks[..., None]
+    img = Image.fromarray(np.clip(base, 0, 255).astype(np.uint8))
+    d = ImageDraw.Draw(img)
+    d.rectangle([0, 0, w - 1, h - 1], outline=(20, 20, 22), width=4)
+    d.line([8, 12, w - 8, 12], fill=(78, 78, 82), width=2)
+    # The cassette door (the game's flap covers it), recessed.
+    d.rectangle([90, 46, 520, 130], fill=(14, 14, 16), outline=(90, 90, 94), width=3)
+    d.line([96, 52, 514, 52], fill=(36, 36, 40), width=2)
+    draw_text(d, (305, 152), "VIDEO CASSETTE RECORDER", font("oswald", 18, 500), (150, 150, 155), spacing=5)
+    # The clock window, dark glass (the game lights it).
+    d.rounded_rectangle([600, 44, 820, 104], radius=6, fill=(6, 10, 12), outline=(100, 100, 104), width=2)
+    # Buttons.
+    names = ["EJECT", "REW", "PLAY", "FF", "STOP", "REC"]
+    for i, name in enumerate(names):
+        x = 600 + i * 56
+        d.rounded_rectangle([x, 120, x + 48, 146], radius=3, fill=(30, 30, 33), outline=(110, 110, 114), width=2)
+        if name == "REC":
+            d.ellipse([x + 19, 128, x + 29, 138], fill=(170, 30, 30))
+        draw_text(d, (x + 24, 162), name, font("oswald", 14, 500), (160, 160, 165))
+    draw_text(d, (930, 74), "MERIDIAN", font("bebas", 40), (190, 190, 196), spacing=3)
+    draw_text(d, (930, 108), "HQ  4-HEAD", font("oswald", 16, 500), (140, 140, 146), spacing=3)
+    # A power lamp.
+    d.ellipse([40, 84, 52, 96], fill=(30, 120, 40))
+    return grime(img, 0.05, 371)
+
+
+def play_mark(d, x, y, size, fill):
+    """The play triangle, drawn (the VCR font has none)."""
+    d.polygon([(x, y), (x, y + size), (x + size * 0.85, y + size / 2)], fill=fill)
+
+
+def osd_text(d, xy, text, size, anchor="la"):
+    """White on-screen text with the hard black shadow of a VCR's character generator."""
+    f = font("lcd", size)
+    x, y = xy
+    d.text((x + 4, y + 4), text, font=f, fill=(0, 0, 0, 230), anchor=anchor)
+    d.text((x, y), text, font=f, fill=(245, 245, 245, 255), anchor=anchor)
+
+
+def vhs_osd(top_left, top_right, bottom_left, bottom_right, play=False, rec=False):
+    """A tape's on-screen display, transparent around the text: laid over the picture."""
+    w, h = 1024, 768
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    x = 60
+    if play:
+        play_mark(d, 62, 52, 46, (0, 0, 0, 230))
+        play_mark(d, 58, 48, 46, (245, 245, 245, 255))
+        x = 128
+    if rec:
+        d.ellipse([62, 52, 104, 94], fill=(220, 30, 30, 255))
+        x = 128
+    osd_text(d, (x, 40), top_left, 64)
+    osd_text(d, (w - 60, 40), top_right, 64, "ra")
+    osd_text(d, (60, h - 110), bottom_left, 58)
+    osd_text(d, (w - 60, h - 110), bottom_right, 58, "ra")
+    return img
+
+
+def vhs_blue(lines, play=True):
+    """The recorder's blue screen, with lines of text in its blocky font."""
+    w, h = 1024, 768
+    img = Image.new("RGB", (w, h), VCR_BLUE)
+    d = ImageDraw.Draw(img)
+    if play:
+        play_mark(d, 60, 48, 46, (245, 245, 245))
+        d.text((128, 40), "PLAY", font=font("lcd", 64), fill=(245, 245, 245))
+    y = 220
+    for line in lines:
+        if line.startswith("#"):
+            # A progress bar: "#87" fills 87 % of it.
+            done = int(line[1:])
+            d.rectangle([150, y + 6, 874, y + 50], outline=(245, 245, 245), width=4)
+            d.rectangle([160, y + 16, 160 + int(704 * done / 100), y + 40], fill=(245, 245, 245))
+            y += 80
+            continue
+        d.text((w / 2, y), line, font=font("lcd", 60), fill=(245, 245, 245), anchor="ma")
+        y += 70
+    return img
+
+
+def vhs_scanlines():
+    """Scanlines and a dark rounded vignette, for the picture of an old TV; tiles vertically."""
+    w, h = 512, 512
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    lines = ((yy % 4) < 2).astype(np.float32) * 70
+    edge = np.clip(((np.abs(xx / w - 0.5) * 2) ** 6 + (np.abs(yy / h - 0.5) * 2) ** 6) * 255, 0, 255)
+    alpha = np.clip(lines + edge, 0, 255)
+    rgba = np.zeros((h, w, 4), np.uint8)
+    rgba[..., 3] = alpha.astype(np.uint8)
+    return Image.fromarray(rgba, "RGBA")
+
+
+def vhs_static():
+    """TV snow: grey noise in fine horizontal grains; the game jumps around it every frame."""
+    w, h = 512, 512
+    rng = np.random.default_rng(372)
+    grain = rng.random((h, w // 2))
+    grain = np.repeat(grain, 2, axis=1)
+    rows = rng.random((h, 1)) * 0.35
+    value = np.clip(grain * 0.85 + rows, 0, 1) * 235
+    return Image.fromarray(value.astype(np.uint8)).convert("RGB")
 
 
 def main():
@@ -1354,6 +1490,19 @@ def main():
         save_rgba("cctv_" + re.sub(r"[^a-z]+", "_", room.lower()).strip("_"), cctv_overlay(room, i + 1))
     for i in range(6):
         save(f"drawing_{i}", drawing(i))
+    grime_map = wear(args.project)
+    if grime_map is not None:
+        save("wrap_wear", grime_map)
+    # The ending: the guard plays the tape at home.
+    save("vcr_front", vcr_front())
+    save_rgba("vhs_osd_1987", vhs_osd("GRAND OPENING", "SP", "JUN 12 1987", "7:42 PM", play=True))
+    save_rgba("vhs_osd_sim", vhs_osd("CAM 06  DINING HALL", "SIM 0001", "NIGHTSHIFT LABS", "REWARD -0.46", play=True))
+    save_rgba("vhs_osd_guard4", vhs_osd("CAM 01  OFFICE", "NIGHT 5", "GUARD #4", "03:12:44 AM", rec=True))
+    save_rgba("vhs_osd_guard5", vhs_osd("LIVE", "", "GUARD #5", "--:--", rec=True))
+    save("vhs_blue_play", vhs_blue([]))
+    save("vhs_blue_end", vhs_blue(["GUARD #5", "NIGHTS RECORDED: 5", "ADDED TO TRAINING SET", "", "FREDDY_V8  TRAINING", "#87"], play=False))
+    save_rgba("glass_vhs_scanlines", vhs_scanlines())
+    save("vhs_static", vhs_static())
     (out / "signs.json").write_text(json.dumps(made, indent=2, sort_keys=True) + "\n")
 
 
