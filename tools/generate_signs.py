@@ -35,7 +35,7 @@ import zlib
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
+from PIL import ImageEnhance, Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 
 from fetch_surfaces import ROOT, fetch
 
@@ -1256,6 +1256,56 @@ def glass_rain():
     return img.filter(ImageFilter.GaussianBlur(0.6))
 
 
+def glass_drops():
+    """Beads of rain on a windshield between two strokes of the wipers, tiling: white with alpha,
+    each bead lit on its top edge and dark under it, the way a drop bends the light behind it."""
+    w = h = 512
+    rng = np.random.default_rng(351)
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    for _ in range(1400):
+        x, y = rng.uniform(0, w), rng.uniform(0, h)
+        r = rng.uniform(0.8, 2.2) if rng.random() < 0.85 else rng.uniform(3, 6.5)
+        squash = rng.uniform(0.8, 1.15)
+        for ox in (0, -w, w):
+            for oy in (0, -h, h):
+                cx, cy = x + ox, y + oy
+                d.ellipse([cx - r, cy - r * squash, cx + r, cy + r * squash], fill=(200, 210, 225, int(55 + 50 * rng.random())))
+                d.ellipse([cx - r * 0.55, cy - r * squash * 0.8, cx + r * 0.25, cy - r * squash * 0.2], fill=(255, 255, 255, 190))
+                d.arc([cx - r, cy - r * squash, cx + r, cy + r * squash], 20, 160, fill=(20, 25, 35, 120), width=max(1, int(r * 0.35)))
+    return img.filter(ImageFilter.GaussianBlur(0.5))
+
+
+def phone_voicemail():
+    """The guard's phone on the dashboard, playing a voicemail: a dark screen, the caller and a
+    progress bar (the game moves nothing on it; it only glows)."""
+    w, h = 512, 1024
+    img = Image.new("RGB", (w, h), (10, 12, 16))
+    d = ImageDraw.Draw(img)
+    d.rectangle([0, 0, w, 64], fill=(18, 20, 26))
+    draw_text(d, (60, 32), "11:52", font("lcd", 30), (200, 205, 215))
+    draw_text(d, (w - 70, 32), "4G", font("lcd", 26), (200, 205, 215))
+    draw_text(d, (w / 2, 190), "Voicemail", font("oswald", 52, 600), (235, 238, 245))
+    d.ellipse([w / 2 - 90, 260, w / 2 + 90, 440], fill=(48, 54, 66))
+    draw_text(d, (w / 2, 350), "R9", font("oswald", 74, 600), (210, 215, 225))
+    draw_text(d, (w / 2, 500), "Route 9 Staffing", font("oswald", 44, 400), (230, 232, 238))
+    draw_text(d, (w / 2, 556), "mobile", font("oswald", 32, 400), (140, 146, 158))
+    rng = np.random.default_rng(12)
+    for i in range(46):
+        x = 56 + i * 8.6
+        a = 8 + 46 * abs(np.sin(i * 0.5)) * rng.uniform(0.4, 1.0)
+        d.rectangle([x, 690 - a, x + 4, 690 + a], fill=(90, 200, 120) if i < 19 else (70, 76, 90))
+    d.rectangle([56, 790, w - 56, 796], fill=(60, 64, 76))
+    d.rectangle([56, 790, 56 + (w - 112) * 0.41, 796], fill=(90, 200, 120))
+    d.ellipse([56 + (w - 112) * 0.41 - 11, 782, 56 + (w - 112) * 0.41 + 11, 804], fill=(235, 238, 245))
+    draw_text(d, (90, 830), "0:14", font("lcd", 28), (160, 166, 178))
+    draw_text(d, (w - 90, 830), "0:35", font("lcd", 28), (160, 166, 178))
+    d.ellipse([w / 2 - 54, 880, w / 2 + 54, 988], fill=(235, 238, 245))
+    d.rectangle([w / 2 - 22, 908, w / 2 - 8, 960], fill=(10, 12, 16))
+    d.rectangle([w / 2 + 8, 908, w / 2 + 22, 960], fill=(10, 12, 16))
+    return img
+
+
 def night_sky():
     """The sky behind the houses: low clouds lit orange by the town from below, a moon behind them."""
     w, h = 1024, 512
@@ -1285,6 +1335,63 @@ def wear(project):
     value = np.clip(0.93 + a * 0.05 + blotch * 0.12, 0.7, 1.0)
     rgb = np.stack([value * 1.0, value * 0.985, value * 0.965], axis=-1)
     return Image.fromarray((rgb * 255).astype(np.uint8))
+
+
+def socket_face(project):
+    """The front plate of a power socket: worn steel from a photo, a round hole through it (alpha),
+    an engraved collar around the hole, screws, and the instructions stamped in. 1 px = 1 mm on a
+    460 x 560 mm plate; the hole (r 165 mm) is 20 mm above the middle."""
+    w, h = 460, 560
+    src = Path(project) / "Assets" / "Art" / "Surfaces" / "metal_worn" / "metal_worn_albedo.jpg"
+    if src.exists():
+        base = Image.open(src).convert("RGB").resize((w, h), Image.LANCZOS)
+        base = ImageEnhance.Brightness(base.convert("L").convert("RGB")).enhance(0.9)
+    else:
+        base = Image.new("RGB", (w, h), (110, 112, 114))
+    img = base.convert("RGBA")
+    d = ImageDraw.Draw(img)
+    cx, cy, r = w / 2, h / 2 - 20, 165
+    # Raised border.
+    d.rounded_rectangle([4, 4, w - 5, h - 5], radius=18, outline=(40, 42, 44, 255), width=6)
+    d.rounded_rectangle([12, 12, w - 13, h - 13], radius=14, outline=(170, 172, 174, 255), width=2)
+    # Engraved collar: a dark groove, a bright chamfer.
+    for rr, col, width in ((r + 34, (28, 28, 30, 255), 8), (r + 22, (190, 192, 196, 255), 3), (r + 6, (60, 60, 64, 255), 10)):
+        d.ellipse([cx - rr, cy - rr, cx + rr, cy + rr], outline=col, width=width)
+    # Screws in the corners.
+    for sx, sy in ((34, 34), (w - 34, 34), (34, h - 34), (w - 34, h - 34)):
+        d.ellipse([sx - 10, sy - 10, sx + 10, sy + 10], fill=(150, 152, 156, 255), outline=(50, 50, 54, 255), width=2)
+        d.line([sx - 7, sy - 3, sx + 7, sy + 3], fill=(60, 60, 64, 255), width=3)
+    f = font("oswald", 24, 600)
+    draw_text(d, (cx, 44), "POWER CELL", f, (30, 30, 32, 255), spacing=4)
+    draw_text(d, (cx, h - 46), "INSERT  -  PUSH  -  TURN", font("oswald", 20, 500), (30, 30, 32, 255), spacing=3)
+    # Turn arrow.
+    d.arc([cx - r - 52, cy - r - 52, cx + r + 52, cy + r + 52], 300, 340, fill=(30, 30, 32, 255), width=5)
+    img = grime(img.convert("RGB"), 0.25, 390).convert("RGBA")
+    # The hole.
+    yy, xx = np.mgrid[0:h, 0:w]
+    hole = ((xx - cx) ** 2 + (yy - cy) ** 2) < r * r
+    a = np.asarray(img).copy()
+    a[hole, 3] = 0
+    return Image.fromarray(a, "RGBA")
+
+
+def stencil_tapes():
+    """Spray-stenciled words on the tape safe's lid: white paint, overspray, the bridges of the stencil."""
+    w, h = 768, 256
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    f = font("bebas", 118)
+    draw_text(d, (w / 2, 92), "SECURITY TAPES", f, (232, 228, 216, 235), spacing=10)
+    draw_text(d, (w / 2, 196), "DO NOT REMOVE FROM PREMISES", font("oswald", 34, 600), (232, 228, 216, 220), spacing=6)
+    # Stencil bridges: thin gaps through the letters.
+    for x in range(40, w, 37):
+        d.line([x, 30, x, 150], fill=(0, 0, 0, 0), width=4)
+    a = np.asarray(img).astype(np.float32)
+    spray = np.asarray(img.filter(ImageFilter.GaussianBlur(5))).astype(np.float32)
+    a[..., 3] = np.maximum(a[..., 3], spray[..., 3] * 0.35)
+    rng = np.random.default_rng(391)
+    a[..., 3] *= 0.75 + 0.25 * rng.random(a.shape[:2])
+    return Image.fromarray(np.clip(a, 0, 255).astype(np.uint8), "RGBA")
 
 
 # ---------------------------------------------------------------- the ending: a VCR and its tape
@@ -1490,11 +1597,17 @@ def main():
         save_rgba("cctv_" + re.sub(r"[^a-z]+", "_", room.lower()).strip("_"), cctv_overlay(room, i + 1))
     for i in range(6):
         save(f"drawing_{i}", drawing(i))
+    save_rgba("decal_stencil_tapes", stencil_tapes())
+    face = socket_face(args.project)
+    save_rgba("decal_socket_face", face)
     grime_map = wear(args.project)
     if grime_map is not None:
         save("wrap_wear", grime_map)
     # The ending: the guard plays the tape at home.
     save("vcr_front", vcr_front())
+    save_rgba("vhs_osd_party", vhs_osd("TOMMY 8TH", "SP", "AUG 08 1987", "8:14 PM", play=True))
+    save_rgba("glass_drops", glass_drops())
+    save("screen_voicemail", phone_voicemail())
     save_rgba("vhs_osd_1987", vhs_osd("GRAND OPENING", "SP", "JUN 12 1987", "7:42 PM", play=True))
     save_rgba("vhs_osd_sim", vhs_osd("CAM 06  DINING HALL", "SIM 0001", "NIGHTSHIFT LABS", "REWARD -0.46", play=True))
     save_rgba("vhs_osd_guard4", vhs_osd("CAM 01  OFFICE", "NIGHT 5", "GUARD #4", "03:12:44 AM", rec=True))

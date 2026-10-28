@@ -75,12 +75,15 @@ Follow [docs/setup.md](docs/setup.md). It covers macOS and Windows step by step:
   survivor bot, baselines and evaluation
 - [docs/training-log.md](docs/training-log.md): one entry per training run
 - [docs/setup.md](docs/setup.md): installation, local website, WebGL build and deployment
+- [docs/credits.md](docs/credits.md): every third-party model, font, sound and voice, with its license
 
 ## Credits
 
 - This work is based on "[Freddy Fazbear](https://sketchfab.com/3d-models/freddy-fazbear-e8248c29265544e7b7e686b4c0c09f10)"
   by 2012carlitos17, licensed under CC-BY-4.0. Rigged and animated with Adobe Mixamo.
-- The phone call voice was generated with the macOS speech synthesizer (voice "Daniel").
+- The car, the wreck, the exit lever, the knife switch and the first-person arms are Sketchfab models
+  under CC BY 4.0 (the wreck CC BY-NC 4.0); authors and links in [docs/credits.md](docs/credits.md).
+- The story's voices were synthesized locally with Kokoro (Apache 2.0).
 - Font: [VT323](https://fonts.google.com/specimen/VT323) by Peter Hull, SIL Open Font License
   (`unity/Assets/Art/Fonts/OFL.txt`).
 - Sounds from Pixabay (Pixabay Content License): "Metal Door Slam" by SoundReality and
