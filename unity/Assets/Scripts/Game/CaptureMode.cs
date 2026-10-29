@@ -95,7 +95,8 @@ namespace NightShift.Game
                 ("drive", 10.8f, "01j-glance-phone"), ("drive", 15f, "01k-wheel-lamp"), ("drive", 19.5f, "01l-alongside"), ("drive", 24f, "01m-phone"),
                 ("drive", 29f, "01n-road-ahead"), ("drive", 33f, "01o-approach"), ("drive", 36.4f, "01p-turn-sweep"), ("drive", 38.3f, "01q-parked"),
                 ("drive", 40f, "01r-glare"), ("foot", 1.5f, "01s-out"), ("foot", 4f, "01t-walk"), ("foot", 6.55f, "01u-reveal"), ("foot", 6.9f, "01v-reveal-zoom"),
-                ("foot", 8.6f, "01w-gone"), ("foot", 11.5f, "01x-hurry"), ("door", 0.9f, "01y-padlock"), ("door", 1.9f, "01y2-key"), ("door", 2.9f, "01y3-chain"),
+                ("foot", 8.6f, "01w-gone"), ("foot", 11.5f, "01x-hurry"), ("door", 0.9f, "01y-padlock"), ("door", 1.25f, "01y1-key-coming"), ("door", 1.9f, "01y2-key"), ("door", 2.45f, "01y3-lock-off"),
+                ("door", 2.8f, "01y4-chain-hangs"), ("door", 3.25f, "01y5-chain-slides"), ("door", 3.8f, "01y6-chain-floor"),
                 ("door", 4.6f, "01z-doors"), ("door", 7.5f, "01z2-lobby"), ("inside", 2.5f, "01z3-stage"), ("title", 2.4f, "01z4-title")
             };
             string[] order = { "tape", "cards", "drive", "foot", "door", "inside", "title" };

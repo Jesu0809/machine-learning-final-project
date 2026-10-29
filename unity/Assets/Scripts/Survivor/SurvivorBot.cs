@@ -47,14 +47,21 @@ namespace NightShift.Hunt.Survivor
         /// <summary>Chance of escaping through an air duct, or taking one as a shortcut, when there is one.</summary>
         public float DuctUse = 0.5f;
 
+        /// <summary>
+        /// Chance, each time the survivor picks where to go next, of a detour to a random room first
+        /// (a dead end, the stage, somewhere to look around), lingering there a moment. People do
+        /// this; a bot that only takes shortest paths leaves whole rooms out of Freddy's training.
+        /// </summary>
+        public float Curiosity = 0.1f;
+
         public static SurvivorSettings FromPreset(SurvivorPreset preset)
         {
             switch (preset)
             {
                 case SurvivorPreset.Novice:
-                    return new SurvivorSettings { TrackerUse = 0.55f, HideChance = 0.75f, RunChance = 0.4f, Patience = 2, MaxWaitActions = 3, DuctUse = 0.2f };
+                    return new SurvivorSettings { TrackerUse = 0.55f, HideChance = 0.75f, RunChance = 0.4f, Patience = 2, MaxWaitActions = 3, DuctUse = 0.2f, Curiosity = 0.2f };
                 case SurvivorPreset.Expert:
-                    return new SurvivorSettings { TrackerUse = 0.95f, HideChance = 0.45f, RunChance = 0.08f, Patience = 3, MaxWaitActions = 8, DuctUse = 0.8f };
+                    return new SurvivorSettings { TrackerUse = 0.95f, HideChance = 0.45f, RunChance = 0.08f, Patience = 3, MaxWaitActions = 8, DuctUse = 0.8f, Curiosity = 0.04f };
                 default:
                     return new SurvivorSettings();
             }
@@ -74,7 +81,8 @@ namespace NightShift.Hunt.Survivor
                 Patience = random.Next(2, 6),
                 MaxWaitActions = random.Next(3, 11),
                 Spot0Preference = Range(random, 0.1f, 0.9f),
-                DuctUse = Range(random, 0.1f, 0.9f)
+                DuctUse = Range(random, 0.1f, 0.9f),
+                Curiosity = Range(random, 0f, 0.3f)
             };
         }
 
@@ -104,6 +112,8 @@ namespace NightShift.Hunt.Survivor
         private int waitStreak;
         private int actionsSinceLoud = 100;
         private Room? committedWalk;
+        private Room? detour;
+        private int lingerTicks;
 
         public SurvivorSettings Settings { get; private set; }
 
@@ -134,6 +144,8 @@ namespace NightShift.Hunt.Survivor
             calmTicks = 0;
             waitStreak = 0;
             committedWalk = null;
+            detour = null;
+            lingerTicks = 0;
             actionsSinceLoud = 100;
         }
 
@@ -221,7 +233,25 @@ namespace NightShift.Hunt.Survivor
                 return PlayerAction.WorkExit();
             }
 
-            Room goal = state.ExitUnlocked ? state.ExitRoom : NextGoal(state);
+            // A detour: somewhere off the route to look around, lingering a few actions once there.
+            if (detour.HasValue && here == detour.Value)
+            {
+                if (lingerTicks-- > 0)
+                {
+                    return PlayerAction.Wait();
+                }
+                detour = null;
+            }
+            if (!detour.HasValue && random.NextDouble() < Settings.Curiosity)
+            {
+                var somewhere = (Room)random.Next(HuntMap.RoomCount);
+                if (somewhere != here && !NearFreddy(somewhere))
+                {
+                    detour = somewhere;
+                    lingerTicks = random.Next(1, 5);
+                }
+            }
+            Room goal = detour ?? (state.ExitUnlocked ? state.ExitRoom : NextGoal(state));
             // A duct that saves at least two rooms of walking, if it does not come out next to Freddy.
             foreach (Room exit in HuntMap.DuctsFrom(here))
             {

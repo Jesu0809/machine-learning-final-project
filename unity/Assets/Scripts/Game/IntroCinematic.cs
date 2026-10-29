@@ -87,7 +87,8 @@ namespace NightShift.Game
         private Transform padlock;
         private Transform shackle;
         private Transform key;
-        private readonly List<Transform> links = new List<Transform>();
+        private Transform keyRing;
+        private ChainRope chain;
 
         public bool Playing { get; private set; }
 
@@ -756,70 +757,111 @@ namespace NightShift.Game
             Vector3 outside = WalkEnd + Vector3.up * (EyeHeight + SidewalkHeight);
             var inside = new Vector3(PizzeriaLayout.ExitDoor.x, EyeHeight, -14.6f);
             Vector3 outward = -PizzeriaLayout.ExitInward(HuntMap.Exit);
+            Vector3 right = Vector3.Cross(Vector3.up, -outward);
             Vector3 keyhole = padlock.position;
-            Vector3 keyFrom = key.localPosition;
             Vector3 lockFrom = padlock.position;
-            Quaternion lockTurn = padlock.rotation;
-            var fall = new Vector3[links.Count];
-            for (int i = 0; i < links.Count; i++)
-            {
-                fall[i] = links[i].position;
-            }
-            bool scrape = false, click = false, pop = false, drop = false, doors = false, ring1 = false, ring2 = false;
-            for (float d = 0f; d < 9f && !skip; d += Time.deltaTime)
+            Quaternion lockRest = padlock.rotation;
+            // The key comes up from below the frame (the guard's hand), on its ring.
+            Vector3 keyStart = keyhole + outward * 0.32f + right * 0.2f + Vector3.down * 0.3f;
+            Vector3 keyBend = keyhole + outward * 0.22f + right * 0.06f + Vector3.down * 0.05f;
+            Vector3 keyIn = key.position;
+            Quaternion keyRest = key.rotation;
+            key.gameObject.SetActive(true);
+            Vector3 lockAway = lockFrom + outward * 0.35f + right * 0.18f + Vector3.down * 0.35f;
+            bool scrape = false, click = false, pop = false, opened = false, leftGo = false, rightGo = false, doors = false, ring1 = false, ring2 = false;
+            for (float d = 0f; d < 9.2f && !skip; d += Time.deltaTime)
             {
                 Mark("door", d);
-                // The key goes in, turns; the shackle springs; the lock and then the chain fall.
-                key.localPosition = Vector3.Lerp(keyFrom, Vector3.zero, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((d - 1f) / 0.5f)));
-                key.localRotation = Quaternion.Euler(0f, 0f, 90f * Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((d - 1.7f) / 0.3f)));
-                if (!scrape && d > 1f)
+                // 1. The key: up into the light, a wobble as it finds the slot, in; a quarter turn.
+                float bring = Mathf.Clamp01((d - 1f) / 0.55f);
+                float u = Mathf.SmoothStep(0f, 1f, bring);
+                Vector3 path = (1f - u) * (1f - u) * keyStart + 2f * u * (1f - u) * keyBend + u * u * keyhole;
+                if (key.parent != padlock)
+                {
+                    float find = Mathf.Clamp01((d - 1.4f) / 0.15f);
+                    key.position = Vector3.Lerp(path + (keyIn - keyhole), keyIn, find) + right * Mathf.Sin(d * 40f) * 0.002f * (1f - find) * bring;
+                    key.rotation = keyRest * Quaternion.Euler(-25f * (1f - u), 18f * (1f - u), 0f);
+                    if (find >= 1f)
+                    {
+                        key.SetParent(padlock, true);
+                    }
+                }
+                else
+                {
+                    key.localRotation = Quaternion.Inverse(lockRest) * keyRest * Quaternion.Euler(0f, 0f, 90f * Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((d - 1.65f) / 0.25f)));
+                }
+                // The ring and its other key swing on the bow, livelier while the key moves.
+                float sway = Mathf.Exp(-Mathf.Max(0f, d - 1.55f) * 2.5f) * (d > 1f ? 1f : 0f);
+                keyRing.localRotation = Quaternion.Euler(Mathf.Sin(d * 9f) * 28f * sway, 0f, Mathf.Sin(d * 6.3f + 1f) * 18f * sway);
+                if (!scrape && d > 1.4f)
                 {
                     scrape = true;
                     effects.PlayOneShot(GameAudio.Ratchet(), 0.35f);
                 }
-                if (!click && d > 1.95f)
+                if (!click && d > 1.9f)
                 {
                     click = true;
                     effects.PlayOneShot(GameAudio.Ratchet(), 0.6f);
                 }
-                if (!pop && d > 2.15f)
+                if (!pop && d > 2f)
                 {
                     pop = true;
                     effects.PlayOneShot(GameAudio.Clunk(), 0.5f);
                 }
-                shackle.localPosition = new Vector3(0f, 0.014f * Mathf.Clamp01((d - 2.15f) / 0.06f), 0f);
-                if (d > 2.6f)
+                shackle.localPosition = new Vector3(0f, 0.014f * Mathf.Clamp01((d - 2f) / 0.06f), 0f);
+
+                // 2. The open lock is lifted off the chain and taken away, the key still in it.
+                if (d > 2.15f)
                 {
-                    // Gravity on the lock and on each link, a little later the farther it is from the lock.
-                    float fallen = d - 2.6f;
-                    padlock.position = lockFrom + Vector3.down * Mathf.Min(lockFrom.y - 0.03f, 4.9f * fallen * fallen) + outward * 0.1f * Mathf.Min(fallen, 0.5f);
-                    padlock.rotation = lockTurn * Quaternion.Euler(Mathf.Min(fallen, 0.45f) * 260f, 0f, Mathf.Min(fallen, 0.45f) * 90f);
-                    for (int i = 0; i < links.Count; i++)
+                    float lift = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((d - 2.15f) / 0.15f));
+                    float away = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((d - 2.3f) / 0.3f));
+                    padlock.position = Vector3.Lerp(lockFrom + Vector3.up * 0.02f * lift, lockAway, away);
+                    padlock.rotation = lockRest * Quaternion.Euler(-40f * away, 25f * away, 0f);
+                    if (away >= 1f)
                     {
-                        float f = Mathf.Max(0f, fallen - Mathf.Abs(i - links.Count * 0.5f) * 0.035f);
-                        links[i].position = fall[i] + Vector3.down * Mathf.Min(fall[i].y - 0.02f, 4.9f * f * f);
+                        padlock.gameObject.SetActive(false);
                     }
                 }
-                if (!drop && d > 3.05f)
+                if (!opened && d > 2.3f)
                 {
-                    drop = true;
-                    effects.PlayOneShot(GameAudio.Ratchet(), 0.9f);
-                    effects.PlayOneShot(GameAudio.Clunk(), 0.7f);
+                    opened = true;
+                    chain.Unlock();
+                    effects.PlayOneShot(GameAudio.Ratchet(), 0.5f);
                 }
-                if (!doors && d > 3.8f)
+                // 3. The halves swing from the bars, then slide off them and drop to the floor.
+                if (!leftGo && d > 3f)
+                {
+                    leftGo = true;
+                    chain.Release(0);
+                    effects.PlayOneShot(GameAudio.Ratchet(), 0.7f);
+                }
+                if (!rightGo && d > 3.35f)
+                {
+                    rightGo = true;
+                    chain.Release(1);
+                    effects.PlayOneShot(GameAudio.Ratchet(), 0.7f);
+                }
+                chain.Step(Time.deltaTime);
+                if (chain.Landed())
+                {
+                    effects.PlayOneShot(GameAudio.Clunk(), 0.6f);
+                    effects.PlayOneShot(GameAudio.Ratchet(), 0.9f);
+                }
+
+                if (!doors && d > 4f)
                 {
                     doors = true;
                     effects.PlayOneShot(director.Assets.ExitDoor != null ? director.Assets.ExitDoor : director.Assets.LockerDoor, 0.6f);
                 }
-                director.Level.Exit.SetLift(Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((d - 3.8f) / 1.8f)) * 0.75f);
+                director.Level.Exit.SetLift(Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((d - 4f) / 1.8f)) * 0.75f);
 
                 // Far inside, the office phone starts to ring.
-                if (!ring1 && d > 6.4f)
+                if (!ring1 && d > 6.6f)
                 {
                     ring1 = true;
                     director.Audio.Ring();
                 }
-                if (!ring2 && d > 8.6f)
+                if (!ring2 && d > 8.8f)
                 {
                     ring2 = true;
                     director.Audio.Ring();
@@ -827,18 +869,22 @@ namespace NightShift.Game
 
                 Vector3 eye, look;
                 float fov;
-                if (d < 3.8f)
+                if (d < 4f)
                 {
-                    // Close on the padlock in the flashlight.
-                    eye = Vector3.Lerp(outside, keyhole + outward * 0.5f + new Vector3(0.06f, 0.14f, 0f), Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(d / 1f))) + Handheld(d, 0.004f);
+                    // Close on the padlock in the flashlight, then down with the chain as it falls.
+                    // When the lock comes off, a step back to see both halves swing and drop.
+                    float back = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((d - 2.3f) / 0.6f));
+                    Vector3 close = keyhole + outward * 0.5f + new Vector3(0f, 0.14f, 0f) + right * 0.06f;
+                    Vector3 wide = keyhole + outward * 1.15f + new Vector3(0f, 0.3f, 0f) + right * 0.1f;
+                    eye = Vector3.Lerp(outside, Vector3.Lerp(close, wide, back), Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(d / 1f))) + Handheld(d, 0.004f);
                     look = Vector3.Lerp(new Vector3(PizzeriaLayout.ExitDoor.x, 1.4f, -17.3f), keyhole, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(d / 0.9f)));
-                    look = Vector3.Lerp(look, keyhole + Vector3.down * 0.8f, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((d - 2.8f) / 0.5f)));
-                    fov = 46f;
+                    look = Vector3.Lerp(look, chain.Center, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((d - 2.4f) / 0.8f)) * 0.8f);
+                    fov = Mathf.Lerp(46f, 62f, back);
                 }
                 else
                 {
                     // Push in through the doors into the dark lobby.
-                    float k = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((d - 4.3f) / 3.6f));
+                    float k = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((d - 4.5f) / 3.6f));
                     eye = Vector3.Lerp(outside, inside, k) + Vector3.up * Mathf.Sin(k * 18f) * 0.025f;
                     look = eye + new Vector3(-0.3f * k, -0.05f, 1f);
                     fov = 68f;
@@ -848,13 +894,13 @@ namespace NightShift.Game
                         director.Audio.PlayAmbient(true);
                     }
                     rain.volume = Mathf.Lerp(0.5f, 0.12f, k);
-                    if (d > 4.5f && d < 7.8f && Time.frameCount % 34 == 0)
+                    if (d > 4.7f && d < 8f && Time.frameCount % 34 == 0)
                     {
                         director.Audio.Footstep(0.45f);
                     }
                 }
                 Aim(player, eye, look, fov);
-                director.UI.SetCinematic(subtitle, Mathf.Clamp01((d - 8.2f) / 0.8f));
+                director.UI.SetCinematic(subtitle, Mathf.Clamp01((d - 8.4f) / 0.8f));
                 yield return null;
             }
             director.Level.Exit.SetLift(0f);
@@ -1112,7 +1158,7 @@ namespace NightShift.Game
             }
         }
 
-        /// <summary>A chain looped through the front doors' push bars, a padlock on it and the key.</summary>
+        /// <summary>A chain looped through the front doors' push bars, a padlock joining its ends, and the key on its ring.</summary>
         private void BuildChain()
         {
             Vector3 outward = -PizzeriaLayout.ExitInward(HuntMap.Exit);
@@ -1122,32 +1168,14 @@ namespace NightShift.Game
             props.Add(root.gameObject);
             Material steel = BuildKit.Plain("chainSteel", new Color(0.16f, 0.16f, 0.17f), 0.5f, 0.9f);
             Material brass = BuildKit.Plain("padlockBrass", new Color(0.36f, 0.27f, 0.12f), 0.45f, 1f);
-            Material keySteel = BuildKit.Plain("keySteel", new Color(0.7f, 0.68f, 0.6f), 0.7f, 1f);
+            Material keySteel = BuildKit.Plain("keySteel", new Color(0.62f, 0.6f, 0.53f), 0.65f, 1f);
 
-            // Links sagging from bar to bar, meeting at the lock in the middle; every other one turned.
-            const int count = 30;
-            for (int i = 0; i < count; i++)
-            {
-                float u = i / (count - 1f);
-                float x = Mathf.Lerp(-0.42f, 0.42f, u);
-                float sag = -0.11f * (1f - (2f * u - 1f) * (2f * u - 1f));
-                // An oval link: two thin sides and their rounded ends, as small bars.
-                var link = new GameObject("Link").transform;
-                link.SetParent(root, false);
-                link.localPosition = new Vector3(x, sag, 0f);
-                link.localRotation = Quaternion.Euler(i % 2 == 0 ? 0f : 90f, 0f, Mathf.Atan2(-0.44f * (2f * u - 1f), 1f) * Mathf.Rad2Deg);
-                for (int side = -1; side <= 1; side += 2)
-                {
-                    BuildKit.Cylinder("Side", link, new Vector3(0f, side * 0.008f, 0f), 0.006f, 0.03f, steel).transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
-                    BuildKit.Cylinder("End", link, new Vector3(side * 0.017f, 0f, 0f), 0.006f, 0.018f, steel);
-                }
-                links.Add(link);
-            }
             padlock = new GameObject("Padlock").transform;
             padlock.SetParent(root, false);
             padlock.localPosition = new Vector3(0.01f, -0.17f, -0.02f);
             BuildKit.Box("Body", padlock, Vector3.zero, new Vector3(0.06f, 0.055f, 0.024f), brass, 1f, false);
             BuildKit.Box("Face", padlock, new Vector3(0f, -0.004f, -0.0125f), new Vector3(0.05f, 0.04f, 0.002f), BuildKit.Plain("padlockFace", new Color(0.5f, 0.38f, 0.16f), 0.5f, 1f), 1f, false);
+            BuildKit.Cylinder("Keyway", padlock, new Vector3(0f, -0.008f, -0.0132f), 0.012f, 0.001f, BuildKit.Plain("keyway", new Color(0.05f, 0.05f, 0.05f), 0.3f)).transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
             shackle = new GameObject("Shackle").transform;
             shackle.SetParent(padlock, false);
             for (int side = -1; side <= 1; side += 2)
@@ -1155,14 +1183,236 @@ namespace NightShift.Game
                 BuildKit.Cylinder("Leg", shackle, new Vector3(side * 0.019f, 0.03f, 0f), 0.009f, 0.05f, steel);
             }
             BuildKit.Box("Bow", shackle, new Vector3(0f, 0.056f, 0f), new Vector3(0.047f, 0.009f, 0.009f), steel, 1f, false);
-            key = new GameObject("KeyPivot").transform;
-            key.SetParent(padlock, false);
-            var blade = new GameObject("Key").transform;
-            blade.SetParent(key, false);
-            blade.localPosition = new Vector3(0f, -0.008f, -0.03f);
-            BuildKit.Box("Blade", blade, Vector3.zero, new Vector3(0.006f, 0.014f, 0.035f), keySteel, 1f, false);
-            BuildKit.Box("Bow", blade, new Vector3(0f, 0f, -0.028f), new Vector3(0.004f, 0.03f, 0.024f), keySteel, 1f, false);
-            key.localPosition = new Vector3(0f, 0f, -0.06f);
+
+            // The chain: from the left push bar down to the lock and up to the right bar, a rope of links.
+            Transform links = new GameObject("Links").transform;
+            links.SetParent(transform, false);
+            props.Add(links.gameObject);
+            chain = new ChainRope(root.TransformPoint(new Vector3(-0.42f, 0f, 0f)), root.TransformPoint(new Vector3(0.42f, 0f, 0f)),
+                                  padlock.TransformPoint(new Vector3(0f, 0.056f, 0f)), PizzeriaLayout.ExitDoor.y + 0.03f, links, steel);
+
+            // The key, out of sight until the hand brings it, with a ring, a second key and a tag.
+            key = new GameObject("Key").transform;
+            key.SetParent(root, false);
+            key.localPosition = padlock.localPosition + new Vector3(0f, -0.008f, -0.03f);
+            key.localRotation = Quaternion.identity;
+            BuildKit.Box("Blade", key, new Vector3(0f, 0f, 0.012f), new Vector3(0.006f, 0.013f, 0.03f), keySteel, 1f, false);
+            BuildKit.Box("Shoulder", key, new Vector3(0f, 0f, -0.004f), new Vector3(0.007f, 0.018f, 0.004f), keySteel, 1f, false);
+            BuildKit.Box("Bow", key, new Vector3(0f, 0f, -0.019f), new Vector3(0.004f, 0.03f, 0.026f), keySteel, 1f, false);
+            keyRing = new GameObject("Ring").transform;
+            keyRing.SetParent(key, false);
+            keyRing.localPosition = new Vector3(0f, -0.01f, -0.03f);
+            for (int i = 0; i < 12; i++)
+            {
+                float angle = i * Mathf.PI * 2f / 12f;
+                var at = new Vector3(0f, -0.014f + Mathf.Cos(angle) * 0.014f, Mathf.Sin(angle) * 0.014f);
+                BuildKit.Cylinder("Wire", keyRing, at, 0.0018f, 0.008f, steel).transform.localRotation = Quaternion.Euler(angle * Mathf.Rad2Deg + 90f, 0f, 0f);
+            }
+            var spare = new GameObject("SpareKey").transform;
+            spare.SetParent(keyRing, false);
+            spare.localPosition = new Vector3(0.002f, -0.028f, 0f);
+            spare.localRotation = Quaternion.Euler(70f, 15f, 0f);
+            BuildKit.Box("Bow", spare, new Vector3(0f, 0f, 0.01f), new Vector3(0.004f, 0.026f, 0.022f), BuildKit.Plain("spareKey", new Color(0.55f, 0.45f, 0.22f), 0.6f, 1f), 1f, false);
+            BuildKit.Box("Blade", spare, new Vector3(0f, 0f, 0.035f), new Vector3(0.005f, 0.012f, 0.03f), BuildKit.Plain("spareKey", new Color(0.55f, 0.45f, 0.22f), 0.6f, 1f), 1f, false);
+            BuildKit.Box("Tag", keyRing, new Vector3(-0.004f, -0.05f, 0.004f), new Vector3(0.003f, 0.04f, 0.024f), BuildKit.Plain("keyTag", new Color(0.45f, 0.08f, 0.06f), 0.35f), 1f, false)
+                .transform.localRotation = Quaternion.Euler(-8f, 0f, 0f);
+            key.gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// The chain as a rope of points a link apart (Verlet integration with distance constraints):
+        /// held at both push bars and, through the padlock, in the middle. Opened, the two halves swing
+        /// from the bars; released, each slides off and falls, and lies on the floor.
+        /// </summary>
+        private class ChainRope
+        {
+            private const int Half = 16;              // links from a bar to the lock
+            private const float Tick = 1f / 120f;
+            private static readonly Vector3 Gravity = new Vector3(0f, -9.81f, 0f);
+
+            private readonly Vector3[] position;
+            private readonly Vector3[] previous;
+            private readonly bool[] pinned;
+            private readonly float rest;
+            private readonly float floor;
+            private readonly Transform[] links;
+            private bool locked = true;
+            private float pending;
+            private bool landedLeft, landedRight;
+
+            public ChainRope(Vector3 leftBar, Vector3 rightBar, Vector3 lockPoint, float floorHeight, Transform parent, Material steel)
+            {
+                int count = 2 * Half + 2;
+                position = new Vector3[count];
+                previous = new Vector3[count];
+                pinned = new bool[count];
+                floor = floorHeight;
+                float length = 0f;
+                for (int i = 0; i <= Half; i++)
+                {
+                    float u = i / (float)Half;
+                    position[i] = Vector3.Lerp(leftBar, lockPoint, u) + Vector3.down * Mathf.Sin(u * Mathf.PI) * 0.045f;
+                    position[count - 1 - i] = Vector3.Lerp(rightBar, lockPoint, u) + Vector3.down * Mathf.Sin(u * Mathf.PI) * 0.045f;
+                    if (i > 0)
+                    {
+                        length += Vector3.Distance(position[i - 1], position[i]);
+                    }
+                }
+                rest = length / Half;
+                pinned[0] = pinned[count - 1] = pinned[Half] = pinned[Half + 1] = true;
+                System.Array.Copy(position, previous, count);
+                links = new Transform[count - 2];
+                for (int i = 0; i < links.Length; i++)
+                {
+                    var link = new GameObject("Link").transform;
+                    link.SetParent(parent, false);
+                    // An oval link along its local x: two thin sides and their rounded ends.
+                    for (int side = -1; side <= 1; side += 2)
+                    {
+                        BuildKit.Cylinder("Side", link, new Vector3(0f, side * 0.008f, 0f), 0.006f, rest, steel).transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+                        BuildKit.Cylinder("End", link, new Vector3(side * rest * 0.55f, 0f, 0f), 0.006f, 0.018f, steel);
+                    }
+                    links[i] = link;
+                }
+                Draw();
+            }
+
+            /// <summary>Where the chain is, on average (for the camera to follow it down).</summary>
+            public Vector3 Center
+            {
+                get
+                {
+                    Vector3 sum = Vector3.zero;
+                    foreach (Vector3 point in position)
+                    {
+                        sum += point;
+                    }
+                    return sum / position.Length;
+                }
+            }
+
+            /// <summary>The lock is off: the two ends in the middle hang free.</summary>
+            public void Unlock()
+            {
+                locked = false;
+                pinned[Half] = pinned[Half + 1] = false;
+                // A small tug as the shackle comes out.
+                previous[Half] = position[Half] + new Vector3(0.01f, -0.02f, 0.01f);
+                previous[Half + 1] = position[Half + 1] + new Vector3(-0.01f, -0.02f, 0.01f);
+            }
+
+            /// <summary>One half (0 left, 1 right) slides off its push bar.</summary>
+            public void Release(int side)
+            {
+                int end = side == 0 ? 0 : position.Length - 1;
+                pinned[end] = false;
+                previous[end] = position[end] + new Vector3(side == 0 ? 0.03f : -0.03f, 0f, 0.02f);
+            }
+
+            /// <summary>True once, the first time each half hits the floor.</summary>
+            public bool Landed()
+            {
+                bool left = position[Half / 2].y <= floor + 0.01f;
+                bool right = position[position.Length - 1 - Half / 2].y <= floor + 0.01f;
+                bool now = left && !landedLeft || right && !landedRight;
+                landedLeft |= left;
+                landedRight |= right;
+                return now;
+            }
+
+            public void Step(float deltaTime)
+            {
+                pending = Mathf.Min(pending + deltaTime, 0.1f);
+                while (pending >= Tick)
+                {
+                    pending -= Tick;
+                    Simulate();
+                }
+                Draw();
+            }
+
+            private void Simulate()
+            {
+                for (int i = 0; i < position.Length; i++)
+                {
+                    if (pinned[i])
+                    {
+                        previous[i] = position[i];
+                        continue;
+                    }
+                    Vector3 velocity = (position[i] - previous[i]) * 0.992f;
+                    previous[i] = position[i];
+                    position[i] += velocity + Gravity * (Tick * Tick);
+                }
+                for (int iteration = 0; iteration < 16; iteration++)
+                {
+                    for (int i = 0; i < position.Length - 1; i++)
+                    {
+                        if (i == Half && !locked)
+                        {
+                            continue;   // the lock no longer joins the two halves
+                        }
+                        float length = i == Half ? 0f : rest;
+                        Vector3 delta = position[i + 1] - position[i];
+                        float distance = delta.magnitude;
+                        if (distance < 1e-6f)
+                        {
+                            continue;
+                        }
+                        Vector3 correction = delta * ((distance - length) / distance);
+                        bool a = pinned[i], b = pinned[i + 1];
+                        if (a && b)
+                        {
+                            continue;
+                        }
+                        if (a)
+                        {
+                            position[i + 1] -= correction;
+                        }
+                        else if (b)
+                        {
+                            position[i] += correction;
+                        }
+                        else
+                        {
+                            position[i] += correction * 0.5f;
+                            position[i + 1] -= correction * 0.5f;
+                        }
+                    }
+                    for (int i = 0; i < position.Length; i++)
+                    {
+                        if (position[i].y < floor)
+                        {
+                            // On the floor: it stops falling and drags (friction).
+                            position[i].y = floor;
+                            previous[i] = Vector3.Lerp(previous[i], position[i], 0.6f);
+                            previous[i].y = floor;
+                        }
+                    }
+                }
+            }
+
+            private void Draw()
+            {
+                int link = 0;
+                for (int i = 0; i < position.Length - 1; i++)
+                {
+                    if (i == Half)
+                    {
+                        continue;   // the lock, not a link
+                    }
+                    Vector3 along = position[i + 1] - position[i];
+                    Transform t = links[link];
+                    t.position = (position[i] + position[i + 1]) * 0.5f;
+                    if (along.sqrMagnitude > 1e-8f)
+                    {
+                        Vector3 up = Mathf.Abs(Vector3.Dot(along.normalized, Vector3.up)) > 0.95f ? Vector3.forward : Vector3.up;
+                        // The link's long side along the chain; every other one turned a quarter about it.
+                        t.rotation = Quaternion.LookRotation(along, up) * Quaternion.Euler(0f, -90f, 0f) * Quaternion.Euler(link % 2 == 0 ? 0f : 90f, 0f, 0f);
+                    }
+                    link++;
+                }
+            }
         }
 
         // ------------------------------------------------------------------ helpers
@@ -1283,7 +1533,7 @@ namespace NightShift.Game
                 Destroy(prop);
             }
             props.Clear();
-            links.Clear();
+            chain = null;
             kids.Clear();
             confetti.Clear();
             showBones = null;

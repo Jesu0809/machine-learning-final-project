@@ -7,7 +7,7 @@ namespace NightShift.Hunt
     /// hiding spot. Every value is in [0, 1]. See docs/ml-design.md, section 5.
     /// </summary>
     /// <remarks>
-    /// Layout (R = <see cref="HuntMap.RoomCount"/> = 13, so 5R + 9 = 74 values):
+    /// Layout (R = <see cref="HuntMap.RoomCount"/> = 13, so 7R + 9 = 100 values):
     ///   own room, one-hot (R)
     ///   noise memory per room (R)
     ///   last room where the player was seen, one-hot, all zero if never seen (R)
@@ -20,12 +20,17 @@ namespace NightShift.Hunt
     ///   "sense" readiness, 1 = ready, falls to 0 right after using it (1)
     ///   room where "sense" last found the player, one-hot, all zero if never (R)
     ///   ticks since that, normalized (1)
+    ///   per room: 1 if it is next to Freddy and a step there brings him closer to the loudest noise he remembers (R)
+    ///   per room: 1 if it is next to Freddy and a step there brings him closer to where he last saw or sensed the player (R)
+    /// The last two are the building's map in Freddy's head, relative to where he stands: without
+    /// them the network has to learn every pair of rooms on its own, and a pair the training rarely
+    /// shows (a noise in the Dining Hall heard from the Arcade) it never learns.
     /// </remarks>
     public static class FreddyObservations
     {
         private const int R = HuntMap.RoomCount;
 
-        public const int Size = 5 * R + 6 + HuntMap.MaxSpots;
+        public const int Size = 7 * R + 6 + HuntMap.MaxSpots;
 
         private const int RoomOffset = 0;
         private const int NoiseOffset = R;
@@ -39,6 +44,11 @@ namespace NightShift.Hunt
         private const int SenseReadyIndex = SearchedOffset + HuntMap.MaxSpots;
         private const int SensedOffset = SenseReadyIndex + 1;
         private const int SinceSensedIndex = SensedOffset + R;
+        private const int TowardNoiseOffset = SinceSensedIndex + 1;
+        private const int TowardSightingOffset = TowardNoiseOffset + R;
+
+        /// <summary>A remembered noise below this is too faint to steer by.</summary>
+        private const float FaintNoise = 0.1f;
 
         public static void Write(HuntState state, float[] output)
         {
@@ -73,6 +83,37 @@ namespace NightShift.Hunt
                 output[SensedOffset + (int)state.SensedRoom.Value] = 1f;
             }
             output[SinceSensedIndex] = Clamp01(state.TicksSinceSensed / window);
+
+            // Which neighboring rooms lead toward the loudest noise, and toward the last sighting.
+            Room here = state.FreddyRoom;
+            int loudest = -1;
+            for (int room = 0; room < HuntMap.RoomCount; room++)
+            {
+                if (state.NoiseMemory[room] >= FaintNoise && (loudest < 0 || state.NoiseMemory[room] > state.NoiseMemory[loudest]))
+                {
+                    loudest = room;
+                }
+            }
+            Room? sighting = null;
+            if (state.LastSeenRoom.HasValue && state.TicksSinceSeen < window)
+            {
+                sighting = state.LastSeenRoom.Value;
+            }
+            if (state.SensedRoom.HasValue && state.TicksSinceSensed < window && (!sighting.HasValue || state.TicksSinceSensed < state.TicksSinceSeen))
+            {
+                sighting = state.SensedRoom.Value;
+            }
+            foreach (Room next in HuntMap.GetNeighbors(here))
+            {
+                if (loudest >= 0 && HuntMap.Distance(next, (Room)loudest) < HuntMap.Distance(here, (Room)loudest))
+                {
+                    output[TowardNoiseOffset + (int)next] = 1f;
+                }
+                if (sighting.HasValue && HuntMap.Distance(next, sighting.Value) < HuntMap.Distance(here, sighting.Value))
+                {
+                    output[TowardSightingOffset + (int)next] = 1f;
+                }
+            }
         }
 
         private static float Clamp01(float value) => value < 0f ? 0f : value > 1f ? 1f : value;
