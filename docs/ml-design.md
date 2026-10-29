@@ -171,8 +171,8 @@ recharged.
 
 ## 5. Observations
 
-5R + 9 values (74 since `freddy_v7`; 43 in v1–v2, 54 in v3, 79 in v4, 64 in v5–v6), all in [0, 1], built only
-from what Freddy knows (`FreddyObservations.cs`):
+7R + 9 values (100 since `freddy_v9`; 43 in v1–v2, 54 in v3, 79 in v4, 64 in v5–v6, 74 in v7–v8), all in
+[0, 1], built only from what Freddy knows (`FreddyObservations.cs`):
 
 | Index | Observation |
 |---|---|
@@ -188,6 +188,14 @@ from what Freddy knows (`FreddyObservations.cs`):
 | 59 | Sense readiness (1 = ready, 0 right after using it) |
 | 60–72 | Room where sense last found the player, one-hot |
 | 73 | Decisions since that / 60 |
+| 74–86 | Per room: 1 if it is next to Freddy and a step there brings him closer to the loudest remembered noise (≥ 0.1) (`freddy_v9`) |
+| 87–99 | Per room: 1 if it is next to Freddy and a step there brings him closer to where he last saw or sensed the player (`freddy_v9`) |
+
+The last two blocks are the building's map in Freddy's head, relative to where he stands. With
+only one-hot rooms the network has to learn every pair of rooms from experience, and a pair the
+training rarely shows it never learns: v8 and v9 measured on the exact situation "in the Arcade,
+noise in the Dining Hall" chose to go there 0–9 % of the time. The map is not secret information
+(Freddy knows the building); the inputs still never contain where the player really is.
 
 Tonight's exit is **not** an input: Freddy has to find it out from the noise of the panel.
 
@@ -203,7 +211,8 @@ Tonight's exit is **not** an input: Freddy has to find it out from the noise of 
 | Search of a spot already searched since arriving | −0.02 extra |
 | Sense that finds nothing (`freddy_v3`) | −0.01 |
 | Staying or sensing in the room where the player hides, instead of searching (`freddy_v6`) | −0.05 |
-| Walking into a room where he has just heard a noise, noise memory ≥ 0.3 (`freddy_v8`) | +0.02 |
+| A step toward the freshest noise he remembers (noise memory ≥ 0.3), or into its room (`freddy_v8`: +0.02 only for walking into the room; `freddy_v10`) | +0.05 |
+| A move that does not bring him closer to a fresh noise (`freddy_v10`) | −0.03 |
 | Distance shaping | 0.1 · (γ·Φ(s′) − Φ(s)), with Φ(s) = −distance(Freddy, player) / diameter |
 
 The `freddy_v6` term exists because a policy can win by **waiting**: next to a hidden player he
@@ -218,6 +227,15 @@ way between the wings, and to predict the bot's route from the objectives it had
 the bot, but for a person the stealth and the party horns stop mattering, and the game tells the
 player that Freddy hunts by ear. The bonus is small and uses only what Freddy knows (his noise
 memory), not where the player really is.
+
+The `freddy_v10` terms come from a playtest. In two nights a person made noise in the Dining Hall
+while Freddy walked back and forth between the Main Hall and the Arcade, next door, choosing each
+move with 81–99 % confidence. In the simulation that situation happened 7 times in 1,000 nights:
+no objective sends the bot to the Dining Hall, so the network learned that it is never worth
+checking, noise or not. The new inputs of v9 (above) and a curious bot (section 7) were not enough
+on their own (v9: 9 %); rewarding every step toward a fresh noise and charging a little for
+walking past one was (v10: 100 % with a loud noise, 80 % with a faint one). Searching and sensing
+are never charged, so he can still check where the player hides first.
 
 The shaping term is **potential-based** (Ng et al., 1999), so it speeds up learning without
 changing the optimal policy. It uses the player's real room, which Freddy never observes:
@@ -238,15 +256,19 @@ player in the 3D game:
    never stepping into Freddy's last known room, and not next to it until it has waited
    `MaxWaitActions` actions (then it risks it: people do not freeze forever).
 
-**Domain randomization:** every training night uses random bot settings (tracker 0.5–0.97, hide
-0.4–0.8, run 0.05–0.45, patience 2–5, max wait 3–10, locker preference 0.1–0.9) so the policy does
-not overfit one play style. Evaluation uses three fixed presets:
+5. Curiosity (`freddy_v9`): each time it picks where to go next, with chance `Curiosity` it first
+   takes a detour to a random room (a dead end, the stage) and lingers there a few actions. People
+   do this; a bot that only takes shortest paths leaves whole rooms out of Freddy's training.
 
-| Preset | Tracker use | Hide | Run | Patience | Max wait |
-|---|---|---|---|---|---|
-| Novice | 0.55 | 0.75 | 0.40 | 2 | 3 |
-| Normal | 0.80 | 0.60 | 0.20 | 3 | 6 |
-| Expert | 0.95 | 0.45 | 0.08 | 3 | 8 |
+**Domain randomization:** every training night uses random bot settings (tracker 0.5–0.97, hide
+0.4–0.8, run 0.05–0.45, patience 2–5, max wait 3–10, locker preference 0.1–0.9, curiosity 0–0.3)
+so the policy does not overfit one play style. Evaluation uses three fixed presets:
+
+| Preset | Tracker use | Hide | Run | Patience | Max wait | Curiosity |
+|---|---|---|---|---|---|---|
+| Novice | 0.55 | 0.75 | 0.40 | 2 | 3 | 0.20 |
+| Normal | 0.80 | 0.60 | 0.20 | 3 | 6 | 0.10 |
+| Expert | 0.95 | 0.45 | 0.08 | 3 | 8 | 0.04 |
 
 ### Balance (simulation before training)
 
@@ -374,6 +396,8 @@ length and searches per night.
 - Each copy advances with a simulated tick instead of real time.
 - Config: `training/config/freddy_ppo.yaml` (256×2 network, buffer 20,480; 3M steps for v1–v3,
   5M since v4); run IDs `freddy_v1`, `freddy_v2`, …
+- Fine-tuning (`freddy_v10`): `training/config/freddy_ppo_finetune.yaml`, the same setup for 2.5M
+  steps, started from another run's weights with `mlagents-learn --initialize-from=freddy_v9`.
 
 ## 12. Limitations (for the report)
 
@@ -384,6 +408,10 @@ length and searches per night.
 - A policy can exploit weaknesses of the training bot (freddy_v1) or of the map (freddy_v5, which
   camped the only door to the exit). High catch rates alone do not show good behavior: the network
   has to be probed and watched, and the bot, the map or the reward fixed when that happens.
+- Situations the training rarely shows stay weak. In `freddy_v10` two remain: in the Banquet Room
+  with a noise in the Kitchen he goes to the Veranda instead (98 %), and in the Back Hall with a
+  noise in the Restrooms he goes there only 6–7 % of the time. They were found by asking the
+  network about chosen situations (`web/freddy_brain.py`), not by the catch rate.
 
 ## References
 

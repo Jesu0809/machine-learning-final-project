@@ -22,9 +22,13 @@
         <div class="col-md-5"><h3 class="h6 text-info">Finding</h3><p class="small mb-0">{{ run.finding }}</p></div>
         <div class="col-md-3">
           <h3 class="h6 text-info">Catch rate</h3>
-          <p class="small mb-1">Novice {{ run.catch_rate['Novice'] | percent: '1.0-1' }}</p>
-          <p class="small mb-1">Normal {{ run.catch_rate['Normal'] | percent: '1.0-1' }}</p>
-          <p class="small mb-1">Expert {{ run.catch_rate['Expert'] | percent: '1.0-1' }}</p>
+          @if (run.catch_rate) {
+            <p class="small mb-1">Novice {{ run.catch_rate['Novice'] | percent: '1.0-1' }}</p>
+            <p class="small mb-1">Normal {{ run.catch_rate['Normal'] | percent: '1.0-1' }}</p>
+            <p class="small mb-1">Expert {{ run.catch_rate['Expert'] | percent: '1.0-1' }}</p>
+          } @else {
+            <p class="small mb-1 text-muted">Not evaluated (stopped early)</p>
+          }
           <p class="small mb-0"><strong>{{ run.decision }}</strong></p>
         </div>
       </div>

@@ -41,7 +41,7 @@ export class MlEvidence {
     ['unity/Assets/Scripts/Core/FreddyRewards.cs', 'The reward function'],
     ['unity/Assets/Scripts/Brain/FreddyAgent.cs', 'The ML-Agents Agent'],
     ['unity/Assets/Scripts/Core/PolicyProbe.cs', 'Forward pass for the inspector'],
-    ['unity/Assets/ML/Models/freddy_v6.onnx', 'The trained model used in the game'],
+    ['unity/Assets/ML/Models/freddy_v10.onnx', 'The trained model used in the game'],
     ['training/config/freddy_ppo.yaml', 'PPO hyperparameters'],
     ['training/evaluation/results.json', 'Evaluation results'],
     ['docs/ml-design.md', 'Full design of the learning problem'],

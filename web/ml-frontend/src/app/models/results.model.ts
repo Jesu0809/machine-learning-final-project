@@ -31,7 +31,7 @@ export interface TrainingRun {
   reward_start: number;
   reward_end: number;
   change: string;
-  catch_rate: Record<string, number>;
+  catch_rate: Record<string, number> | null;
   finding: string;
   decision: string;
 }

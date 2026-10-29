@@ -10,7 +10,11 @@
       "reward_start": -0.46,
       "reward_end": 1.02,
       "change": "First run of the hunt.",
-      "catch_rate": {"Novice": 0.965, "Normal": 0.998, "Expert": 1.0},
+      "catch_rate": {
+        "Novice": 0.965,
+        "Normal": 0.998,
+        "Expert": 1.0
+      },
       "finding": "It exploited a weakness of the training bot: the bot froze while Freddy was within two rooms, so Freddy learned to patrol the center and the expert survivor, who read the tracker more often, was caught more. No information leak: the same model outside Unity gives the same rates.",
       "decision": "Keep, but fix the bot (it gets impatient) and retrain."
     },
@@ -24,7 +28,11 @@
       "reward_start": -0.41,
       "reward_end": 1.02,
       "change": "The survivor bot gets impatient: after waiting a few actions for a path next to Freddy, it risks it.",
-      "catch_rate": {"Novice": 0.92, "Normal": 0.975, "Expert": 0.99},
+      "catch_rate": {
+        "Novice": 0.92,
+        "Normal": 0.975,
+        "Expert": 0.99
+      },
       "finding": "The impatient bot escapes more often, but the trained policy stays far above both baselines; the confidence intervals never overlap.",
       "decision": "Keep."
     },
@@ -38,7 +46,11 @@
       "reward_start": -0.42,
       "reward_end": 1.03,
       "change": "New learned action SENSE (from Friday the 13th): it reveals the player's room if their fear is at least 0.5, then recharges. 11 new observations; -0.01 for a sense that finds nothing.",
-      "catch_rate": {"Novice": 0.995, "Normal": 0.985, "Expert": 0.992},
+      "catch_rate": {
+        "Novice": 0.995,
+        "Normal": 0.985,
+        "Expert": 0.992
+      },
       "finding": "It uses sense about as often as the scripted hunter, but its senses find the player 77-82% of the time against 62-67%: it learned when sensing pays off.",
       "decision": "Keep (replaced by v4 when the map grew)."
     },
@@ -52,7 +64,11 @@
       "reward_start": -0.68,
       "reward_end": 0.97,
       "change": "Bigger map for the 3D game: 14 rooms on two floors joined by stairs, and air ducts only the player fits through. The survivor bot learned to crawl through ducts. 5M steps instead of 3M for the larger state space.",
-      "catch_rate": {"Novice": 0.9975, "Normal": 1.0, "Expert": 0.955},
+      "catch_rate": {
+        "Novice": 0.9975,
+        "Normal": 1.0,
+        "Expert": 0.955
+      },
       "finding": "Still far above the scripted hunter (46-62%), but in the playtest the map felt confusing and Freddy too slow: one move in the simulation was a 16 m walk in 3D, so the brain planned as if rooms were next door.",
       "decision": "Replace: redesign the map and make the simulation count corridor length."
     },
@@ -66,7 +82,11 @@
       "reward_start": -0.56,
       "reward_end": 0.99,
       "change": "One floor in two wings (11 rooms): the staff wing and the public wing joined by a long service corridor and the kitchen pass, ducts crossing between them. Travel time: a long corridor costs two decisions for Freddy and the survivor, so the simulation runs at the pace of the 3D building.",
-      "catch_rate": {"Novice": 0.9925, "Normal": 1.0, "Expert": 0.9975},
+      "catch_rate": {
+        "Novice": 0.9925,
+        "Normal": 1.0,
+        "Expert": 0.9975
+      },
       "finding": "99-100% against every survivor, but probing the network showed a degenerate strategy: it walks to the Party Room, the only way into the Exit Lobby, and patrols there. It ignores far noises and searches only 0.1-0.5 spots per night (v4: 1.8-8.5). Camping the only door to the exit wins in the simulation and is dull to play against.",
       "decision": "Discard. Next: a random exit each night and a penalty for waiting next to a hidden player."
     },
@@ -80,15 +100,105 @@
       "reward_start": -0.52,
       "reward_end": 0.85,
       "change": "Two exits: each night the way out is the front doors or the loading door in the Storage, at random, and Freddy does not observe which. New reward term: -0.05 for staying or sensing in the room where the player hides instead of searching.",
-      "catch_rate": {"Novice": 0.9225, "Normal": 0.915, "Expert": 0.8175},
+      "catch_rate": {
+        "Novice": 0.9225,
+        "Normal": 0.915,
+        "Expert": 0.8175
+      },
       "finding": "No more exit camping: lower catch rates (82-92%), but still well above the scripted hunter (48-84%), and he searches 1-5 spots per night again. Probing shows a new bias: he heads for the staff wing, where the player starts, and often ignores noises in the public wing.",
+      "decision": "Keep until the map changed; replaced by freddy_v7."
+    },
+    {
+      "id": "freddy_v7",
+      "date": "2026-10-27",
+      "steps": 5000000,
+      "minutes": 79,
+      "observations": 74,
+      "actions": 17,
+      "reward_start": -0.02,
+      "reward_end": 0.98,
+      "change": "Miguel's 13-room map: the staff and public wings joined only through the north wing (Banquet Room and Veranda). Power cells carried one at a time to three sockets, plus breakers (night 3), keycard (night 4) and tape box (night 5); a lever opens the exit. The night is drawn at random in training.",
+      "catch_rate": {
+        "Novice": 1.0,
+        "Normal": 0.998,
+        "Expert": 0.99
+      },
+      "finding": "Wins every cell, but in the simulation it went to a noise in the next room only 35% of the time (scripted 95%): it cut the survivor off at the north wing and predicted its route from the objectives done.",
+      "decision": "Replace: for a person, stealth and the party horns stopped mattering."
+    },
+    {
+      "id": "freddy_v8",
+      "date": "2026-10-28",
+      "steps": 5000000,
+      "minutes": 80,
+      "observations": 74,
+      "actions": 17,
+      "reward_start": 0.08,
+      "reward_end": 0.99,
+      "change": "New reward term: +0.02 for walking into a room where he has just heard a noise.",
+      "catch_rate": {
+        "Novice": 0.998,
+        "Normal": 0.998,
+        "Expert": 0.995
+      },
+      "finding": "Goes to a noise in the next room 93% of the time (v7: 35%) with the same strength. A playtest later found a gap: noise in the Dining Hall heard from the Arcade, and he walked back and forth to the Main Hall instead. In the simulation that happened 7 times in 1,000 nights.",
+      "decision": "Replace: a whole room he would never check."
+    },
+    {
+      "id": "freddy_v9",
+      "date": "2026-10-28",
+      "steps": 3212546,
+      "minutes": 110,
+      "observations": 100,
+      "actions": 17,
+      "reward_start": 0.14,
+      "reward_end": 0.98,
+      "change": "26 new inputs: for each neighbouring room, whether a step there leads toward the loudest noise and toward the last sighting (the map in Freddy's head). The survivor bot became curious: detours to random rooms.",
+      "catch_rate": null,
+      "finding": "Noise-following generalized faster (88% at 3M steps) but the habit stayed: in the Arcade with a loud noise in the Dining Hall it went there 9% of the time. The Dining Hall has no objective, so the network had learned it is never worth checking.",
+      "decision": "Stopped at 3.2M steps; its weights start freddy_v10."
+    },
+    {
+      "id": "freddy_v10",
+      "date": "2026-10-28",
+      "steps": 2500000,
+      "minutes": 43,
+      "observations": 100,
+      "actions": 17,
+      "reward_start": 1.01,
+      "reward_end": 1.02,
+      "change": "Fine-tuned from freddy_v9: +0.05 for every step toward a fresh noise, -0.03 for a move that does not bring him closer to one (searching and sensing never charged).",
+      "catch_rate": {
+        "Novice": 1.0,
+        "Normal": 0.998,
+        "Expert": 0.978
+      },
+      "finding": "Goes to a noise in the next room 96% of the time and closer to a farther one 94%. In the Arcade with a loud noise in the Dining Hall: 100% (80% with a faint one). Two rare situations stay weak (Banquet to Kitchen, Back Hall to Restrooms).",
       "decision": "Keep. This is the brain in the game."
     }
   ],
   "sense": [
-    {"survivor": "Novice", "trained_uses": 1.08, "trained_hit": 0.78, "scripted_uses": 1.02, "scripted_hit": 0.65},
-    {"survivor": "Normal", "trained_uses": 1.32, "trained_hit": 0.77, "scripted_uses": 1.63, "scripted_hit": 0.62},
-    {"survivor": "Expert", "trained_uses": 1.66, "trained_hit": 0.82, "scripted_uses": 2.01, "scripted_hit": 0.67}
+    {
+      "survivor": "Novice",
+      "trained_uses": 1.08,
+      "trained_hit": 0.78,
+      "scripted_uses": 1.02,
+      "scripted_hit": 0.65
+    },
+    {
+      "survivor": "Normal",
+      "trained_uses": 1.32,
+      "trained_hit": 0.77,
+      "scripted_uses": 1.63,
+      "scripted_hit": 0.62
+    },
+    {
+      "survivor": "Expert",
+      "trained_uses": 1.66,
+      "trained_hit": 0.82,
+      "scripted_uses": 2.01,
+      "scripted_hit": 0.67
+    }
   ],
   "checks": [
     "The probabilities shown in the game and on this site come from the same weights as the .onnx model: the most likely action matches the model's choice in 7,007 of 7,007 states.",

@@ -271,5 +271,64 @@ After a run:
   so walking, crouching and the party horns matter again. The lesson for the report: a policy can
   be optimal against its training opponent and still wrong for the people who will play against
   it; catch rate alone did not show it, a behavioral measurement did.
-- **Decision:** keep. `unity/Assets/ML/Models/freddy_v8.onnx` is the game's brain.
+- **Decision:** kept until a playtest showed a gap it shares with v7; replaced by freddy_v10.
 
+### freddy_v9 — 2026-10-28
+
+- **Changed from previous run:** two new observation blocks (74 → 100 inputs): for each room next
+  to Freddy, whether a step there brings him closer to the loudest noise he remembers, and whether
+  it brings him closer to where he last saw or sensed the player. The survivor bot got a
+  `Curiosity` setting (randomized 0–0.3 in training): detours to a random room before its next goal.
+- **Why:** a playtest of night 2 and night 3. The player made noise in the Dining Hall while Freddy
+  went back and forth between the Main Hall and the Arcade, next door, for half a minute, each move
+  chosen with 81–99 % confidence. The harness, split by pairs of rooms, showed the cause: of 341
+  noises heard in the next room, 286 were "in the Veranda, noise in the Banquet Room"; "in the
+  Arcade, noise in the Dining Hall" happened 7 times in 1,000 nights and v8 went there once. The
+  Dining Hall has no objective, so the bot almost never enters it, and with one-hot rooms the
+  network has to learn every pair of rooms from experience.
+- **Config changes:** none (5M planned).
+- **Steps trained / wall time:** stopped at 3,212,546 steps (about 1 h 50 min, including a pause
+  while the computer slept), once the measurements below showed the inputs alone would not fix it.
+- **Final mean cumulative reward:** +0.98.
+- **Behavior (harness, 1,000 nights):** at 3M steps it went to a noise in the next room 88 % of
+  the time and moved closer to a farther noise 71 %, catching 98.8 %. Asked directly (in the Arcade,
+  a loud noise in the Dining Hall, sense not ready) it chose the Main Hall 90 % and the Dining Hall
+  9 %; with sense ready, sense 98 %, the Dining Hall 0 %.
+- **Observations:** the new inputs made noise-following generalize faster, but the learned habit
+  stayed: a room the bot never needs is a room not worth checking, whatever Freddy hears there. The
+  more curious bot raised that situation only from 7 to about 8–9 times in 1,000 nights.
+- **Decision:** discard as the game's brain; its weights are the starting point of freddy_v10.
+
+### freddy_v10 — 2026-10-28
+
+- **Changed from previous run:** the reward. A step toward the freshest noise Freddy remembers (or
+  into its room) earns +0.05 (v8: +0.02, only for walking into the room); a move that does not
+  bring him closer to a fresh noise costs −0.03. Searching and sensing are never charged.
+  Inputs (100) and the curious bot as in v9.
+- **Why:** v9's measurements above: the habit was not a lack of information but what the reward
+  made worth doing.
+- **Config changes:** fine-tuning from freddy_v9's weights (`--initialize-from=freddy_v9`) with
+  `training/config/freddy_ppo_finetune.yaml`, the same setup for 2.5M steps.
+- **Steps trained / wall time:** 2,500,000 steps in 43 min (5.7M in total with v9's).
+- **Final mean cumulative reward:** +1.02 (the noise bonus adds to v9's +0.98).
+- **Behavior (harness, 1,500 nights):** goes to a noise in the next room 96 % of the time (v8: 93 %),
+  moves closer to a farther noise 94 % (v8: 87 %); 2.3 searches and 1.4 senses per night; caught
+  99.7 %. Asked directly, in the Arcade with a loud noise in the Dining Hall: with sense not ready
+  it goes to the Dining Hall 100 % (80 % with a faint noise); with sense ready it senses first (99 %).
+  Two rare situations remain weak: in the Banquet Room with a noise in the Kitchen it goes to the
+  Veranda (98 %), and in the Back Hall with a noise in the Restrooms it goes there 6–7 %.
+- **Evaluation (400 nights per cell, catch rate with 95% Wilson interval):**
+
+  | Survivor | Trained | Scripted | Random |
+  |---|---|---|---|
+  | Novice | 100.0 % (99.1–100.0) | 96.0 % (93.6–97.5) | 87.0 % (83.4–90.0) |
+  | Normal | 99.8 % (98.6–100.0) | 82.2 % (78.2–85.7) | 80.2 % (76.1–83.9) |
+  | Expert | 97.8 % (95.8–98.8) | 55.8 % (50.8–60.5) | 57.2 % (52.4–62.0) |
+
+  The baselines catch more than in v8's table because the evaluation bots are now curious: detours
+  cost them time. The trained policy keeps the same lead over both.
+- **Observations:** the lesson for the report is the same as v8's, one level deeper. A catch rate of
+  99.8 % hid a whole room Freddy would never enter; only a person playing found it, and only
+  asking the network about one exact situation explained it. Measuring by pairs of rooms is now
+  part of checking a policy.
+- **Decision:** keep. `unity/Assets/ML/Models/freddy_v10.onnx` is the game's brain.

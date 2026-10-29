@@ -32,16 +32,20 @@
   <div class="row g-3 mb-4">
     @for (run of runs()?.runs ?? []; track run.id) {
       <div class="col-lg-4">
-        <div class="card h-100" [class.border-info]="run.id === 'freddy_v6'">
+        <div class="card h-100" [class.border-info]="run.id === 'freddy_v10'">
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-start">
               <h3 class="h5">{{ run.id }}</h3>
-              @if (run.id === 'freddy_v6') { <span class="badge text-bg-info">in the game</span> }
+              @if (run.id === 'freddy_v10') { <span class="badge text-bg-info">in the game</span> }
             </div>
             <p class="small text-muted mb-2">{{ run.date }} · {{ run.steps | number }} steps · {{ run.minutes }} min · {{ run.observations }} obs / {{ run.actions }} actions</p>
             <p class="mb-2"><strong>Change:</strong> {{ run.change }}</p>
             <p class="mb-2">Reward <strong>{{ run.reward_start }}</strong> → <strong>{{ run.reward_end }}</strong></p>
-            <p class="small mb-2">Catch rate: Novice {{ run.catch_rate['Novice'] | percent: '1.0-1' }} · Normal {{ run.catch_rate['Normal'] | percent: '1.0-1' }} · Expert {{ run.catch_rate['Expert'] | percent: '1.0-1' }}</p>
+            @if (run.catch_rate) {
+              <p class="small mb-2">Catch rate: Novice {{ run.catch_rate['Novice'] | percent: '1.0-1' }} · Normal {{ run.catch_rate['Normal'] | percent: '1.0-1' }} · Expert {{ run.catch_rate['Expert'] | percent: '1.0-1' }}</p>
+            } @else {
+              <p class="small mb-2 text-muted">Not evaluated (stopped early).</p>
+            }
             <p class="small mb-2"><strong>Finding:</strong> {{ run.finding }}</p>
             <p class="small mb-0"><strong>Decision:</strong> {{ run.decision }}</p>
           </div>
@@ -71,7 +75,7 @@
         <li>How long it waits before risking a path next to him, and which hiding spot it prefers.</li>
       </ul>
       <p class="small text-muted mb-2">Evaluation uses three fixed presets: Novice, Normal and Expert.</p>
-      <p class="small text-muted mb-0">Reproduce: <code>mlagents-learn config/freddy_ppo.yaml --run-id=freddy_v6</code> and press Play on the HuntTraining scene.</p>
+      <p class="small text-muted mb-0">Reproduce: <code>mlagents-learn config/freddy_ppo.yaml --run-id=freddy_v9</code>, then <code>mlagents-learn config/freddy_ppo_finetune.yaml --run-id=freddy_v10 --initialize-from=freddy_v9</code>, and press Play on the HuntTraining scene.</p>
     </div></div></div>
   </div>
 

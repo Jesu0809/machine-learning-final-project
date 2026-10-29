@@ -2,7 +2,7 @@
 
 The weights are the same network the game uses (exported from the .onnx model by
 training/scripts/export_policy_weights.py). The observation vector is built exactly like
-FreddyObservations.cs (74 values) and the legal actions like FreddyActions.cs (17 actions), so the
+FreddyObservations.cs (100 values) and the legal actions like FreddyActions.cs (17 actions), so the
 probabilities shown on the website are the ones the game's Freddy would have in that situation.
 """
 import os
@@ -47,9 +47,9 @@ ACTION_COUNT = ROOM_COUNT + MAX_SPOTS + 1
 SENSE = ROOM_COUNT + MAX_SPOTS
 FREDDY_START = 6  # asleep on the stage of the Dining Hall
 
-# Offsets of the observation vector (FreddyObservations.cs): 5 R + 6 + MAX_SPOTS values.
+# Offsets of the observation vector (FreddyObservations.cs): 7 R + 6 + MAX_SPOTS values.
 R = ROOM_COUNT
-OBS_SIZE = 5 * R + 6 + MAX_SPOTS
+OBS_SIZE = 7 * R + 6 + MAX_SPOTS
 NOISE = R
 LAST_SEEN = 2 * R
 SINCE_SEEN = 3 * R
@@ -61,6 +61,9 @@ SEARCHED = 4 * R + 4
 SENSE_READY = SEARCHED + MAX_SPOTS
 SENSED = SENSE_READY + 1
 SINCE_SENSED = SENSED + R
+TOWARD_NOISE = SINCE_SENSED + 1
+TOWARD_SIGHTING = TOWARD_NOISE + R
+FAINT_NOISE = 0.1
 
 # HuntSettings defaults (the values the brain was trained with).
 MEMORY_WINDOW = 60
@@ -87,7 +90,7 @@ _LAYERS = _load_layers() if os.path.isfile(WEIGHTS_FILE) else None
 
 
 def network_info():
-    """Sizes of the network layers, e.g. [74, 256, 256, 17]."""
+    """Sizes of the network layers, e.g. [100, 256, 256, 17]."""
     if _LAYERS is None:
         return []
     return [int(_LAYERS[0][0].shape[1])] + [int(weights.shape[0]) for weights, _ in _LAYERS]
@@ -102,8 +105,30 @@ def action_name(action, room):
     return "Stay and listen" if action == room else "Go to " + ROOMS[action]
 
 
+def _distances():
+    """Rooms between every pair of rooms (breadth-first search over NEIGHBORS), like HuntMap.Distance."""
+    table = []
+    for start in range(ROOM_COUNT):
+        dist = [None] * ROOM_COUNT
+        dist[start] = 0
+        frontier = [start]
+        while frontier:
+            nxt = []
+            for r in frontier:
+                for n in NEIGHBORS[r]:
+                    if dist[n] is None:
+                        dist[n] = dist[r] + 1
+                        nxt.append(n)
+            frontier = nxt
+        table.append(dist)
+    return table
+
+
+DISTANCE = _distances()
+
+
 def observations(state):
-    """The 74 inputs, as FreddyObservations.cs builds them, from a description of what Freddy knows."""
+    """The 100 inputs, as FreddyObservations.cs builds them, from a description of what Freddy knows."""
     obs = np.zeros(OBS_SIZE, dtype=np.float64)
     room = int(state.get("freddy_room", FREDDY_START))
     obs[room] = 1.0
@@ -137,6 +162,20 @@ def observations(state):
         obs[SINCE_SENSED] = min(1.0, float(state.get("seconds_since_sensed", 0)) / SECONDS_PER_DECISION / MEMORY_WINDOW)
     else:
         obs[SINCE_SENSED] = 1.0
+    # The map in Freddy's head: which neighbors lead toward the loudest noise and toward the last
+    # sighting (or sense), whichever is more recent.
+    noise = obs[NOISE:NOISE + R]
+    loudest = int(np.argmax(noise)) if noise.max() >= FAINT_NOISE else None
+    sighting = None
+    if seen is not None and obs[SINCE_SEEN] < 1.0:
+        sighting = int(seen)
+    if sensed is not None and obs[SINCE_SENSED] < 1.0 and (sighting is None or obs[SINCE_SENSED] < obs[SINCE_SEEN]):
+        sighting = int(sensed)
+    for n in NEIGHBORS[room]:
+        if loudest is not None and DISTANCE[n][loudest] < DISTANCE[room][loudest]:
+            obs[TOWARD_NOISE + n] = 1.0
+        if sighting is not None and DISTANCE[n][sighting] < DISTANCE[room][sighting]:
+            obs[TOWARD_SIGHTING + n] = 1.0
     return obs
 
 

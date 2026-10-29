@@ -1613,7 +1613,7 @@ def main():
     save_rgba("vhs_osd_guard4", vhs_osd("CAM 01  OFFICE", "NIGHT 5", "GUARD #4", "03:12:44 AM", rec=True))
     save_rgba("vhs_osd_guard5", vhs_osd("LIVE", "", "GUARD #5", "--:--", rec=True))
     save("vhs_blue_play", vhs_blue([]))
-    save("vhs_blue_end", vhs_blue(["GUARD #5", "NIGHTS RECORDED: 5", "ADDED TO TRAINING SET", "", "FREDDY_V8  TRAINING", "#87"], play=False))
+    save("vhs_blue_end", vhs_blue(["GUARD #5", "NIGHTS RECORDED: 5", "ADDED TO TRAINING SET", "", "FREDDY_V10  TRAINING", "#87"], play=False))
     save_rgba("glass_vhs_scanlines", vhs_scanlines())
     save("vhs_static", vhs_static())
     (out / "signs.json").write_text(json.dumps(made, indent=2, sort_keys=True) + "\n")
