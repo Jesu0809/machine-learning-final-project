@@ -14,7 +14,7 @@ namespace NightShift.Game
     /// <item>Guard #4's fifth night: the office camera, Freddy coming closer, then snow.</item>
     /// <item>"Live": the apartment itself, from the corner. Freddy stands in the doorway on the tape;
     ///       the room is empty when the guard turns around.</item>
-    /// <item>The blue screen: guard #5 added to the training set, freddy_v8 training. The lights die.</item>
+    /// <item>The blue screen: guard #5 added to the training set, freddy_v10 training. The lights die.</item>
     /// </list>
     /// The footage is real: a second camera films the building (and the apartment) into a texture
     /// shown on the TV, with the tape's on-screen text, scanlines and tracking noise on top.
@@ -366,7 +366,7 @@ namespace NightShift.Game
                     look = tvGlass;
                     fade = 1f;
                     Card(g, 0.6f, 3.6f, "NIGHT SHIFT", 130, ref card, ref cardAlpha, ref cardSize);
-                    Card(g, 3.8f, 6.8f, "freddy_v8 is learning from you.", 40, ref card, ref cardAlpha, ref cardSize);
+                    Card(g, 3.8f, 6.8f, "freddy_v10 is learning from you.", 40, ref card, ref cardAlpha, ref cardSize);
                     rain.volume = Mathf.MoveTowards(rain.volume, 0f, Time.deltaTime * 0.15f);
                 }
 

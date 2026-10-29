@@ -26,12 +26,20 @@ namespace NightShift.Hunt
         /// </summary>
         public const float WaitedOutsideHiding = -0.05f;
         /// <summary>
-        /// Walking into a room where he just heard a noise (freddy_v8). Without it, v7 learned to
-        /// cut the survivor off at the north wing and ignored most noises: unbeatable for the bot,
-        /// but the stealth and the party horns no longer mattered to a person. A small bonus: he
-        /// hunts by ear, as the game tells the player he does.
+        /// A step toward the freshest noise he heard, or into its room (freddy_v8 rewarded only
+        /// walking into the room, +0.02; freddy_v10 rewards every step toward it, +0.05). Without
+        /// it, v7 learned to cut the survivor off at the north wing and ignored most noises:
+        /// unbeatable for the bot, but the stealth and the party horns no longer mattered to a
+        /// person. He hunts by ear, as the game tells the player he does.
         /// </summary>
-        public const float InvestigatedNoise = 0.02f;
+        public const float InvestigatedNoise = 0.05f;
+
+        /// <summary>
+        /// Walking away from (or past) a fresh noise (freddy_v10). v9 still learned that a room no
+        /// objective sends the survivor to (the Dining Hall) is never worth checking, and ignored a
+        /// noise there from the next room: for a person who goes there, a bear that will not come.
+        /// </summary>
+        public const float IgnoredNoise = -0.03f;
         /// <summary>Noise memory (level / 3, fading ×0.8 a tick) above which a noise counts as fresh.</summary>
         public const float FreshNoise = 0.3f;
         public const float ShapingScale = 0.1f;
@@ -60,6 +68,10 @@ namespace NightShift.Hunt
             if (step.InvestigatedNoise)
             {
                 reward += InvestigatedNoise;
+            }
+            if (step.IgnoredNoise)
+            {
+                reward += IgnoredNoise;
             }
             if (step.Outcome == HuntOutcome.InProgress)
             {

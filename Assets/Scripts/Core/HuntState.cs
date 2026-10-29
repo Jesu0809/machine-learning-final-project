@@ -96,15 +96,19 @@ namespace NightShift.Hunt
         /// <summary>He stayed or sensed in the room where the player hides, instead of searching (privileged; reward only).</summary>
         public readonly bool WaitedOutsideHiding;
 
-        /// <summary>He walked into a room where he had just heard a noise (see FreddyRewards.InvestigatedNoise).</summary>
+        /// <summary>He stepped toward the freshest noise he heard, or into its room (see FreddyRewards.InvestigatedNoise).</summary>
         public readonly bool InvestigatedNoise;
+
+        /// <summary>A fresh noise was waiting and he walked somewhere that does not bring him closer to it (see FreddyRewards.IgnoredNoise).</summary>
+        public readonly bool IgnoredNoise;
 
         public FreddyStep(int action, Room from, Room to, int distanceBefore, int distanceAfter,
                           bool failedSearch, bool repeatedSearch, HuntOutcome outcome, bool senseUsed = false, bool senseFound = false,
-                          bool waitedOutsideHiding = false, bool investigatedNoise = false)
+                          bool waitedOutsideHiding = false, bool investigatedNoise = false, bool ignoredNoise = false)
         {
             WaitedOutsideHiding = waitedOutsideHiding;
             InvestigatedNoise = investigatedNoise;
+            IgnoredNoise = ignoredNoise;
             SenseUsed = senseUsed;
             SenseFound = senseFound;
             Action = action;
@@ -812,6 +816,20 @@ namespace NightShift.Hunt
         /// Applies Freddy's action and advances the clock one tick. An illegal action is treated as
         /// "stay" (it should never happen: illegal actions are masked).
         /// </summary>
+        /// <summary>The room with the loudest noise in Freddy's memory, if it is still fresh; otherwise -1.</summary>
+        private int FreshestNoise()
+        {
+            int loudest = -1;
+            for (int room = 0; room < HuntMap.RoomCount; room++)
+            {
+                if (NoiseMemory[room] >= FreddyRewards.FreshNoise && (loudest < 0 || NoiseMemory[room] > NoiseMemory[loudest]))
+                {
+                    loudest = room;
+                }
+            }
+            return loudest;
+        }
+
         public FreddyStep ApplyFreddyAction(int action)
         {
             if (IsOver)
@@ -834,6 +852,7 @@ namespace NightShift.Hunt
             bool waitedOutsideHiding = PlayerHidden && PlayerRoom == FreddyRoom
                                        && (FreddyActions.IsSense(action) || action == FreddyActions.GoTo(FreddyRoom));
             bool investigatedNoise = false;
+            bool ignoredNoise = false;
 
             if (FreddyActions.IsSense(action))
             {
@@ -852,8 +871,15 @@ namespace NightShift.Hunt
             else if (FreddyActions.IsMove(action))
             {
                 var target = (Room)action;
-                // Going to see what made a noise he heard there a moment ago (what Freddy knows, not where the player is).
-                investigatedNoise = target != FreddyRoom && NoiseMemory[(int)target] >= FreddyRewards.FreshNoise;
+                // Going to see what made a noise he heard a moment ago, or stepping toward it (what
+                // Freddy knows, not where the player is); walking some other way while it is fresh ignores it.
+                int heard = FreshestNoise();
+                if (target != FreddyRoom && heard >= 0 && heard != (int)FreddyRoom)
+                {
+                    bool closer = HuntMap.Distance(target, (Room)heard) < HuntMap.Distance(FreddyRoom, (Room)heard);
+                    investigatedNoise = closer;
+                    ignoredNoise = !closer;
+                }
                 if (target != FreddyRoom)
                 {
                     // A long connection keeps him walking for its extra decisions (see FreddyCanDecide).
@@ -886,7 +912,7 @@ namespace NightShift.Hunt
 
             AdvanceClock();
             int distanceAfter = HuntMap.Distance(FreddyRoom, PlayerRoom);
-            return new FreddyStep(action, from, FreddyRoom, distanceBefore, distanceAfter, failedSearch, repeatedSearch, Outcome, senseUsed, senseFound, waitedOutsideHiding, investigatedNoise);
+            return new FreddyStep(action, from, FreddyRoom, distanceBefore, distanceAfter, failedSearch, repeatedSearch, Outcome, senseUsed, senseFound, waitedOutsideHiding, investigatedNoise, ignoredNoise);
         }
 
         private void AdvanceClock()

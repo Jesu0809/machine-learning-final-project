@@ -190,6 +190,9 @@ namespace NightShift.Game
             var cover = BuildKit.Box("Awning", root, new Vector3(doorX, doorTop + 0.55f, LobbyFrontZ - 0.85f), new Vector3(4.2f, 0.06f, 1.6f), awning, 1.5f, false);
             cover.transform.localRotation = Quaternion.Euler(-18f, 0f, 0f);
             BuildKit.Box("AwningValance", root, new Vector3(doorX, doorTop + 0.15f, LobbyFrontZ - 1.6f), new Vector3(4.2f, 0.3f, 0.04f), awning, 1.5f, false);
+            // The threshold under the doors, from the sidewalk to the doors' sill (no gap of street between them).
+            BuildKit.Box("Threshold", root, new Vector3(doorX, -0.03f, (LobbyFrontZ + PizzeriaLayout.ExitDoor.z) * 0.5f - 0.1f),
+                         new Vector3(half * 2f, 0.1f, PizzeriaLayout.ExitDoor.z - LobbyFrontZ + 0.3f), sidewalk, 1f, false);
             var porch = Lamp(root, new Vector3(doorX, doorTop + 0.3f, LobbyFrontZ - 0.5f), new Color(1f, 0.75f, 0.45f), 9f, 8f);
             porch.shadows = LightShadows.None;
         }
