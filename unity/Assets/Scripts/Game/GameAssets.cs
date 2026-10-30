@@ -99,6 +99,15 @@ namespace NightShift.Game
         public AudioClip CarEngine;
         public AudioClip VoicemailBeep;
 
+        [Tooltip("Freddy's footsteps, recordings in Assets/Audio/Freddy/Steps (one picked at random each step). Empty: synthesized.")]
+        public AudioClip[] FreddySteps;
+
+        [Tooltip("Freddy's joints moving, short servo recordings in Assets/Audio/Freddy/Servo. Empty: synthesized.")]
+        public AudioClip[] FreddyServos;
+
+        [Tooltip("Freddy's frame creaking while he stands still, recordings in Assets/Audio/Freddy/Creaks. Empty: synthesized.")]
+        public AudioClip[] FreddyCreaks;
+
         [Tooltip("Intro narration, one clip per line of StoryData.Intro.")]
         public AudioClip[] IntroLines;
 

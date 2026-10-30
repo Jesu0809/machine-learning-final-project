@@ -501,10 +501,17 @@ namespace NightShift.Game
             head.rotation = Quaternion.Euler(slopePitch + crawlLookPitch + bob * 40f, crawlYaw + crawlLookYaw + sway, roll * (1f - rise));
         }
 
+        /// <summary>Seconds before another vent can be entered after coming out of one (HuntSettings.DuctCooldownActions in the simulation).</summary>
+        public const float DuctCooldownSeconds = 25f;
+
+        /// <summary>When the player may crawl into a vent again.</summary>
+        public float DuctReadyAt { get; private set; }
+
         private void FinishCrawl()
         {
             Vector3 stand = crawlPath[crawlPath.Count - 1] - Vector3.up * 1.0f;
             Crawling = false;
+            DuctReadyAt = Time.time + DuctCooldownSeconds;
             transform.position = stand;
             body.enabled = true;
             yaw = crawlYaw;
@@ -521,6 +528,7 @@ namespace NightShift.Game
                 EndFocus();
             }
             Crawling = false;
+            DuctReadyAt = 0f;
             hideMotion = 1f;
             leaveMotion = 1f;
             if (HiddenIn != null)

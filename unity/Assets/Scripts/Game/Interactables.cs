@@ -107,6 +107,22 @@ namespace NightShift.Game
 
         private float closingSpeed = 4f;
 
+        /// <summary>Opens the door and keeps it open (Freddy looking inside) until <see cref="Shut"/>.</summary>
+        public void HoldOpen()
+        {
+            CancelInvoke(nameof(CloseDoor));
+            doorTarget = 1f;
+            doorSpeed = 5f;
+        }
+
+        /// <summary>Swings the door shut at <paramref name="speed"/> (doors per second).</summary>
+        public void Shut(float speed)
+        {
+            CancelInvoke(nameof(CloseDoor));
+            doorTarget = 0f;
+            doorSpeed = speed;
+        }
+
         private void CloseDoor()
         {
             doorTarget = 0f;
@@ -347,6 +363,7 @@ namespace NightShift.Game
                 flicker.hum.pitch = Random.Range(0.97f, 1.03f);
                 flicker.hum.time = Random.value * 0.9f;
                 flicker.hum.Play();
+                GameAudio.KeepLooping(flicker.hum);
             }
             if (fixture != null && lamp.intensity > 0f)
             {
@@ -392,7 +409,7 @@ namespace NightShift.Game
         private bool dead;
         private bool lastSurging;
         private AudioSource hum;
-        private const float HumVolume = 0.06f;
+        private const float HumVolume = 0.025f;
 
         private static Vector3 surgeAt;
         private static float surgeRadius;

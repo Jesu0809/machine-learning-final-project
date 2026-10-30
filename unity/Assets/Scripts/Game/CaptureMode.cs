@@ -63,6 +63,22 @@ namespace NightShift.Game
                 Application.Quit();
                 yield break;
             }
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-audiotest") >= 0)
+            {
+                yield return AudioTest();
+                Application.Quit();
+                yield break;
+            }
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-sockets") >= 0)
+            {
+                yield return new WaitForSeconds(1f);
+                director.StartNight(2);
+                director.SkipCall();
+                yield return new WaitForSeconds(1f);
+                yield return LayoutShots();
+                Application.Quit();
+                yield break;
+            }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-sixam") >= 0)
             {
                 yield return SixAMTest();
@@ -373,11 +389,11 @@ namespace NightShift.Game
                     yield return Shot(prefix + "b-cell-in-hand");
                 }
                 int socket = 0;
-                while (socket < director.Level.Sockets.Length && !director.State.CellFits(cell, socket))
+                while (socket < director.State.SocketRooms.Count && !director.State.CellFits(cell, socket))
                 {
                     socket++;
                 }
-                PowerSocket target = director.Level.Sockets[socket];
+                PowerSocket target = director.Level.LiveSocket(socket);
                 Vector3 front = target.transform.position + target.transform.forward * 1.1f;
                 Teleport(new Vector3(front.x, 0f, front.z), -target.transform.forward);
                 yield return Aim(target.transform.position);
@@ -941,6 +957,7 @@ namespace NightShift.Game
                           " after " + (Time.time - t0).ToString("0.0") + " s, standing " + (director.Player.transform.position.y).ToString("0.00"));
             }
             Debug.Log("CAPTURE AUDIT done: " + tested + " walks, " + blocked + " blocked");
+            yield return LayoutShots();
         }
 
         /// <summary>Turns the player's view onto a point (the tour teleports with level eyes).</summary>
@@ -951,6 +968,104 @@ namespace NightShift.Game
                 director.Player.LookToward(point, 12f);
                 yield return null;
             }
+        }
+
+        /// <summary>
+        /// How Freddy reaches the player's ears from around them: the game's mixed output, per ear,
+        /// with his steps to each side, in front, behind, far away and in the next room, then as he
+        /// walks in on his own legs and stands still.
+        /// </summary>
+        private IEnumerator AudioTest()
+        {
+            yield return new WaitForSeconds(1f);
+            director.StartNight(2);
+            director.SkipCall();
+            yield return new WaitForSeconds(1.5f);
+            var spot = new Vector3(13.5f, 0f, -1.5f);   // the Main Hall, looking east along it
+            Teleport(spot, Vector3.right);
+            // What actually reaches the ears: the mixed output, left and right, while he takes four
+            // steps at each spot, against the room with him silent and far away (the hum, the lamps).
+            director.Freddy.ResetTo(spot + new Vector3(-26f, 0f, 0f), 270f);
+            director.Freddy.WakeUp();
+            director.Freddy.ScriptedWalk = 0f;
+            Teleport(spot, Vector3.right);
+            yield return new WaitForSeconds(2f);
+            yield return MeasureOutput("room only (he is 26 m away, silent)", false);
+            (string name, Vector3 offset)[] walks =
+            {
+                ("left 3 m", new Vector3(0f, 0f, 3f)), ("right 3 m", new Vector3(0f, 0f, -3f)),
+                ("front 6 m", new Vector3(6f, 0f, 0f)), ("behind 6 m", new Vector3(-6f, 0f, 0f)),
+                ("front 15 m", new Vector3(15f, 0f, 0f)), ("next room (Party Room)", new Vector3(-6.5f, 0f, -6f))
+            };
+            foreach ((string name, Vector3 offset) in walks)
+            {
+                director.Freddy.ResetTo(spot + offset, 270f);
+                director.Freddy.WakeUp();
+                director.Freddy.ScriptedWalk = 0f;
+                Teleport(spot, Vector3.right);
+                yield return new WaitForSeconds(1f);
+                yield return MeasureOutput(name, true);
+            }
+
+            // The real thing: he walks in from the Party Room on his own legs (steps and servo as
+            // in play), then stands still in the Main Hall (ticking).
+            director.Freddy.ResetTo(spot + new Vector3(-6.5f, 0f, -6f), 0f);
+            director.Freddy.WakeUp();
+            Teleport(spot, Vector3.right);
+            yield return new WaitForSeconds(0.5f);
+            director.Freddy.Execute(FreddyActions.GoTo(Room.MainHall), 3f);
+            yield return MeasureOutput("walking in from the Party Room", false, 5f);
+            yield return MeasureOutput("standing in the Main Hall", false, 2.5f);
+        }
+
+        /// <summary>Logs the loudness of the game's mixed output, per ear, over 2.2 s (with four of Freddy's steps if <paramref name="steps"/>).</summary>
+        private IEnumerator MeasureOutput(string name, bool steps, float seconds = 2.2f)
+        {
+            var samples = new float[2048];
+            float Rms(int channel)
+            {
+                AudioListener.GetOutputData(samples, channel);
+                float sum = 0f;
+                foreach (float v in samples)
+                {
+                    sum += v * v;
+                }
+                return Mathf.Sqrt(sum / samples.Length);
+            }
+            float left = 0f, right = 0f, peakLeft = 0f, peakRight = 0f;
+            int frames = 0;
+            float nextStep = 0f;
+            for (float t = 0f; t < seconds; t += Time.deltaTime)
+            {
+                if (steps && t >= nextStep)
+                {
+                    director.Audio.FreddyStep(director.Freddy.transform.position, false, director.Freddy.transform);
+                    nextStep += 0.55f;
+                }
+                float l = Rms(0), r = Rms(1);
+                left += l;
+                right += r;
+                peakLeft = Mathf.Max(peakLeft, l);
+                peakRight = Mathf.Max(peakRight, r);
+                frames++;
+                yield return null;
+            }
+            string Db(float v) => (20f * Mathf.Log10(Mathf.Max(v, 1e-6f))).ToString("0.0") + " dB";
+            Debug.Log("CAPTURE OUTPUT " + name + ": left mean " + Db(left / frames) + " peak " + Db(peakLeft)
+                      + ", right mean " + Db(right / frames) + " peak " + Db(peakRight) + ", Freddy " + director.Freddy.Activity + ", output " + AudioSettings.outputSampleRate + " Hz " + AudioSettings.speakerMode);
+        }
+
+        /// <summary>The service corridor from both ends, and every socket on its wall (also <c>-sockets</c> on its own).</summary>
+        private IEnumerator LayoutShots()
+        {
+            yield return Pose(new Vector3(-4.5f, 0f, -1.5f), Vector3.right, "layout-corridor-from-back-hall");
+            yield return Pose(new Vector3(5.5f, 0f, -1.5f), Vector3.left, "layout-corridor-from-main-hall");
+            foreach (PowerSocket socket in director.Level.Sockets)
+            {
+                Vector3 front = socket.transform.position + socket.transform.forward * 1.8f;
+                yield return Pose(new Vector3(front.x, 0f, front.z), -socket.transform.forward, "layout-socket-" + socket.Room + (socket.Live ? "-live" : "-dead"));
+            }
+            Debug.Log("CAPTURE layout shots done");
         }
 
         private IEnumerator Pose(Vector3 position, Vector3 look, string name)

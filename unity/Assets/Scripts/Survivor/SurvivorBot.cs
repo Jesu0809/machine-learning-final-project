@@ -14,10 +14,15 @@ namespace NightShift.Hunt.Survivor
     [Serializable]
     public class SurvivorSettings
     {
-        /// <summary>The motion tracker shows Freddy's room when he is at most this many rooms away.</summary>
-        public int TrackerRange = 2;
+        /// <summary>
+        /// The survivor hears Freddy (his steps, servos, ticking) when he is at most this many rooms
+        /// away. 2 until freddy_v15, when it stood for the game's motion tracker; the game has no
+        /// radar since then, and a person hears him about one room away (freddy_v16). With the
+        /// radar-strength bot, walking into a dead end never paid: the bot was always gone.
+        /// </summary>
+        public int TrackerRange = 1;
 
-        /// <summary>Chance per tick that the survivor checks the tracker and reads it.</summary>
+        /// <summary>Chance per tick that the survivor notices him when he is in range.</summary>
         public float TrackerUse = 0.8f;
 
         /// <summary>Actions the survivor remembers where the tracker last showed Freddy.</summary>
@@ -186,7 +191,7 @@ namespace NightShift.Hunt.Survivor
                 int spots = HuntMap.SpotCount(here);
                 Room flee = FleeRoom(here, knownFreddy.Value);
                 // A vent is the best escape: Freddy cannot follow.
-                Room? vent = BestDuct(here, knownFreddy.Value);
+                Room? vent = state.CanCrawl ? BestDuct(here, knownFreddy.Value) : null;
                 if (vent.HasValue && random.NextDouble() < Settings.DuctUse)
                 {
                     return PlayerAction.Crawl(vent.Value);
@@ -216,7 +221,7 @@ namespace NightShift.Hunt.Survivor
                 return PlayerAction.Wait();
             }
 
-            if (state.CarriedCell >= 0 && state.CellFits(state.CarriedCell, HuntMap.SocketIn(here)))
+            if (state.CarriedCell >= 0 && state.CellFits(state.CarriedCell, state.SocketIn(here)))
             {
                 return PlayerAction.InsertCell();
             }
@@ -253,7 +258,7 @@ namespace NightShift.Hunt.Survivor
             }
             Room goal = detour ?? (state.ExitUnlocked ? state.ExitRoom : NextGoal(state));
             // A duct that saves at least two rooms of walking, if it does not come out next to Freddy.
-            foreach (Room exit in HuntMap.DuctsFrom(here))
+            foreach (Room exit in state.CanCrawl ? HuntMap.DuctsFrom(here) : System.Array.Empty<Room>())
             {
                 if (HuntMap.Distance(exit, goal) + 2 <= HuntMap.Distance(here, goal) && !NearFreddy(exit)
                     && random.NextDouble() < Settings.DuctUse)
@@ -365,7 +370,7 @@ namespace NightShift.Hunt.Survivor
             {
                 var room = (Room)r;
                 bool useful = state.HasWorkIn(room)
-                              || (state.CarriedCell >= 0 && state.CellFits(state.CarriedCell, HuntMap.SocketIn(room)))
+                              || (state.CarriedCell >= 0 && state.CellFits(state.CarriedCell, state.SocketIn(room)))
                               || (state.CarriedCell < 0 && state.CellIn(room));
                 if (!useful)
                 {

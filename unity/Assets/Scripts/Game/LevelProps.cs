@@ -891,6 +891,7 @@ namespace NightShift.Game
             hum.volume = 0.05f;
             hum.pitch = 0.45f;
             hum.Play();
+            GameAudio.KeepLooping(hum);
         }
 
         /// <summary>A steel prep counter: drawers over two doors, a recessed kick, a backsplash.</summary>
@@ -1271,10 +1272,9 @@ namespace NightShift.Game
                     return false;
                 }
             }
-            int socket = HuntMap.SocketIn(room);
-            if (socket >= 0)
+            if (HuntMap.HasSocket(room))
             {
-                Vector3 mount = PizzeriaLayout.SocketPosition(socket);
+                Vector3 mount = PizzeriaLayout.SocketPosition(room);
                 if (Vector2.Distance(point, new Vector2(mount.x, mount.z)) < distance + 0.6f)
                 {
                     return false;

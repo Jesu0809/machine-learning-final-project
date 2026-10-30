@@ -15,7 +15,10 @@ namespace NightShift.Game
         public const float WalkSpeed = 2.9f;
         public const float ChaseSpeed = 4.7f;
         public const float AttackRange = 1.4f;
-        public const float SearchSeconds = 1.8f;
+        /// <summary>Reaching for a hiding spot's door before it swings open.</summary>
+        public const float SearchSeconds = 0.35f;
+        /// <summary>The door open, him staring inside, head cocked one way and the other.</summary>
+        public const float LookInSeconds = 1.6f;
         public const float LoseSightSeconds = 3f;
         public const float SightRange = 10f;
         public const float SightRangeFlashlight = 16f;
@@ -74,13 +77,12 @@ namespace NightShift.Game
             body.director = director;
             body.animator = go.GetComponentInChildren<Animator>();
             body.SetUpEyes();
-            body.servo = director.Audio.Attach3DLoop(go.transform, director.Audio.ServoLoop, 14f);
             return body;
         }
 
         private Light eyeLight;
         private readonly List<Material> eyeMaterials = new List<Material>();
-        private AudioSource servo;
+        private float nextCreakAt;
 
         /// <summary>The glowing eyes that are often all you see of him in the dark.</summary>
         private void SetUpEyes()
@@ -131,12 +133,17 @@ namespace NightShift.Game
             {
                 material.SetColor("_EmissionColor", color * (1.5f * pulse));
             }
-            if (servo != null)
+            // Moving, his steps carry him (and a joint whirs now and then, see GameAudio.FreddyStep);
+            // standing still, his frame creaks at random moments, so a silent wait is never quite silent.
+            bool still = mode == Mode.Idle || mode == Mode.Listening || mode == Mode.Searching;
+            if (!still || !director.Playing || ScriptedWalk >= 0f)
             {
-                servo.mute = !SoundPrefs.EffectsOn;
-                float moving = mode == Mode.Walking || mode == Mode.Chasing ? 1f : 0.15f;
-                servo.volume = Mathf.MoveTowards(servo.volume, mode == Mode.Asleep ? 0f : 0.55f * moving, Time.deltaTime);
-                servo.pitch = mode == Mode.Chasing ? 1.25f : 1f;
+                nextCreakAt = Time.time + Random.Range(1.5f, 4f);
+            }
+            else if (Time.time >= nextCreakAt)
+            {
+                nextCreakAt = Time.time + Random.Range(3f, 9f);
+                director.Audio.FreddyCreak(transform.position, transform);
             }
         }
 
@@ -202,9 +209,11 @@ namespace NightShift.Game
                 return;
             }
             // Into the new room: sometimes to its middle, often straight to a corner or a hiding spot.
+            // Toward a noise he just heard he hurries, and his steps come faster and heavier.
             Vector3 destination = Random.value < 0.4f ? PizzeriaLayout.Center(target) : PointOfInterest(target);
-            WalkTo(destination, WalkSpeed);
-            Activity = "walking to " + HuntMap.DisplayName(target);
+            bool hurry = director.State.NoiseMemory[(int)target] >= FreddyRewards.FreshNoise;
+            WalkTo(destination, hurry ? WalkSpeed * 1.35f : WalkSpeed);
+            Activity = (hurry ? "hurrying to the " : "walking to ") + HuntMap.DisplayName(target);
         }
 
         /// <summary>
@@ -430,27 +439,66 @@ namespace NightShift.Game
         /// <summary>Speed multiplier of the current night (1 on night 1).</summary>
         public float NightSpeed { get; set; } = 1f;
 
+        /// <summary>0: reaching for the door; 1: the door open, him looking in; 2: shutting it.</summary>
+        private int searchStage;
+        private float searchYaw;
+        private HidingSpot heldOpen;
+
+        /// <summary>
+        /// Opens the spot at once, stares into it, puzzled, then shuts it. Breathing while the door
+        /// is open gives you away; holding your breath through the stare does not.
+        /// </summary>
         private void UpdateSearch()
         {
             SetAnimatorSpeed(0f);
-            FaceTowards(searchTarget.transform.position);
             modeTimer -= Time.deltaTime;
+            PlayerController player = director.Player;
+            if (searchStage == 0)
+            {
+                FaceTowards(searchTarget.transform.position);
+                if (modeTimer > 0f)
+                {
+                    return;
+                }
+                searchTarget.HoldOpen();
+                heldOpen = searchTarget;
+                director.Audio.PlayAt(director.Assets.LockerDoor, searchTarget.transform.position, 0.9f, 0.8f, searchTarget.transform);
+                SetSearching(true);
+                Vector3 toSpot = searchTarget.transform.position - transform.position;
+                searchYaw = Mathf.Atan2(toSpot.x, toSpot.z) * Mathf.Rad2Deg;
+                searchStage = 1;
+                modeTimer = LookInSeconds;
+            }
+            if (searchStage == 1)
+            {
+                if (player.HiddenIn == searchTarget && !player.HoldingBreath)
+                {
+                    heldOpen = null;
+                    Attack("He opened " + Describe(searchTarget) + " in the " + HuntMap.DisplayName(searchTarget.Room) + " and found you breathing.");
+                    searchTarget = null;
+                    return;
+                }
+                float looked = LookInSeconds - modeTimer;
+                float cock = Mathf.Sin(looked * 3.4f) * 22f * Mathf.Clamp01(looked * 2.5f);
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.Euler(0f, searchYaw + cock, 0f), 160f * Time.deltaTime);
+                if (modeTimer > 0f)
+                {
+                    return;
+                }
+                SetSearching(false);
+                searchTarget.Shut(2.5f);
+                heldOpen = null;
+                director.Audio.PlayAt(director.Assets.LockerDoor, searchTarget.transform.position, 0.6f, 0.65f, searchTarget.transform);
+                searchStage = 2;
+                modeTimer = 0.45f;
+                return;
+            }
             if (modeTimer > 0f)
             {
                 return;
             }
-
-            PlayerController player = director.Player;
-            searchTarget.Rattle(1.2f);
-            director.Audio.PlayAt(director.Assets.LockerDoor, searchTarget.transform.position, 0.9f, 0.8f);
-            SetSearching(false);
             HidingSpot searched = searchTarget;
             searchTarget = null;
-            if (player.HiddenIn == searched && !player.HoldingBreath)
-            {
-                Attack("He opened " + Describe(searched) + " in the " + HuntMap.DisplayName(searched.Room) + " and found you breathing.");
-                return;
-            }
             director.OnSpotSearched(searched, player.HiddenIn == searched);
             SetMode(Mode.Idle, "searched " + Describe(searched) + ": nothing");
         }
@@ -460,8 +508,8 @@ namespace NightShift.Game
             if (searchTarget != null)
             {
                 SetMode(Mode.Searching, "searching " + Describe(searchTarget));
+                searchStage = 0;
                 modeTimer = SearchSeconds;
-                SetSearching(true);
                 return;
             }
             if (mode == Mode.Walking && fast)
@@ -604,7 +652,7 @@ namespace NightShift.Game
             if (stepDistance >= (fast ? 1.6f : 1.1f))
             {
                 stepDistance = 0f;
-                director.Audio.FreddyStep(transform.position, fast);
+                director.Audio.FreddyStep(transform.position, fast, transform);
             }
             return false;
         }
@@ -626,6 +674,13 @@ namespace NightShift.Game
 
         private void SetMode(Mode next, string activity)
         {
+            if (heldOpen != null && next != Mode.Searching)
+            {
+                // Interrupted with a door open (he saw you): it swings shut behind him.
+                heldOpen.Shut(4f);
+                heldOpen = null;
+                SetSearching(false);
+            }
             mode = next;
             Activity = activity;
         }

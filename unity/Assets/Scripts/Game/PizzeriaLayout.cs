@@ -49,7 +49,7 @@ namespace NightShift.Game
     ///                       ||                          ||
     ///  [Storage]=[ Kitchen ]      [ Dining Hall (stage) ]=[ Arcade ]
     ///                 ||                                    ||
-    ///  [=========== Back Hall ===========]   [======= Main Hall =======]
+    ///  [=========== Back Hall ===========]===[======= Main Hall =======]
     ///     ||        ||          ||                    ||
     ///  [Office]=[ Parts ]   [Restrooms]           [ Party ]=[ Exit Lobby ]
     ///                                                            EXIT
@@ -116,8 +116,11 @@ namespace NightShift.Game
             Link(Room.Restrooms, Room.BackHall, -4.5f, -7f, -4.5f, -3f),
             Link(Room.BackHall, Room.Kitchen, -9.5f, 0f, -9.5f, 2f),
             Link(Room.Storage, Room.Kitchen, -16f, 6f, -14f, 6f),
-            // Between the wings: only the north wing.
+            // Between the wings: the north wing, and the service corridor from the back hall to the
+            // main hall (freddy_v12). With the north wing as the only way across, freddy_v10/v11
+            // learned to wait on it instead of hunting.
             Link(Room.Kitchen, Room.Banquet, -6.3f, 10f, -6.3f, 15f),
+            Link(Room.BackHall, Room.MainHall, -3f, -1.5f, 4f, -1.5f),
             Link(Room.Banquet, Room.Veranda, 9f, 18.5f, 12f, 18.5f),
             Link(Room.Veranda, Room.Arcade, 18f, 15f, 18f, 10f),
             // Public wing.
@@ -193,18 +196,121 @@ namespace NightShift.Game
                 { Room.Veranda, (new Vector2(21f, 15.35f), 0f) }
             };
 
-        // The three power sockets (HuntMap.SocketRooms order: yellow, blue, green), on a wall each.
-        private static readonly (Vector2 position, float facing)[] SocketMounts =
+        // Power sockets placed by hand on a wall of their room (the rest are placed by SocketMount).
+        private static readonly Dictionary<Room, (Vector2 position, float facing)> SocketMounts =
+            new Dictionary<Room, (Vector2 position, float facing)>
+            {
+                { Room.Parts, (new Vector2(-8.35f, -10f), 270f) },      // east wall
+                { Room.Banquet, (new Vector2(-13.5f, 15.35f), 0f) },    // south wall
+                { Room.PartyRoom, (new Vector2(4.35f, -9f), 90f) }      // west wall
+            };
+
+        /// <summary>Where the socket of <paramref name="room"/> is on its wall (the mouth's height).</summary>
+        public static Vector3 SocketPosition(Room room)
         {
-            (new Vector2(-8.35f, -10f), 270f),     // Parts & Service, east wall
-            (new Vector2(-13.5f, 15.35f), 0f),     // Banquet Room, south wall
-            (new Vector2(4.35f, -9f), 90f)         // Party Room, west wall
+            (Vector2 position, float _) = SocketMount(room);
+            return new Vector3(position.x, 1.25f, position.y);
+        }
+
+        public static Quaternion SocketFacing(Room room) => Quaternion.Euler(0f, SocketMount(room).facing, 0f);
+
+        /// <summary>
+        /// A socket's place on a wall of <paramref name="room"/>: the hand-placed one, or the point
+        /// along the inside of its walls farthest from every doorway, hiding spot, cell shelf,
+        /// window, the stage and the exit panel (computed once).
+        /// </summary>
+        public static (Vector2 position, float facing) SocketMount(Room room)
+        {
+            if (SocketMounts.TryGetValue(room, out (Vector2 position, float facing) mount))
+            {
+                return mount;
+            }
+            Rect area = Area(room);
+            float inset = WallThickness;
+            var best = (position: area.center, facing: 0f);
+            float bestScore = float.MinValue;
+            // South, north, west, east walls: a point on the inside face, and the way it faces.
+            (Vector2 from, Vector2 to, float facing)[] walls =
+            {
+                (new Vector2(area.xMin, area.yMin + inset), new Vector2(area.xMax, area.yMin + inset), 0f),
+                (new Vector2(area.xMin, area.yMax - inset), new Vector2(area.xMax, area.yMax - inset), 180f),
+                (new Vector2(area.xMin + inset, area.yMin), new Vector2(area.xMin + inset, area.yMax), 90f),
+                (new Vector2(area.xMax - inset, area.yMin), new Vector2(area.xMax - inset, area.yMax), 270f)
+            };
+            foreach ((Vector2 from, Vector2 to, float facing) in walls)
+            {
+                float length = Vector2.Distance(from, to);
+                for (float along = 0.9f; along <= length - 0.9f; along += 0.25f)
+                {
+                    Vector2 point = Vector2.Lerp(from, to, along / length);
+                    float score = SocketClearance(room, point);
+                    if (score > bestScore)
+                    {
+                        bestScore = score;
+                        best = (point, facing);
+                    }
+                }
+            }
+            SocketMounts[room] = best;
+            return best;
+        }
+
+        // Signs on the walls of rooms with a socket (where LevelProps hangs them, and how wide):
+        // the socket's conduits run up the wall and must not cross them.
+        private static readonly (float x, float z, float width)[] WallSigns =
+        {
+            (-11f, -13.77f, 2.6f),      // PARTS & SERVICE
+            (-2.23f, -10.5f, 1.8f),     // OUT OF ORDER (restrooms)
+            (7.5f, 2.23f, 3.4f),        // LET'S PARTY! (dining hall)
+            (7f, -13.77f, 2.6f),        // PARTY ROOM
+            (22.77f, 5.4f, 1.8f),       // PRIZES (arcade)
+            (-11f, 15.23f, 2.8f),       // BANQUET ROOM
+            (14.6f, 15.23f, 2.2f)       // VERANDA
         };
 
-        /// <summary>Where socket <paramref name="socket"/> is on its wall (the mouth's height), and which way it faces.</summary>
-        public static Vector3 SocketPosition(int socket) => new Vector3(SocketMounts[socket].position.x, 1.25f, SocketMounts[socket].position.y);
-
-        public static Quaternion SocketFacing(int socket) => Quaternion.Euler(0f, SocketMounts[socket].facing, 0f);
+        /// <summary>How far a socket at <paramref name="point"/> would be from the nearest thing it must not crowd.</summary>
+        private static float SocketClearance(Room room, Vector2 point)
+        {
+            float clear = 8f;
+            foreach (Vector2 door in DoorwaysOf(room))
+            {
+                clear = Mathf.Min(clear, Vector2.Distance(point, door) - DoorWidth * 0.5f - 0.4f);
+            }
+            for (int spot = 0; spot < HuntMap.SpotCount(room); spot++)
+            {
+                Vector3 position = SpotPosition(room, spot);
+                clear = Mathf.Min(clear, Vector2.Distance(point, new Vector2(position.x, position.z)) - 1f);
+            }
+            if (HasFuseShelf(room))
+            {
+                Vector3 shelf = FusePosition(room);
+                clear = Mathf.Min(clear, Vector2.Distance(point, new Vector2(shelf.x, shelf.z)) - 1f);
+            }
+            foreach ((Room windowRoom, float x, float width, float _, float _) in Windows)
+            {
+                if (windowRoom == room)
+                {
+                    clear = Mathf.Min(clear, Vector2.Distance(point, new Vector2(x, Area(room).yMax)) - width * 0.5f - 0.6f);
+                }
+            }
+            if (room == Room.DiningHall)
+            {
+                var stage = new Rect(StageArea.xMin - 0.8f, StageArea.yMin - 0.8f, StageArea.width + 1.6f, StageArea.height + 1.6f);
+                if (stage.Contains(point))
+                {
+                    clear = -1f;
+                }
+            }
+            if (room == HuntMap.CardRoom)
+            {
+                clear = Mathf.Min(clear, Vector2.Distance(point, new Vector2(CardPedestal.x, CardPedestal.z)) - 1.2f);
+            }
+            foreach ((float x, float z, float width) in WallSigns)
+            {
+                clear = Mathf.Min(clear, Vector2.Distance(point, new Vector2(x, z)) - width * 0.5f - 0.5f);
+            }
+            return clear;
+        }
 
         /// <summary>
         /// Real windows, cut through the north wall of the north wing (the only rooms with the

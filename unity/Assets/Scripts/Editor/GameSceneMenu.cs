@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using NightShift.Game;
 using Unity.InferenceEngine;
@@ -26,7 +27,7 @@ namespace NightShift.EditorTools
         public const string ModelsFolder = "Assets/ML/Models";
 
         /// <summary>Model used by the game; the newest freddy_v*.onnx if this one does not exist.</summary>
-        public const string PreferredModel = "freddy_v10";
+        public const string PreferredModel = "freddy_v19";
 
         [MenuItem("Night Shift/Create Game Scene")]
         public static void CreateGameScene()
@@ -103,6 +104,9 @@ namespace NightShift.EditorTools
             assets.KnifeSwitchModel = Model("knife_switch");
             assets.HandsModel = Model("fp_hands");
             assets.AmbientOcclusion = RenderingSetup.Apply();
+            assets.FreddySteps = Clips("Freddy/Steps");
+            assets.FreddyServos = Clips("Freddy/Servo");
+            assets.FreddyCreaks = Clips("Freddy/Creaks");
             assets.AmbientLoop = Clip("ambient-hum-loop");
             assets.MenuMusic = Clip("menu-music-loop");
             assets.Scream = Clip("jumpscare-scream");
@@ -199,6 +203,21 @@ namespace NightShift.EditorTools
         }
 
         private static AudioClip Clip(string name) => AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/" + name + ".ogg");
+
+        /// <summary>Every clip in Assets/Audio/<paramref name="folder"/> (wav, ogg or mp3), by name; empty if the folder is missing.</summary>
+        private static AudioClip[] Clips(string folder)
+        {
+            string path = "Assets/Audio/" + folder;
+            if (!AssetDatabase.IsValidFolder(path))
+            {
+                return new AudioClip[0];
+            }
+            return AssetDatabase.FindAssets("t:AudioClip", new[] { path })
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .OrderBy(clip => clip)
+                .Select(AssetDatabase.LoadAssetAtPath<AudioClip>)
+                .ToArray();
+        }
 
         /// <summary>A UI picture with transparency: no mipmaps, no compression artifacts on the thin lines.</summary>
         private static Texture2D UiTexture(string path)

@@ -75,14 +75,20 @@ namespace NightShift.Game
             {
                 return "The grate is screwed shut.  Listen to the call first.";
             }
+            if (Time.time < player.DuctReadyAt)
+            {
+                return "Still catching your breath from the last vent: " + Mathf.CeilToInt(player.DuctReadyAt - Time.time) + " s";
+            }
             string where = Hunt.HuntMap.DisplayName(EndA ? Duct.B : Duct.A);
-            return "[E] Crawl into the vent  (to the " + where + " — he can't follow you)";
+            return "[E] Crawl into the vent  (to the " + where + " — he can't follow you, but he may hear the grate)";
         }
 
         public void Use(PlayerController player)
         {
-            if (player.HiddenIn == null && !player.Crawling && !player.Director.InCall)
+            if (player.HiddenIn == null && !player.Crawling && !player.Director.InCall && Time.time >= player.DuctReadyAt)
             {
+                // The grate rattles: if Freddy hears it, he knows where this duct comes out.
+                player.Director.State.NoteDuctEntered(EndA ? Duct.B : Duct.A);
                 player.StartCrawl(CrawlPath(), EndA ? Duct.B : Duct.A, this, Other);
             }
         }
