@@ -156,7 +156,7 @@ def runs():
 
 @app.route("/api/plots/training")
 def training_plot():
-    run = request.args.get("run", "freddy_v10")
+    run = request.args.get("run", "freddy_v19")
     path = os.path.join(DATA_DIR, "curves", os.path.basename(run) + ".csv")
     if not os.path.isfile(path):
         return jsonify({"error": "Unknown run."}), 404

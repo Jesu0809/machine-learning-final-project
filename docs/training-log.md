@@ -331,4 +331,212 @@ After a run:
   99.8 % hid a whole room Freddy would never enter; only a person playing found it, and only
   asking the network about one exact situation explained it. Measuring by pairs of rooms is now
   part of checking a policy.
-- **Decision:** keep. `unity/Assets/ML/Models/freddy_v10.onnx` is the game's brain.
+- **Decision:** kept until the next playtest; replaced by freddy_v13 (below).
+
+### freddy_v11 — 2026-10-29
+
+- **Changed from previous run:** two reward terms for when Freddy has nothing fresh to go on (no
+  remembered noise ≥ 0.3, no sighting or sense in the last 20 decisions): +0.04 × how long the room
+  he walks into had gone unchecked (0–1), and −0.03 for walking straight back into the room he just
+  left. Fine-tuned from freddy_v10.
+- **Why:** the next playtest. Freddy paced between the Main Hall and the Arcade again, now hearing
+  the player in the Banquet Room. The harness, now also counting where Freddy decides and how often
+  he goes straight back, showed v10 spending 86 % of its decisions in three rooms (Arcade 40 %, Main
+  Hall 26 %, Veranda 20 %), never entering the staff wing, with 61 % of its moves straight back to
+  the room it had left (the scripted hunter: 18 %). It waited on the only way between the wings,
+  which the bot has to cross almost every night.
+- **Config changes:** fine-tuning (`freddy_ppo_finetune.yaml`, `--initialize-from=freddy_v10`).
+- **Steps trained / wall time:** stopped at 1,062,233 steps (18 min).
+- **Behavior (harness, 1,000 nights at 1M steps):** backtracking with nothing to go on 54 % → 35 %,
+  still 0 % of decisions in the staff wing and 84 % in the same three rooms; caught 99.0 %.
+  With the live sockets drawn at random (next run) it still caught 99.5 % from the same rooms.
+- **Decision:** stopped. Rewards cannot outweigh a map that makes waiting on one crossing optimal;
+  its weights start freddy_v12.
+
+### freddy_v12 — 2026-10-29
+
+- **Changed from previous run:** the map and the objectives, not the reward. A service corridor
+  joins the Back Hall and the Main Hall (three decisions long), so there are two ways between the
+  wings (map diameter 8 → 5). Eight rooms have a power socket; each night three of them are live,
+  at random, and Freddy does not observe which (`HuntSettings.RandomSockets`), as was done for the
+  exits in v6. Rewards as in v11. Fine-tuned from freddy_v11.
+- **Why:** v11's measurements. Even with random live sockets the bot crossed the north wing almost
+  every night (cells, keycard, tape, the front exit). It was the team's idea to break the camping
+  the way the two exits once did; the data showed the crossing, not the sockets, had to change.
+- **Config changes:** fine-tuning (`--initialize-from=freddy_v11`), 2.5M steps.
+- **Steps trained / wall time:** 2,500,008 steps; about 45 min of training (the run sat paused
+  for hours while the computer slept).
+- **Behavior (harness, 1,500 nights):** straight back to the room he just left 16 % of moves (2 %
+  with nothing to go on; scripted 24 % / 19 %); goes to a noise in the next room 95 %; caught 93.0 %
+  (scripted 85.9 %). But 50 % of his decisions were in the Main Hall, where both crossings meet,
+  standing and listening, and none in the Office, Parts & Service, Restrooms or Storage.
+- **Decision:** replaced by freddy_v13 (one more reward term); its weights start v13.
+
+### freddy_v13 — 2026-10-29
+
+- **Changed from previous run:** −0.02 for staying put to listen with nothing fresh to go on, and
+  the patrol bonus doubled (0.04 → 0.08 × staleness). Fine-tuned from freddy_v12.
+- **Why:** v12 stood listening in the Main Hall half the time.
+- **Config changes:** fine-tuning (`--initialize-from=freddy_v12`), 2.5M steps.
+- **Steps trained / wall time:** 2,500,107 steps in 43 min.
+- **Final mean cumulative reward:** +1.9 (v12: +1.25): most of the rise is patrol bonus.
+- **Behavior (harness, 1,000 nights per checkpoint):** at 1M steps it hunted the whole building
+  (busiest room 22 %, 2.0 searches and 1.8 senses a night, caught 89.8 %); from there it traded the
+  hunt for the bonus: 0.8 searches a night at 1.75M, 0.3 at 2.5M, caught 80 %.
+- **Evaluation (final model, 400 nights per cell):** trained 94.5 / 81.5 / 65.0 % against
+  Novice / Normal / Expert, scripted 99.8 / 92.5 / 72.0 %, random 78.5 / 54.2 / 39.8 %.
+- **Observations:** reward hacking. The patrol bonus was meant to make him search the building and
+  became the goal itself; the mean reward kept rising while the behavior the reward stood for got
+  worse. The checkpoint to keep had to be chosen by behavior, and only five checkpoints are kept,
+  so the good one (1M) was already gone.
+- **Decision:** discard; the same run stopped at 1M steps is freddy_v14.
+
+### freddy_v14 — 2026-10-29
+
+- **Changed from previous run:** nothing in the simulation; v13's setup fine-tuned from freddy_v12
+  for 1M steps only (early stopping), keeping every checkpoint
+  (`training/config/freddy_ppo_finetune_1m.yaml`).
+- **Steps trained / wall time:** 1,000,016 steps in 17 min.
+- **Final mean cumulative reward:** +1.75.
+- **Behavior (harness, 1,000 nights):** caught 88.8 % (scripted 85.9 %); 2.5 searches and 1.8 senses
+  a night; goes to a noise in the next room 91 %; 18 % of moves straight back (8 % with nothing to go
+  on; v10: 61 % / 54 %). Decisions by room: Main Hall 24, Arcade 18, Back Hall 17, Veranda 13,
+  Banquet 10, Kitchen 9, Dining Hall 4, Restrooms 3, Parts 2 %, Office, Storage, Party Room and
+  Exit Lobby 0–1 % (v10: 86 % in three rooms, none in the staff wing). Asked directly, with the
+  rooms recently checked and sense not ready: in the Arcade with a noise in the Dining Hall it goes
+  there (100 %), with a noise in the Banquet Room it goes to the Veranda (100 %), and in the Main
+  Hall with a noise in the Kitchen it takes the new corridor (100 %; v10 went to guard the Party
+  Room). Still weak: in the Banquet Room with a noise in the Kitchen it goes to the Veranda (70 %),
+  in the Back Hall with a noise in the Restrooms to the Kitchen (66 %).
+- **Evaluation (400 nights per cell, catch rate with 95% Wilson interval):**
+
+  | Survivor | Trained | Scripted | Random |
+  |---|---|---|---|
+  | Novice | 98.5 % (96.8–99.3) | 99.8 % (98.6–100.0) | 78.5 % (74.2–82.2) |
+  | Normal | 89.5 % (86.1–92.1) | 92.5 % (89.5–94.7) | 54.2 % (49.4–59.1) |
+  | Expert | 77.8 % (73.4–81.5) | 72.0 % (67.4–76.2) | 39.8 % (35.1–44.6) |
+
+- **Observations:** with two ways between the wings, catching the bot is harder for every hunter,
+  and the trained policy no longer wins by waiting on a bottleneck: it is level with the scripted
+  hunter against novice and normal survivors (overlapping intervals), ahead against experts, and
+  far ahead of random. It searches far less than the scripted hunter (0.7–4.6 against 4.5–15 spots a
+  night) and catches experts more often, so it finds people by ear and by sense rather than by
+  opening every locker. The lesson of v9–v14 for the report: a 99 % catch rate came from a map
+  that let the policy wait; a playtest found it, behavioral measurements explained it, and the fix
+  was in the environment (a second way across, random sockets), with the reward only finishing it.
+- **Decision:** keep until freddy_v17; fine-tuned into freddy_v15.
+
+### freddy_v15 — 2026-10-29
+
+- **Changed from previous run:** the rewards of a hunter instead of a patrol. +0.05 for opening a
+  spot in the room a fresh clue points to (a noise, or a sense or sighting in the last 20
+  decisions); −0.05 (was −0.03) for walking somewhere that does not bring him closer to a fresh
+  noise; the patrol and lingering terms of v13 removed. In the simulation the player waits 14
+  actions between ducts (the game: 25 s), and when Freddy hears a grate rattle the duct's exit
+  room enters his noise memory at level 2. The survivor bot gets a `Curiosity` setting (detours
+  into rooms off its route). Fine-tuned from freddy_v14.
+- **Why:** a playtest of v14 found it walked a loop past fresh noises and never opened a hiding
+  spot; the player could also chain ducts to stay out of reach.
+- **Steps trained / wall time:** 2,500,000 steps in 65 min.
+- **Final mean cumulative reward:** +1.14 (rewards changed, not comparable with v14).
+- **Behavior (harness, 200 nights per checkpoint):** caught 96.0–98.0 % across checkpoints;
+  9–10 % of moves straight back, none of them blind; 1.8–2.0 searches and 1.3–1.4 senses a night;
+  goes to a noise in the next room 84–89 %. Decisions by room: Main Hall 27–30, Arcade 17–18,
+  Veranda 13–14, Back Hall 12, Banquet 10–11, Kitchen 9–10, Dining Hall 6–7 %; the Office,
+  Storage, Parts and Restrooms 0 %.
+- **Observations:** the loop is gone and he searches where clues point. Against the bot he
+  rarely needs the staff wing, but that bot still had the radar the game had just lost.
+- **Decision:** fine-tune further against a bot that hears instead of seeing (freddy_v16).
+
+### freddy_v16 — 2026-10-29
+
+- **Changed from previous run:** the survivor bot's tracker reaches 1 room instead of 2. The game
+  no longer has a radar (it is a developer option); the player locates Freddy by ear, about one
+  room away. Fine-tuned from freddy_v15.
+- **Steps trained / wall time:** 2,500,000 steps in 57 min.
+- **Final mean cumulative reward:** +1.10.
+- **Behavior (harness, 200 nights per checkpoint, the hearing-only bot):** caught 96.8–98.3 %
+  (v15 against the same bot: 95.3 %), 13.7–15.5 decisions a night (v15: 16.5); goes to a noise in
+  the next room 95–96 %; 11–13 % of moves straight back. Still 0 % of decisions in the Office,
+  Storage and Restrooms. Asked directly: in the Back Hall with a noise in the Office he stays and
+  listens (100 %); in the Kitchen with a noise in Storage, stays 60 %.
+- **Observations:** a loophole in the reward. Only walking away from a fresh noise was
+  penalized; standing still beside it cost nothing. The Office and Restrooms open only onto the
+  Back Hall, so waiting at that door catches whoever comes out without going in: camping again,
+  in a smaller place.
+- **Decision:** close the loophole (freddy_v17).
+
+### freddy_v17 — 2026-10-29
+
+- **Changed from previous run:** staying put while a fresh noise waits in another room counts as
+  ignoring it (−0.05), the same as walking away (`HuntState.ApplyFreddyAction`). Fine-tuned from
+  freddy_v16 for 1M steps (`freddy_ppo_finetune_1m.yaml`).
+- **Steps trained / wall time:** 1,000,027 steps in 23 min.
+- **Final mean cumulative reward:** +1.11.
+- **Behavior (harness, 300 nights):** caught 98.3 %; goes to a noise in the next room 98 % (519
+  times), including the Parts room (6 of 6) and the Restrooms; 16 % of moves straight back, none
+  blind; 1.6 searches and 0.8 senses a night. Asked directly, in the Back Hall with a noise in the
+  Office he now stays 79 % (v16: 100 %). In the simulation that situation came up 3 times in 300
+  nights: the staff wing is quiet when Freddy is next to it.
+- **Evaluation (400 nights per cell, catch rate with 95 % Wilson interval; the survivors hear
+  Freddy one room away and wait between ducts, so the numbers are not comparable with v14's):**
+
+  | Survivor | Trained | Scripted | Random |
+  |---|---|---|---|
+  | Novice | 99.2 % (97.8–99.7) | 99.5 % (98.2–99.9) | 88.8 % (85.3–91.5) |
+  | Normal | 99.5 % (98.2–99.9) | 98.2 % (96.4–99.2) | 77.2 % (72.9–81.1) |
+  | Expert | 98.0 % (96.1–99.0) | 91.5 % (88.4–93.8) | 73.0 % (68.5–77.1) |
+
+- **Observations:** level with the scripted hunter against novice and normal survivors, ahead
+  against experts (intervals do not overlap), with fewer searches (1.0–2.3 against 2.3–4.6 a
+  night). Without a radar every hunter catches more, so the comparison that matters is between
+  hunters on the same bots, not with earlier runs.
+- **Decision:** keep until freddy_v19; fine-tuned into freddy_v18.
+
+### freddy_v18 — 2026-10-29
+
+- **Changed from previous run:** with no fresh noise, a sighting or a sense in the last 20
+  decisions counts as a clue the same way (moving away from it or staying put ignores it, −0.05);
+  and staying put with the clue in his own room while a spot there is still shut is camping (−0.05).
+  `SearchedClue` uses the same test. Fine-tuned from freddy_v17 for 1M steps.
+- **Why:** a playtest of v17: it saw the guard from afar and never went to look, and it stood beside
+  the Main Hall locker the guard hid in, "stay and listen" four decisions in a row.
+- **Steps trained / wall time:** 1,000,037 steps in 19 min.
+- **Final mean cumulative reward:** +1.16.
+- **Behavior (harness, 300 nights):** caught 98.8 %. After seeing the guard in another room (no
+  fresh noise) he moves closer 55 % and stays 1 % (v17: 42 % and 20 %; scripted 44 % and 0 %).
+  With the guard hidden in his room, a clue there and a spot shut, he opens a spot 60 % (v17: 50 %)
+  and leaves 34 %; he never stays.
+- **Observations:** in the simulation neither v17 nor v18 ever stayed twice beside the hidden
+  guard, so the playtest's camping came from a state the simulation does not produce: Freddy had
+  already opened that locker (the guard held their breath), so for him it was checked, and when the
+  guard then gasped he stood by it listening. Opening it again was a repeated search (−0.02).
+- **Decision:** fix the state and the reward (freddy_v19).
+
+### freddy_v19 — 2026-10-29
+
+- **Changed from previous run:** staying a second time in a row where any trace of the guard is
+  left (a noise not yet forgotten, a sighting or sense in memory) counts as ignoring it, spots
+  opened or not. In the simulation and the game, a fresh noise in Freddy's own room makes every
+  spot there unopened again (`HuntState.Remember`): the guard may have held their breath. Fine-tuned
+  from freddy_v18 for 1M steps; the spot rule was added after training and the model measured with it.
+- **Steps trained / wall time:** 1,000,001 steps in 21 min.
+- **Final mean cumulative reward:** +1.20.
+- **Behavior (harness, 300 nights, with the spot rule):** caught 98.4 %; goes to a noise in the next
+  room 93 %; after a sighting moves closer 58 %, stays 1 %; with the guard hidden in his room and a
+  clue there he opens a spot 58 %, leaves 38 %, never stays; never stays twice in the room the guard
+  hides in (275 cases).
+- **Evaluation (400 nights per cell, catch rate with 95 % Wilson interval):**
+
+  | Survivor | Trained | Scripted | Random |
+  |---|---|---|---|
+  | Novice | 100.0 % (99.1–100.0) | 99.5 % (98.2–99.9) | 88.8 % (85.3–91.5) |
+  | Normal | 98.5 % (96.8–99.3) | 98.5 % (96.8–99.3) | 77.2 % (72.9–81.1) |
+  | Expert | 97.8 % (95.8–98.8) | 91.5 % (88.4–93.8) | 73.0 % (68.5–77.1) |
+
+- **Observations:** level with the scripted hunter against novice and normal survivors and ahead
+  against experts, searching less (1.5–4.0 spots a night against 2.3–4.6). The lesson of v16–v19:
+  a camping loophole closed in one place (the next room) reappears in the next (his own room, a
+  checked locker); a playtest finds it, the harness measures it, and the reward closes it.
+- **Decision:** keep. `unity/Assets/ML/Models/freddy_v19.onnx` is the game's brain.
+

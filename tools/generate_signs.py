@@ -58,7 +58,10 @@ CODEPOINTS = ICONS + "MaterialSymbolsOutlined%5BFILL,GRAD,opsz,wght%5D.codepoint
 ROOMS = ["Office", "Parts & Service", "Restrooms", "Back Hall", "Storage", "Kitchen",
          "Dining Hall", "Main Hall", "Party Room", "Arcade", "Exit Lobby", "Banquet Room", "Veranda"]
 # The power sockets and the color of the cell each takes (yellow, blue, green).
-SOCKETS = {"Parts & Service": (250, 196, 40), "Banquet Room": (60, 140, 255), "Party Room": (70, 220, 110)}
+# Rooms with a power socket on a wall (HuntMap.SocketCandidates); three of them are live each night,
+# at random, so the maps mark them all in the same grey and the player's list names tonight's.
+SOCKETS = {room: (150, 150, 150) for room in ["Parts & Service", "Kitchen", "Restrooms", "Banquet Room", "Veranda",
+                                              "Party Room", "Dining Hall", "Arcade"]}
 STAFF_WING = {"Office", "Parts & Service", "Restrooms", "Back Hall", "Storage", "Kitchen"}
 ROOM_ICONS = {
     "Office": "security", "Parts & Service": "build", "Restrooms": "wc", "Back Hall": "meeting_room",
@@ -365,7 +368,7 @@ def directory(project, here, title):
     d.line([hx, hy + 24, hx, by], fill=(170, 10, 10), width=5)
     d.rectangle([bx, by, bx + tw + 32, by + th + 22], fill=(250, 246, 236), outline=(170, 10, 10), width=4)
     d.text((bx + 16, by + 11 - box[1]), "YOU ARE HERE", font=f, fill=(170, 10, 10))
-    # The power sockets, in their colors (from night 2 each cell fits only its own).
+    # The power sockets, all alike: which three are live changes every night.
     glyph, icon_font = icon("power", 34)
     for i, (x, z, rw, rd) in enumerate(rooms):
         if ROOMS[i] in SOCKETS:
@@ -373,7 +376,7 @@ def directory(project, here, title):
             cx, cy = b[0] - 30, b[1] - 30
             d.ellipse([cx - 24, cy - 24, cx + 24, cy + 24], fill=SOCKETS[ROOMS[i]], outline=(30, 30, 30), width=4)
             draw_text(d, (cx, cy), glyph, icon_font, (25, 25, 25))
-    legend = "RED: RESTAURANT    GREY-GREEN: STAFF ONLY    GREEN: WAY OUT    PLUGS: POWER SOCKETS"
+    legend = "RED: RESTAURANT    GREY-GREEN: STAFF ONLY    GREEN: WAY OUT    PLUGS: SOCKETS (LIVE ONES: YOUR LIST)"
     draw_text(d, (w / 2, h - 50), legend, font("oswald", 32, 500), (60, 50, 44))
     return grime(img, 0.45, seed(title))
 
@@ -1613,7 +1616,7 @@ def main():
     save_rgba("vhs_osd_guard4", vhs_osd("CAM 01  OFFICE", "NIGHT 5", "GUARD #4", "03:12:44 AM", rec=True))
     save_rgba("vhs_osd_guard5", vhs_osd("LIVE", "", "GUARD #5", "--:--", rec=True))
     save("vhs_blue_play", vhs_blue([]))
-    save("vhs_blue_end", vhs_blue(["GUARD #5", "NIGHTS RECORDED: 5", "ADDED TO TRAINING SET", "", "FREDDY_V10  TRAINING", "#87"], play=False))
+    save("vhs_blue_end", vhs_blue(["GUARD #5", "NIGHTS RECORDED: 5", "ADDED TO TRAINING SET", "", "FREDDY_V19  TRAINING", "#87"], play=False))
     save_rgba("glass_vhs_scanlines", vhs_scanlines())
     save("vhs_static", vhs_static())
     (out / "signs.json").write_text(json.dumps(made, indent=2, sort_keys=True) + "\n")

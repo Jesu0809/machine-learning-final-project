@@ -12,7 +12,7 @@ import { Runs } from '../../models/results.model';
 export class MlTraining {
   private readonly resultsService = inject(ResultsService);
   protected readonly runs = signal<Runs | null>(null);
-  protected readonly selected = signal('freddy_v10');
+  protected readonly selected = signal('freddy_v19');
 
   protected readonly config = [
     ['Trainer', 'PPO'],

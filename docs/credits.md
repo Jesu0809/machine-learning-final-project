@@ -40,7 +40,19 @@ Marker and Schoolbell (Apache License 2.0); Material Symbols (Apache License 2.0
 ## Sounds
 
 From Pixabay (Pixabay Content License): "Metal Door Slam" by SoundReality and "Jump-Scare_2" by
-freesound_community. Every other sound was synthesized for this project.
+freesound_community.
+
+Freddy's sounds (CC0, converted to mono, trimmed and normalized in `Assets/Audio/Freddy/`):
+
+- Steps: "Metal footsteps on concrete" by Thimras, OpenGameArt
+  (https://opengameart.org/content/metal-footsteps-on-concrete).
+- Servos: "Servo 1–5" from the "Electromechanical" pack by JoontheFloof, Freesound
+  (https://freesound.org/people/JoontheFloof/sounds/740238/, 740240, 740241, 740242, 740243).
+- Creaks: "Metal Creak 1–4" by ingudios (https://freesound.org/people/ingudios/sounds/119465/,
+  119466, 119467, 119468) and "Long Metal Creak" by LoafDV
+  (https://freesound.org/people/LoafDV/sounds/238289/), Freesound.
+
+Every other sound was synthesized for this project.
 
 ## Voices
 

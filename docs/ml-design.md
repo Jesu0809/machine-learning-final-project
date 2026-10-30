@@ -40,8 +40,9 @@ infer.
 ### Room graph
 
 Three wings since `freddy_v7` (v1–v3 used a 3 × 3 grid of 9 rooms, v4 two floors of 14, v5–v6
-two wings of 11). The staff wing and the public wing no longer touch: the only way between them is
-the north wing, two dining rooms with windows onto the back lot.
+two wings of 11). The staff wing and the public wing meet through the north wing, two dining rooms
+with windows onto the back lot, and (since `freddy_v12`) a long service corridor from the Back Hall
+to the Main Hall. With the north wing as the only way across, v10 and v11 learned to wait on it.
 
 ```
            NORTH WING
@@ -50,38 +51,47 @@ the north wing, two dining rooms with windows onto the back lot.
   STAFF WING  ║                             │        PUBLIC WING
   Storage ── Kitchen                     Arcade ── DiningHall (stage)
                 │                         ║   
-  ══ BackHall ══╛                      MainHall
+  ══ BackHall ══╛═══ service corridor ═══ MainHall
      ║   │    │                           │
   Office─Parts Restrooms              PartyRoom ────────── ExitLobby
 ```
 
 `═` / `║` mark long connections: walking them takes **two decisions** (`HuntMap.Cost`): Office–Back
-Hall, Main Hall–Arcade, Kitchen–Banquet Room and Banquet Room–Veranda. Every other connection takes one.
+Hall, Main Hall–Arcade, Kitchen–Banquet Room and Banquet Room–Veranda; the service corridor (Back
+Hall–Main Hall) takes three. Every other connection takes one.
 
 | Room | Hiding spots | Notes |
 |---|---|---|
 | Office | 2 | Player start (security office); the card reader |
-| Parts & Service | 2 | Yellow power socket |
-| Restrooms | 2 | |
+| Parts & Service | 2 | Power socket |
+| Restrooms | 2 | Power socket |
 | Back Hall | 1 | Staff hall |
 | Storage | 3 | Loading door (one of the two exits); the breaker box |
-| Kitchen | 3 | |
-| Dining Hall | 3 | Freddy start (on the stage) |
+| Kitchen | 3 | Power socket |
+| Dining Hall | 3 | Freddy start (on the stage); power socket |
 | Main Hall | 1 | Public hall |
-| Party Room | 2 | Green power socket; the only way into the Exit Lobby |
-| Arcade | 2 | |
+| Party Room | 2 | Power socket; the only way into the Exit Lobby |
+| Arcade | 2 | Power socket |
 | Exit Lobby | 1 | Front doors (one of the two exits); the tape box |
-| Banquet Room | 3 | Blue power socket; tables only |
-| Veranda | 2 | The keycard; tables only |
+| Banquet Room | 3 | Power socket; tables only |
+| Veranda | 2 | The keycard; power socket; tables only |
 
 Spot 0 is a locker in the first eleven rooms; the others are cabinets or places under tables. The
-map diameter is 8 moves. **Air ducts** join Office–Storage, Restrooms–Party Room, Kitchen–Arcade
+map diameter is 5 moves (8 before the service corridor). **Air ducts** join Office–Storage, Restrooms–Party Room, Kitchen–Arcade
 and Parts–Dining Hall: only the player fits (4 actions to crawl through), and nobody sees into them.
+After coming out of one, the player has to wait 14 actions (about 25 s in the game) before entering
+another (`HuntSettings.DuctCooldownActions`, `freddy_v15`): the vents are an escape, not a way to
+stay out of reach all night.
 
 **Two exits (`freddy_v6`).** Each night the way out is the front doors in the Exit Lobby or the
 loading door in the Storage, chosen at random (`HuntSettings.RandomExit`). The player knows which
 (the objective list says it); Freddy does not observe it, so he cannot camp one door and has to
 hunt by sound (pulling the exit lever is the loudest noise in the game).
+
+**Random live sockets (`freddy_v12`).** Eight rooms have a socket on a wall; each night three of
+them are live, at random (`HuntSettings.RandomSockets`), like the exit. The player's list names
+them; Freddy does not observe which. With the three sockets always in Parts & Service, the Banquet
+Room and the Party Room, every night's route crossed the same rooms.
 
 **Objectives per night (`freddy_v7`).** The player has to power three sockets with power cells,
 carried one at a time from shelves in other rooms (night 1: three yellow cells that fit any socket;
@@ -134,6 +144,7 @@ tonight's exit, and at least two rooms from the socket they fit.
 | Hearing | Noise level 1 is heard in the same room, 2 up to 1 room away, 3 up to 2 rooms away. With 25% chance a noise from another room is placed in a neighbor of the real room |
 | Sight (same room) | A player who is not hidden in Freddy's room is caught with 75% chance per check (rooms have corners) |
 | Sight (next room) | A player who is not hidden one room away is seen with 20% chance per player action |
+| A grate (`freddy_v15`) | When he hears a grate rattle as the player climbs into a duct, he knows where that duct comes out: the exit room enters his noise memory at level 2. It fades like any noise, so it helps only if he gets there in time |
 
 ### How the player is caught
 
@@ -212,7 +223,9 @@ Tonight's exit is **not** an input: Freddy has to find it out from the noise of 
 | Sense that finds nothing (`freddy_v3`) | −0.01 |
 | Staying or sensing in the room where the player hides, instead of searching (`freddy_v6`) | −0.05 |
 | A step toward the freshest noise he remembers (noise memory ≥ 0.3), or into its room (`freddy_v8`: +0.02 only for walking into the room; `freddy_v10`) | +0.05 |
-| A move that does not bring him closer to a fresh noise (`freddy_v10`) | −0.03 |
+| Ignoring a clue: a move that does not bring him closer to a fresh noise (or, with none, to a sighting or sense in the last 20 decisions), or staying put while it waits; staying put with the clue in his own room and a spot there still shut; staying a second time in a row where any trace of the guard is left (`freddy_v10`: −0.03; `freddy_v15`: −0.05; staying put since `freddy_v17`; sightings and his own room since `freddy_v18`; the second stay since `freddy_v19`) | −0.05 |
+| With nothing fresh to go on, walking straight back into the room he just left (`freddy_v11`) | −0.03 |
+| Opening a spot in the room a fresh clue points to (noise ≥ 0.3, or a sense or sighting in the last 20 decisions), not one already opened (`freddy_v15`) | +0.05 |
 | Distance shaping | 0.1 · (γ·Φ(s′) − Φ(s)), with Φ(s) = −distance(Freddy, player) / diameter |
 
 The `freddy_v6` term exists because a policy can win by **waiting**: next to a hidden player he
@@ -237,6 +250,21 @@ on their own (v9: 9 %); rewarding every step toward a fresh noise and charging a
 walking past one was (v10: 100 % with a loud noise, 80 % with a faint one). Searching and sensing
 are never charged, so he can still check where the player hides first.
 
+The `freddy_v11` terms and the `freddy_v12` map come from the next playtest: Freddy paced between
+the Main Hall and the Arcade again, now hearing the player in the Banquet Room. Measured in the
+simulation, v10 spent 86 % of its decisions in three rooms (Arcade, Main Hall, Veranda), never
+entered the staff wing, and 61 % of its moves went straight back to the room it had just left
+(the scripted hunter: 18 %). It had learned to wait on the only way between the wings, which the
+bot has to cross almost every night (cells, keycard, tape, the front exit). Rewards alone (v11)
+lowered the backtracking only a little; random live sockets did not change it either, because the
+crossing itself was the bottleneck. A second way across did (`freddy_v12`, section 2), and then v12 stood listening in the Main Hall,
+where both ways meet, half the time; charging a little for standing still with nothing to go on
+spread it over the building (`freddy_v13`). Those two terms were dropped again in `freddy_v15`:
+v14 walked a loop around the building, heard a player twenty times in a night and opened no spot.
+A walk-the-building bonus rewards walking; v15 rewards what a hunter does instead, opening the
+spots where the clues point, and charges more for walking past a fresh noise.
+("With nothing fresh" means no remembered noise ≥ 0.3 and no sighting or sense in the last 20 ticks.)
+
 The shaping term is **potential-based** (Ng et al., 1999), so it speeds up learning without
 changing the optimal policy. It uses the player's real room, which Freddy never observes:
 privileged information is used only in the reward, never in the inputs, so the trained policy
@@ -244,11 +272,13 @@ works in the game where that information does not exist.
 
 ## 7. Training opponent: SurvivorBot
 
-During training the player is `SurvivorBot`, a scripted survivor with a motion tracker, like the
-player in the 3D game:
+During training the player is `SurvivorBot`, a scripted survivor. Its "tracker" stands for what
+the player of the 3D game hears: since `freddy_v15` the game has no radar (it is a developer
+option), and the player locates Freddy by his steps, servos and ticking, which carry direction,
+distance and walls (`Earshot.cs`). The bot obeys the same duct wait as the player.
 
-1. It reads the tracker (chance `TrackerUse` per action), which shows Freddy's room up to 2 rooms
-   away, and assumes Freddy may have come one room closer per tick since the last reading.
+1. It reads the tracker (chance `TrackerUse` per action), which shows Freddy's room up to 1 room
+   away (2 until `freddy_v15`, when it stood for the radar; one room is about how far a person hears him), and assumes Freddy may have come one room closer per tick since the last reading.
 2. If Freddy is next to it: it hides (chance `HideChance`), choosing the locker with chance
    `Spot0Preference`. After a loud action or in a room with a single spot it runs away first.
 3. If Freddy is 2 rooms away it waits in silence for a while (`Patience`).
@@ -408,10 +438,16 @@ length and searches per night.
 - A policy can exploit weaknesses of the training bot (freddy_v1) or of the map (freddy_v5, which
   camped the only door to the exit). High catch rates alone do not show good behavior: the network
   has to be probed and watched, and the bot, the map or the reward fixed when that happens.
-- Situations the training rarely shows stay weak. In `freddy_v10` two remain: in the Banquet Room
-  with a noise in the Kitchen he goes to the Veranda instead (98 %), and in the Back Hall with a
-  noise in the Restrooms he goes there only 6–7 % of the time. They were found by asking the
-  network about chosen situations (`web/freddy_brain.py`), not by the catch rate.
+- Situations the training rarely shows stay weak. In `freddy_v17`, asked directly about chosen
+  situations (`web/freddy_brain.py`), in the Banquet Room with a noise in the Kitchen he still goes
+  to the Veranda (98 %), and in the Back Hall with a noise in the Office he mostly stays (79 %). In
+  the simulation these come up a few times in 300 nights (the staff wing is quiet when he is next
+  to it), so they barely move the catch rate; they were found by probing, not by the catch rate.
+- A reward can leave a loophole the policy finds: until `freddy_v17` only walking away from a
+  fresh noise was penalized, so `freddy_v16` stood at the Office's door listening instead of going
+  in.
+- A shaping bonus can become the goal (`freddy_v13`): past 1M steps the patrol bonus paid better
+  than searching. The model kept is chosen by measured behavior, not by the reward curve.
 
 ## References
 

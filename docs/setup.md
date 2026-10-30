@@ -252,9 +252,9 @@ used there.
 Updating the data after a new training run or evaluation (from `training/`):
 
 ```bash
-python scripts/export_tensorboard.py freddy_v10    # writes web/data/curves/freddy_v10.csv
+python scripts/export_tensorboard.py freddy_v19    # writes web/data/curves/freddy_v19.csv
 python scripts/summarize_eval.py                  # copies results.json to web/data/
-python scripts/export_policy_weights.py ../unity/Assets/ML/Models/freddy_v10.onnx
+python scripts/export_policy_weights.py ../unity/Assets/ML/Models/freddy_v19.onnx
 # FreddyPolicy.bytes goes to Unity Resources; copy it to web/data/ as well
 ```
 

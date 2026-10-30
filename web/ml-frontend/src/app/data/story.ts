@@ -19,9 +19,10 @@ export const INTRO: string[] = [
 export const CALLS: string[][] = [
   [
     "Hello? Hello, hello! Uh, welcome to your first night at the pizzeria. They asked me to walk you through it, since the last guy... well. Let's not get into that.",
-    "So. The power is out. There are three power sockets: in the parts room, the banquet room and the party room. Find the power cells, carry them one at a time, and plug one into each socket. Then pull the lever at the exit. Some nights it is the front doors, some nights the loading door in the storage. Your list tells you which.",
+    "So. The power is out. There are sockets all over the building, but the wiring is so old that only three lines work, and never the same three. Your list tells you which ones are live tonight. Find the power cells, carry them one at a time, and plug one into each live socket. Then pull the lever at the exit. Some nights it is the front doors, some nights the loading door in the storage. Your list tells you that too.",
     "Now, about Freddy. Management installed a new brain in him. A neural network. They trained it on thousands of nights against people like you. It does not follow a script. It learned.",
     "It cannot see through walls, but it listens. Running, grabbing a cell, plugging it in, that lever. All loud. Walk when you can, and crouch when you really need to be quiet.",
+    "And you have to listen too. There is no tracker in this place. His steps are heavy, something loose rattles inside him, his motors whir, and when he stands still his frame creaks. Wear headphones. If it sounds muffled, he is behind a wall. If it sounds dull and far, he is behind you.",
     "If he gets close, hide. Lockers, cabinets, under the tables. And if he opens your locker, hold your breath with the space bar. Not for too long.",
     "Oh, and the air vents. There are grates all over the building, in the floor and in the walls. Crawl in and you come out in another room. He is too big for them, so in there he cannot reach you.",
     "Sprinting will not save you for long, you will run out of breath. And every socket you power makes him angrier. Faster.",
@@ -31,7 +32,7 @@ export const CALLS: string[][] = [
   ],
   [
     "Hey! You made it. Wow. Okay. Management is... thrilled. They want more data.",
-    "So tonight is a little different. The cells are colored now. Yellow, blue and green. Each one only fits the socket of its color. The maps on the walls show where they go.",
+    "So tonight is a little different. The cells are colored now. Yellow, blue and green. Each one only fits the live socket of its color. Your list shows which room each color goes to.",
     "I looked at last night's logs. Here is the thing: Freddy does not remember you. The network is frozen, it cannot learn during the night.",
     "But it was trained against thousands of guards. It knows what people do. People hide when they hear him. People run straight for the exit.",
     "So, do something people do not do. Throw one of those party horns. It cannot tell a horn from a person. To the network, a noise is a noise.",
@@ -49,7 +50,7 @@ export const CALLS: string[][] = [
     "I need to tell you something else, and I need you to keep working while I do.",
     "The guard before you. Management said he quit. I found his name today. It was in the training data.",
     "They did not just simulate guards. They recorded the real ones. Every night he worked here became more practice for Freddy.",
-    "The lights are worse tonight, and your tracker is losing range. And Freddy senses fear more often now. They changed the settings after your last night.",
+    "The lights are worse tonight, and the rain on the roof is louder. Listen hard for him. And Freddy senses fear more often now. They changed the settings after your last night.",
     "I think they are going to do the same with you. Every night you survive... teaches him something. Be careful what you teach him."
   ],
   [
@@ -75,6 +76,6 @@ export const NIGHT_CHANGES: string[] = [
   "",
   "Freddy is faster  ·  each cell fits only the socket of its color",
   "Freddy is faster  ·  lights are failing  ·  reset the breakers by hand",
-  "Freddy senses more often  ·  the tracker loses range  ·  swipe the keycard",
+  "Freddy senses more often  ·  the rain is louder: listen hard  ·  swipe the keycard",
   "Freddy is awake from the start  ·  open the tape box  ·  get out"
 ];

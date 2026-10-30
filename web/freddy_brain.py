@@ -13,8 +13,8 @@ import numpy as np
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 WEIGHTS_FILE = os.path.join(DATA_DIR, "FreddyPolicy.bytes")
 
-# The map of HuntMap.cs: a staff wing (west) and a public wing (east), joined only through the
-# north wing (Banquet Room and Veranda).
+# The map of HuntMap.cs: a staff wing (west) and a public wing (east), joined through the north
+# wing (Banquet Room and Veranda) and the service corridor from the Back Hall to the Main Hall.
 ROOMS = [
     "Office", "Parts & Service", "Restrooms", "Back Hall", "Storage", "Kitchen",
     "Dining Hall", "Main Hall", "Party Room", "Arcade", "Exit Lobby", "Banquet Room", "Veranda",
@@ -23,11 +23,11 @@ NEIGHBORS = [
     [1, 3],              # Office
     [0, 3],              # Parts & Service
     [3],                 # Restrooms
-    [0, 1, 2, 5],        # Back Hall
+    [0, 1, 2, 5, 7],     # Back Hall
     [5],                 # Storage
     [3, 4, 11],          # Kitchen
     [9],                 # Dining Hall
-    [8, 9],              # Main Hall
+    [8, 9, 3],           # Main Hall
     [7, 10],             # Party Room
     [6, 7, 12],          # Arcade
     [8],                 # Exit Lobby

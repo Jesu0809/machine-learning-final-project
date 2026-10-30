@@ -174,6 +174,148 @@
         "Expert": 0.978
       },
       "finding": "Goes to a noise in the next room 96% of the time and closer to a farther one 94%. In the Arcade with a loud noise in the Dining Hall: 100% (80% with a faint one). Two rare situations stay weak (Banquet to Kitchen, Back Hall to Restrooms).",
+      "decision": "Replaced by freddy_v14: a later playtest showed it waited on the only way between the wings."
+    },
+    {
+      "id": "freddy_v11",
+      "date": "2026-10-29",
+      "steps": 1062233,
+      "minutes": 18,
+      "observations": 100,
+      "actions": 17,
+      "reward_start": 1.0,
+      "reward_end": 1.04,
+      "change": "With nothing fresh to go on: +0.04 for walking into a room that went long unchecked, -0.03 for going straight back to the room he just left. Fine-tuned from v10.",
+      "catch_rate": null,
+      "finding": "A playtest found Freddy pacing between the Main Hall and the Arcade again. v10 spent 86% of its decisions in three rooms on the only way between the wings and never entered the staff wing; 61% of its moves went straight back. v11 barely changed it.",
+      "decision": "Stopped: rewards cannot outweigh a map that makes waiting on one crossing optimal."
+    },
+    {
+      "id": "freddy_v12",
+      "date": "2026-10-29",
+      "steps": 2500008,
+      "minutes": 45,
+      "observations": 100,
+      "actions": 17,
+      "reward_start": 0.86,
+      "reward_end": 1.25,
+      "change": "A service corridor from the Back Hall to the Main Hall (a second way between the wings) and three live sockets drawn at random each night among eight rooms, like the two exits. Fine-tuned from v11.",
+      "catch_rate": null,
+      "finding": "No more pacing (16% of moves straight back, 2% with nothing to go on) and it follows noises 95% of the time, but it stood listening in the Main Hall, where both crossings meet, for half its decisions.",
+      "decision": "Its weights start v13 and v14."
+    },
+    {
+      "id": "freddy_v13",
+      "date": "2026-10-29",
+      "steps": 2500107,
+      "minutes": 43,
+      "observations": 100,
+      "actions": 17,
+      "reward_start": 1.25,
+      "reward_end": 1.9,
+      "change": "-0.02 for standing still with nothing to go on, and the patrol bonus doubled (0.08). Fine-tuned from v12.",
+      "catch_rate": {
+        "Novice": 0.945,
+        "Normal": 0.815,
+        "Expert": 0.65
+      },
+      "finding": "At 1M steps it hunted all over the building; by 2.5M it had found that walking for the patrol bonus paid better than searching: 0.3 searches a night (was 2.0), and it lost to the scripted hunter. Reward hacking.",
+      "decision": "Discard; the same run stopped at 1M steps is v14."
+    },
+    {
+      "id": "freddy_v14",
+      "date": "2026-10-29",
+      "steps": 1000016,
+      "minutes": 17,
+      "observations": 100,
+      "actions": 17,
+      "reward_start": 1.25,
+      "reward_end": 1.75,
+      "change": "v13's rewards, stopped at 1M steps (early stopping chosen by behaviour, not by reward). Fine-tuned from v12.",
+      "catch_rate": {
+        "Novice": 0.985,
+        "Normal": 0.895,
+        "Expert": 0.7775
+      },
+      "finding": "Hunts the whole building: its busiest room holds 24% of its decisions (v10: 40%), 18% of moves go straight back (v10: 61%), it searches 2.5 spots and senses 1.8 times a night, and follows a noise in the next room 91% of the time.",
+      "decision": "Kept until freddy_v17; fine-tuned into v15."
+    },
+    {
+      "date": "2026-10-29",
+      "observations": 100,
+      "actions": 17,
+      "catch_rate": null,
+      "id": "freddy_v15",
+      "steps": 2500000,
+      "minutes": 65,
+      "reward_start": 1.03,
+      "reward_end": 1.14,
+      "change": "Hunter rewards instead of patrol bonuses: +0.05 for opening a spot a fresh clue points to, −0.05 for walking past a fresh noise, no patrol or lingering terms. The player waits 14 actions between ducts, and Freddy hears a grate and learns where that duct comes out. Fine-tuned from v14.",
+      "finding": "Searches where clues point instead of walking a loop: 9% of moves go straight back, 1.8 searches a night, caught 96–98% across checkpoints. Still never enters the Office, Storage or Restrooms.",
+      "decision": "Superseded by v16 (the game lost its radar, so the training bot had to lose it too)."
+    },
+    {
+      "date": "2026-10-29",
+      "observations": 100,
+      "actions": 17,
+      "catch_rate": null,
+      "id": "freddy_v16",
+      "steps": 2500000,
+      "minutes": 57,
+      "reward_start": 1.06,
+      "reward_end": 1.1,
+      "change": "The training bot hears Freddy one room away instead of seeing him two rooms away, like a player without the radar. Fine-tuned from v15.",
+      "finding": "Catches the hearing-only bot in 98.3% of nights with 13.7 decisions a night (v15: 95.3%, 16.5) and goes to a noise in the next room 96% of the time, but stands in the Back Hall listening to a noise in the Office (100%) instead of going in.",
+      "decision": "Superseded by v17: standing still next to a fresh noise was never penalized."
+    },
+    {
+      "date": "2026-10-29",
+      "observations": 100,
+      "actions": 17,
+      "catch_rate": {
+        "Novice": 0.9925,
+        "Normal": 0.995,
+        "Expert": 0.98
+      },
+      "id": "freddy_v17",
+      "steps": 1000000,
+      "minutes": 23,
+      "reward_start": 1.08,
+      "reward_end": 1.11,
+      "change": "Staying put while a fresh noise waits in another room now counts as ignoring it (−0.05). Fine-tuned from v16 for 1M steps.",
+      "finding": "Caught 98.3% in the simulation and goes to a noise in the next room 98% of the time. Evaluation: 99.2 / 99.5 / 98.0% against Novice / Normal / Expert survivors, ahead of the scripted hunter against experts (91.5%).",
+      "decision": "Kept until freddy_v19; fine-tuned into v18."
+    },
+    {
+      "date": "2026-10-29",
+      "observations": 100,
+      "actions": 17,
+      "id": "freddy_v18",
+      "steps": 1000037,
+      "minutes": 19,
+      "reward_start": 1.1,
+      "reward_end": 1.16,
+      "catch_rate": null,
+      "change": "A recent sighting or sense counts like a fresh noise (moving away or staying put ignores it), and staying put with the clue in his own room and a spot there still shut is camping. Fine-tuned from v17.",
+      "finding": "After seeing the guard in another room he moves closer 55% of the time and stays 1% (v17: 42% and 20%); with the guard hidden in his room and a clue there he opens a spot 60% (v17: 50%).",
+      "decision": "Superseded by v19: a playtest found him standing by a locker he had already opened while the guard held their breath."
+    },
+    {
+      "date": "2026-10-29",
+      "observations": 100,
+      "actions": 17,
+      "id": "freddy_v19",
+      "steps": 1000001,
+      "minutes": 21,
+      "reward_start": 1.17,
+      "reward_end": 1.2,
+      "catch_rate": {
+        "Novice": 1.0,
+        "Normal": 0.985,
+        "Expert": 0.9775
+      },
+      "change": "Staying a second time in a row where any trace of the guard is left counts as ignoring it, spots opened or not; and a fresh noise in his own room makes its spots worth opening again. Fine-tuned from v18.",
+      "finding": "Never stays twice beside the hidden guard; after a sighting moves closer 58%; caught 98.3% in the simulation. Evaluation: 100 / 98.5 / 97.8% against Novice / Normal / Expert, ahead of the scripted hunter against experts (91.5%).",
       "decision": "Keep. This is the brain in the game."
     }
   ],
