@@ -13,7 +13,21 @@ namespace NightShift.Game
         public readonly CellPickup[] Cells = new CellPickup[HuntMap.RoomCount];
 
         /// <summary>The three power sockets (built by the director, which they report to).</summary>
-        public readonly PowerSocket[] Sockets = new PowerSocket[3];
+        /// <summary>A socket on a wall of every candidate room (HuntMap.SocketCandidates order); three are live each night.</summary>
+        public readonly PowerSocket[] Sockets = new PowerSocket[HuntMap.SocketCandidates.Count];
+
+        /// <summary>The socket that is tonight's live socket <paramref name="index"/> (its color), or null.</summary>
+        public PowerSocket LiveSocket(int index)
+        {
+            foreach (PowerSocket socket in Sockets)
+            {
+                if (socket != null && socket.Index == index)
+                {
+                    return socket;
+                }
+            }
+            return null;
+        }
         public readonly List<FlickerLight>[] Lamps = new List<FlickerLight>[HuntMap.RoomCount];
         /// <summary>The front doors' panel (the intro opens these doors).</summary>
         public ExitPanel Exit;

@@ -49,6 +49,7 @@ namespace NightShift.UI
         private RectTransform trackerBlip;
         private Image trackerBlipImage;
         private Text trackerLabel;
+        private GameObject trackerRoot;
         private GameObject breath;
         private Image breathFill;
         private GameObject lockerView;
@@ -268,12 +269,12 @@ namespace NightShift.UI
                 string line;
                 if (step == ObjectiveStep.Cells)
                 {
-                    line = "Power the sockets  " + state.CellsInserted + "/" + director.CellsNeeded + "  (one cell at a time)";
+                    line = "Power the sockets  " + state.CellsInserted + "/" + director.CellsNeeded + "  (one cell at a time)\n      Live tonight: " + director.LiveSocketsText;
                     if (director.Player.Cell.Carrying)
                     {
                         int socket = director.Player.Cell.Socket;
                         line += state.Night >= 2
-                            ? "\n      In your hands: the " + CellColors.Name(socket) + " cell  ->  " + HuntMap.DisplayName(HuntMap.SocketRooms[socket])
+                            ? "\n      In your hands: the " + CellColors.Name(socket) + " cell  ->  " + HuntMap.DisplayName(state.SocketRooms[socket])
                             : "\n      In your hands: a cell  ->  any socket";
                     }
                 }
@@ -661,6 +662,7 @@ namespace NightShift.UI
 
             // Motion tracker.
             RectTransform tracker = UiKit.Area("Tracker", h, new Vector2(0.015f, 0.03f), new Vector2(0.015f, 0.03f));
+            trackerRoot = tracker.gameObject;
             tracker.sizeDelta = new Vector2(300f, 300f);
             tracker.pivot = Vector2.zero;
             UiKit.Picture("Screen", tracker, Vector2.zero, Vector2.one, ProceduralTextures.Disc(128), new Color(0.05f, 0.18f, 0.1f, 0.85f));
@@ -763,7 +765,8 @@ namespace NightShift.UI
                 breathFill.color = player.HoldingBreath ? new Color(0.5f, 0.8f, 1f, 0.95f) : new Color(0.5f, 0.6f, 0.7f, 0.6f);
             }
 
-            // Tracker: Freddy's position relative to where the player looks.
+            // Tracker (developers only; the player finds Freddy by ear): his position relative to where the player looks.
+            trackerRoot.SetActive(HuntDirector.DevRadar);
             Vector3 offset = director.Freddy.transform.position - player.transform.position;
             offset.y = 0f;
             float distance = offset.magnitude;

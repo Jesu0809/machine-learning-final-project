@@ -40,7 +40,13 @@ namespace NightShift.Hunt
         /// <summary>True in training and evaluation: every hunt plays a random night (1–5).</summary>
         public bool RandomNight = true;
 
-        /// <summary>Power cells, one for each socket of <see cref="HuntMap.SocketRooms"/>. The player carries one at a time.</summary>
+        /// <summary>
+        /// Each night three of <see cref="HuntMap.SocketCandidates"/> are live, at random (freddy_v12);
+        /// false: always <see cref="HuntMap.DefaultSockets"/>.
+        /// </summary>
+        public bool RandomSockets = true;
+
+        /// <summary>Power cells, one for each of tonight's live sockets (<see cref="HuntState.SocketRooms"/>). The player carries one at a time.</summary>
         public int CellCount = 3;
 
         /// <summary>Player actions flipping the tripped breakers back up (each flip is a loud clack).</summary>
@@ -79,6 +85,12 @@ namespace NightShift.Hunt
 
         /// <summary>Player actions it takes to crawl through an air duct.</summary>
         public int CrawlActions = 4;
+
+        /// <summary>
+        /// Player actions after coming out of a duct before another one can be entered (14 ≈ 25 s in
+        /// the 3D game; freddy_v15): the vents are an escape, not a way to stay out of reach forever.
+        /// </summary>
+        public int DuctCooldownActions = 14;
 
         /// <summary>Chance that searching the right spot finds the player (otherwise they held their breath).</summary>
         public float SearchFindChance = 0.8f;

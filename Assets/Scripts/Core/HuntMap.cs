@@ -18,16 +18,16 @@ namespace NightShift.Hunt
         PartyRoom = 8,
         Arcade = 9,
         ExitLobby = 10,
-        // The north wing: two dining rooms with tables and windows, the only way between the wings.
+        // The north wing: two dining rooms with tables and windows, one of the two ways between the wings.
         Banquet = 11,
         Veranda = 12
     }
 
     /// <summary>
     /// The room graph the hunt is played on: one floor in two wings, the staff wing and the public
-    /// wing, each strung along its own hall; the wings meet only through the north wing, two
-    /// dining rooms with tables and windows (the banquet room off the kitchen, the veranda above
-    /// the arcade). Air ducts cross between the wings, and only the player fits through them. Moving along a connection takes as many decisions as its length needs
+    /// wing, each strung along its own hall; the wings meet through the north wing, two dining
+    /// rooms with tables and windows (the banquet room off the kitchen, the veranda above the
+    /// arcade), and through a long service corridor from the back hall to the main hall. Air ducts cross between the wings, and only the player fits through them. Moving along a connection takes as many decisions as its length needs
     /// (<see cref="Cost"/>), so the simulation runs at the pace of the 3D building.
     /// See docs/ml-design.md, section 2.
     /// </summary>
@@ -38,11 +38,12 @@ namespace NightShift.Hunt
     ///                     ║                       ║
     ///   Storage ── Kitchen          DiningHall ── Arcade
     ///      │          ║                              ║   ║
-    ///   ═══ BackHall ═╝                MainHall ═════╝   ║
+    ///   ═══ BackHall ═╝═══ service corridor ═══ MainHall ═╝  ║
     ///    │     │     │                    │              ║
     ///  Office─Parts Restrooms         PartyRoom ──── ExitLobby (front exit)
     ///
     ///   Exits: the front doors (Exit Lobby) or the loading door (Storage), one of them each night.
+    ///   The wings meet through the north wing and the service corridor (freddy_v12).
     ///
     ///   Ducts (player only): Office–Storage, Restrooms–PartyRoom, Kitchen–Arcade, Parts–DiningHall.
     /// </code>
@@ -63,11 +64,20 @@ namespace NightShift.Hunt
         public static IReadOnlyList<Room> Exits { get; } = new[] { Room.ExitLobby, Room.Storage };
 
         /// <summary>
-        /// The three power sockets, always in the same rooms. A socket takes one power cell; from
-        /// night 2 each cell has the color of its socket: index 0 yellow (Parts), 1 blue (Banquet
-        /// Room), 2 green (Party Room).
+        /// Rooms with a power socket on a wall, all over the building. Each night three of them are
+        /// live (<see cref="HuntState.SocketRooms"/>, drawn at random like the exit, and Freddy does
+        /// not observe which): with the sockets always in the same rooms, every night's route went
+        /// through the same rooms, and freddy_v10/v11 learned to wait there instead of hunting.
         /// </summary>
-        public static IReadOnlyList<Room> SocketRooms { get; } = new[] { Room.Parts, Room.Banquet, Room.PartyRoom };
+        public static IReadOnlyList<Room> SocketCandidates { get; } = new[]
+        {
+            Room.Parts, Room.Kitchen, Room.Restrooms,          // staff wing
+            Room.Banquet, Room.Veranda,                         // north wing
+            Room.PartyRoom, Room.DiningHall, Room.Arcade        // public wing
+        };
+
+        /// <summary>The live sockets when they are not drawn at random (index 0 yellow, 1 blue, 2 green).</summary>
+        public static IReadOnlyList<Room> DefaultSockets { get; } = new[] { Room.Parts, Room.Banquet, Room.PartyRoom };
 
         /// <summary>The breaker box (night 3 on).</summary>
         public const Room BreakerRoom = Room.Storage;
@@ -81,17 +91,17 @@ namespace NightShift.Hunt
         /// <summary>The keypad box that holds the tape (night 5).</summary>
         public const Room TapeRoom = Room.ExitLobby;
 
-        /// <summary>Index of the socket in <paramref name="room"/>, or -1.</summary>
-        public static int SocketIn(Room room)
+        /// <summary>True if <paramref name="room"/> has a socket on its wall (live tonight or not).</summary>
+        public static bool HasSocket(Room room)
         {
-            for (int i = 0; i < SocketRooms.Count; i++)
+            foreach (Room candidate in SocketCandidates)
             {
-                if (SocketRooms[i] == room)
+                if (candidate == room)
                 {
-                    return i;
+                    return true;
                 }
             }
-            return -1;
+            return false;
         }
 
         private static readonly Room[][] Neighbors =
@@ -99,11 +109,11 @@ namespace NightShift.Hunt
             new[] { Room.Parts, Room.BackHall },                                       // Office
             new[] { Room.Office, Room.BackHall },                                      // Parts
             new[] { Room.BackHall },                                                   // Restrooms
-            new[] { Room.Office, Room.Parts, Room.Restrooms, Room.Kitchen },           // BackHall
+            new[] { Room.Office, Room.Parts, Room.Restrooms, Room.Kitchen, Room.MainHall }, // BackHall
             new[] { Room.Kitchen },                                                    // Storage
             new[] { Room.BackHall, Room.Storage, Room.Banquet },                       // Kitchen
             new[] { Room.Arcade },                                                     // DiningHall
-            new[] { Room.PartyRoom, Room.Arcade },                                     // MainHall
+            new[] { Room.PartyRoom, Room.Arcade, Room.BackHall },                      // MainHall
             new[] { Room.MainHall, Room.ExitLobby },                                   // PartyRoom
             new[] { Room.DiningHall, Room.MainHall, Room.Veranda },                    // Arcade
             new[] { Room.PartyRoom },                                                  // ExitLobby
@@ -129,7 +139,8 @@ namespace NightShift.Hunt
             (Room.Office, Room.BackHall, 2),
             (Room.MainHall, Room.Arcade, 2),
             (Room.Kitchen, Room.Banquet, 2),
-            (Room.Banquet, Room.Veranda, 2)
+            (Room.Banquet, Room.Veranda, 2),
+            (Room.BackHall, Room.MainHall, 3)
         };
 
         // Hiding spots per room: lockers, cabinets and under tables (the banquet room and the veranda only have tables).

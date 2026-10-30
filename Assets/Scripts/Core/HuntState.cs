@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace NightShift.Hunt
 {
@@ -102,10 +103,19 @@ namespace NightShift.Hunt
         /// <summary>A fresh noise was waiting and he walked somewhere that does not bring him closer to it (see FreddyRewards.IgnoredNoise).</summary>
         public readonly bool IgnoredNoise;
 
+        /// <summary>With nothing fresh to go on, he walked straight back into the room he had just left (see FreddyRewards.Backtrack).</summary>
+        public readonly bool Backtracked;
+
+        /// <summary>He opened a spot in the room a fresh clue points to: a noise, a sense or a sighting (see FreddyRewards.SearchedClue).</summary>
+        public readonly bool SearchedClue;
+
         public FreddyStep(int action, Room from, Room to, int distanceBefore, int distanceAfter,
                           bool failedSearch, bool repeatedSearch, HuntOutcome outcome, bool senseUsed = false, bool senseFound = false,
-                          bool waitedOutsideHiding = false, bool investigatedNoise = false, bool ignoredNoise = false)
+                          bool waitedOutsideHiding = false, bool investigatedNoise = false, bool ignoredNoise = false,
+                          bool backtracked = false, bool searchedClue = false)
         {
+            SearchedClue = searchedClue;
+            Backtracked = backtracked;
             WaitedOutsideHiding = waitedOutsideHiding;
             InvestigatedNoise = investigatedNoise;
             IgnoredNoise = ignoredNoise;
@@ -144,6 +154,9 @@ namespace NightShift.Hunt
         /// <summary>Decisions Freddy still spends walking a long connection (he cannot act meanwhile).</summary>
         public int FreddyTravelLeft { get; private set; }
 
+        /// <summary>The room Freddy was in before the one he is in now (the one he just left).</summary>
+        public Room FreddyCameFrom { get; private set; }
+
         /// <summary>True when the policy should decide this tick: awake and not in the middle of a long walk.</summary>
         public bool FreddyCanDecide => FreddyAwake && FreddyTravelLeft == 0;
 
@@ -163,6 +176,15 @@ namespace NightShift.Hunt
         /// <summary>Room at the other end of the duct the player is crawling through, or null.</summary>
         public Room? PlayerCrawlingTo { get; private set; }
         public int PlayerCrawlProgress { get; private set; }
+
+        /// <summary>Player actions left before another duct can be entered (after coming out of one).</summary>
+        public int DuctCooldown { get; private set; }
+
+        /// <summary>True if the player may crawl into a duct now.</summary>
+        public bool CanCrawl => DuctCooldown == 0;
+
+        // Where a duct the player just climbed into comes out: if Freddy hears the grate, he knows.
+        private Room? ductHeadingTo;
         public bool PlayerInDuct => PlayerCrawlingTo.HasValue;
         public int ExitProgress { get; private set; }
 
@@ -206,6 +228,8 @@ namespace NightShift.Hunt
 
         /// <summary>True once the player has used all their actions of this tick; Freddy acts next.</summary>
         public bool FreddyTurn => PlayerActionsThisTick >= Settings.PlayerActionsPerTick;
+
+        private readonly Room[] socketRooms = { Room.Parts, Room.Banquet, Room.PartyRoom };
 
         // Where each cell waits (null once picked up), the socket it fits (-1: any), the sockets filled.
         private readonly Room?[] cellRoom = new Room?[MaxCells];
@@ -277,7 +301,13 @@ namespace NightShift.Hunt
         /// <summary>Room where cell <paramref name="cell"/> waits, or null once it was picked up.</summary>
         public Room? CellRoom(int cell) => cellRoom[cell];
 
-        /// <summary>The socket cell <paramref name="cell"/> fits (index in <see cref="HuntMap.SocketRooms"/>), or -1 for any.</summary>
+        /// <summary>Tonight's three live sockets (index 0 yellow, 1 blue, 2 green).</summary>
+        public IReadOnlyList<Room> SocketRooms => socketRooms;
+
+        /// <summary>Index of tonight's live socket in <paramref name="room"/>, or -1 (no socket, or a dead one).</summary>
+        public int SocketIn(Room room) => Array.IndexOf(socketRooms, room);
+
+        /// <summary>The socket cell <paramref name="cell"/> fits (index in <see cref="SocketRooms"/>), or -1 for any.</summary>
         public int CellSocket(int cell) => cellSocket[cell];
 
         public bool SocketPowered(int socket) => socketPowered[socket];
@@ -310,7 +340,10 @@ namespace NightShift.Hunt
             PlayerWalkProgress = 0;
             PlayerCrawlingTo = null;
             PlayerCrawlProgress = 0;
+            DuctCooldown = 0;
+            ductHeadingTo = null;
             FreddyTravelLeft = 0;
+            FreddyCameFrom = HuntMap.FreddyStart;
             ExitProgress = 0;
             Night = Settings.RandomNight ? random.Next(1, 6) : Math.Max(1, Math.Min(5, Settings.Night));
             CarriedCell = -1;
@@ -335,7 +368,36 @@ namespace NightShift.Hunt
                 TicksSinceVisited[room] = Settings.MemoryWindowTicks;
             }
             TicksSinceVisited[(int)FreddyRoom] = 0;
+            PickSockets();
             PlaceCells();
+        }
+
+        /// <summary>Tonight's three live sockets: three different candidate rooms at random, or the default three.</summary>
+        private void PickSockets()
+        {
+            if (!Settings.RandomSockets)
+            {
+                for (int i = 0; i < socketRooms.Length; i++)
+                {
+                    socketRooms[i] = HuntMap.DefaultSockets[i];
+                }
+                return;
+            }
+            var pool = new List<Room>(HuntMap.SocketCandidates);
+            for (int i = 0; i < socketRooms.Length; i++)
+            {
+                int pick = random.Next(pool.Count);
+                socketRooms[i] = pool[pick];
+                pool.RemoveAt(pick);
+            }
+        }
+
+        /// <summary>Sets tonight's live sockets (tests).</summary>
+        public void SetSockets(Room yellow, Room blue, Room green)
+        {
+            socketRooms[0] = yellow;
+            socketRooms[1] = blue;
+            socketRooms[2] = green;
         }
 
         /// <summary>
@@ -359,7 +421,7 @@ namespace NightShift.Hunt
                 {
                     Room room = candidates[random.Next(candidates.Count)];
                     bool strict = attempt < 40;
-                    if (HuntMap.SocketIn(room) >= 0 || room == ExitRoom || CellIn(room) || (strict && SocketDistance(room, cellSocket[i]) < 2))
+                    if (SocketIn(room) >= 0 || room == ExitRoom || CellIn(room) || (strict && SocketDistance(room, cellSocket[i]) < 2))
                     {
                         continue;
                     }
@@ -370,14 +432,14 @@ namespace NightShift.Hunt
         }
 
         /// <summary>Rooms between <paramref name="room"/> and socket <paramref name="socket"/> (the nearest socket if -1).</summary>
-        private static int SocketDistance(Room room, int socket)
+        private int SocketDistance(Room room, int socket)
         {
             if (socket >= 0)
             {
-                return HuntMap.Distance(room, HuntMap.SocketRooms[socket]);
+                return HuntMap.Distance(room, socketRooms[socket]);
             }
             int best = int.MaxValue;
-            foreach (Room s in HuntMap.SocketRooms)
+            foreach (Room s in socketRooms)
             {
                 best = Math.Min(best, HuntMap.Distance(room, s));
             }
@@ -436,6 +498,7 @@ namespace NightShift.Hunt
             }
             PlayerActionsThisTick++;
             PlayerNoise = 0;
+            DuctCooldown = Math.Max(0, DuctCooldown - 1);
             if (PlayerInDuct)
             {
                 // Inside a duct there is nothing to do but keep crawling: silent and out of sight.
@@ -448,6 +511,7 @@ namespace NightShift.Hunt
                     LeaveHidingSpot();
                     MovePlayer(exit);
                     PlayerNoise = 1; // the grate at the other end
+                    DuctCooldown = Settings.DuctCooldownActions;
                 }
                 Sense();
                 return;
@@ -455,12 +519,13 @@ namespace NightShift.Hunt
             switch (action.Kind)
             {
                 case PlayerActionKind.Crawl:
-                    if (!HuntMap.DuctBetween(PlayerRoom, action.Target))
+                    if (!HuntMap.DuctBetween(PlayerRoom, action.Target) || !CanCrawl)
                     {
                         break;
                     }
                     // Into the vent: the grate rattles, then the player is gone from sight.
                     PlayerNoise = 1;
+                    ductHeadingTo = action.Target;
                     PlayerHidden = true;
                     PlayerSpot = -1;
                     PlayerCrawlingTo = action.Target;
@@ -510,10 +575,10 @@ namespace NightShift.Hunt
                     break;
 
                 case PlayerActionKind.InsertCell:
-                    if (CellFits(CarriedCell, HuntMap.SocketIn(PlayerRoom)))
+                    if (CellFits(CarriedCell, SocketIn(PlayerRoom)))
                     {
                         LeaveHidingSpot();
-                        socketPowered[HuntMap.SocketIn(PlayerRoom)] = true;
+                        socketPowered[SocketIn(PlayerRoom)] = true;
                         CarriedCell = -1;
                         CellsInserted++;
                         PlayerNoise = 2;
@@ -648,9 +713,17 @@ namespace NightShift.Hunt
                     source = neighbors[random.Next(neighbors.Count)];
                 }
                 HeardRoom = source;
-                NoiseMemory[(int)source] = Math.Max(NoiseMemory[(int)source], PlayerNoise / 3f);
+                Remember(source, PlayerNoise / 3f);
                 TimesHeard++;
+                // A grate rattling as someone climbs in: Freddy knows the building, and where that
+                // duct comes out. The clue fades like any noise, so it pays only if he gets there in time.
+                if (ductHeadingTo.HasValue && source == PlayerRoom)
+                {
+                    int exit = (int)ductHeadingTo.Value;
+                    NoiseMemory[exit] = Math.Max(NoiseMemory[exit], 2f / 3f);
+                }
             }
+            ductHeadingTo = null;
 
             if (!PlayerHidden && distance == 1 && random.NextDouble() < Settings.SightAdjacentChance)
             {
@@ -669,6 +742,12 @@ namespace NightShift.Hunt
         /// One player action measured in the 3D game: where the player is, whether they hide and how
         /// much noise they made since the last call. Replaces <see cref="ApplyPlayerAction"/> there.
         /// </summary>
+        /// <summary>The 3D player climbed into a duct that comes out in <paramref name="exit"/> (heard with the next observation).</summary>
+        public void NoteDuctEntered(Room exit)
+        {
+            ductHeadingTo = exit;
+        }
+
         public void ObservePlayer(Room room, bool hidden, int spot, int noise)
         {
             if (IsOver)
@@ -700,9 +779,24 @@ namespace NightShift.Hunt
                 return false;
             }
             HeardRoom = source;
-            NoiseMemory[(int)source] = Math.Max(NoiseMemory[(int)source], level / 3f);
+            Remember(source, level / 3f);
             TimesHeard++;
             return true;
+        }
+
+        /// <summary>
+        /// A noise reaches Freddy's memory. A fresh one in his own room makes every spot there worth
+        /// opening again: the guard he did not find a moment ago may have been holding their breath,
+        /// and gasped (in the 3D game v18 opened the Main Hall locker, the guard held their breath,
+        /// then panted, and he stood beside the locker he had "already checked").
+        /// </summary>
+        private void Remember(Room source, float level)
+        {
+            NoiseMemory[(int)source] = Math.Max(NoiseMemory[(int)source], level);
+            if (source == FreddyRoom && level >= FreddyRewards.FreshNoise)
+            {
+                Array.Clear(SearchedHere, 0, SearchedHere.Length);
+            }
         }
 
         /// <summary>Freddy's eyes in the 3D game saw the player (raycast), wherever Freddy is.</summary>
@@ -719,6 +813,7 @@ namespace NightShift.Hunt
         {
             if (room != FreddyRoom)
             {
+                FreddyCameFrom = FreddyRoom;
                 FreddyRoom = room;
                 Array.Clear(SearchedHere, 0, SearchedHere.Length);
             }
@@ -816,7 +911,53 @@ namespace NightShift.Hunt
         /// Applies Freddy's action and advances the clock one tick. An illegal action is treated as
         /// "stay" (it should never happen: illegal actions are masked).
         /// </summary>
+        /// <summary>A sighting or a sense this many ticks old still tells Freddy where to look.</summary>
+        private const int RecentTicks = 20;
+
         /// <summary>The room with the loudest noise in Freddy's memory, if it is still fresh; otherwise -1.</summary>
+        /// <summary>The room of a sighting or a sense in the last <see cref="RecentTicks"/> decisions, or -1.</summary>
+        private int RecentSighting()
+        {
+            if (LastSeenRoom.HasValue && TicksSinceSeen < RecentTicks)
+            {
+                return (int)LastSeenRoom.Value;
+            }
+            if (SensedRoom.HasValue && TicksSinceSensed < RecentTicks)
+            {
+                return (int)SensedRoom.Value;
+            }
+            return -1;
+        }
+
+        /// <summary>A fresh noise, a sighting or a sense points at Freddy's own room.</summary>
+        private bool ClueHere()
+        {
+            return NoiseMemory[(int)FreddyRoom] >= FreddyRewards.FreshNoise
+                   || (LastSeenRoom == FreddyRoom && TicksSinceSeen < RecentTicks)
+                   || (SensedRoom == FreddyRoom && TicksSinceSensed < RecentTicks);
+        }
+
+        /// <summary>Anything left of the guard in Freddy's room: a noise not yet forgotten, or a sighting or sense in memory.</summary>
+        private bool TraceHere()
+        {
+            return NoiseMemory[(int)FreddyRoom] > 0f
+                   || (LastSeenRoom == FreddyRoom && TicksSinceSeen < Settings.MemoryWindowTicks)
+                   || (SensedRoom == FreddyRoom && TicksSinceSensed < Settings.MemoryWindowTicks);
+        }
+
+        /// <summary>A hiding spot in Freddy's room he has not opened since he came in.</summary>
+        private bool UnopenedSpotHere()
+        {
+            for (int spot = 0; spot < HuntMap.SpotCount(FreddyRoom); spot++)
+            {
+                if (!SearchedHere[spot])
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         private int FreshestNoise()
         {
             int loudest = -1;
@@ -841,6 +982,7 @@ namespace NightShift.Hunt
                 action = FreddyActions.GoTo(FreddyRoom);
             }
 
+            bool stayedBefore = LastFreddyAction == FreddyActions.GoTo(FreddyRoom);
             LastFreddyAction = action;
             Room from = FreddyRoom;
             int distanceBefore = HuntMap.Distance(FreddyRoom, PlayerRoom);
@@ -853,6 +995,8 @@ namespace NightShift.Hunt
                                        && (FreddyActions.IsSense(action) || action == FreddyActions.GoTo(FreddyRoom));
             bool investigatedNoise = false;
             bool ignoredNoise = false;
+            bool backtracked = false;
+            bool searchedClue = false;
 
             if (FreddyActions.IsSense(action))
             {
@@ -872,16 +1016,34 @@ namespace NightShift.Hunt
             {
                 var target = (Room)action;
                 // Going to see what made a noise he heard a moment ago, or stepping toward it (what
-                // Freddy knows, not where the player is); walking some other way while it is fresh ignores it.
+                // Freddy knows, not where the player is); walking some other way while it is fresh
+                // ignores it, and so does staying put: v16 stood in the Back Hall listening to noise in
+                // the Office, a dead end, waiting at its only door instead of going in. With no fresh
+                // noise, a recent sighting or sense counts the same (v17 saw the guard and let it go).
                 int heard = FreshestNoise();
-                if (target != FreddyRoom && heard >= 0 && heard != (int)FreddyRoom)
+                int clue = heard >= 0 ? heard : RecentSighting();
+                if (clue >= 0 && clue != (int)FreddyRoom)
                 {
-                    bool closer = HuntMap.Distance(target, (Room)heard) < HuntMap.Distance(FreddyRoom, (Room)heard);
+                    bool closer = HuntMap.Distance(target, (Room)clue) < HuntMap.Distance(FreddyRoom, (Room)clue);
                     investigatedNoise = closer;
                     ignoredNoise = !closer;
                 }
+                else if (target == FreddyRoom && ((ClueHere() && UnopenedSpotHere()) || (stayedBefore && TraceHere())))
+                {
+                    // The clue is in this very room and a spot here is still shut: standing outside it
+                    // listening is camping. So is staying a second time in a row where any trace of the
+                    // guard is left, even with every spot opened: v18 opened the Main Hall locker, the
+                    // guard held their breath, and he stood beside it four decisions in a row. Open it
+                    // again or go.
+                    ignoredNoise = true;
+                }
+                // With nothing fresh to go on he should patrol the building, not pace between two
+                // rooms on the way to the exit (v10 did: 61 % of its moves went straight back).
+                bool clueless = heard < 0 && TicksSinceSeen >= RecentTicks && TicksSinceSensed >= RecentTicks;
+                backtracked = target != FreddyRoom && clueless && target == FreddyCameFrom;
                 if (target != FreddyRoom)
                 {
+                    FreddyCameFrom = FreddyRoom;
                     // A long connection keeps him walking for its extra decisions (see FreddyCanDecide).
                     FreddyTravelLeft = Settings.TravelTime ? HuntMap.Cost(FreddyRoom, target) - 1 : 0;
                     FreddyRoom = target;
@@ -897,6 +1059,8 @@ namespace NightShift.Hunt
                 int spot = FreddyActions.SpotOf(action);
                 Searches++;
                 repeatedSearch = SearchedHere[spot];
+                // Opening a spot where the clues point: what makes him a hunter rather than a walker.
+                searchedClue = !repeatedSearch && ClueHere();
                 SearchedHere[spot] = true;
                 if (Settings.ResolveCatches && PlayerHidden && PlayerRoom == FreddyRoom && PlayerSpot == spot
                     && random.NextDouble() < Settings.SearchFindChance)
@@ -912,7 +1076,7 @@ namespace NightShift.Hunt
 
             AdvanceClock();
             int distanceAfter = HuntMap.Distance(FreddyRoom, PlayerRoom);
-            return new FreddyStep(action, from, FreddyRoom, distanceBefore, distanceAfter, failedSearch, repeatedSearch, Outcome, senseUsed, senseFound, waitedOutsideHiding, investigatedNoise, ignoredNoise);
+            return new FreddyStep(action, from, FreddyRoom, distanceBefore, distanceAfter, failedSearch, repeatedSearch, Outcome, senseUsed, senseFound, waitedOutsideHiding, investigatedNoise, ignoredNoise, backtracked, searchedClue);
         }
 
         private void AdvanceClock()

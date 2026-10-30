@@ -233,7 +233,7 @@ namespace NightShift.Game
             // the tape box on the ticket booth's counter.
             for (int socket = 0; socket < Level.Sockets.Length; socket++)
             {
-                Level.Sockets[socket] = PowerSocket.Build(this, Level.Root, socket);
+                Level.Sockets[socket] = PowerSocket.Build(this, Level.Root, HuntMap.SocketCandidates[socket]);
             }
             breakerBox = BreakerBox.Create(this, Level.Root, new Vector3(-20.4f, 1.4f, 2.32f), 0f);
             cardPedestal = KeycardPedestal.Create(this, Level.Root, PizzeriaLayout.CardPedestal);
@@ -753,7 +753,7 @@ namespace NightShift.Game
         {
             switch (step)
             {
-                case ObjectiveStep.Cells: return "power the three sockets";
+                case ObjectiveStep.Cells: return "power the three live sockets";
                 case ObjectiveStep.Breaker: return "reset the breakers in the Storage";
                 case ObjectiveStep.Keycard: return "take the keycard from the Veranda and swipe it in the Office";
                 case ObjectiveStep.Tape: return "open the tape box in the Exit Lobby";
@@ -797,27 +797,48 @@ namespace NightShift.Game
             }
         }
 
-        /// <summary>Motion tracker: faster beeps and a heartbeat as Freddy gets closer.</summary>
+        /// <summary>
+        /// The developer's motion tracker (radar and its beeps): off in the game, where Freddy is
+        /// found by ear. On with the -radar command-line flag or F9.
+        /// </summary>
+        public static bool DevRadar { get; set; } = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-radar") >= 0;
+
+        /// <summary>
+        /// The pressure of having him near, without saying where (his own sounds tell that): the
+        /// player's heartbeat and a low drone, nothing while he is more than a room away, rising as
+        /// he comes within a dozen meters, loudest when he chases.
+        /// </summary>
         private void UpdateTracker()
         {
+            if (Keyboard.current != null && Keyboard.current.f9Key.wasPressedThisFrame)
+            {
+                DevRadar = !DevRadar;
+            }
             float distance = Vector3.Distance(Player.transform.position, Freddy.transform.position);
-            if (distance > TrackerRange)
+            int rooms = HuntMap.Distance(Freddy.Room, PizzeriaLayout.RoomAt(Player.transform.position));
+            float near = rooms <= 1 ? 1f - Mathf.Clamp01((distance - 3f) / 11f) : 0f;
+            if (Freddy.Chasing)
             {
-                return;
+                near = 1f;
             }
-            trackerTimer -= Time.deltaTime;
-            if (trackerTimer <= 0f)
+            Audio.SetDread(Freddy.IsAsleep ? 0f : near);
+            if (DevRadar && distance <= TrackerRange)
             {
-                trackerTimer = Mathf.Lerp(0.25f, 1.6f, distance / TrackerRange);
-                Audio.Beep(Mathf.Lerp(1.3f, 0.9f, distance / TrackerRange));
+                trackerTimer -= Time.deltaTime;
+                if (trackerTimer <= 0f)
+                {
+                    trackerTimer = Mathf.Lerp(0.25f, 1.6f, distance / TrackerRange);
+                    Audio.Beep(Mathf.Lerp(1.3f, 0.9f, distance / TrackerRange));
+                }
             }
-            if (distance < 10f)
+            if (near > 0.05f && !Freddy.IsAsleep)
             {
                 heartbeatTimer -= Time.deltaTime;
                 if (heartbeatTimer <= 0f)
                 {
-                    heartbeatTimer = Mathf.Lerp(0.42f, 1.1f, distance / 10f);
-                    Audio.Heartbeat(Mathf.Lerp(0.9f, 0.3f, distance / 10f));
+                    heartbeatTimer = Mathf.Lerp(1.15f, 0.38f, near);
+                    // Under his steps, never over them: the steps say where he is, the heart only how close.
+                    Audio.Heartbeat(Mathf.Lerp(0.1f, 0.4f, near));
                 }
             }
         }
@@ -932,8 +953,18 @@ namespace NightShift.Game
             Player.MakeNoise(2);
             Audio.PlayAt(Assets.FusePickup, cell.transform.position, 0.8f, 1.4f);
             UI.Toast(Night >= 2
-                ? "The " + CellColors.Name(cell.Socket) + " cell. Its socket is in the " + HuntMap.DisplayName(HuntMap.SocketRooms[cell.Socket]) + "."
-                : "A power cell. Any socket takes it: Parts & Service, Banquet Room or Party Room.");
+                ? "The " + CellColors.Name(cell.Socket) + " cell. Its socket is in the " + HuntMap.DisplayName(State.SocketRooms[cell.Socket]) + "."
+                : "A power cell. Any live socket takes it: " + LiveSocketsText + ".");
+        }
+
+        /// <summary>Tonight's live sockets by room, e.g. "Kitchen, Veranda and Party Room".</summary>
+        public string LiveSocketsText
+        {
+            get
+            {
+                IReadOnlyList<Room> rooms = State.SocketRooms;
+                return HuntMap.DisplayName(rooms[0]) + ", " + HuntMap.DisplayName(rooms[1]) + " and " + HuntMap.DisplayName(rooms[2]);
+            }
         }
 
         public void OnCellInserted(PowerSocket socket)

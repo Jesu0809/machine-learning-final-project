@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace NightShift.Game
@@ -41,21 +42,29 @@ namespace NightShift.Game
         private AudioSource music;
         private AudioSource ambient;
         private AudioSource ui;
+        private AudioSource dread;
         private AudioClip footstep;
         private AudioClip click;
         private AudioClip gasp;
         private AudioClip beep;
         private AudioClip heartbeat;
-        private AudioClip freddyStep;
+        private AudioClip[] freddySteps;
+        private AudioClip[] freddyServos;
+        private AudioClip[] freddyCreaks;
+        private int lastStep = -1;
+        private int lastCreak = -1;
         private AudioClip sting;
         private AudioClip staticBurst;
         private AudioClip impact;
         private AudioClip ring;
         private AudioClip horn;
         private AudioClip senseWhisper;
+        private bool musicWanted;
+        private bool ambientWanted;
+        private bool restartLoops;
 
-        /// <summary>Freddy's servos: a low mechanical whir that loops while he moves.</summary>
-        public AudioClip ServoLoop { get; private set; }
+        /// <summary>Looping sounds in the level that must keep playing (lamp hums, the fridge).</summary>
+        private static readonly List<AudioSource> Loops = new List<AudioSource>();
 
         public GameAssets Assets { get; private set; }
 
@@ -65,22 +74,27 @@ namespace NightShift.Game
             audio.transform.SetParent(parent, false);
             audio.Assets = assets;
             audio.music = audio.Source("Music", assets.MenuMusic, true, 0.5f);
-            audio.ambient = audio.Source("Ambient", assets.AmbientLoop, true, 0.35f);
+            // Kept low: the building's hum must never cover Freddy.
+            audio.ambient = audio.Source("Ambient", assets.AmbientLoop, true, 0.1f);
             audio.ui = audio.Source("UI", null, false, 1f);
+            // A low, uneasy drone that rises only when Freddy is close (no direction: that is the pressure).
+            audio.dread = audio.Source("Dread", Synth("Dread", 4f, (t, i) =>
+                (Mathf.Sin(2f * Mathf.PI * 41f * t) * 0.5f + Mathf.Sin(2f * Mathf.PI * 43.5f * t) * 0.4f
+                 + Mathf.Sin(2f * Mathf.PI * 123f * t + Mathf.Sin(2f * Mathf.PI * 0.5f * t) * 3f) * 0.12f + Noise(i) * 0.04f) * 0.8f, 0.6f), true, 0f);
 
             audio.footstep = Synth("Footstep", 0.12f, (t, i) => Noise(i) * Mathf.Exp(-t * 45f) * 0.6f, 0.5f);
             audio.click = Synth("Click", 0.03f, (t, i) => Noise(i) * Mathf.Exp(-t * 200f), 0f);
             audio.gasp = Synth("Gasp", 0.7f, (t, i) => Noise(i) * Mathf.Sin(Mathf.PI * t / 0.7f) * 0.7f, 0.85f);
             audio.beep = Synth("Beep", 0.07f, (t, i) => Mathf.Sin(2f * Mathf.PI * 1250f * t) * Mathf.Exp(-t * 30f) * 0.5f, 0f);
+            // Lub-dub, with harmonics over the 55 Hz beat so it is felt on headphones and small speakers too.
             audio.heartbeat = Synth("Heartbeat", 0.5f, (t, i) =>
-                Mathf.Sin(2f * Mathf.PI * 55f * t) * (Mathf.Exp(-t * 30f) + (t > 0.18f ? Mathf.Exp(-(t - 0.18f) * 30f) * 0.7f : 0f)), 0f);
-            audio.freddyStep = Synth("FreddyStep", 0.35f, (t, i) =>
-                (Mathf.Sin(2f * Mathf.PI * 48f * t) * 0.9f + Noise(i) * 0.25f + Mathf.Sin(2f * Mathf.PI * 1900f * t) * 0.08f * Mathf.Exp(-t * 60f))
-                * Mathf.Exp(-t * 12f), 0.3f);
-            audio.ServoLoop = Synth("Servo", 2f, (t, i) =>
-                (Mathf.Sin(2f * Mathf.PI * 92f * t + Mathf.Sin(2f * Mathf.PI * 3f * t) * 2f) * 0.25f
-                 + Mathf.Sin(2f * Mathf.PI * 184f * t) * 0.08f + Noise(i) * 0.05f)
-                * (0.7f + 0.3f * Mathf.Sin(2f * Mathf.PI * 1.5f * t)), 0.4f);
+                (Mathf.Sin(2f * Mathf.PI * 55f * t) * 0.6f + Mathf.Sin(2f * Mathf.PI * 110f * t) * 0.35f + Mathf.Sin(2f * Mathf.PI * 165f * t) * 0.15f)
+                * (Mathf.Exp(-t * 30f) + (t > 0.18f ? Mathf.Exp(-(t - 0.18f) * 30f) * 0.7f : 0f)), 0.3f);
+            // Freddy: recordings when the project has them (Assets/Audio/Freddy), synthesized
+            // stand-ins otherwise (FreddyStepClip, ServoClip, CreakClip).
+            audio.freddySteps = Recorded(assets.FreddySteps) ?? new[] { FreddyStepClip(0), FreddyStepClip(1), FreddyStepClip(2), FreddyStepClip(3) };
+            audio.freddyServos = Recorded(assets.FreddyServos) ?? new[] { ServoClip() };
+            audio.freddyCreaks = Recorded(assets.FreddyCreaks) ?? new[] { CreakClip() };
             audio.staticBurst = Synth("Static", 1.2f, (t, i) => Noise(i) * 0.8f * (t < 0.9f ? 1f : (1.2f - t) / 0.3f), 0f);
             audio.impact = Synth("Impact", 1.0f, (t, i) =>
                 (Mathf.Sin(2f * Mathf.PI * 45f * t * (1f - t * 0.4f)) + Noise(i) * 0.4f) * Mathf.Exp(-t * 4f), 0.5f);
@@ -100,9 +114,58 @@ namespace NightShift.Game
             return audio;
         }
 
+        /// <summary>Keeps <paramref name="source"/> looping when the audio output changes (see <see cref="DeviceChanged"/>).</summary>
+        public static void KeepLooping(AudioSource source) => Loops.Add(source);
+
+        private void OnEnable() => AudioSettings.OnAudioConfigurationChanged += DeviceChanged;
+
+        private void OnDisable() => AudioSettings.OnAudioConfigurationChanged -= DeviceChanged;
+
+        /// <summary>
+        /// Plugging in headphones (or AirPods connecting) mid-game resets Unity's audio, which stops
+        /// every playing source; one-shots are new each time, but loops were started once and stayed
+        /// silent: Freddy could no longer be heard moving or ticking. Restart them next frame.
+        /// </summary>
+        private void DeviceChanged(bool deviceWasChanged)
+        {
+            if (deviceWasChanged)
+            {
+                // Unity's own reset can fail on the switch ("failed to initialize it"): open the new
+                // device again (this calls back with deviceWasChanged false).
+                AudioSettings.Reset(AudioSettings.GetConfiguration());
+            }
+            restartLoops = true;
+        }
+
+        private void Update()
+        {
+            if (!restartLoops)
+            {
+                return;
+            }
+            restartLoops = false;
+            if (musicWanted && !music.isPlaying)
+            {
+                music.Play();
+            }
+            if (ambientWanted && !ambient.isPlaying)
+            {
+                ambient.Play();
+            }
+            Loops.RemoveAll(source => source == null);
+            foreach (AudioSource source in Loops)
+            {
+                if (source.isActiveAndEnabled && !source.isPlaying)
+                {
+                    source.Play();
+                }
+            }
+        }
+
         public void PlayMenuMusic(bool on)
         {
             bool play = on && SoundPrefs.MusicOn;
+            musicWanted = play;
             if (play && !music.isPlaying)
             {
                 music.Play();
@@ -116,6 +179,7 @@ namespace NightShift.Game
         public void PlayAmbient(bool on)
         {
             bool play = on && SoundPrefs.EffectsOn;
+            ambientWanted = play;
             if (play && !ambient.isPlaying)
             {
                 ambient.Play();
@@ -140,26 +204,9 @@ namespace NightShift.Game
         public AudioClip PartyHorn => horn;
         public void Impact() => Ui(impact, 1f, 1f);
 
-        /// <summary>A looping 3D sound that follows a moving object (Freddy's servos).</summary>
-        public AudioSource Attach3DLoop(Transform target, AudioClip clip, float maxDistance)
-        {
-            var source = new GameObject("Loop " + clip.name).AddComponent<AudioSource>();
-            source.transform.SetParent(target, false);
-            source.transform.localPosition = Vector3.up * 1.5f;
-            source.clip = clip;
-            source.loop = true;
-            source.volume = 0f;
-            source.spatialBlend = 1f;
-            source.minDistance = 1.5f;
-            source.maxDistance = maxDistance;
-            source.rolloffMode = AudioRolloffMode.Linear;
-            source.mute = !SoundPrefs.EffectsOn;
-            source.Play();
-            return source;
-        }
-
-        /// <summary>A 3D sound at a point in the level (lockers, Freddy, the exit door).</summary>
-        public void PlayAt(AudioClip clip, Vector3 position, float volume, float pitch = 1f)
+        /// <summary>A sound at a point in the level (lockers, Freddy, the exit door), heard through <see cref="Earshot"/>.</summary>
+        /// <param name="owner">What makes it, if it is solid (its own colliders do not muffle it).</param>
+        public void PlayAt(AudioClip clip, Vector3 position, float volume, float pitch = 1f, Transform owner = null)
         {
             if (clip == null || !SoundPrefs.EffectsOn)
             {
@@ -169,19 +216,66 @@ namespace NightShift.Game
             go.transform.position = position;
             var source = go.AddComponent<AudioSource>();
             source.clip = clip;
-            source.volume = volume;
             source.pitch = pitch;
-            source.spatialBlend = 1f;
-            source.minDistance = 2f;
-            source.maxDistance = 30f;
-            source.rolloffMode = AudioRolloffMode.Linear;
+            Earshot.Attach(source, volume, owner);
             source.Play();
             Destroy(go, clip.length / Mathf.Max(0.1f, pitch) + 0.1f);
         }
 
-        public void FreddyStep(Vector3 position, bool running)
+        /// <summary>The drone of dread, 0 (he is far: quiet) to 1 (he is right there).</summary>
+        public void SetDread(float amount)
         {
-            PlayAt(freddyStep, position, running ? 1f : 0.8f, Random.Range(0.85f, 1.05f));
+            if (!SoundPrefs.EffectsOn || amount <= 0.001f)
+            {
+                dread.volume = Mathf.MoveTowards(dread.volume, 0f, Time.deltaTime * 0.5f);
+                if (dread.volume <= 0f && dread.isPlaying)
+                {
+                    dread.Stop();
+                }
+                return;
+            }
+            if (!dread.isPlaying)
+            {
+                dread.Play();
+            }
+            dread.volume = Mathf.MoveTowards(dread.volume, amount * 0.2f, Time.deltaTime * 0.6f);
+        }
+
+        public void FreddyStep(Vector3 position, bool running, Transform freddy = null)
+        {
+            // Never the same recording twice in a row, and each one a little different in pitch and
+            // weight, so a night of his steps does not turn into a loop.
+            AudioClip step = Pick(freddySteps, ref lastStep);
+            // Pitched down: the recordings are a lighter metal foot than a 2 m bear.
+            PlayAt(step, position + Vector3.up * 0.3f, Random.Range(0.85f, 1f), running ? Random.Range(0.86f, 0.96f) : Random.Range(0.76f, 0.88f), freddy);
+            if (Random.value < (running ? 0.5f : 0.3f))
+            {
+                // Now and then a joint whirs with the step.
+                PlayAt(freddyServos[Random.Range(0, freddyServos.Length)], position + Vector3.up * 1.4f, Random.Range(0.45f, 0.7f), Random.Range(0.9f, 1.12f), freddy);
+            }
+        }
+
+        /// <summary>His frame creaks as he stands still (called at random moments by his body).</summary>
+        public void FreddyCreak(Vector3 position, Transform freddy)
+        {
+            PlayAt(Pick(freddyCreaks, ref lastCreak), position + Vector3.up * 1.4f, Random.Range(0.6f, 0.9f), Random.Range(0.88f, 1.08f), freddy);
+        }
+
+        /// <summary>A clip at random, not <paramref name="last"/> again when there is a choice.</summary>
+        private static AudioClip Pick(AudioClip[] clips, ref int last)
+        {
+            int index = Random.Range(0, clips.Length);
+            if (clips.Length > 1 && index == last)
+            {
+                index = (index + 1 + Random.Range(0, clips.Length - 1)) % clips.Length;
+            }
+            last = index;
+            return clips[index];
+        }
+
+        private static AudioClip[] Recorded(AudioClip[] clips)
+        {
+            return clips != null && clips.Length > 0 && System.Array.TrueForAll(clips, clip => clip != null) ? clips : null;
         }
 
         private void Ui(AudioClip clip, float volume, float pitch)
@@ -362,6 +456,164 @@ namespace NightShift.Game
             return charge;
         }
 
+        // ------------------------------------------------------------------ Freddy's sounds
+
+        /// <summary>
+        /// One heavy step: the heel's dull thump (low-passed noise and a little weight under it), the
+        /// floor's slap in the mids, and loose metal inside the suit rattling just after, a few small
+        /// rings at random (which is also what the ear places left or right). Each seed is a different step.
+        /// </summary>
+        private static AudioClip FreddyStepClip(int seed)
+        {
+            var random = new System.Random(seed);
+            float Rand(float from, float to) => from + (float)random.NextDouble() * (to - from);
+            int n = (int)(0.5f * Rate);
+            var data = new float[n];
+            var heel = new Biquad(false, 180f, 0.8f);
+            var slap = new Biquad(true, 480f, 1f);
+            for (int i = 0; i < n; i++)
+            {
+                float t = i / (float)Rate;
+                data[i] = heel.Run(Rand(-1f, 1f)) * Envelope(t, 22f, 0.002f) * 2.2f
+                          + Mathf.Sin(2f * Mathf.PI * 52f * t) * Envelope(t, 18f, 0.004f) * 0.55f
+                          + slap.Run(Rand(-1f, 1f)) * Envelope(t, 45f, 0.002f) * 4f;
+            }
+            int rattles = random.Next(3, 6);
+            for (int r = 0; r < rattles; r++)
+            {
+                int at = (int)(Rand(0.012f, 0.11f) * Rate);
+                int length = (int)(0.05f * Rate);
+                var ring = new Biquad(true, Rand(2200f, 4800f), 9f);
+                float decay = Rand(70f, 120f), gain = Rand(1.2f, 2f);
+                for (int i = 0; i < length && at + i < n; i++)
+                {
+                    data[at + i] += ring.Run(Rand(-1f, 1f)) * Envelope(i / (float)Rate, decay, 0.002f) * gain;
+                }
+            }
+            return Clip("FreddyStep" + seed, data, 2.4f, 0.95f);
+        }
+
+        /// <summary>
+        /// A joint moving: one burst of a small geared motor sliding up in pitch (a whir with the grit
+        /// of its gears), the way a servo works. Played now and then with a step.
+        /// </summary>
+        private static AudioClip ServoClip()
+        {
+            var random = new System.Random(11);
+            var data = new float[(int)(0.65f * Rate)];
+            (float start, float length, float from, float to)[] moves = { (0.05f, 0.55f, 950f, 1250f) };
+            foreach (var move in moves)
+            {
+                int start = (int)(move.start * Rate);
+                int length = (int)(move.length * Rate);
+                var grit = new Biquad(true, move.from * 1.8f, 4f);
+                float phase = 0f;
+                for (int i = 0; i < length && start + i < data.Length; i++)
+                {
+                    float t = i / (float)Rate;
+                    phase += 2f * Mathf.PI * Mathf.Lerp(move.from, move.to, t / move.length) / Rate;
+                    float gear = Mathf.Sin(phase) * 0.35f + Mathf.Sin(2f * phase) * 0.2f + Mathf.Sin(phase * 0.5f) * 0.15f;
+                    float shape = Mathf.Pow(Mathf.Sin(Mathf.PI * t / move.length), 0.6f);
+                    data[start + i] += (gear * (0.7f + 0.3f * Mathf.Sin(2f * Mathf.PI * 37f * t)) + grit.Run((float)random.NextDouble() * 2f - 1f) * 0.9f) * shape;
+                }
+            }
+            return Clip("Servo", data, 2f, 0.85f);
+        }
+
+        /// <summary>
+        /// The frame settling as he stands still: a creak (metal sticking and slipping, little pulses
+        /// through a resonance) and a small twitch of a servo.
+        /// </summary>
+        private static AudioClip CreakClip()
+        {
+            var random = new System.Random(5);
+            var data = new float[(int)(1.2f * Rate)];
+            (float start, float length, float rate, float frequency)[] creaks = { (0.05f, 0.55f, 38f, 620f) };
+            foreach (var creak in creaks)
+            {
+                int start = (int)(creak.start * Rate);
+                int length = (int)(creak.length * Rate);
+                var body = new Biquad(true, creak.frequency, 14f);
+                var edge = new Biquad(true, creak.frequency * 2.3f, 10f);
+                float nextPulse = 0f;
+                for (int i = 0; i < length; i++)
+                {
+                    float t = i / (float)Rate;
+                    float pulse = 0f;
+                    if (t >= nextPulse)
+                    {
+                        pulse = 0.5f + (float)random.NextDouble() * 0.5f;
+                        nextPulse += 1f / (creak.rate * (0.8f + (float)random.NextDouble() * 0.45f));
+                    }
+                    data[start + i] += (body.Run(pulse) * 28f + edge.Run(pulse) * 12f) * Mathf.Sin(Mathf.PI * t / creak.length);
+                }
+            }
+            int twitch = (int)(0.8f * Rate);
+            int twitchLength = (int)(0.18f * Rate);
+            var whir = new Biquad(true, 2200f, 4f);
+            float twitchPhase = 0f;
+            for (int i = 0; i < twitchLength; i++)
+            {
+                float t = i / (float)Rate;
+                twitchPhase += 2f * Mathf.PI * (1300f - t * 900f) / Rate;
+                data[twitch + i] += (Mathf.Sin(twitchPhase) * 0.3f + whir.Run((float)random.NextDouble() * 2f - 1f) * 0.6f) * Mathf.Sin(Mathf.PI * t / 0.18f);
+            }
+            return Clip("Creaks", data, 2f, 0.9f);
+        }
+
+        private static float Envelope(float t, float decay, float attack) => Mathf.Min(1f, t / attack) * Mathf.Exp(-t * decay);
+
+        /// <summary>A mono clip from <paramref name="data"/>, driven by <paramref name="drive"/> through soft clipping and scaled to <paramref name="level"/>.</summary>
+        private static AudioClip Clip(string name, float[] data, float drive, float level)
+        {
+            for (int i = 0; i < data.Length; i++)
+            {
+                data[i] = Drive(data[i] * drive) * level;
+            }
+            var clip = AudioClip.Create(name, data.Length, 1, Rate, false);
+            clip.SetData(data, 0);
+            return clip;
+        }
+
+        /// <summary>A two-pole filter (the RBJ cookbook): band-pass with a 0 dB peak, or low-pass.</summary>
+        private sealed class Biquad
+        {
+            private readonly float b0, b1, b2, a1, a2;
+            private float x1, x2, y1, y2;
+
+            public Biquad(bool bandPass, float frequency, float q)
+            {
+                float w = 2f * Mathf.PI * frequency / Rate;
+                float alpha = Mathf.Sin(w) / (2f * q);
+                float cos = Mathf.Cos(w);
+                float a0 = 1f + alpha;
+                if (bandPass)
+                {
+                    b0 = alpha / a0;
+                    b1 = 0f;
+                    b2 = -alpha / a0;
+                }
+                else
+                {
+                    b0 = (1f - cos) / 2f / a0;
+                    b1 = (1f - cos) / a0;
+                    b2 = b0;
+                }
+                a1 = -2f * cos / a0;
+                a2 = (1f - alpha) / a0;
+            }
+
+            public float Run(float x)
+            {
+                float y = b0 * x + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2;
+                x2 = x1;
+                x1 = x;
+                y2 = y1;
+                y1 = y;
+                return y;
+            }
+        }
+
         private static AudioClip Synth(string name, float seconds, System.Func<float, int, float> sample, float lowPass)
         {
             int count = Mathf.CeilToInt(seconds * Rate);
@@ -378,6 +630,9 @@ namespace NightShift.Game
             clip.SetData(data, 0);
             return clip;
         }
+
+        /// <summary>Soft clipping: loud without harsh distortion.</summary>
+        private static float Drive(float x) => (float)System.Math.Tanh(x);
 
         private static float Noise(int i)
         {

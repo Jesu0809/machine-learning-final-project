@@ -6,7 +6,7 @@ namespace NightShift.Game
 {
     /// <summary>
     /// Colors of the power cells and their sockets. From night 2 each cell fits only the socket of
-    /// its color (index = socket in <see cref="HuntMap.SocketRooms"/>); on night 1 they are all
+    /// its color (index = socket in <see cref="HuntState.SocketRooms"/>); on night 1 they are all
     /// yellow and fit any socket (index -1).
     /// </summary>
     public static class CellColors
@@ -275,21 +275,27 @@ namespace NightShift.Game
         private Color color;
         private bool busy;
 
-        public int Index { get; private set; }
+        /// <summary>The room whose wall it is on.</summary>
+        public Room Room { get; private set; }
+
+        /// <summary>Its place among tonight's live sockets (its color), or -1 if it is dead tonight.</summary>
+        public int Index => director.State.SocketIn(Room);
+
+        public bool Live => Index >= 0;
         public bool Powered { get; private set; }
         public bool HoldToUse => false;
 
-        public static PowerSocket Build(HuntDirector director, Transform parent, int index)
+        public static PowerSocket Build(HuntDirector director, Transform parent, Room room)
         {
-            Vector3 position = PizzeriaLayout.SocketPosition(index);
-            var go = new GameObject("PowerSocket " + CellColors.Name(index));
+            Vector3 position = PizzeriaLayout.SocketPosition(room);
+            var go = new GameObject("PowerSocket " + HuntMap.DisplayName(room));
             go.transform.SetParent(parent, false);
             go.transform.position = position;
-            go.transform.rotation = PizzeriaLayout.SocketFacing(index);
+            go.transform.rotation = PizzeriaLayout.SocketFacing(room);
             Transform t = go.transform;
             var socket = go.AddComponent<PowerSocket>();
             socket.director = director;
-            socket.Index = index;
+            socket.Room = room;
 
             Material steel = BuildKit.Pbr("metal_worn", new Color(0.5f, 0.53f, 0.55f)) ?? BuildKit.Plain("socketSteel", new Color(0.3f, 0.32f, 0.33f), 0.45f, 0.7f);
             Material dark = BuildKit.Plain("socketDark", new Color(0.03f, 0.03f, 0.035f), 0.4f);
@@ -417,20 +423,24 @@ namespace NightShift.Game
             return socket;
         }
 
-        /// <summary>A new night: empty and shut, the gauge dim in its color (amber on night 1, when any cell fits).</summary>
+        /// <summary>
+        /// A new night: empty and shut, the gauge dim in its color (amber on night 1, when any cell
+        /// fits). A socket that is not live tonight is dark: no ring, no lamp, a dead gauge.
+        /// </summary>
         public void ResetSocket(bool colored)
         {
             StopAllCoroutines();
             busy = false;
             Powered = false;
             seated.SetActive(false);
-            color = colored ? CellColors.Of(Index) : new Color(1f, 0.6f, 0.2f);
+            color = !Live ? new Color(0.08f, 0.08f, 0.08f) : colored ? CellColors.Of(Index) : new Color(1f, 0.6f, 0.2f);
             SetHatch(0f);
             SetJaws(0f);
             SetGauge(0f, 0f);
             ringLight.color = color;
             ringLight.intensity = 0.35f;
-            SetLamp(new Color(1f, 0.08f, 0.04f), 2f);
+            ringLight.enabled = Live;
+            SetLamp(Live ? new Color(1f, 0.08f, 0.04f) : Color.black, 2f);
             pulseLight.enabled = false;
             foreach (Transform pulse in pulses)
             {
@@ -445,6 +455,10 @@ namespace NightShift.Game
                 return "";
             }
             HuntState state = director.State;
+            if (!Live)
+            {
+                return "Dead socket: no power on this line tonight. Live tonight: " + director.LiveSocketsText;
+            }
             string mine = state.Night >= 2 ? CellColors.Name(Index) + " " : "";
             if (!player.Cell.Carrying)
             {
@@ -459,7 +473,7 @@ namespace NightShift.Game
 
         public void Use(PlayerController player)
         {
-            if (Powered || busy || !player.Cell.Carrying || !director.State.CellFits(player.Cell.CellIndex, Index))
+            if (!Live || Powered || busy || !player.Cell.Carrying || !director.State.CellFits(player.Cell.CellIndex, Index))
             {
                 return;
             }
@@ -632,7 +646,7 @@ namespace NightShift.Game
 
         private void Update()
         {
-            if (!Powered && !busy)
+            if (!Powered && !busy && Live)
             {
                 // A slow pulse: the socket is waiting.
                 ringLight.intensity = 0.25f + Mathf.Sin(Time.time * 2f + Index) * 0.12f;

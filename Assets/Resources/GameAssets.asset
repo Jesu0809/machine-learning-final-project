@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: GameAssets
   m_EditorClassIdentifier: 
   FreddyPrefab: {fileID: 1351803082040418418, guid: 1b569aa87f364446c90cdc3ecc7f2f05, type: 3}
-  FreddyModel: {fileID: 5022602860645237092, guid: a3fb76f08fb524ff9a018bf7d2ce9972, type: 3}
+  FreddyModel: {fileID: 5022602860645237092, guid: 2996af14ef2b04c94af90a3a5cc1b829, type: 3}
   PolicyWeights: {fileID: 4900000, guid: 11a4bb891940140a9a31c1eff9f03be0, type: 3}
   MaterialTemplates:
   - {fileID: 2100000, guid: 522f4d4231d60480eac5a2b678b535b9, type: 2}
@@ -312,6 +312,44 @@ MonoBehaviour:
   Thunder: {fileID: 8300000, guid: f4b76ea53df1f49939679892b9c19948, type: 3}
   CarEngine: {fileID: 8300000, guid: 98ba0283308c64bb1b2f7033c73d5aba, type: 3}
   VoicemailBeep: {fileID: 8300000, guid: 561c1d0487cdc4b95af88832d93683ae, type: 3}
+  FreddySteps:
+  - {fileID: 8300000, guid: b684ba33946b8414d8cda473ba4a1c76, type: 3}
+  - {fileID: 8300000, guid: 4ffcb49c7270d4ab2ae6542cdbc2d912, type: 3}
+  - {fileID: 8300000, guid: 3fbb79cb420524c78acd9d9c29061edc, type: 3}
+  - {fileID: 8300000, guid: 1ced547e109f5412c808196469621f16, type: 3}
+  - {fileID: 8300000, guid: 5b63406b9eafa4c50878759216b58741, type: 3}
+  - {fileID: 8300000, guid: 08d49ee3aa1594b97bf2942d9e4438e5, type: 3}
+  - {fileID: 8300000, guid: 0ffece9927766411d8b8b9bd09a5f65a, type: 3}
+  - {fileID: 8300000, guid: c620e5140034b48e4b32bfcac025c384, type: 3}
+  - {fileID: 8300000, guid: 588c32b9416ce4060a98e351c105b079, type: 3}
+  - {fileID: 8300000, guid: 85eaf846b26eb4b90aea42853f4c99d9, type: 3}
+  - {fileID: 8300000, guid: 79f89694ff3534b91a3eda03f2a2445a, type: 3}
+  - {fileID: 8300000, guid: 5691d6f0b0bd7471683acd6839f59112, type: 3}
+  - {fileID: 8300000, guid: fb762dea5c0de4f4da6c09bb2fc523c8, type: 3}
+  - {fileID: 8300000, guid: 3cf0e06dbdc44455f9ca183c14ebe44e, type: 3}
+  - {fileID: 8300000, guid: fa218a1c0e73d4e1aba3cf77dfc788e7, type: 3}
+  - {fileID: 8300000, guid: 1e210feca286c474d81472c170a03873, type: 3}
+  - {fileID: 8300000, guid: 052269deab6b0418cb3dc200d05950d6, type: 3}
+  - {fileID: 8300000, guid: 9a9c7d7a7d0ba4949b3dd46bdfde60bd, type: 3}
+  - {fileID: 8300000, guid: 8fb6294ebd62245cda1a5c79bc58a7e9, type: 3}
+  - {fileID: 8300000, guid: 1ff9d4d1e41b34b328be0fc5fa63f97f, type: 3}
+  - {fileID: 8300000, guid: 9fbbedc44ca6e4681bc44244975ab2be, type: 3}
+  - {fileID: 8300000, guid: af1141c8af5e04f729fbb171850514b1, type: 3}
+  - {fileID: 8300000, guid: 6fd57780a46e646b09bfb9e44d4496d7, type: 3}
+  - {fileID: 8300000, guid: 76fd06f923c8740aa98efae0261c1126, type: 3}
+  - {fileID: 8300000, guid: 35eb665d95b79460abcd5daf7849e387, type: 3}
+  FreddyServos:
+  - {fileID: 8300000, guid: c4f90f0fe1d664501a14cd31fd70dfe6, type: 3}
+  - {fileID: 8300000, guid: 2bf90b10a7e274456b68292f63721007, type: 3}
+  - {fileID: 8300000, guid: 84ba08569dda645bfb2c4fb4fca4a377, type: 3}
+  - {fileID: 8300000, guid: 309d383d58665461fb1ba8618bd8cf77, type: 3}
+  - {fileID: 8300000, guid: 80096df9351374765b00f8cb009a5f8e, type: 3}
+  FreddyCreaks:
+  - {fileID: 8300000, guid: 6abed766ab24f44a4baff99946292b31, type: 3}
+  - {fileID: 8300000, guid: 758c183a995544a2084f1c1c8781ab52, type: 3}
+  - {fileID: 8300000, guid: 721318df02e7e4eb3831cd778147e99c, type: 3}
+  - {fileID: 8300000, guid: 60aadcde6d4f9466bbb3b9d2c38738a1, type: 3}
+  - {fileID: 8300000, guid: af6dab54db9a94ec9b2bd6c43c70b665, type: 3}
   IntroLines:
   - {fileID: 8300000, guid: ae65984aac8524682aabbf916738aae5, type: 3}
   - {fileID: 8300000, guid: f336cd0c819c248b09fd55e3378c4c69, type: 3}
@@ -331,6 +369,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 8fbdb40a8d7c04f859b8ed9d7900197a, type: 3}
     - {fileID: 8300000, guid: 9d2492b7ac38a45eebc31184df6112d1, type: 3}
     - {fileID: 8300000, guid: f1d3d9c03e6274632be934d191e23e95, type: 3}
+    - {fileID: 8300000, guid: 825090ce0a6304ab0b5b1cf8ffd783a4, type: 3}
   - Lines:
     - {fileID: 8300000, guid: 5264a4160d6ad48a3b297ee6a0f8d22c, type: 3}
     - {fileID: 8300000, guid: e429cef1bd1c147a783963f974dd5415, type: 3}
