@@ -347,6 +347,7 @@ namespace NightShift.UI
         {
             InspectorVisible = !InspectorVisible;
             inspector.SetActive(InspectorVisible && (hud.activeSelf || pause.activeSelf));
+            nextInspector = 0f;
             RefreshSoundButtons();
         }
 
@@ -837,11 +838,15 @@ namespace NightShift.UI
             {
                 RefreshHud();
             }
-            if (inspector.activeSelf)
+            // In the browser the inspector's map and texts are redrawn five times a second, not every frame.
+            if (inspector.activeSelf && (!WebPerformance.Active || Time.unscaledTime >= nextInspector))
             {
+                nextInspector = Time.unscaledTime + 0.2f;
                 RefreshInspector();
             }
         }
+
+        private float nextInspector;
 
         private void RefreshHud()
         {
@@ -1130,6 +1135,12 @@ namespace NightShift.UI
             "Every lamp casts shadows, sharper shadows and reflections. Needs a strong graphics card.",
         };
 
+        private static readonly string[] WebQualityNotes =
+        {
+            "For slow computers: a lower resolution and fewer light shafts.",
+            "The browser's best: no shadows or ambient occlusion, so it stays smooth. The desktop version goes up to Ultra.",
+        };
+
         private void BuildSettings(Transform root)
         {
             settingsScreen = UiKit.Panel("Settings", root, Vector2.zero, Vector2.one, new Color(0.02f, 0.02f, 0.025f, 1f)).gameObject;
@@ -1203,7 +1214,7 @@ namespace NightShift.UI
             stickValue.text = Controls.StickSensitivity.ToString("0.0");
             UiKit.SetButtonText(invertButton, Controls.InvertY ? "ON" : "OFF");
             qualityValue.text = GraphicsQuality.Name(GraphicsQuality.Level);
-            qualityNote.text = QualityNotes[(int)GraphicsQuality.Level];
+            qualityNote.text = (WebPerformance.Active ? WebQualityNotes : QualityNotes)[(int)GraphicsQuality.Level];
             foreach (KeyValuePair<InputAction, Button> pair in keyButtons)
             {
                 bool waiting = rebinding == pair.Key;

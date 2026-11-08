@@ -282,6 +282,16 @@ namespace NightShift.Game
             cardReader = CardReader.Create(this, Level.Root, PizzeriaLayout.ReaderMount, PizzeriaLayout.ReaderFacing);
             tapeBox = TapeBox.Create(this, Level.Root, LevelProps.TapeBoxPose.position, LevelProps.TapeBoxPose.rotation);
             GraphicsQuality.Apply();
+            if (WebPerformance.Active)
+            {
+                // The exit doors swing open and the EXIT signs follow the night's exit: never merged.
+                var keep = new List<Transform> { Level.Root.Find("FrontDoors"), Level.Root.Find("LoadingDoor") };
+                foreach (var exitSign in Level.ExitSigns)
+                {
+                    keep.Add(exitSign.sign.transform);
+                }
+                Debug.Log("Web: merged " + WebPerformance.MergeStill(Level.Root, keep) + " still meshes");
+            }
             CreateBrain();
             UI = GameUI.Create(this);
 #if UNITY_EDITOR
@@ -627,6 +637,7 @@ namespace NightShift.Game
         private void Update()
         {
             Controls.Poll();
+            GraphicsQuality.FollowScreen();
             if (Controls.PausePressed && !InIntro && Player.InFocus)
             {
                 // Esc at a panel steps back from it instead of pausing.

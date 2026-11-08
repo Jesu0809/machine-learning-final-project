@@ -14,11 +14,12 @@ namespace NightShift.Game
     }
 
     /// <summary>
-    /// The graphics quality the player picks in Settings (saved between sessions). The web build
-    /// starts on Medium and the desktop build on High; a strong computer can go up to Ultra in
-    /// the browser too. Each level sets the render resolution, anti-aliasing, shadow detail,
-    /// which lamps cast shadows, ambient occlusion, reflections, the lamps' bounce light and light
-    /// shafts, and texture resolution.
+    /// The graphics quality the player picks in Settings (saved between sessions). The desktop
+    /// build starts on High and goes up to Ultra; the web build starts on Medium, offers only Low
+    /// and Medium, and uses its own lighter version of them (<see cref="WebPerformance"/>). Each
+    /// level sets the render resolution, anti-aliasing, shadow detail, which lamps cast shadows,
+    /// ambient occlusion, reflections, the lamps' bounce light and light shafts, and texture
+    /// resolution.
     /// </summary>
     public static class GraphicsQuality
     {
@@ -39,7 +40,12 @@ namespace NightShift.Game
 
         public static GraphicsLevel Level { get; private set; } = Default;
 
-        private static GraphicsLevel Default => Application.platform == RuntimePlatform.WebGLPlayer ? GraphicsLevel.Medium : GraphicsLevel.High;
+        private static GraphicsLevel Default => WebPerformance.Active ? GraphicsLevel.Medium : GraphicsLevel.High;
+
+        /// <summary>The highest level offered: Medium in the browser.</summary>
+        public static GraphicsLevel Highest => WebPerformance.Active ? GraphicsLevel.Medium : GraphicsLevel.Ultra;
+
+        private static int screenWidth;
 
         public static string Name(GraphicsLevel level) => level.ToString().ToUpperInvariant();
 
@@ -48,7 +54,7 @@ namespace NightShift.Game
         {
             ambientOcclusion = occlusion;
             int saved = PlayerPrefs.GetInt(Key, (int)Default);
-            Level = (GraphicsLevel)Mathf.Clamp(saved, 0, (int)GraphicsLevel.Ultra);
+            Level = (GraphicsLevel)Mathf.Clamp(saved, 0, (int)Highest);
             // "-quality Ultra" on the command line (captures and tests) overrides the saved choice.
             string[] args = System.Environment.GetCommandLineArgs();
             int index = System.Array.IndexOf(args, "-quality");
@@ -75,7 +81,7 @@ namespace NightShift.Game
         /// <summary>Next level up (wraps around), saved and applied.</summary>
         public static void Cycle(int step)
         {
-            int count = (int)GraphicsLevel.Ultra + 1;
+            int count = (int)Highest + 1;
             Set((GraphicsLevel)(((int)Level + step + count) % count));
         }
 
@@ -94,6 +100,9 @@ namespace NightShift.Game
             bool low = level == GraphicsLevel.Low;
             bool high = level >= GraphicsLevel.High;
             bool ultra = level == GraphicsLevel.Ultra;
+            // The browser: no ambient occlusion (it draws the whole scene a second time), no
+            // shadows (a third time) and no MSAA, at a capped resolution.
+            bool web = WebPerformance.Active;
 
             // A copy of the project's pipeline asset, so playing in the editor never rewrites it.
             if (runtimePipeline == null && GraphicsSettings.currentRenderPipeline is UniversalRenderPipelineAsset shared)
@@ -104,18 +113,20 @@ namespace NightShift.Game
             }
             if (runtimePipeline is UniversalRenderPipelineAsset pipeline)
             {
-                pipeline.renderScale = low ? 0.75f : level == GraphicsLevel.Medium ? 0.9f : 1f;
-                pipeline.msaaSampleCount = low ? 1 : level == GraphicsLevel.Medium ? 2 : 4;
+                pipeline.renderScale = web ? WebPerformance.RenderScale(WebScale)
+                                     : low ? 0.75f : level == GraphicsLevel.Medium ? 0.9f : 1f;
+                pipeline.msaaSampleCount = low || web ? 1 : level == GraphicsLevel.Medium ? 2 : 4;
                 pipeline.additionalLightsShadowmapResolution = low ? 512 : level == GraphicsLevel.Medium ? 1024 : ultra ? 4096 : 2048;
                 pipeline.maxAdditionalLightsCount = low ? 4 : level == GraphicsLevel.Medium ? 6 : 8;
-                pipeline.shadowDistance = low ? 12f : high ? 30f : 20f;
+                // A shadow distance of 0 leaves no shadow casters: no light draws shadows on the web.
+                pipeline.shadowDistance = web ? 0f : low ? 12f : high ? 30f : 20f;
             }
             QualitySettings.globalTextureMipmapLimit = low ? 1 : 0;
             QualitySettings.anisotropicFiltering = low ? AnisotropicFiltering.Disable : AnisotropicFiltering.ForceEnable;
 
             if (ambientOcclusion != null)
             {
-                ambientOcclusion.SetActive(!low);
+                ambientOcclusion.SetActive(!low && !web);
             }
             if (bloom != null)
             {
@@ -175,6 +186,20 @@ namespace NightShift.Game
             {
                 flashlight.SetQuality(level);
             }
+        }
+
+        /// <summary>Render scale of the web build before the width cap.</summary>
+        private static float WebScale => Level == GraphicsLevel.Low ? 0.7f : 0.8f;
+
+        /// <summary>In the browser, keeps the width cap when the page or full screen resizes the canvas.</summary>
+        public static void FollowScreen()
+        {
+            if (!WebPerformance.Active || Screen.width == screenWidth || runtimePipeline == null)
+            {
+                return;
+            }
+            screenWidth = Screen.width;
+            runtimePipeline.renderScale = WebPerformance.RenderScale(WebScale);
         }
 
         /// <summary>Captures the reflections of every room once (the building does not move).</summary>

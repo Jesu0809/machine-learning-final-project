@@ -1,5 +1,9 @@
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEditor;
+using UnityEditor.Build;
+using UnityEditor.Rendering;
 using UnityEngine;
 
 namespace NightShift.EditorTools
@@ -82,18 +86,34 @@ namespace NightShift.EditorTools
         /// </summary>
         public static void Voices()
         {
-            const float quality = 0.3f;
+            WebAudio(AssetDatabase.FindAssets("t:AudioClip", new[] { "Assets/Audio/Story" }).Select(AssetDatabase.GUIDToAssetPath), 0.3f, true);
+        }
+
+        /// <summary>
+        /// The menu's march and the clown's sounds, in the web build: AAC at a lower quality, still
+        /// in stereo. Saves about 1.5 MB; the desktop keeps Unity's settings.
+        /// </summary>
+        public static void Music()
+        {
+            IEnumerable<string> clips = AssetDatabase.FindAssets("t:AudioClip", new[] { "Assets/Audio/Clown" })
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .Append("Assets/Audio/menu-music-loop.ogg");
+            WebAudio(clips, 0.4f, false);
+        }
+
+        private static void WebAudio(IEnumerable<string> paths, float quality, bool mono)
+        {
             AssetDatabase.StartAssetEditing();
             try
             {
-                foreach (string guid in AssetDatabase.FindAssets("t:AudioClip", new[] { "Assets/Audio/Story" }))
+                foreach (string path in paths)
                 {
-                    if (!(AssetImporter.GetAtPath(AssetDatabase.GUIDToAssetPath(guid)) is AudioImporter importer))
+                    if (!(AssetImporter.GetAtPath(path) is AudioImporter importer))
                     {
                         continue;
                     }
                     AudioImporterSampleSettings web = importer.GetOverrideSampleSettings("WebGL");
-                    if (importer.ContainsSampleSettingsOverride("WebGL") && importer.forceToMono
+                    if (importer.ContainsSampleSettingsOverride("WebGL") && (!mono || importer.forceToMono)
                         && web.compressionFormat == AudioCompressionFormat.AAC && Mathf.Approximately(web.quality, quality))
                     {
                         continue;
@@ -101,7 +121,10 @@ namespace NightShift.EditorTools
                     web.compressionFormat = AudioCompressionFormat.AAC;
                     web.quality = quality;
                     importer.SetOverrideSampleSettings("WebGL", web);
-                    importer.forceToMono = true;
+                    if (mono)
+                    {
+                        importer.forceToMono = true;
+                    }
                     importer.SaveAndReimport();
                 }
             }
@@ -134,6 +157,23 @@ namespace NightShift.EditorTools
                 }
             }
             return fits;
+        }
+    }
+
+    /// <summary>
+    /// WebGL has no compute shaders, so the inference engine's (about 9 MB) can never run in the
+    /// browser, where the brain runs on the CPU: the web build leaves out their compiled kernels.
+    /// </summary>
+    public class WebComputeStripping : IPreprocessComputeShaders
+    {
+        public int callbackOrder => 0;
+
+        public void OnProcessComputeShader(ComputeShader shader, string kernelName, IList<ShaderCompilerData> data)
+        {
+            if (EditorUserBuildSettings.activeBuildTarget == BuildTarget.WebGL)
+            {
+                data.Clear();
+            }
         }
     }
 }

@@ -51,10 +51,11 @@ namespace NightShift.EditorTools
                     importer.isReadable = false;
                     importer.SaveAndReimport();
                 }
-                // Small objects: half a K is plenty in the web build (the desktop keeps 2K).
+                // Small objects: half a K is plenty in the web build (the desktop keeps 2K), and a
+                // quarter K for the mask (metal, occlusion, smoothness), which has no fine detail.
                 Texture2D albedo = SurfaceImporter.Texture(path + "_albedo.jpg", TextureImporterType.Default, true, 512);
                 Texture2D normal = SurfaceImporter.Texture(path + "_normal.jpg", TextureImporterType.NormalMap, false, 512);
-                Texture2D mask = SurfaceImporter.Texture(path + "_mask.png", TextureImporterType.Default, false, 512);
+                Texture2D mask = SurfaceImporter.Texture(path + "_mask.png", TextureImporterType.Default, false, 256);
                 Material material = SurfaceImporter.Material(path + ".mat", name, albedo, normal, mask, 1f);
                 props.Add(new GameAssets.Prop
                 {
