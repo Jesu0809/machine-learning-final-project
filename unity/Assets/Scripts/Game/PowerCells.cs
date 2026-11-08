@@ -89,7 +89,7 @@ namespace NightShift.Game
             }
             if (player.Director.InCall)
             {
-                return "The cell is stuck... listen to the call first  [ENTER] skip";
+                return "The cell is stuck... listen to him first  [ENTER] skip";
             }
             if (player.Cell.Carrying)
             {

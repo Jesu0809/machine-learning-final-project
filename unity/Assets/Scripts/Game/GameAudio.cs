@@ -98,11 +98,13 @@ namespace NightShift.Game
             audio.staticBurst = Synth("Static", 1.2f, (t, i) => Noise(i) * 0.8f * (t < 0.9f ? 1f : (1.2f - t) / 0.3f), 0f);
             audio.impact = Synth("Impact", 1.0f, (t, i) =>
                 (Mathf.Sin(2f * Mathf.PI * 45f * t * (1f - t * 0.4f)) + Noise(i) * 0.4f) * Mathf.Exp(-t * 4f), 0.5f);
-            // Old phone ring: two tones, two bursts.
+            // The speakers' chime before he talks: two soft notes, a descending third.
             audio.ring = Synth("Ring", 2.0f, (t, i) =>
-                ((t % 1f) < 0.4f || ((t % 1f) > 0.5f && (t % 1f) < 0.9f) ? 1f : 0f)
-                * (Mathf.Sin(2f * Mathf.PI * 440f * t) + Mathf.Sin(2f * Mathf.PI * 480f * t)) * 0.25f
-                * (Mathf.Sin(2f * Mathf.PI * 20f * t) > 0f ? 1f : 0.6f), 0f);
+            {
+                float note = t < 0.6f ? 659f : 523f;
+                float since = t < 0.6f ? t : t - 0.6f;
+                return (Mathf.Sin(2f * Mathf.PI * note * t) + 0.3f * Mathf.Sin(4f * Mathf.PI * note * t)) * 0.3f * Mathf.Exp(-since * 2.6f);
+            }, 0f);
             // Party horn: a buzzy, wobbling square-ish tone.
             audio.horn = Synth("PartyHorn", 1.4f, (t, i) =>
                 Mathf.Sign(Mathf.Sin(2f * Mathf.PI * (520f + Mathf.Sin(t * 30f) * 25f) * t)) * 0.35f * Mathf.Clamp01((1.4f - t) * 3f) * Mathf.Clamp01(t * 20f), 0.55f);
@@ -241,6 +243,21 @@ namespace NightShift.Game
             dread.volume = Mathf.MoveTowards(dread.volume, amount * 0.2f, Time.deltaTime * 0.6f);
         }
 
+        /// <summary>A rubber toy underfoot: a recording if there is one, else a short rising squeak.</summary>
+        public void ToySqueak(Vector3 position)
+        {
+            AudioClip[] clips = Assets.ToySqueaks;
+            AudioClip clip = clips != null && clips.Length > 0 ? clips[Random.Range(0, clips.Length)] : Squeak();
+            PlayAt(clip, position + Vector3.up * 0.1f, 0.9f, Random.Range(0.92f, 1.1f));
+        }
+
+        /// <summary>A surprise box opening: a recording if there is one, else his horn.</summary>
+        public void SurprisePop(Vector3 position)
+        {
+            AudioClip[] clips = Assets.SurprisePops;
+            PlayAt(clips != null && clips.Length > 0 ? clips[Random.Range(0, clips.Length)] : Honk(), position + Vector3.up * 0.5f, 1f, 1f);
+        }
+
         public void FreddyStep(Vector3 position, bool running, Transform freddy = null)
         {
             // Never the same recording twice in a row, and each one a little different in pitch and
@@ -248,6 +265,17 @@ namespace NightShift.Game
             AudioClip step = Pick(freddySteps, ref lastStep);
             // Pitched down: the recordings are a lighter metal foot than a 2 m bear.
             PlayAt(step, position + Vector3.up * 0.3f, Random.Range(0.85f, 1f), running ? Random.Range(0.86f, 0.96f) : Random.Range(0.76f, 0.88f), freddy);
+            // Clown shoes and bells on top of the steps, when the recordings are there.
+            AudioClip[] shoes = Assets.ClownShoes;
+            if (shoes != null && shoes.Length > 0 && Random.value < 0.6f)
+            {
+                PlayAt(shoes[Random.Range(0, shoes.Length)], position + Vector3.up * 0.1f, Random.Range(0.5f, 0.8f), Random.Range(0.9f, 1.1f), freddy);
+            }
+            AudioClip[] bells = Assets.ClownBells;
+            if (bells != null && bells.Length > 0 && Random.value < (running ? 0.5f : 0.2f))
+            {
+                PlayAt(bells[Random.Range(0, bells.Length)], position + Vector3.up * 1.6f, Random.Range(0.35f, 0.6f), Random.Range(0.95f, 1.05f), freddy);
+            }
             if (Random.value < (running ? 0.5f : 0.3f))
             {
                 // Now and then a joint whirs with the step.
@@ -322,11 +350,39 @@ namespace NightShift.Game
         }
 
         private static AudioClip honk;
+        private static AudioClip squeak;
+        private static AudioClip siren;
 
         /// <summary>
         /// A plush's squeeze horn: a reedy, nasal honk that bends up and back down, with the
         /// rattle of the reed in it.
         /// </summary>
+        public static AudioClip Squeak()
+        {
+            if (squeak == null)
+            {
+                squeak = Synth("Squeak", 0.28f, (t, i) =>
+                    (Mathf.Sin(2f * Mathf.PI * (1500f * t + 900f * t * t * 3f)) + 0.2f * Mathf.Sin(4f * Mathf.PI * (1500f * t))) * 0.5f
+                    * Mathf.Clamp01(t / 0.02f) * Mathf.Clamp01((0.28f - t) / 0.1f), 0f);
+            }
+            return squeak;
+        }
+
+        /// <summary>The exit's alarm: a slow two-tone siren.</summary>
+        public static AudioClip Siren()
+        {
+            if (siren == null)
+            {
+                siren = Synth("Siren", 3f, (t, i) =>
+                {
+                    float wail = 500f + 260f * Mathf.Sin(2f * Mathf.PI * 0.5f * t);
+                    float phase = 2f * Mathf.PI * (500f * t - 260f / (2f * Mathf.PI * 0.5f) * (Mathf.Cos(2f * Mathf.PI * 0.5f * t) - 1f));
+                    return (Mathf.Sin(phase) + 0.25f * Mathf.Sin(2f * phase)) * 0.45f * Mathf.Clamp01(t / 0.2f) * Mathf.Clamp01((3f - t) / 0.3f) * (wail > 0f ? 1f : 0f);
+                }, 0f);
+            }
+            return siren;
+        }
+
         public static AudioClip Honk()
         {
             if (honk == null)

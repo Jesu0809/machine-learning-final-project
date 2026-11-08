@@ -105,6 +105,20 @@ namespace NightShift.UI
             return button;
         }
 
+        /// <summary>A one-line text box.</summary>
+        public static InputField Input(string name, Transform parent, string hint, int size, Vector2 min, Vector2 max)
+        {
+            Image back = Panel(name, parent, min, max, Palette.Button);
+            var field = back.gameObject.AddComponent<InputField>();
+            field.targetGraphic = back;
+            field.placeholder = Label("Hint", back.transform, hint, size, Palette.InkDim, TextAnchor.MiddleLeft, new Vector2(0.03f, 0f), new Vector2(0.97f, 1f));
+            Text text = Label("Text", back.transform, "", size, Palette.Ink, TextAnchor.MiddleLeft, new Vector2(0.03f, 0f), new Vector2(0.97f, 1f));
+            text.supportRichText = false;
+            field.textComponent = text;
+            field.characterLimit = 12;
+            return field;
+        }
+
         public static void SetButtonText(Button button, string text)
         {
             button.GetComponentInChildren<Text>().text = text;

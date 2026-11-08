@@ -12,7 +12,7 @@ namespace NightShift.Game
     /// <item>A home video, August 1987: a birthday at Freddy's, the bear on his stage under the
     /// lights. He turns his head to the camera, the music drags, the tape tears into snow.</item>
     /// <item>Black, two cards: the pizzeria closed after the incidents; thirty-eight years later.</item>
-    /// <item>The road at night in the rain: the guard's station wagon throws spray as it passes, the
+    /// <item>The road at night in the rain: the guard's sedan throws spray as it passes, the
     /// wipers beat, the street lamps sweep through the car, and the phone on the dashboard plays a
     /// voicemail from the agency (<see cref="StoryData.Intro"/>).</item>
     /// <item>The car turns into the lot; its headlights sweep the boarded front and stop on the doors.

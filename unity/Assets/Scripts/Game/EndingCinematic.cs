@@ -366,7 +366,7 @@ namespace NightShift.Game
                     look = tvGlass;
                     fade = 1f;
                     Card(g, 0.6f, 3.6f, "NIGHT SHIFT", 130, ref card, ref cardAlpha, ref cardSize);
-                    Card(g, 3.8f, 6.8f, "freddy_v19 is learning from you.", 40, ref card, ref cardAlpha, ref cardSize);
+                    Card(g, 3.8f, 6.8f, "pockets_v19 is learning from you.", 40, ref card, ref cardAlpha, ref cardSize);
                     rain.volume = Mathf.MoveTowards(rain.volume, 0f, Time.deltaTime * 0.15f);
                 }
 
@@ -787,13 +787,13 @@ namespace NightShift.Game
             BuildKit.Prop("cardboard_box_01", root, new Vector3(-1.7f, 0.42f, 1.25f), -20f, 0.8f, false);
             BuildKit.Prop("metal_trash_can", root, new Vector3(-1.9f, 0f, -1.45f), 0f, 1f, false);
             BuildKit.Prop("wall_clock", root, new Vector3(-w + 0.02f, 1.9f, 0.4f), 90f, 1f, false);
-            Texture2D pizza = Sign("pizza_box_top");
+            Texture2D carton = Sign("snack_box_top");
             Material cardboard = BuildKit.Plain("cardboard", new Color(0.55f, 0.42f, 0.28f), 0.15f);
-            GameObject box = BuildKit.Box("PizzaBox", root, new Vector3(0.9f, 0.025f, -0.6f), new Vector3(0.42f, 0.05f, 0.42f), cardboard, 1f, false);
+            GameObject box = BuildKit.Box("SnackBox", root, new Vector3(0.9f, 0.025f, -0.6f), new Vector3(0.42f, 0.05f, 0.42f), cardboard, 1f, false);
             box.transform.localRotation = Quaternion.Euler(0f, 23f, 0f);
-            if (pizza != null)
+            if (carton != null)
             {
-                BuildKit.Quad("PizzaTop", box.transform, new Vector3(0f, 0.51f, 0f), Vector2.one, 0f, BuildKit.Picture("pizzaTop", pizza)).transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                BuildKit.Quad("SnackTop", box.transform, new Vector3(0f, 0.51f, 0f), Vector2.one, 0f, BuildKit.Picture("snackTop", carton)).transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
             }
 
             // Lights: the TV's glow, a dim lamp in the corner, the night through the window.

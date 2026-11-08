@@ -68,6 +68,7 @@ namespace NightShift.Game
             exterior.BuildBackAlley(root);
             exterior.BuildBackLot(root, assets);
             exterior.BuildSigns(root, assets);
+            exterior.BuildBigTop(root);
             exterior.BuildStreetLights(root);
             exterior.BuildRoadside(root);
             exterior.BuildSkyline(root);
@@ -129,7 +130,9 @@ namespace NightShift.Game
 
         private void BuildFront(Transform root)
         {
-            Material brick = BuildKit.Surface("bricks", () => ProceduralTextures.Bricks(new Color(0.42f, 0.17f, 0.12f), new Color(0.32f, 0.3f, 0.27f)), 0.25f);
+            Material brickOld = BuildKit.Surface("bricks", () => ProceduralTextures.Bricks(new Color(0.42f, 0.17f, 0.12f), new Color(0.32f, 0.3f, 0.27f)), 0.25f);
+            // The walls of the circus are painted boards in wide stripes, faded by the rain.
+            Material brick = BuildKit.Surface("circusFront", () => ProceduralTextures.Stripes(new Color(0.42f, 0.06f, 0.06f), new Color(0.58f, 0.5f, 0.36f), 2), 0.15f);
             Material trim = BuildKit.Surface("trim", () => ProceduralTextures.Concrete(new Color(0.5f, 0.48f, 0.44f)), 0.3f);
             Material roof = BuildKit.Plain("roof", new Color(0.04f, 0.04f, 0.045f), 0.6f);
             Material glass = BuildKit.Plain("darkGlass", new Color(0.02f, 0.025f, 0.03f), 0.96f, 0.2f);
@@ -412,7 +415,7 @@ namespace NightShift.Game
             lotRain.Play();
         }
 
-        /// <summary>A rusted sedan left in the lot (car_wreck.glb, or the box car with its lights off).</summary>
+        /// <summary>A destroyed sedan left in the lot (car_wreck.glb, or the box car with its lights off).</summary>
         private static void Wreck(Transform root, GameAssets assets, Vector3 position, float yaw)
         {
             if (assets == null || assets.WreckModel == null)
@@ -599,6 +602,59 @@ namespace NightShift.Game
         }
 
         // ------------------------------------------------------------------ signs
+
+        /// <summary>The striped big top rising over the roof, with its flag, seen from the road.</summary>
+        private void BuildBigTop(Transform root)
+        {
+            var area = Rect.MinMaxRect(-14f, -13f, 16f, 17f);
+            Material red = BuildKit.Surface("bigTopRed", () => ProceduralTextures.Grimy(new Color(0.48f, 0.05f, 0.06f), 0.6f), 0.15f);
+            Material cream = BuildKit.Surface("bigTopCream", () => ProceduralTextures.Grimy(new Color(0.6f, 0.53f, 0.4f), 0.6f), 0.15f);
+            float eave = FrontHeight - 0.1f;
+            CircusDressing.Canopy(root, area, eave, eave + 8f, 16, red, cream, 0.3f);
+            Material pole = BuildKit.Plain("bigTopPole", new Color(0.35f, 0.3f, 0.22f), 0.4f, 0.6f);
+            var top = new Vector3(area.center.x, eave + 8f, area.center.y);
+            BuildKit.Cylinder("FlagPole", root, top + Vector3.up * 1.2f, 0.12f, 2.4f, pole);
+            BuildKit.Box("Flag", root, top + new Vector3(0.65f, 2f, 0f), new Vector3(1.2f, 0.65f, 0.03f), red, 1f, false);
+            // The entrance: a striped arch with the marquee over it, and banners along the front.
+            float doorX = PizzeriaLayout.ExitDoor.x;
+            foreach (float side in new[] { -2.6f, 2.6f })
+            {
+                BuildKit.Cylinder("ArchPost", root, new Vector3(doorX + side, 2.6f, LobbyFrontZ - 2f), 0.45f, 5.2f, red);
+                BuildKit.Sphere("ArchBall", root, new Vector3(doorX + side, 5.35f, LobbyFrontZ - 2f), 0.5f, BuildKit.Plain("circusBrass", new Color(0.82f, 0.6f, 0.16f), 0.55f, 0.8f));
+            }
+            BuildKit.Box("ArchBeam", root, new Vector3(doorX, 4.9f, LobbyFrontZ - 2f), new Vector3(5.6f, 1.1f, 0.25f), red, 1f, false);
+            Texture2D logo = BuildKit.SignTexture("door_logo");
+            if (logo != null)
+            {
+                BuildKit.Quad("ArchSign", root, new Vector3(doorX, 4.9f, LobbyFrontZ - 2.14f), new Vector2(5.2f, 1f), 180f, BuildKit.Picture("sign:" + logo.name, logo, 0.5f));
+            }
+            CircusDressing.Bulbs(root, new Vector3(doorX - 2.7f, 5.5f, LobbyFrontZ - 2.14f), new Vector3(doorX + 2.7f, 5.5f, LobbyFrontZ - 2.14f), 12);
+            for (int i = 0; i < 3; i++)
+            {
+                Texture2D bill = BuildKit.SignTexture("poster_" + (5 + i));
+                if (bill != null)
+                {
+                    BuildKit.Quad("FrontBill", root, new Vector3(-18f + i * 8f, 2.2f, FrontZ - 0.06f), new Vector2(3f, 4f), 180f, BuildKit.Picture("sign:" + bill.name, bill, 0.08f));
+                }
+            }
+            // The marquee bulbs along the top of the front wall.
+            CircusDressing.Bulbs(root, new Vector3(WestX + 1f, FrontHeight - 0.5f, FrontZ - 0.08f), new Vector3(LobbyWestX - 1f, FrontHeight - 0.5f, FrontZ - 0.08f), 36, 0.1f);
+            // Old floodlights at the foot of the wall, thrown up on the stripes and the tent behind them.
+            foreach (float x in new[] { -18f, -6f, 6f })
+            {
+                var flood = new GameObject("TentFlood").AddComponent<Light>();
+                flood.transform.SetParent(root, false);
+                flood.transform.localPosition = new Vector3(x, 0.4f, FrontZ - 4f);
+                flood.transform.localRotation = Quaternion.Euler(-38f, 0f, 0f);
+                flood.type = LightType.Spot;
+                flood.spotAngle = 95f;
+                flood.innerSpotAngle = 40f;
+                flood.range = 34f;
+                flood.intensity = 42f;
+                flood.color = new Color(1f, 0.74f, 0.52f);
+                flood.shadows = LightShadows.None;
+            }
+        }
 
         private void BuildSigns(Transform root, GameAssets assets)
         {
@@ -818,11 +874,13 @@ namespace NightShift.Game
                 {
                     center.z = RoadZ + (center.z >= RoadZ ? clearance : -clearance);
                 }
-                float height = 9f + (float)(random.NextDouble() * random.NextDouble()) * 45f;
-                var block = BuildKit.Box("Building", root, center + new Vector3(0f, height * 0.5f, 0f), new Vector3(width, height, depth), facade, 6f, false);
+                // A small town: low blocks, a few of them a little taller.
+                float height = 7f + (float)(random.NextDouble() * random.NextDouble()) * 24f;
+                // 32 windows to the tile: about 2 meters to a window, and the pattern never seems to repeat.
+                var block = BuildKit.Box("Building", root, center + new Vector3(0f, height * 0.5f, 0f), new Vector3(width, height, depth), facade, 70f, false);
                 block.transform.localRotation = Quaternion.Euler(0f, (float)random.NextDouble() * 20f - 10f, 0f);
                 // A red light on the tall ones.
-                if (height > 35f)
+                if (height > 22f)
                 {
                     BuildKit.Box("Beacon", root, center + new Vector3(0f, height + 0.3f, 0f), new Vector3(0.5f, 0.5f, 0.5f), BuildKit.Glow("beacon", new Color(1f, 0.1f, 0.05f), 8f), 1f, false);
                 }
@@ -856,6 +914,8 @@ namespace NightShift.Game
             renderer.renderMode = ParticleSystemRenderMode.Stretch;
             renderer.lengthScale = 6f;
             renderer.velocityScale = 0.02f;
+            // A drop passing right by the lens stays a thin streak, not a white bar across the shot.
+            renderer.maxParticleSize = 0.004f;
             renderer.sharedMaterial = BuildKit.Additive("rainStreak", ProceduralTextures.Disc(16), new Color(0.65f, 0.7f, 0.8f, 0.5f));
 
             // Where the drops land: small rings on the ground that grow and fade, around the camera.
@@ -1016,7 +1076,7 @@ namespace NightShift.Game
     }
 
     /// <summary>
-    /// The guard's car, a 1984 station wagon (car_wagon.glb, or boxes if the model is missing): it
+    /// The guard's car, a 1986 sedan (car_wagon.glb, or boxes if the model is missing): it
     /// drives, parks, turns its wheels and its steering wheel, lights its lamps with beams in the
     /// rain, and its wipers sweep the beads of rain off the windshield.
     /// </summary>
@@ -1081,16 +1141,16 @@ namespace NightShift.Game
             foreach (Renderer renderer in body.GetComponentsInChildren<Renderer>())
             {
                 string name = renderer.name;
-                if (name.Contains("WheelStock"))
+                if (name.Contains("Steering_Wheel"))
+                {
+                    steering = renderer.transform;
+                }
+                else if (name.Contains("_Wheel_"))
                 {
                     wheels.Add(renderer.transform);
                     wheelRadius = LocalBounds(renderer).extents.y;
                 }
-                else if (name.Contains("Steering_Wheel"))
-                {
-                    steering = renderer.transform;
-                }
-                else if (name.Contains("Headlights0"))
+                else if (name.Contains("Headlights_UCB"))
                 {
                     headlightLenses = renderer;
                 }
@@ -1153,9 +1213,9 @@ namespace NightShift.Game
             dashboard.transform.localPosition = DriverEyes + new Vector3(0.12f, 0.18f, -0.05f);
             dashboard.transform.localRotation = Quaternion.LookRotation(SteeringCenter + new Vector3(0f, 0.05f, 0.15f) - dashboard.transform.localPosition);
             dashboard.type = LightType.Spot;
-            dashboard.spotAngle = 75f;
-            dashboard.range = 1.8f;
-            dashboard.intensity = 2.2f;
+            dashboard.spotAngle = 95f;
+            dashboard.range = 2.4f;
+            dashboard.intensity = 6f;
             dashboard.color = new Color(0.75f, 0.8f, 1f);
             dashboard.shadows = LightShadows.None;
 

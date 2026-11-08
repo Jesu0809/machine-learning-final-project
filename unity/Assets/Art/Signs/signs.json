@@ -59,55 +59,55 @@
     "height": 192,
     "width": 288
   },
-  "cctv_arcade": {
+  "cctv_backstage_hall": {
     "height": 384,
     "width": 512
   },
-  "cctv_back_hall": {
+  "cctv_birthday_tent": {
     "height": 384,
     "width": 512
   },
-  "cctv_banquet_room": {
+  "cctv_concessions": {
     "height": 384,
     "width": 512
   },
-  "cctv_dining_hall": {
+  "cctv_dressing_rooms": {
     "height": 384,
     "width": 512
   },
-  "cctv_exit_lobby": {
+  "cctv_promenade": {
     "height": 384,
     "width": 512
   },
-  "cctv_kitchen": {
+  "cctv_prop_workshop": {
     "height": 384,
     "width": 512
   },
-  "cctv_main_hall": {
+  "cctv_ringside_lounge": {
     "height": 384,
     "width": 512
   },
-  "cctv_office": {
+  "cctv_the_big_ring": {
     "height": 384,
     "width": 512
   },
-  "cctv_parts_service": {
+  "cctv_the_midway": {
     "height": 384,
     "width": 512
   },
-  "cctv_party_room": {
+  "cctv_ticket_lobby": {
     "height": 384,
     "width": 512
   },
-  "cctv_restrooms": {
+  "cctv_trunk_store": {
     "height": 384,
     "width": 512
   },
-  "cctv_storage": {
+  "cctv_watch_office": {
     "height": 384,
     "width": 512
   },
-  "cctv_veranda": {
+  "cctv_winter_garden": {
     "height": 384,
     "width": 512
   },
@@ -175,27 +175,19 @@
     "height": 192,
     "width": 384
   },
-  "door_arcade": {
+  "door_backstage_hall": {
     "height": 256,
     "width": 1024
   },
-  "door_back_hall": {
+  "door_birthday_tent": {
     "height": 256,
     "width": 1024
   },
-  "door_banquet_room": {
+  "door_concessions": {
     "height": 256,
     "width": 1024
   },
-  "door_dining_hall": {
-    "height": 256,
-    "width": 1024
-  },
-  "door_exit_lobby": {
-    "height": 256,
-    "width": 1024
-  },
-  "door_kitchen": {
+  "door_dressing_rooms": {
     "height": 256,
     "width": 1024
   },
@@ -203,31 +195,39 @@
     "height": 198,
     "width": 1024
   },
-  "door_main_hall": {
+  "door_promenade": {
     "height": 256,
     "width": 1024
   },
-  "door_office": {
+  "door_prop_workshop": {
     "height": 256,
     "width": 1024
   },
-  "door_parts_service": {
+  "door_ringside_lounge": {
     "height": 256,
     "width": 1024
   },
-  "door_party_room": {
+  "door_the_big_ring": {
     "height": 256,
     "width": 1024
   },
-  "door_restrooms": {
+  "door_the_midway": {
     "height": 256,
     "width": 1024
   },
-  "door_storage": {
+  "door_ticket_lobby": {
     "height": 256,
     "width": 1024
   },
-  "door_veranda": {
+  "door_trunk_store": {
+    "height": 256,
+    "width": 1024
+  },
+  "door_watch_office": {
+    "height": 256,
+    "width": 1024
+  },
+  "door_winter_garden": {
     "height": 256,
     "width": 1024
   },
@@ -383,9 +383,9 @@
     "height": 1152,
     "width": 1536
   },
-  "pizza_box_top": {
-    "height": 512,
-    "width": 512
+  "menu_title": {
+    "height": 520,
+    "width": 1400
   },
   "poster_0": {
     "height": 1024,
@@ -407,6 +407,18 @@
     "height": 1024,
     "width": 768
   },
+  "poster_5": {
+    "height": 1024,
+    "width": 768
+  },
+  "poster_6": {
+    "height": 1024,
+    "width": 768
+  },
+  "poster_7": {
+    "height": 1024,
+    "width": 768
+  },
   "screen_voicemail": {
     "height": 1024,
     "width": 512
@@ -415,11 +427,11 @@
     "height": 512,
     "width": 1024
   },
-  "title_arcade": {
-    "height": 384,
-    "width": 1536
+  "snack_box_top": {
+    "height": 512,
+    "width": 512
   },
-  "title_banquet_room": {
+  "title_birthday_tent": {
     "height": 384,
     "width": 1536
   },
@@ -427,7 +439,11 @@
     "height": 384,
     "width": 1536
   },
-  "title_lets_party": {
+  "title_high_striker": {
+    "height": 384,
+    "width": 1536
+  },
+  "title_midway": {
     "height": 384,
     "width": 1536
   },
@@ -435,11 +451,7 @@
     "height": 320,
     "width": 1280
   },
-  "title_parts_service": {
-    "height": 320,
-    "width": 1280
-  },
-  "title_party_room": {
+  "title_popcorn": {
     "height": 384,
     "width": 1536
   },
@@ -451,9 +463,17 @@
     "height": 384,
     "width": 1536
   },
-  "title_security": {
+  "title_prop_workshop": {
     "height": 320,
     "width": 1280
+  },
+  "title_ring_toss": {
+    "height": 384,
+    "width": 1536
+  },
+  "title_ringside_lounge": {
+    "height": 384,
+    "width": 1536
   },
   "title_showtime": {
     "height": 384,
@@ -463,19 +483,27 @@
     "height": 320,
     "width": 1280
   },
-  "title_storage": {
-    "height": 320,
-    "width": 1280
+  "title_step_right_up": {
+    "height": 384,
+    "width": 1536
   },
   "title_tickets": {
     "height": 384,
     "width": 1536
   },
-  "title_veranda": {
+  "title_trunk_store": {
+    "height": 320,
+    "width": 1280
+  },
+  "title_watch_office": {
+    "height": 320,
+    "width": 1280
+  },
+  "title_welcome": {
     "height": 384,
     "width": 1536
   },
-  "title_welcome": {
+  "title_winter_garden": {
     "height": 384,
     "width": 1536
   },

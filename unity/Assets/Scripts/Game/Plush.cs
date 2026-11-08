@@ -23,12 +23,22 @@ namespace NightShift.Game
             var go = new GameObject("Plush");
             go.transform.SetParent(parent, false);
             go.transform.SetPositionAndRotation(pose.position, pose.rotation);
-            GameObject model = FreddyParts.Plush(go.transform, Vector3.zero, Quaternion.identity, Height);
-            if (model == null)
+            // A little Pockets for the guard's desk.
+            var model = new GameObject("Toy");
+            model.transform.SetParent(go.transform, false);
+            // Measured in units of his height: the squash in Update scales the whole toy by Height.
+            GameAssets assets = GameAssets.Load();
+            const float Figure = 1f / 2.18f;
+            if (assets != null && assets.PropDummyMesh != null)
             {
-                Destroy(go);
-                return null;
+                var toyBody = new GameObject("Body");
+                toyBody.transform.SetParent(model.transform, false);
+                toyBody.transform.localScale = Vector3.one * Figure;
+                toyBody.AddComponent<MeshFilter>().sharedMesh = assets.PropDummyMesh;
+                toyBody.AddComponent<MeshRenderer>().sharedMaterial = assets.PropMaterial;
             }
+            // A toy's head is too big for its body.
+            CircusDressing.ClownHead(model.transform, new Vector3(0f, 1.9f * Figure, 0f), Figure * 1.5f);
             var plush = go.AddComponent<Plush>();
             plush.director = director;
             plush.body = model.transform;

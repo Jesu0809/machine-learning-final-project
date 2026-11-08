@@ -14,6 +14,7 @@ namespace NightShift.Game
     {
         public const float WalkSpeed = 2.9f;
         public const float ChaseSpeed = 4.7f;
+        private const float MaxChaseScale = 1.6f;
         public const float AttackRange = 1.4f;
         /// <summary>Reaching for a hiding spot's door before it swings open.</summary>
         public const float SearchSeconds = 0.35f;
@@ -112,6 +113,9 @@ namespace NightShift.Game
         /// <summary>Head bone (the jumpscare camera looks at it).</summary>
         public Transform Head { get; private set; }
 
+        /// <summary>The middle of his face: on Pockets it sits well above the bone of the neck.</summary>
+        public Vector3 FaceCenter => Head.position + Vector3.up * (GetComponent<PocketsRig>() != null ? 0.17f : 0.05f);
+
         private float eyesFlashUntil;
 
         /// <summary>His eyes come on red for a moment, even asleep (the intro's last shot).</summary>
@@ -205,7 +209,7 @@ namespace NightShift.Game
                 // "Stay" is not standing in the middle: he prowls to a corner of the room, stops and listens.
                 listenAfterArriving = listenSeconds * 0.5f;
                 WalkTo(PointOfInterest(here), WalkSpeed * 0.8f);
-                Activity = "prowling the " + HuntMap.DisplayName(here) + ", listening";
+                Activity = "prowling " + HuntMap.WithThe(here) + ", listening";
                 return;
             }
             // Into the new room: sometimes to its middle, often straight to a corner or a hiding spot.
@@ -213,7 +217,7 @@ namespace NightShift.Game
             Vector3 destination = Random.value < 0.4f ? PizzeriaLayout.Center(target) : PointOfInterest(target);
             bool hurry = director.State.NoiseMemory[(int)target] >= FreddyRewards.FreshNoise;
             WalkTo(destination, hurry ? WalkSpeed * 1.35f : WalkSpeed);
-            Activity = (hurry ? "hurrying to the " : "walking to ") + HuntMap.DisplayName(target);
+            Activity = (hurry ? "hurrying to " : "walking to ") + HuntMap.WithThe(target);
         }
 
         /// <summary>
@@ -227,7 +231,8 @@ namespace NightShift.Game
             UpdateEyes();
             if (ScriptedWalk >= 0f)
             {
-                SetAnimatorSpeed(ScriptedWalk);
+                // Meters per second, as the blend tree wants them: 0 stands, 1 walks, 2 runs.
+                SetAnimatorSpeed(ScriptedWalk <= 0f ? 0f : Mathf.Clamp(1f + (ScriptedWalk - WalkSpeed) / (ChaseSpeed - WalkSpeed), 1f, 2f));
                 return;
             }
             if (!director.Playing)
@@ -296,6 +301,7 @@ namespace NightShift.Game
                 fast = true;
                 speed = ChaseSpeed * RageScale(true);
                 director.Audio.Sting();
+                Cue("Roar");
             }
         }
 
@@ -306,7 +312,7 @@ namespace NightShift.Game
             Vector3 toPlayer = head - eye;
             float distance = toPlayer.magnitude;
 
-            float range = player.Flashlight.enabled ? SightRangeFlashlight : SightRange;
+            float range = (player.Flashlight.enabled ? SightRangeFlashlight : SightRange) * SightScale;
             if (player.Crouching)
             {
                 // Crouched in the dark you are a shadow among the tables (Alien: Isolation).
@@ -359,7 +365,7 @@ namespace NightShift.Game
             {
                 if (Vector3.Distance(transform.position, player.transform.position) < AttackRange)
                 {
-                    Attack("He saw you in the " + HuntMap.DisplayName(PizzeriaLayout.RoomAt(player.transform.position)) + " and ran you down.");
+                    Attack("He saw you in " + HuntMap.WithThe(PizzeriaLayout.RoomAt(player.transform.position)) + " and ran you down.");
                     return;
                 }
                 PathTo(player.transform.position);
@@ -390,24 +396,32 @@ namespace NightShift.Game
             {
                 breakingDoor = door;
                 blows = 0;
-                nextBlowAt = Time.time + 0.4f;
+                nextBlowAt = Time.time + SwingLeadSeconds;
+                swung = false;
                 Activity = "breaking down a door";
-                SetSearching(true);
+            }
+            if (!swung && Time.time >= nextBlowAt - SwingLeadSeconds)
+            {
+                Cue("Smash");
+                swung = true;
             }
             if (Time.time >= nextBlowAt)
             {
                 blows++;
+                swung = false;
                 bool last = blows >= 3;
                 door.Hit(last);
                 nextBlowAt = Time.time + Door.BreakSeconds / 3f;
                 if (last)
                 {
                     breakingDoor = null;
-                    SetSearching(false);
                 }
             }
         }
 
+        /// <summary>From the start of his swing to the mallet landing on the door (see PocketsSetup).</summary>
+        private const float SwingLeadSeconds = 0.4f;
+        private bool swung;
         private float listenAfterArriving;
         private float sensingUntil;
         private bool fast;
@@ -433,11 +447,25 @@ namespace NightShift.Game
         private float RageScale(bool chasing)
         {
             float level = director.State.Progress * 3f + (director.ActiveExit.Progress > 0f ? 1f : 0f);
-            return (1f + level * (chasing ? 0.06f : 0.1f)) * NightSpeed;
+            float scale = (1f + level * (chasing ? 0.06f : 0.1f)) * NightSpeed;
+            // At full rage on the last night and the highest threat he stays beatable with a slide or a duct.
+            return chasing ? Mathf.Min(scale, MaxChaseScale) : scale;
         }
 
         /// <summary>Speed multiplier of the current night (1 on night 1).</summary>
         public float NightSpeed { get; set; } = 1f;
+
+        /// <summary>Shows or hides his model (the home does not show him).</summary>
+        public void SetVisible(bool visible)
+        {
+            foreach (Renderer part in GetComponentsInChildren<Renderer>(true))
+            {
+                part.enabled = visible;
+            }
+        }
+
+        /// <summary>How far he sees compared with the base ranges (see ThreatLevel).</summary>
+        public float SightScale { get; set; } = 1f;
 
         /// <summary>0: reaching for the door; 1: the door open, him looking in; 2: shutting it.</summary>
         private int searchStage;
@@ -474,7 +502,7 @@ namespace NightShift.Game
                 if (player.HiddenIn == searchTarget && !player.HoldingBreath)
                 {
                     heldOpen = null;
-                    Attack("He opened " + Describe(searchTarget) + " in the " + HuntMap.DisplayName(searchTarget.Room) + " and found you breathing.");
+                    Attack("He opened " + Describe(searchTarget) + " in " + HuntMap.WithThe(searchTarget.Room) + " and found you breathing.");
                     searchTarget = null;
                     return;
                 }
@@ -515,6 +543,7 @@ namespace NightShift.Game
             if (mode == Mode.Walking && fast)
             {
                 director.OnFreddyLostPlayer();
+                Cue("Laugh");
             }
             if (listenAfterArriving > 0f)
             {
@@ -646,7 +675,7 @@ namespace NightShift.Game
             {
                 transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(flat), 360f * Time.deltaTime);
             }
-            SetAnimatorSpeed(fast ? 2f : 1f);
+            SetAnimatorSpeed(fast ? 2f : Mathf.Clamp(1f + (speed - WalkSpeed) / (ChaseSpeed - WalkSpeed), 1f, 2f));
 
             stepDistance += step;
             if (stepDistance >= (fast ? 1.6f : 1.1f))
@@ -683,6 +712,10 @@ namespace NightShift.Game
             }
             mode = next;
             Activity = activity;
+            if (animator != null && Knows("Listening"))
+            {
+                animator.SetBool("Listening", next == Mode.Listening);
+            }
         }
 
         private void SetAnimatorSpeed(float value)
@@ -690,6 +723,33 @@ namespace NightShift.Game
             if (animator != null)
             {
                 animator.SetFloat("Speed", value, 0.15f, Time.deltaTime);
+            }
+        }
+
+        private HashSet<string> animatorKnows;
+
+        /// <summary>True if his animator has this parameter (the optional moves may not be there).</summary>
+        private bool Knows(string parameter)
+        {
+            if (animatorKnows == null)
+            {
+                animatorKnows = new HashSet<string>();
+                if (animator != null)
+                {
+                    foreach (AnimatorControllerParameter known in animator.parameters)
+                    {
+                        animatorKnows.Add(known.name);
+                    }
+                }
+            }
+            return animatorKnows.Contains(parameter);
+        }
+
+        private void Cue(string trigger)
+        {
+            if (animator != null && Knows(trigger))
+            {
+                animator.SetTrigger(trigger);
             }
         }
 

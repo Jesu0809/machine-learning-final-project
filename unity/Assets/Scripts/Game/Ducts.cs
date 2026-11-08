@@ -71,9 +71,13 @@ namespace NightShift.Game
             {
                 return "";
             }
+            if (player.Director.Rules.VentsShut)
+            {
+                return "He bolted this grate shut.";
+            }
             if (player.Director.InCall)
             {
-                return "The grate is screwed shut.  Listen to the call first.";
+                return "The grate is screwed shut.  Let him finish talking first.";
             }
             if (Time.time < player.DuctReadyAt)
             {
@@ -85,7 +89,7 @@ namespace NightShift.Game
 
         public void Use(PlayerController player)
         {
-            if (player.HiddenIn == null && !player.Crawling && !player.Director.InCall && Time.time >= player.DuctReadyAt)
+            if (player.HiddenIn == null && !player.Crawling && !player.Director.InCall && !player.Director.Rules.VentsShut && Time.time >= player.DuctReadyAt)
             {
                 // The grate rattles: if Freddy hears it, he knows where this duct comes out.
                 player.Director.State.NoteDuctEntered(EndA ? Duct.B : Duct.A);

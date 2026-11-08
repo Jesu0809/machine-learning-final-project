@@ -47,13 +47,21 @@ namespace NightShift.Game
     /// how likely the policy found every option (<see cref="PolicyProbe"/>).</item>
     /// <item>The body carries the action out; what it sees is reported back to the brain.</item>
     /// </list>
-    /// It also runs the five nights: the story intro, each night's phone call, the objectives and
+    /// It also runs the seven nights: the story intro, each night's phone call, the objectives and
     /// what gets harder from night to night.
     /// </summary>
+    /// <summary>What is being played.</summary>
+    public enum ShowMode
+    {
+        Story,
+        Encore,
+        Daily
+    }
+
     public class HuntDirector : MonoBehaviour
     {
         private const float TrailInterval = 0.5f;
-        public const int LastNight = 5;
+        public const int LastNight = 7;
 
         private HuntSettings settings;
         private float sampleTimer;
@@ -65,7 +73,10 @@ namespace NightShift.Game
         private PolicyProbe probe;
         private readonly float[] observations = new float[FreddyObservations.Size];
 
-        private PhoneCall call;
+        private PublicAddress call;
+        private ClownPatter patter;
+        private GameObject menuClown;
+        private readonly List<GameObject> pranks = new List<GameObject>();
         private IntroCinematic intro;
         private bool wasInCall;
         private bool itemsRevealed;
@@ -83,7 +94,9 @@ namespace NightShift.Game
         private FilmGrain grain;
         private Vignette vignette;
         private ColorAdjustments colorAdjustments;
-        private const float BaseExposure = 0.9f;
+        public const float BaseExposure = 1.6f;
+        public const float GradeSaturation = -20f;
+        public const float GradeContrast = 18f;
         private Light jumpscareLight;
 
         public GameAssets Assets { get; private set; }
@@ -132,15 +145,37 @@ namespace NightShift.Game
         public List<Vector3> FreddyTrail { get; } = new List<Vector3>();
         public List<Vector3> PlayerTrail { get; } = new List<Vector3>();
 
-        /// <summary>The night being played (1–5). Each night Freddy decides more often and walks faster.</summary>
+        /// <summary>The night being played (1–7). Each night Freddy decides more often and walks faster.</summary>
         public int Night { get; private set; } = 1;
+
+        /// <summary>How dangerous he is for this player (see <see cref="ThreatLevel"/>); fixed in test runs, which never save it.</summary>
+        public static float Threat
+        {
+            get => CaptureMode.Active || ExploreMode.Active ? ThreatLevel.Start : SaveGame.Data.threat;
+            private set => SaveGame.Data.threat = value;
+        }
+
+        /// <summary>The threat level before the night that just ended, for the end screen.</summary>
+        public float ThreatBeforeNight { get; private set; } = ThreatLevel.Start;
 
         /// <summary>Best night reached, remembered between sessions.</summary>
         public static int BestNight
         {
-            get => PlayerPrefs.GetInt("NightShift.BestNight", 1);
-            private set { PlayerPrefs.SetInt("NightShift.BestNight", value); PlayerPrefs.Save(); }
+            get => Mathf.Clamp(SaveGame.Data.bestNight, 1, LastNight);
+            private set => SaveGame.Data.bestNight = value;
         }
+
+        /// <summary>The story, the endless encore (once the story is finished) or the show of the day.</summary>
+        public ShowMode Mode { get; private set; } = ShowMode.Story;
+
+        /// <summary>The round of the encore, from 1.</summary>
+        public int EncoreRound { get; private set; } = 1;
+
+        /// <summary>What tonight adds to the building (see <see cref="NightRules"/>).</summary>
+        public NightRules Rules { get; private set; } = new NightRules();
+
+        /// <summary>Keeps the save on the server, by itself.</summary>
+        public CloudSave Cloud { get; private set; }
 
         /// <summary>Time the night began (the title card fades from it).</summary>
         public float NightStartedAt { get; private set; }
@@ -190,6 +225,7 @@ namespace NightShift.Game
 
         private void Awake()
         {
+            FilmMode.SilenceIfRequested();
             Assets = GameAssets.Load();
             if (Assets == null)
             {
@@ -216,7 +252,7 @@ namespace NightShift.Game
             Player = PlayerController.Create(this, PizzeriaLayout.PlayerStart, PizzeriaLayout.PlayerFacing);
             Freddy = FreddyBody.Create(this, Assets.FreddyPrefab, PizzeriaLayout.FreddyStart, PizzeriaLayout.FreddyFacing);
             SecurityFeeds.Create(this);
-            Material doorSteel = BuildKit.Surface("doorSteel", () => ProceduralTextures.SteelPanel(new Color(0.42f, 0.09f, 0.08f)), 0.4f, 0.35f);
+            Material doorSteel = BuildKit.Pbr("distressed_planks", new Color(0.7f, 0.14f, 0.12f)) ?? BuildKit.Surface("circusDoor", () => ProceduralTextures.Planks(new Color(0.3f, 0.06f, 0.05f)), 0.4f, 0.35f);
             foreach ((Room a, Room b, Vector3 door, bool alongX, Vector3 corridor) in PizzeriaLayout.Doorways())
             {
                 Door.Create(this, Level.Root, a, b, door, alongX, corridor, doorSteel);
@@ -224,7 +260,13 @@ namespace NightShift.Game
             OfficeSeat.Create(this, Level.Root, LevelProps.OfficeChairPose);
             Plush.Create(this, Level.Root, LevelProps.OfficePlushPose);
             AiVision.Create(this);
-            call = PhoneCall.Create(transform, Audio, Assets);
+            call = PublicAddress.Create(transform, Audio, Assets);
+            patter = ClownPatter.Create(this, call);
+            if (CloudSave.Enabled && !CaptureMode.Active && !ExploreMode.Active)
+            {
+                Cloud = CloudSave.Create(gameObject);
+                Cloud.Pulled += () => { if (Phase == GamePhase.Menu) { UI.RefreshMenu(); } };
+            }
             Ending = EndingCinematic.Create(this);
             Exterior = Exterior.Build(transform, Assets);
             intro = IntroCinematic.Create(this, Exterior);
@@ -267,13 +309,13 @@ namespace NightShift.Game
                 brain.transform.SetParent(transform, false);
                 Agent = FreddyBrain.Add(brain, BehaviorType.InferenceOnly, Assets.FreddyModel);
                 Policy = Agent;
-                BrainDescription = "trained with ML-Agents (" + Assets.FreddyModel.name + ")";
+                BrainDescription = "trained with ML-Agents (" + Assets.FreddyModel.name.Replace("freddy", "pockets") + ")";
             }
             else
             {
                 Policy = new ScriptedFreddyPolicy(System.Environment.TickCount);
                 BrainDescription = Assets.FreddyModel != null
-                    ? "scripted baseline (the model " + Assets.FreddyModel.name + " was trained on another map)"
+                    ? "scripted baseline (the model " + Assets.FreddyModel.name.Replace("freddy", "pockets") + " was trained on another map)"
                     : "scripted baseline (no trained model found)";
                 probe = null;
             }
@@ -289,11 +331,18 @@ namespace NightShift.Game
             Time.timeScale = 1f;
             Player.Controllable = false;
             Player.CameraLocked = true;
-            // The menu looks at Freddy, asleep on the stage, from the audience.
+            // The home looks at a clown in the ring's spotlight, from the audience. The hunter's
+            // placeholder model stays out of it.
             Freddy.ResetTo(PizzeriaLayout.FreddyStart, PizzeriaLayout.FreddyFacing);
-            Player.Head.position = new Vector3(5.4f, 1.55f, 4.2f);
-            // Aim a little to his side so he stands right of the menu buttons.
-            Player.Head.LookAt(PizzeriaLayout.FreddyStart + new Vector3(-1.8f, 1.3f, 0f));
+            Freddy.SetVisible(false);
+            if (menuClown == null)
+            {
+                menuClown = CircusDressing.MenuFigure(Level.Root, PizzeriaLayout.FreddyStart, PizzeriaLayout.FreddyFacing, Assets.FreddyPrefab).gameObject;
+            }
+            menuClown.SetActive(true);
+            Player.Head.position = PizzeriaLayout.FreddyStart + new Vector3(-0.2f, 1.2f, -4.9f);
+            // Aim to his side so he stands right of the buttons, looking down at the player.
+            Player.Head.LookAt(PizzeriaLayout.FreddyStart + new Vector3(-1.75f, 1.3f, 0f));
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
             Audio.PlayMenuMusic(true);
@@ -304,6 +353,8 @@ namespace NightShift.Game
         /// <summary>Plays the story intro, then night 1.</summary>
         public void PlayStory()
         {
+            Mode = ShowMode.Story;
+            LeaveMenu();
             if (Assets.IntroLines == null || Assets.IntroLines.Length == 0)
             {
                 StartNight(1);
@@ -315,25 +366,94 @@ namespace NightShift.Game
 
         public void StartNight() => StartNight(1);
 
-        public void RetryNight() => StartNight(Night);
+        /// <summary>Back to the night the save has reached.</summary>
+        public void ContinueStory()
+        {
+            Mode = ShowMode.Story;
+            StartNight(BestNight);
+        }
 
-        public void NextNight() => StartNight(Mathf.Min(Night + 1, LastNight));
+        /// <summary>Round after round with everything at once, until he catches the player.</summary>
+        public void StartEncore()
+        {
+            Mode = ShowMode.Encore;
+            EncoreRound = 1;
+            StartNight(LastNight);
+        }
+
+        /// <summary>One night, the same for everyone today: same rooms, same rules, same danger.</summary>
+        public void StartDaily()
+        {
+            Mode = ShowMode.Daily;
+            StartNight(5);
+        }
+
+        public void RetryNight()
+        {
+            if (Mode == ShowMode.Encore)
+            {
+                EncoreRound = 1;
+            }
+            StartNight(Night);
+        }
+
+        public void NextNight()
+        {
+            if (Mode == ShowMode.Encore)
+            {
+                EncoreRound++;
+                StartNight(LastNight);
+            }
+            else
+            {
+                StartNight(Mathf.Min(Night + 1, LastNight));
+            }
+        }
+
+        private void LeaveMenu()
+        {
+            Freddy.SetVisible(true);
+            if (menuClown != null)
+            {
+                menuClown.SetActive(false);
+            }
+        }
+
+        /// <summary>Film tour: the end of a night, up close.</summary>
+        public void CatchForFilm() => OnCaught("He caught you.");
+
+        /// <summary>Today's date as a number: the seed of the show of the day (UTC, the same everywhere).</summary>
+        private static int DailySeed => int.Parse(System.DateTime.UtcNow.ToString("yyyyMMdd"));
+
+        /// <summary>The threat level of tonight: the player's own in the story, fixed in the other modes so scores compare.</summary>
+        private float TonightThreat => Mode == ShowMode.Encore ? Mathf.Clamp01(0.55f + EncoreRound * 0.05f)
+                                     : Mode == ShowMode.Daily ? 0.7f : Threat;
 
         /// <summary>
         /// Starts night <paramref name="night"/>. The trained brain is the same every night; what
         /// changes is the pace and the building: a decision every 3.5 s on night 1 down to 2.3 s on
-        /// night 5, Freddy 7% faster per night, "sense" recharging faster, dead lights, a shorter
-        /// tracker, fewer party horns, more objectives, and on night 5 he is awake from the start.
+        /// night 5, Freddy 7% faster per night up to there, "sense" recharging faster, dead lights, a
+        /// shorter tracker, fewer party horns, more objectives, and the rules of <see cref="NightRules"/>.
         /// </summary>
         public void StartNight(int night)
         {
+            LeaveMenu();
             Night = Mathf.Clamp(night, 1, LastNight);
-            settings.DecisionIntervalSeconds = 3.5f - (Night - 1) * 0.3f;
-            Freddy.NightSpeed = 1f + (Night - 1) * 0.07f;
-            settings.SenseCooldownTicks = Night >= 5 ? 16 : Night >= 4 ? 20 : 30;
-            settings.FreddyWakeTicks = Night >= 5 ? 0 : 6;
+            float threat = TonightThreat;
+            Rules = Mode == ShowMode.Encore ? NightRules.Rolled(System.Environment.TickCount, EncoreRound)
+                  : Mode == ShowMode.Daily ? NightRules.Rolled(DailySeed, 3) : NightRules.ForNight(Night);
+            settings.TapeNight = LastNight;
+            ThreatLevel.Apply(settings, Night, threat);
+            Freddy.NightSpeed = (1f + (Mathf.Min(Night, 5) - 1) * 0.07f) * ThreatLevel.SpeedScale(threat);
+            Freddy.SightScale = ThreatLevel.SightScale(threat);
+            Player.DuctCooldownSeconds = ThreatLevel.DuctCooldownSeconds(threat);
+            if (Mode == ShowMode.Daily)
+            {
+                State.Reseed(DailySeed);
+                Random.InitState(DailySeed);
+            }
             TrackerRange = Night >= 5 ? 15f : Night >= 4 ? 18f : 25f;
-            FlickerLight.KillLights(Night >= 4 ? 0.5f : Night >= 3 ? 0.3f : 0f, Night * 97);
+            FlickerLight.KillLights(Rules.DeadLights, Night * 97);
             NightStartedAt = Time.time;
 
             StopAllCoroutines();
@@ -374,8 +494,17 @@ namespace NightShift.Game
             Freddy.ResetTo(PizzeriaLayout.FreddyStart, PizzeriaLayout.FreddyFacing);
             Policy.OnNightStarted(State);
             PlaceLures();
+            PlacePranks();
             Door.ResetAll();
-            call.Begin(Night);
+            if (Mode == ShowMode.Story)
+            {
+                call.Begin(Night);
+            }
+            else
+            {
+                call.Silence();
+            }
+            patter.BeginNight();
             wasInCall = InCall;
             itemsRevealed = false;
             if (InCall)
@@ -427,6 +556,9 @@ namespace NightShift.Game
         /// Developer explore mode (see ExploreMode.cs): night 1's building with every objective item
         /// out, no phone call and Freddy asleep on the stage. The loop in Update stops here.
         /// </summary>
+        /// <summary>While true nothing advances the hunt: he stays asleep (the film shows the building and his moves).</summary>
+        public bool HuntHeld { get; set; }
+
         public void BeginExplore()
         {
             StartNight(1);
@@ -518,7 +650,7 @@ namespace NightShift.Game
 
             FlickerLight.SetFreddyPosition(Phase == GamePhase.Menu ? new Vector3(9999f, 0f, 9999f) : Freddy.transform.position);
             UpdatePointerLock();
-            if (Phase != GamePhase.Playing || ExploreMode.Active)
+            if (Phase != GamePhase.Playing || ExploreMode.Active || HuntHeld)
             {
                 return;
             }
@@ -898,6 +1030,80 @@ namespace NightShift.Game
         }
 
         /// <summary>The lab notes of this night (two per night, in story order), on the floor of random rooms.</summary>
+        /// <summary>Tonight's rubber toys and surprise boxes, in the open parts of random rooms.</summary>
+        private void PlacePranks()
+        {
+            foreach (GameObject prank in pranks)
+            {
+                Destroy(prank);
+            }
+            pranks.Clear();
+            ClownDummy.Reset();
+            ClownDummy.Awake = Rules.DummiesMove;
+            var rooms = new List<Room>();
+            for (int room = 0; room < HuntMap.RoomCount; room++)
+            {
+                if ((Room)room != Room.Office && (Room)room != HuntMap.FreddyStart)
+                {
+                    rooms.Add((Room)room);
+                }
+            }
+            for (int i = 0; i < Rules.Toys + Rules.Surprises; i++)
+            {
+                Room room = rooms[Random.Range(0, rooms.Count)];
+                if (rooms.Count > 1)
+                {
+                    rooms.Remove(room);
+                }
+                if (!LevelProps.OpenFloorPoint(room, out Vector3 floor))
+                {
+                    continue;
+                }
+                GameObject made = i < Rules.Toys
+                    ? SqueakToy.Create(this, Level.Root, floor).gameObject
+                    : SurpriseBox.Create(this, Level.Root, floor).gameObject;
+                pranks.Add(made);
+            }
+        }
+
+        /// <summary>A toy squeaked under the player's foot: a noise in that room, as loud as a run.</summary>
+        public void OnToySqueaked(Vector3 position)
+        {
+            Audio.ToySqueak(position);
+            Room room = PizzeriaLayout.RoomAt(position);
+            if (!InCall && State.HearNoiseAt(room, 2))
+            {
+                LastHeard = room;
+                AiVision.Instance.Ripple(room, 2);
+            }
+            patter.Say("toy");
+        }
+
+        /// <summary>A surprise box popped: a very loud noise in that room, and he has something to say.</summary>
+        public void OnSurprisePopped(Vector3 position)
+        {
+            Audio.SurprisePop(position);
+            Player.Jolt(1.2f);
+            Room room = PizzeriaLayout.RoomAt(position);
+            if (State.HearNoiseAt(room, 3))
+            {
+                LastHeard = room;
+                AiVision.Instance.Ripple(room, 3);
+            }
+            patter.Say("surprise", true);
+        }
+
+        /// <summary>The siren of a slow exit: called every few seconds while its door opens.</summary>
+        public void OnExitSiren(ExitPanel panel)
+        {
+            Audio.PlayAt(GameAudio.Siren(), panel.transform.position, 1f);
+            if (State.HearNoiseAt(panel.Room, 3))
+            {
+                LastHeard = panel.Room;
+                AiVision.Instance.Ripple(panel.Room, 3);
+            }
+        }
+
         private void PlaceNotes()
         {
             foreach (NotePickup note in notes)
@@ -925,12 +1131,13 @@ namespace NightShift.Game
         public void OnLureBlown(Vector3 position)
         {
             Audio.PlayAt(Audio.PartyHorn, position, 1f);
+            patter.Say("horn");
             Room room = PizzeriaLayout.RoomAt(position);
             if (Phase == GamePhase.Playing && !InCall && State.HearNoiseAt(room, 3))
             {
                 LastHeard = room;
                 AiVision.Instance.Ripple(room, 3);
-                UI.Toast("Freddy's brain heard a noise in the " + HuntMap.DisplayName(room) + ".");
+                UI.Toast("His brain heard a noise in " + HuntMap.WithThe(room) + ".");
             }
         }
 
@@ -941,7 +1148,7 @@ namespace NightShift.Game
             LastSenseFound = State.TicksSinceSensed <= 1 && State.SensedRoom.HasValue;
             Audio.SenseWhisper();
             UI.Toast(LastSenseFound
-                ? "FREDDY SENSED YOU. He knows where you are."
+                ? "POCKETS SENSED YOU. He knows where you are."
                 : "You feel something searching for you... it found nothing. Stay calm.");
         }
 
@@ -953,7 +1160,7 @@ namespace NightShift.Game
             Player.MakeNoise(2);
             Audio.PlayAt(Assets.FusePickup, cell.transform.position, 0.8f, 1.4f);
             UI.Toast(Night >= 2
-                ? "The " + CellColors.Name(cell.Socket) + " cell. Its socket is in the " + HuntMap.DisplayName(State.SocketRooms[cell.Socket]) + "."
+                ? "The " + CellColors.Name(cell.Socket) + " cell. Its socket is in " + HuntMap.WithThe(State.SocketRooms[cell.Socket]) + "."
                 : "A power cell. Any live socket takes it: " + LiveSocketsText + ".");
         }
 
@@ -1030,6 +1237,7 @@ namespace NightShift.Game
         {
             Audio.PlayAt(Assets.ExitDoor, ActiveExit.transform.position, 1f);
             UI.Toast("The door is open. RUN!");
+            patter.Say("exit");
         }
 
         public void OnFreddySawPlayer()
@@ -1064,6 +1272,7 @@ namespace NightShift.Game
             EndReason = how;
             State.End(HuntOutcome.Caught);
             Policy.OnNightEnded(State, HuntOutcome.Caught);
+            RecordNight(HuntOutcome.Caught);
             StartCoroutine(Jumpscare());
         }
 
@@ -1071,14 +1280,21 @@ namespace NightShift.Game
         {
             State.End(outcome);
             Policy.OnNightEnded(State, outcome);
+            RecordNight(outcome);
             Phase = outcome == HuntOutcome.Escaped ? GamePhase.Escaped : GamePhase.TimeUp;
-            if (outcome == HuntOutcome.Escaped && Night + 1 > BestNight)
+            if (Mode == ShowMode.Story && outcome == HuntOutcome.Escaped && Night + 1 > BestNight)
             {
                 BestNight = Mathf.Min(Night + 1, LastNight);
+                SaveGame.Save();
             }
             Player.Controllable = false;
             Audio.PlayAmbient(false);
-            if (outcome == HuntOutcome.Escaped && Night >= LastNight && Ending != null)
+            if (Mode == ShowMode.Story && outcome == HuntOutcome.Escaped && Night >= LastNight && !CaptureMode.Active)
+            {
+                SaveGame.Data.finishedStory = true;
+                SaveGame.Save();
+            }
+            if (Mode == ShowMode.Story && outcome == HuntOutcome.Escaped && Night >= LastNight && Ending != null)
             {
                 // Out with the tape: it is played at home before the end screen.
                 Player.EndFocus();
@@ -1088,6 +1304,58 @@ namespace NightShift.Game
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
             UI.ShowEnd(outcome);
+        }
+
+        /// <summary>Moves the threat level with how the night went and adds it to the play log (not in test runs).</summary>
+        private void RecordNight(HuntOutcome outcome)
+        {
+            ThreatBeforeNight = Threat;
+            if (CaptureMode.Active || ExploreMode.Active)
+            {
+                return;
+            }
+            float nightShare = NightSeconds / Mathf.Max(1f, NightLengthSeconds);
+            if (Mode == ShowMode.Story)
+            {
+                Threat = ThreatLevel.AfterNight(ThreatBeforeNight, outcome, State.Progress, nightShare, State.TimesSeen);
+            }
+            else if (Mode == ShowMode.Encore)
+            {
+                int rounds = outcome == HuntOutcome.Escaped ? EncoreRound : EncoreRound - 1;
+                SaveGame.Data.encoreBest = Mathf.Max(SaveGame.Data.encoreBest, rounds);
+            }
+            else if (outcome == HuntOutcome.Escaped)
+            {
+                string today = DailySeed.ToString();
+                if (SaveGame.Data.dailyDate != today || SaveGame.Data.dailyBest <= 0f || NightSeconds < SaveGame.Data.dailyBest)
+                {
+                    SaveGame.Data.dailyDate = today;
+                    SaveGame.Data.dailyBest = NightSeconds;
+                }
+            }
+            PlayLog.Write(new PlayLog.Night
+            {
+                brain = BrainDescription,
+                night = Night,
+                outcome = outcome.ToString(),
+                how = EndReason,
+                room = HuntMap.DisplayName(PizzeriaLayout.RoomAt(Player.transform.position)),
+                roomIndex = (int)PizzeriaLayout.RoomAt(Player.transform.position),
+                mode = Mode.ToString(),
+                seconds = NightSeconds,
+                nightLength = NightLengthSeconds,
+                objectivesDone = State.ObjectivesDone,
+                objectivesTotal = State.ObjectivesTotal,
+                heard = State.TimesHeard,
+                seen = State.TimesSeen,
+                searches = State.Searches,
+                senseUses = State.SenseUses,
+                senseHits = State.SenseHits,
+                ducts = State.DuctUses,
+                decisions = Decisions.Count,
+                threatBefore = ThreatBeforeNight,
+                threatAfter = Threat
+            });
         }
 
         /// <summary>Test helper (capture tour): a second before 6 AM.</summary>
@@ -1351,7 +1619,7 @@ namespace NightShift.Game
             Quaternion from = Player.Head.rotation;
             for (float w = 0f; w < 0.22f; w += Time.deltaTime)
             {
-                Vector3 face0 = head.position + Vector3.up * 0.05f;
+                Vector3 face0 = Freddy.FaceCenter;
                 Player.Head.rotation = Quaternion.Slerp(from, Quaternion.LookRotation(face0 - Player.Head.position), TaskKit.Ease(w / 0.22f));
                 yield return null;
             }
@@ -1374,10 +1642,10 @@ namespace NightShift.Game
                 t += Time.deltaTime;
                 float k = Mathf.Clamp01(t / 0.16f);
                 float calm = 1f - Mathf.Clamp01((t - 0.3f) / (lunge - 0.3f));
-                Vector3 face = head.position + Vector3.up * 0.05f;
+                Vector3 face = Freddy.FaceCenter;
                 Vector3 forward = Freddy.transform.forward;
                 Vector3 shake = new Vector3(Mathf.PerlinNoise(seed, t * 25f) - 0.5f, Mathf.PerlinNoise(seed + 5f, t * 25f) - 0.5f, 0f) * 0.12f * calm;
-                Player.Head.position = face + forward * Mathf.Lerp(1.6f, 0.55f, 1f - (1f - k) * (1f - k)) + Freddy.transform.rotation * shake;
+                Player.Head.position = face + forward * Mathf.Lerp(1.6f, 0.66f, 1f - (1f - k) * (1f - k)) + Freddy.transform.rotation * shake;
                 Player.Head.LookAt(face);
                 Player.Head.Rotate(0f, 0f, (Mathf.PerlinNoise(seed + 9f, t * 12f) - 0.5f) * 14f * calm, Space.Self);
                 view.fieldOfView = Mathf.Lerp(70f, 48f, k);
@@ -1460,11 +1728,11 @@ namespace NightShift.Game
             RenderSettings.ambientMode = AmbientMode.Flat;
             // Next to no ambient light and no grey sky reflection: away from the few working lamps,
             // without the flashlight, you see nothing.
-            RenderSettings.ambientLight = new Color(0.008f, 0.008f, 0.011f);
+            RenderSettings.ambientLight = new Color(0.075f, 0.062f, 0.055f);
             RenderSettings.reflectionIntensity = 0.15f;
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Exponential;
-            RenderSettings.fogDensity = 0.03f;
+            RenderSettings.fogDensity = 0.016f;
             // A faint cold haze: distant rooms fade into it instead of into pure black.
             RenderSettings.fogColor = new Color(0.012f, 0.014f, 0.02f);
             RenderSettings.skybox = null;
@@ -1486,8 +1754,8 @@ namespace NightShift.Game
             distortion.intensity.Override(0f);
             ColorAdjustments color = profile.Add<ColorAdjustments>(true);
             colorAdjustments = color;
-            color.saturation.Override(-20f);
-            color.contrast.Override(18f);
+            color.saturation.Override(GradeSaturation);
+            color.contrast.Override(GradeContrast);
             color.postExposure.Override(BaseExposure);
             color.colorFilter.Override(new Color(1f, 0.96f, 0.9f));
             ShadowsMidtonesHighlights tones = profile.Add<ShadowsMidtonesHighlights>(true);

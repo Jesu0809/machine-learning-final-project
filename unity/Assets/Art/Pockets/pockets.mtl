@@ -1,0 +1,3 @@
+newmtl pockets
+Kd 1 1 1
+map_Kd pockets_albedo.jpg
