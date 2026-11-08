@@ -2,15 +2,16 @@
   <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
       <li class="breadcrumb-item"><a routerLink="/">Home</a></li>
-      <li class="breadcrumb-item active" aria-current="page">Freddy's Brain &mdash; The Model</li>
+      <li class="breadcrumb-item active" aria-current="page">Pockets' Brain &mdash; The Model</li>
     </ol>
   </nav>
 
   <div class="mb-4">
-    <h1>Freddy's Brain: the Model</h1>
+    <h1>Pockets' Brain: the Model</h1>
     <p class="lead">
       A neural network policy trained with PPO in Unity ML-Agents. It does not see the 3D circus: it
-      decides on an abstract map of 11 rooms (one floor, two wings), and a scripted body carries out each decision in 3D.
+      decides on an abstract map of the circus's 13 rooms, and a scripted body carries out each decision in 3D.
+      In the code and the model files he keeps his first name, Freddy (<code>freddy_v19.onnx</code>).
     </p>
   </div>
 
@@ -42,7 +43,7 @@
       <h2 class="h5">Brain and body</h2>
       <div class="row g-3 align-items-center text-center">
         <div class="col-md-3"><div class="border rounded p-3">
-          <strong>Game events</strong><br><span class="small text-muted">footsteps, fuses, breaker, horns, sightings</span>
+          <strong>Game events</strong><br><span class="small text-muted">footsteps, power cells, breaker, toys, surprise boxes, sightings</span>
         </div></div>
         <div class="col-md-1 fs-3">→</div>
         <div class="col-md-4"><div class="border border-info rounded p-3">
@@ -56,7 +57,7 @@
       </div>
       <p class="small text-muted mt-3 mb-0">
         Splitting brain and body makes training fast (thousands of nights per minute, no 3D) and lets the
-        same trained network drive the 3D animatronic. The body only executes: <em>where</em> to go,
+        same trained network drive the 3D clown. The body only executes: <em>where</em> to go,
         <em>which</em> locker to open and <em>when</em> to sense is always the network.
       </p>
     </div></div>
@@ -112,15 +113,17 @@
       </div></div></div>
       <div class="col-lg-6"><div class="card h-100"><div class="card-body">
         <h2 class="h5">Same brain, seven nights</h2>
-        <p class="small text-muted">The network is the same every night; the game gives it more decisions per second and the player harder objectives.</p>
+        <p class="small text-muted">The network is the same every night; the game gives it more decisions per second and the player harder objectives. The pace shown is the base one: each player's threat level makes it from 15% slower to 20% faster.</p>
+        <div class="table-responsive">
         <table class="table table-sm mb-0">
-          <thead><tr><th>Night</th><th>Objectives</th><th>Freddy</th><th>Other</th></tr></thead>
+          <thead><tr><th>Night</th><th>Objectives</th><th>Pockets</th><th>Other</th></tr></thead>
           <tbody>
             @for (n of m.nights; track n.night) {
               <tr><td>{{ n.night }}</td><td class="small">{{ n.objectives }}</td><td class="small">{{ n.freddy }}</td><td class="small text-muted">{{ n.other }}</td></tr>
             }
           </tbody>
         </table>
+        </div>
       </div></div></div>
     </div>
   } @else if (!error()) {

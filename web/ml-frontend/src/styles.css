@@ -59,6 +59,11 @@ html {
   scroll-behavior: smooth;
 }
 
+/* In-page links land below the fixed navbar. */
+section[id] {
+  scroll-margin-top: 76px;
+}
+
 /* Sticky footer layout */
 app-root {
   display: flex;

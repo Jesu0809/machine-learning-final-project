@@ -4,24 +4,61 @@
   <div class="row g-3 mb-4">
     <div class="col-md-6"><div class="card h-100"><div class="card-body">
       <h2 class="h5">Team</h2>
-      <p class="mb-1">Jesús Nuncira · Miguel Moreno</p>
-      <p class="small text-muted mb-0">Machine Learning, Universidad de Cundinamarca, Chía. Prof. Edison Cañón.</p>
+      <p class="mb-1">Jesús David Nuncira Ortiz · Miguel Moreno Arenas</p>
+      <p class="small text-muted mb-0">Machine Learning, Systems Engineering, Universidad de Cundinamarca (Chía). Professor Edison Gustavo Cañón Varela.</p>
     </div></div></div>
     <div class="col-md-6"><div class="card h-100"><div class="card-body">
       <h2 class="h5">Built with</h2>
-      <p class="small mb-0">Unity 6, Unity ML-Agents 4.1 (PPO, mlagents 1.1.0, PyTorch), Inference Engine, Flask, Angular, Bootstrap, matplotlib.</p>
+      <p class="small mb-0">Unity 6 (URP), Unity ML-Agents 4.1 (PPO, mlagents 1.1.0, PyTorch), Inference Engine, glTFast, Flask, Angular, Bootstrap, matplotlib.</p>
     </div></div></div>
   </div>
 
   <div class="card mb-4"><div class="card-body">
-    <h2 class="h5">Assets</h2>
-    <ul class="small mb-0">
-      <li>"<a href="https://sketchfab.com/3d-models/freddy-fazbear-e8248c29265544e7b7e686b4c0c09f10" target="_blank" rel="noopener">Freddy Fazbear</a>" by 2012carlitos17, CC-BY-4.0. Rigged and animated with Adobe Mixamo.</li>
-      <li>Voices generated with the macOS speech synthesizer.</li>
-      <li>Font <a href="https://fonts.google.com/specimen/VT323" target="_blank" rel="noopener">VT323</a> by Peter Hull, SIL Open Font License.</li>
-      <li>Sounds from Pixabay (Pixabay Content License): "Metal Door Slam" by SoundReality and "Jump-Scare_2" by freesound_community. The other sounds were synthesized for this project.</li>
-    </ul>
+    <h2 class="h5">Pockets</h2>
+    <p class="small mb-0">
+      Pockets (his head, body, mallet and textures) was sculpted for this project by a script
+      (<code>tools/sculpt_pockets.py</code>): no third-party model is part of him. The dummies and spare
+      heads around the circus are a light version of the same sculpt. Rigged and animated with Adobe
+      Mixamo. His cloth and metal use scanned surfaces from Poly Haven (CC0).
+    </p>
   </div></div>
+
+  <div class="card mb-4"><div class="card-body">
+    <h2 class="h5">3D models (Sketchfab, CC BY 4.0)</h2>
+    <div class="table-responsive">
+      <table class="table table-sm small mb-0">
+        <thead><tr><th>Model</th><th>Author</th><th>Used as</th></tr></thead>
+        <tbody>
+          <tr><td><a href="https://sketchfab.com/3d-models/kiri-86-low-poly-model-5c17c582ef9549798f694b660feea42a" target="_blank" rel="noopener">Kiri '86 - Low poly model</a></td><td>Daniel Zhabotinsky</td><td>The guard's car, without its badges</td></tr>
+          <tr><td><a href="https://sketchfab.com/3d-models/destroyed-car-03-backrooms-car-gameready-ver-efc4dfe2c7284a64bc9281eb4f61d402" target="_blank" rel="noopener">Destroyed Car 03 / Backrooms Car</a></td><td>Renafox (&#64;kryik1023)</td><td>The wreck in the back lot</td></tr>
+          <tr><td><a href="https://sketchfab.com/3d-models/66915915e3234d319415d6bfb4e3a59e" target="_blank" rel="noopener">Industrial Electricity's Lever</a></td><td>Amine.Elouneg</td><td>The exit lever</td></tr>
+          <tr><td><a href="https://sketchfab.com/3d-models/033dd717e4b04e46b6da85195085b8f3" target="_blank" rel="noopener">Early 1900s Knife Switches Type C</a></td><td>Mad_Lobster_Workshop</td><td>The breaker box's main switch</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small text-muted mt-2 mb-0">License: <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. Rescaled, turned and split into moving parts by <code>tools/prepare_models.py</code>.</p>
+  </div></div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-lg-6"><div class="card h-100"><div class="card-body">
+      <h2 class="h5">Props, surfaces and posters</h2>
+      <ul class="small mb-0">
+        <li>Props and scanned surfaces from <a href="https://polyhaven.com" target="_blank" rel="noopener">Poly Haven</a> and <a href="https://ambientcg.com" target="_blank" rel="noopener">ambientCG</a> (CC0). The striped circus canvas is printed and aged over Poly Haven's "Rough Linen".</li>
+        <li>The wall posters use details of public-domain circus lithographs (about 1890–1900) from Wikimedia Commons, cropped so no show's name remains and set under new type.</li>
+        <li>Fonts from Google Fonts: Oswald, Rye, Bebas Neue, Bungee and VT323 (SIL Open Font License); Luckiest Guy, Special Elite, Permanent Marker and Schoolbell (Apache License 2.0).</li>
+      </ul>
+    </div></div></div>
+    <div class="col-lg-6"><div class="card h-100"><div class="card-body">
+      <h2 class="h5">Sounds and voices</h2>
+      <ul class="small mb-0">
+        <li>The clown's toys, surprise boxes, shoes, bells and music box: CC0 recordings from Freesound by Breviceps, Aiyumi, rschiwal, D.jones, shakaharu, romulofs, JarredGibb and Modification1089.</li>
+        <li>His steps, servos and creaks: CC0 recordings by Thimras (OpenGameArt), JoontheFloof, ingudios and LoafDV (Freesound).</li>
+        <li>From Pixabay (Pixabay Content License): "Metal Door Slam" by SoundReality and "Jump-Scare_2" by freesound_community.</li>
+        <li>The menu's march: "Entrance of the Gladiators" (Julius Fučík, 1897) by the United States Marine Band, public domain, slowed and aged.</li>
+        <li>Voices synthesized locally with <a href="https://huggingface.co/hexgrad/Kokoro-82M" target="_blank" rel="noopener">Kokoro</a> (Apache License 2.0). Every other sound was synthesized for this project.</li>
+      </ul>
+    </div></div></div>
+  </div>
 
   <div class="card"><div class="card-body">
     <h2 class="h5">References</h2>
@@ -33,5 +70,5 @@
     </ul>
   </div></div>
 
-  <p class="small text-muted mt-4 mb-0">Fan work, non-commercial. Freddy Fazbear © Scott Cawthon. Not affiliated with the original games.</p>
+  <p class="small text-muted mt-4 mb-0">Night Shift is an original game made for a university course. Full list with links: <code>docs/credits.md</code> in the repository.</p>
 </div>

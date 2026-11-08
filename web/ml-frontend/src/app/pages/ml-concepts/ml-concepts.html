@@ -16,11 +16,11 @@
 
   <div class="row g-3 mb-4">
     <div class="col-6 col-md-3"><div class="card h-100 text-center"><div class="card-body">
-      <div class="fs-2" aria-hidden="true">🐻</div><h3 class="h6 mt-2 mb-0">Agent</h3>
-      <p class="small text-muted mb-0">Freddy's brain, which picks the next move</p>
+      <div class="fs-2" aria-hidden="true">🤡</div><h3 class="h6 mt-2 mb-0">Agent</h3>
+      <p class="small text-muted mb-0">Pockets' brain, which picks the next move</p>
     </div></div></div>
     <div class="col-6 col-md-3"><div class="card h-100 text-center"><div class="card-body">
-      <div class="fs-2" aria-hidden="true">🍕</div><h3 class="h6 mt-2 mb-0">Environment</h3>
+      <div class="fs-2" aria-hidden="true">🎪</div><h3 class="h6 mt-2 mb-0">Environment</h3>
       <p class="small text-muted mb-0">The circus, its hiding spots and the survivor</p>
     </div></div></div>
     <div class="col-6 col-md-3"><div class="card h-100 text-center"><div class="card-body">
@@ -37,8 +37,8 @@
     <h2 class="h5">The agent–environment loop</h2>
     <p class="text-muted mb-3">Every 3.5 seconds of game time, the same cycle:</p>
     <ol class="mb-0">
-      <li><strong>Observe:</strong> Freddy's brain receives 64 numbers: the noises it heard and from which room, where it last saw the player, how long since it checked each room, whether its sense is ready…</li>
-      <li><strong>Decide:</strong> the network outputs a probability for each of the 15 actions and one is chosen.</li>
+      <li><strong>Observe:</strong> Pockets' brain receives 100 numbers: the noises it heard and from which room, where it last saw the player, how long since it checked each room, whether its sense is ready…</li>
+      <li><strong>Decide:</strong> the network outputs a probability for each of the 17 actions and one is chosen.</li>
       <li><strong>Act:</strong> his 3D body walks to the room, searches the hiding spot or uses its sense.</li>
       <li><strong>Reward:</strong> during training, the result is scored (+1 catch, −1 escape, small penalties for wasted searches).</li>
     </ol>
@@ -49,8 +49,8 @@
       <h2 class="h5">Markov Decision Process</h2>
       <table class="table table-sm mb-0">
         <tbody>
-          <tr><th scope="row">States</th><td>What Freddy knows (64 values)</td></tr>
-          <tr><th scope="row">Actions</th><td>15: move to one of 11 rooms or stay, search spot 0–2, sense</td></tr>
+          <tr><th scope="row">States</th><td>What Pockets knows (100 values)</td></tr>
+          <tr><th scope="row">Actions</th><td>17: move to one of 13 rooms or stay, search spot 0–2, sense</td></tr>
           <tr><th scope="row">Transitions</th><td>The rules of the hunt (hearing, sight, hiding)</td></tr>
           <tr><th scope="row">Reward</th><td>Catch, escape, time, wasted searches</td></tr>
           <tr><th scope="row">Discount γ</th><td>0.99</td></tr>
@@ -59,8 +59,8 @@
     </div></div></div>
     <div class="col-lg-6"><div class="card h-100"><div class="card-body">
       <h2 class="h5">Partial observability</h2>
-      <p class="mb-2">Freddy <strong>never</strong> observes where the player is. He gets noises (sometimes placed in the wrong room) and occasional sightings, so the network has to remember and infer, like a real hunter.</p>
-      <p class="small text-muted mb-0">That is also why a thrown party horn fools him: to the network, a noise is a noise.</p>
+      <p class="mb-2">Pockets <strong>never</strong> observes where the player is. He gets noises (sometimes placed in the wrong room) and occasional sightings, so the network has to remember and infer, like a real hunter.</p>
+      <p class="small text-muted mb-0">That is also why a squeaking toy or a surprise box can fool him: to the network, a noise is a noise.</p>
     </div></div></div>
   </div>
 
@@ -81,7 +81,7 @@
     </div></div></div>
     <div class="col-md-6 col-lg-3"><div class="card h-100"><div class="card-body">
       <h3 class="h6">Domain randomization</h3>
-      <p class="small text-muted mb-0">Every training night the simulated survivor gets a different personality, so Freddy cannot overfit one play style.</p>
+      <p class="small text-muted mb-0">Every training night the simulated survivor gets a different personality, so Pockets cannot overfit one play style.</p>
     </div></div></div>
     <div class="col-md-6 col-lg-3"><div class="card h-100"><div class="card-body">
       <h3 class="h6">Training vs inference</h3>
@@ -90,6 +90,6 @@
   </div>
 
   <div class="d-flex gap-2">
-    <a class="btn btn-primary" routerLink="/ml/model">Next: Freddy's brain →</a>
+    <a class="btn btn-primary" routerLink="/ml/model">Next: Pockets' brain →</a>
   </div>
 </div>

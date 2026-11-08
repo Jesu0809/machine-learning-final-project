@@ -36,7 +36,7 @@ export interface ModelInfo {
   };
 }
 
-/** What Freddy knows, sent to /api/brain/decide. */
+/** What Pockets knows, sent to /api/brain/decide (the keys keep the brain's code name, freddy). */
 export interface BrainState {
   freddy_room: number;
   noises: Record<string, number>;

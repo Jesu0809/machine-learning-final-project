@@ -9,7 +9,7 @@
   <div class="mb-4">
     <h1>The Story</h1>
     <p class="lead">
-      The story and the machine learning are the same thing: Nightshift Labs trained Freddy's brain on
+      The story and the machine learning are the same thing: Nightshift Labs trained the clown's brain on
       thousands of simulated nights, and you are the first real test. Every number in his speeches and the
       notes is a real number from the training.
     </p>
@@ -45,7 +45,7 @@
   </ul>
   <div class="card mb-4"><div class="card-body">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-      <p class="small text-info mb-0">{{ changes[night()] || 'Three fuses, one exit' }}</p>
+      <p class="small text-info mb-0">{{ changes[night()] || 'Three power cells, one exit' }}</p>
       <button type="button" class="btn btn-sm btn-primary" (click)="playing() ? stop() : play('night' + (night() + 1), 0, calls[night()].length, true)">{{ playing() ? '■ Stop' : '▶ Play the whole speech' }}</button>
     </div>
     @for (line of calls[night()]; track $index) {
@@ -55,10 +55,10 @@
       </div>
     }
     <p class="small text-muted mt-3 mb-0">
-      @if (night() < 4) {
+      @if (night() < 6) {
         While he talks he sleeps in the ring and the objectives are hidden: use it to learn the building.
       } @else {
-        On night 5 there is no grace period: Freddy is awake while the phone talks.
+        On night 7 there is no grace period: he is awake while he talks.
       }
     </p>
   </div></div>

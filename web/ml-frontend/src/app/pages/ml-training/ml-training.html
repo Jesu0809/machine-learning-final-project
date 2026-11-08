@@ -9,7 +9,7 @@
   <div class="mb-4">
     <h1>Training</h1>
     <p class="lead">
-      Freddy trains against a simulated survivor that collects fuses, hides and runs. At the start he wanders
+      Pockets trains against a simulated survivor that carries power cells, hides and runs. At the start he wanders
       at random and loses most nights; after a few million decisions he catches the survivor almost every night.
     </p>
   </div>
@@ -17,7 +17,7 @@
   <div class="card mb-4"><div class="card-body">
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
       <h2 class="h5 mb-0">Reward curve (from TensorBoard)</h2>
-      <div class="btn-group" role="group" aria-label="Training run">
+      <div class="d-flex flex-wrap gap-1" role="group" aria-label="Training run">
         @for (run of runs()?.runs ?? []; track run.id) {
           <button type="button" class="btn btn-sm" [class.btn-primary]="selected() === run.id"
                   [class.btn-outline-primary]="selected() !== run.id" (click)="selected.set(run.id)">{{ run.id }}</button>
@@ -67,7 +67,7 @@
     </div></div></div>
     <div class="col-lg-6"><div class="card h-100"><div class="card-body">
       <h2 class="h5">The training opponent</h2>
-      <p>A rule-based survivor bot plays every training night. It goes for the fuses and the exit, avoiding the room where its tracker last showed Freddy. Every night its personality is random (domain randomization):</p>
+      <p>A rule-based survivor bot plays every training night. It goes for the cells, the night's other tasks and the exit, avoiding the room where its tracker last showed him. Every night its personality is random (domain randomization):</p>
       <ul class="small">
         <li>How often it reads the motion tracker (50–97%).</li>
         <li>Whether it hides or runs when he is close (hides 40–80%).</li>

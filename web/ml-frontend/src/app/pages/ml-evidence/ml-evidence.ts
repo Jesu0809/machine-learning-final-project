@@ -16,7 +16,7 @@ export class MlEvidence {
     {
       image: 'inspector.jpg',
       title: 'AI inspector (Tab)',
-      text: 'In the middle of the game, Tab opens the network\'s live view: the probability of each of the 15 actions, what he heard, where he is going and why. The bars are computed by a C# forward pass of the same weights.',
+      text: 'In the middle of the game, Tab opens the network\'s live view: the probability of each of the 17 actions, what he heard, where he is going and why. The bars are computed by a C# forward pass of the same weights.',
     },
     {
       image: 'replay.jpg',
@@ -26,18 +26,18 @@ export class MlEvidence {
     {
       image: 'call.jpg',
       title: 'Story and notes',
-      text: 'The phone calls and the lab notes quote the real training: the reward curve, the 66% vs 99% comparison and how often he senses.',
+      text: 'The clown\'s speeches and the lab notes hidden around the circus quote the real training: the reward curve, the comparison with the hand-written hunter and how often he senses.',
     },
     {
       image: 'hall.jpg',
       title: 'Behavior you can feel',
-      text: 'He goes to the noise, checks the rooms next to it, opens the locker you hide in more often than the empty one, and senses when you are afraid. A thrown horn fools him because the network cannot tell a noise from you.',
+      text: 'He goes to the noise, checks the rooms next to it, opens the locker you hide in more often than the empty one, and senses when you are afraid. A squeaking toy or a surprise box can fool him, because the network cannot tell a noise from you.',
     },
   ];
 
   protected readonly files = [
-    ['unity/Assets/Scripts/Core/FreddyObservations.cs', 'The 64 observations'],
-    ['unity/Assets/Scripts/Core/FreddyActions.cs', 'The 15 actions and the action mask'],
+    ['unity/Assets/Scripts/Core/FreddyObservations.cs', 'The 100 observations'],
+    ['unity/Assets/Scripts/Core/FreddyActions.cs', 'The 17 actions and the action mask'],
     ['unity/Assets/Scripts/Core/FreddyRewards.cs', 'The reward function'],
     ['unity/Assets/Scripts/Brain/FreddyAgent.cs', 'The ML-Agents Agent'],
     ['unity/Assets/Scripts/Core/PolicyProbe.cs', 'Forward pass for the inspector'],

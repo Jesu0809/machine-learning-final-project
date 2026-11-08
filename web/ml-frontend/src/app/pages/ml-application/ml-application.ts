@@ -30,7 +30,8 @@ export class MlApplication {
   protected readonly error = signal('');
   protected readonly showInputs = signal(false);
 
-  // Form fields. Noise levels go from 0 (nothing) to 3 (very loud: a horn, the breaker or the exit panel).
+  // Form fields. Noise levels go from 0 (nothing) to 3 (very loud: a toy, a surprise box, the breaker or the exit).
+  // "fuses" is the API's name for the power cells in place (0-3).
   protected freddyRoom = 6;
   protected noiseRoom: number | null = null;
   protected noiseLevel = 2;
@@ -47,27 +48,27 @@ export class MlApplication {
   protected readonly presets: Preset[] = [
     {
       label: 'Just woke up',
-      hint: 'On the stage at the start of the night: no clues, every room unchecked.',
+      hint: 'Asleep in the Big Ring at the start of the night: no clues, every room unchecked.',
       state: { freddy_room: 6, rooms_not_checked: ALL_BUT_STAGE },
     },
     {
-      label: 'Heard a fuse in the kitchen',
-      hint: 'Someone took a fuse next door, right after he woke up.',
+      label: 'A noise in Concessions',
+      hint: 'Someone runs (or clicks a cell in) in Concessions, across the circus, right after he woke up.',
       state: { freddy_room: 6, noises: { '5': 2 }, rooms_not_checked: ALL_BUT_STAGE },
     },
     {
-      label: 'Player vanished in Storage',
-      hint: 'He saw you go into Storage a moment ago and now he is there.',
+      label: 'Player vanished in the Trunk Store',
+      hint: 'He saw you go into the Trunk Store a moment ago and now he is there.',
       state: { freddy_room: 4, last_seen_room: 4, seconds_since_seen: 4, rooms_not_checked: [] },
     },
     {
-      label: 'Lost in the Main Hall',
-      hint: 'No clues for a while; he has not checked the staff wing.',
+      label: 'Lost on the Promenade',
+      hint: 'No clues for a while; he has not checked the backstage wing.',
       state: { freddy_room: 7, night_progress: 0.4, rooms_not_checked: [0, 1, 2, 4] },
     },
     {
-      label: 'The exit panel in the Exit Lobby',
-      hint: 'Someone is working the front doors\' panel, two rooms away.',
+      label: 'The exit lever in the Ticket Lobby',
+      hint: 'Every cell is in and someone is working the front doors\' lever, two rooms away.',
       state: { freddy_room: 7, noises: { '10': 3 }, fuses: 3, rooms_not_checked: [] },
     },
   ];

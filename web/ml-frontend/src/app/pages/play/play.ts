@@ -11,7 +11,7 @@ const LOADER_ID = 'unity-loader';
 
 declare function createUnityInstance(
   canvas: HTMLCanvasElement,
-  config: Record<string, string>,
+  config: Record<string, unknown>,
   onProgress: (progress: number) => void,
 ): Promise<UnityInstance>;
 
@@ -51,7 +51,7 @@ export class Play implements AfterViewInit, OnDestroy {
 
   /**
    * Leaving the page shuts the game down. Without this the old game kept running (its sound and
-   * its phone call) and coming back started a second one on top.
+   * its speeches) and coming back started a second one on top.
    */
   ngOnDestroy(): void {
     this.destroyed = true;
@@ -104,6 +104,9 @@ export class Play implements AfterViewInit, OnDestroy {
         companyName: 'UdeC',
         productName: 'Night Shift',
         productVersion: this.version,
+        // One canvas pixel per CSS pixel: a high-density screen would otherwise make the game
+        // draw two to four times as many pixels. The game caps its own resolution as well.
+        devicePixelRatio: 1,
       }, (p) => this.progress.set(Math.round(p * 100)))
         .then((instance) => {
           if (this.destroyed) {

@@ -9,7 +9,7 @@
   <div class="mb-4">
     <h1>Evaluation Metrics</h1>
     <p class="lead">
-      Is the trained brain really better than writing rules by hand? Each Freddy plays
+      Is the trained brain really better than writing rules by hand? Each hunter plays
       {{ results()?.nights_per_run ?? 400 }} nights against each simulated survivor, with no exploration
       (always the most likely action), on nights it never saw during training.
     </p>
@@ -42,7 +42,7 @@
       <table class="table table-sm align-middle mb-0">
         <thead>
           <tr>
-            <th>Survivor</th><th>Freddy</th><th>Catch</th><th>95% CI</th><th>Escape</th>
+            <th>Survivor</th><th>Hunter</th><th>Catch</th><th>95% CI</th><th>Escape</th>
             <th>Decisions to catch</th><th>Searches / night</th><th>Empty searches</th>
           </tr>
         </thead>
@@ -92,8 +92,8 @@
   <div class="card mb-4"><div class="card-body">
     <h2 class="h5">How to read these numbers</h2>
     <ul class="small mb-0">
-      <li>The simulated survivors are rule-based bots, so these rates measure the brain against a fixed opponent, not against humans. Humans hide in unexpected places and use horns; in the game Freddy is beatable.</li>
-      <li>The game also makes him slower on night 1 (a decision every 3.5 s) and gives the player a head start during the phone call.</li>
+      <li>The simulated survivors are rule-based bots, so these rates measure the brain against a fixed opponent, not against humans. Humans hide in unexpected places and use the noise of toys and boxes against him; in the game Pockets is beatable.</li>
+      <li>The game also makes him slower on night 1 (a decision every 3.5 s) and gives the player a head start while he talks over the speakers.</li>
       <li>Reproduce: open the Unity project, menu <em>Night Shift → Build Evaluation</em>, run the build, then <code>python scripts/summarize_eval.py</code>.</li>
     </ul>
   </div></div>

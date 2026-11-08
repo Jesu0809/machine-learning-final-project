@@ -7,10 +7,10 @@
   </nav>
 
   <div class="mb-4">
-    <h1>Application: Try Freddy's Brain</h1>
+    <h1>Application: Try Pockets' Brain</h1>
     <p class="lead">
-      Describe what Freddy knows and the real trained network answers what it would do. The server runs
-      the same weights as the game, with the same 64 inputs and the same action masking.
+      Describe what Pockets knows and the real trained network answers what it would do. The server runs
+      the same weights as the game, with the same 100 inputs and the same action masking.
     </p>
   </div>
 
@@ -24,9 +24,9 @@
     <div class="row g-4">
       <div class="col-lg-5">
         <div class="card"><div class="card-body">
-          <h2 class="h5 mb-3">What Freddy knows</h2>
+          <h2 class="h5 mb-3">What Pockets knows</h2>
 
-          <label class="form-label small" for="room">Freddy is in</label>
+          <label class="form-label small" for="room">Pockets is in</label>
           <select id="room" class="form-select mb-3" [(ngModel)]="freddyRoom" (ngModelChange)="onRoomChange()">
             @for (room of m.rooms; track room; let i = $index) { <option [ngValue]="i">{{ room }}</option> }
           </select>
@@ -39,8 +39,8 @@
             </select>
             <select class="form-select" aria-label="Noise level" [(ngModel)]="noiseLevel" (ngModelChange)="ask()" [disabled]="noiseRoom === null">
               <option [ngValue]="1">footsteps</option>
-              <option [ngValue]="2">running / a fuse</option>
-              <option [ngValue]="3">horn / breaker / exit panel</option>
+              <option [ngValue]="2">running / a power cell</option>
+              <option [ngValue]="3">a toy or surprise box / breaker / exit</option>
             </select>
           </div>
           <p class="small text-muted mb-3">Noises come from rooms, not exact positions.</p>
@@ -70,7 +70,7 @@
             @for (room of m.rooms; track room; let i = $index) { <option [ngValue]="i">{{ room }}</option> }
           </select>
 
-          <label class="form-label small" for="fuses">Fuses the player has: {{ fuses }}</label>
+          <label class="form-label small" for="fuses">Power cells in place: {{ fuses }}</label>
           <input id="fuses" type="range" class="form-range mb-2" min="0" max="3" [(ngModel)]="fuses" (ngModelChange)="ask()">
 
           <label class="form-label small" for="progress">Night progress: {{ nightProgress }}%</label>
@@ -147,17 +147,18 @@
   } @else if (error()) {
     <div class="alert alert-danger">{{ error() }}</div>
   } @else {
-    <p class="text-muted">Waking Freddy up…</p>
+    <p class="text-muted">Waking Pockets up…</p>
   }
 
   <div class="card mt-4"><div class="card-body">
     <h2 class="h6">Things to try</h2>
     <ul class="small mb-0">
-      <li><em>Heard a fuse in the kitchen</em>: he goes straight to the Kitchen. Noises in the staff wing pull him hard.</li>
-      <li><em>Player vanished in Storage</em>: he hesitates between going back to the Kitchen, opening the locker and listening. Mark the locker as searched and he leaves for the Kitchen.</li>
-      <li><em>Lost in the Main Hall</em>: he walks to the Back Hall, toward the staff wing he has not checked.</li>
-      <li><em>The exit panel in the Exit Lobby</em>: a known weakness. He still heads for the staff wing, where most nights start, instead of the panel two rooms away.</li>
-      <li>Uncheck rooms in "not checked for a long time" and watch him lose interest in them. This memory is one of his 64 inputs.</li>
+      <li><em>Just woke up</em>: the Big Ring has one way out, The Midway, and he takes it (99%).</li>
+      <li><em>A noise in Concessions</em>: the road there starts at The Midway, and he leaves at once (over 99.9%).</li>
+      <li><em>Player vanished in the Trunk Store</em>: instead of opening the locker he goes back to Concessions, the room's only way out (95%).</li>
+      <li><em>Lost on the Promenade</em>: with no clues he feels for fear first (sense, 92%) before choosing a direction.</li>
+      <li><em>The exit lever in the Ticket Lobby</em>: he splits between walking toward it through the Birthday Tent (53%) and sensing (47%).</li>
+      <li>Uncheck rooms in "not checked for a long time" and watch him lose interest in them. This memory is one of his 100 inputs.</li>
     </ul>
   </div></div>
 

@@ -1,97 +1,273 @@
 <section class="bg-dark text-white py-5 mb-4">
   <div class="container">
-    <p class="text-uppercase small fw-semibold text-info mb-2">Unity ML-Agents · Reinforcement Learning · NPC</p>
-    <h1 class="display-5 fw-bold mb-3">Power the sockets. Get out.<br>Freddy has learned to hunt.</h1>
-    <p class="lead col-lg-8 mb-4">
-      A first-person horror game in an abandoned winter circus. The clown that hunts you is not scripted:
-      his brain is a neural network trained with reinforcement learning (PPO) in millions of simulated
-      decisions. He only knows what he hears and sees, and he learned on his own where to look, which
-      lockers to open and when to use his sense.
-    </p>
-    <div class="d-flex flex-wrap gap-2">
-      <a class="btn btn-primary btn-lg" routerLink="/play">Play in the browser</a>
-      <a class="btn btn-outline-primary btn-lg" routerLink="/ml/model">How his brain works</a>
-      <a class="btn btn-outline-secondary btn-lg" routerLink="/ml/application">Try the brain yourself</a>
+    <div class="row g-4 align-items-center">
+      <div class="col-lg-6">
+        <p class="text-uppercase small fw-semibold text-info mb-2">Unity ML-Agents · Reinforcement learning · NPC</p>
+        <h1 class="display-5 fw-bold mb-3">Power the sockets. Get out.<br>Pockets has learned to hunt.</h1>
+        <p class="lead mb-4">
+          A first-person horror game in Bellwether's Winter Circus, closed for the season. The clown who
+          hunts you is not scripted: his brain is a neural network trained with reinforcement learning
+          (PPO). He only knows what he hears and sees, and he learned on his own where to look, which
+          hiding spots to open and when to use his sense.
+        </p>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-primary btn-lg" routerLink="/play">Play in the browser</a>
+          <a class="btn btn-outline-primary btn-lg" routerLink="/ml/model">How his brain works</a>
+          <a class="btn btn-outline-secondary btn-lg" routerLink="/ml/application">Try the brain</a>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <img class="img-fluid rounded border shadow" src="img/menu.jpg" alt="The game's menu: Pockets the clown on the show stage" width="1280" height="720">
+      </div>
     </div>
   </div>
 </section>
 
 <div class="container">
-  <div class="row g-3 mb-5">
-    <div class="col-md-4">
-      <div class="card h-100 text-center">
-        <div class="card-body">
-          <div class="display-6 fw-bold text-info">{{ rate('trained') | percent: '1.0-1' }}</div>
-          <p class="mb-0">nights caught by the <strong>trained</strong> Freddy</p>
-          <p class="small text-muted mb-0">against the "Normal" simulated survivor</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card h-100 text-center">
-        <div class="card-body">
-          <div class="display-6 fw-bold">{{ rate('scripted') | percent: '1.0-1' }}</div>
-          <p class="mb-0">by a <strong>hand-written</strong> hunter</p>
-          <p class="small text-muted mb-0">same senses, rules instead of learning</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card h-100 text-center">
-        <div class="card-body">
-          <div class="display-6 fw-bold">{{ rate('random') | percent: '1.0-1' }}</div>
-          <p class="mb-0">by a <strong>random</strong> hunter</p>
-          <p class="small text-muted mb-0">the lower baseline</p>
-        </div>
-      </div>
-    </div>
-  </div>
+  <nav class="home-index d-flex flex-wrap gap-2 mb-5" aria-label="On this page">
+    <a class="btn btn-sm btn-outline-secondary" href="#project" (click)="jump($event, 'project')">The project</a>
+    <a class="btn btn-sm btn-outline-secondary" href="#problem" (click)="jump($event, 'problem')">Problem</a>
+    <a class="btn btn-sm btn-outline-secondary" href="#objectives" (click)="jump($event, 'objectives')">Objectives</a>
+    <a class="btn btn-sm btn-outline-secondary" href="#game" (click)="jump($event, 'game')">The game</a>
+    <a class="btn btn-sm btn-outline-secondary" href="#ml" (click)="jump($event, 'ml')">Machine learning</a>
+    <a class="btn btn-sm btn-outline-secondary" href="#results" (click)="jump($event, 'results')">Results</a>
+    <a class="btn btn-sm btn-outline-secondary" href="#method" (click)="jump($event, 'method')">Methodology</a>
+    <a class="btn btn-sm btn-outline-secondary" href="#products" (click)="jump($event, 'products')">Products</a>
+  </nav>
 
-  <h2 class="h4 mb-3">Where is the Machine Learning?</h2>
-  <div class="row g-3 mb-5">
-    <div class="col-md-6 col-lg-3">
-      <div class="card h-100"><div class="card-body">
-        <div class="fs-2" aria-hidden="true">🧠</div>
-        <h3 class="h6">The NPC's brain</h3>
-        <p class="small text-muted mb-2">A 64 → 256 → 256 → 15 network trained with PPO decides every move of Freddy.</p>
-        <a routerLink="/ml/model" class="small">The model →</a>
-      </div></div>
-    </div>
-    <div class="col-md-6 col-lg-3">
-      <div class="card h-100"><div class="card-body">
-        <div class="fs-2" aria-hidden="true">📈</div>
-        <h3 class="h6">How it learned</h3>
-        <p class="small text-muted mb-2">Six training runs of 3 to 5 million steps; the reward climbs from about -0.5 to +1.0.</p>
-        <a routerLink="/ml/training" class="small">Training →</a>
-      </div></div>
-    </div>
-    <div class="col-md-6 col-lg-3">
-      <div class="card h-100"><div class="card-body">
-        <div class="fs-2" aria-hidden="true">🎯</div>
-        <h3 class="h6">Proof it works</h3>
-        <p class="small text-muted mb-2">400 nights per cell against two baselines, with 95% confidence intervals.</p>
-        <a routerLink="/ml/metrics" class="small">Metrics →</a>
-      </div></div>
-    </div>
-    <div class="col-md-6 col-lg-3">
-      <div class="card h-100"><div class="card-body">
-        <div class="fs-2" aria-hidden="true">👁️</div>
-        <h3 class="h6">You can see it think</h3>
-        <p class="small text-muted mb-2">In the game, Tab shows his probabilities; the end screen replays his decisions.</p>
-        <a routerLink="/ml/evidence" class="small">Evidence →</a>
-      </div></div>
-    </div>
-  </div>
+  <!-- General data -->
+  <section id="project" class="mb-5">
+    <h2 class="h4 mb-3">The project</h2>
+    <div class="card"><div class="card-body">
+      <dl class="row mb-0 small">
+        <dt class="col-sm-4 col-lg-3">Title</dt>
+        <dd class="col-sm-8 col-lg-9">Night Shift: a horror game whose enemy is a reinforcement learning agent</dd>
+        <dt class="col-sm-4 col-lg-3">Program</dt>
+        <dd class="col-sm-8 col-lg-9">Systems Engineering, Faculty of Engineering</dd>
+        <dt class="col-sm-4 col-lg-3">University</dt>
+        <dd class="col-sm-8 col-lg-9">Universidad de Cundinamarca, Chía</dd>
+        <dt class="col-sm-4 col-lg-3">Course</dt>
+        <dd class="col-sm-8 col-lg-9">Machine Learning &middot; Professor Edison Gustavo Cañón Varela &middot; Academic period 2026-2</dd>
+        <dt class="col-sm-4 col-lg-3">Project type</dt>
+        <dd class="col-sm-8 col-lg-9">Technological project (software and a trained model), research line "Learning, knowledge, technologies, communication and digitalization"</dd>
+        <dt class="col-sm-4 col-lg-3">Team</dt>
+        <dd class="col-sm-8 col-lg-9">Jesús David Nuncira Ortiz &middot; Miguel Moreno Arenas</dd>
+      </dl>
+    </div></div>
+  </section>
 
-  <h2 class="h4 mb-3">Screenshots</h2>
-  <div class="row g-3 mb-4">
-    @for (shot of shots; track shot.file) {
-      <div class="col-md-6 col-lg-4">
-        <figure class="mb-0">
-          <img class="img-fluid rounded border" [src]="'img/' + shot.file" [alt]="shot.caption" loading="lazy">
-          <figcaption class="small text-muted mt-1">{{ shot.caption }}</figcaption>
-        </figure>
+  <!-- Problem and justification -->
+  <section id="problem" class="mb-5">
+    <h2 class="h4 mb-3">Problem and justification</h2>
+    <div class="row g-3">
+      <div class="col-md-6"><div class="card h-100"><div class="card-body">
+        <h3 class="h6">The problem</h3>
+        <p class="small mb-0">
+          The enemies of most games follow rules written by hand: patrols, timers and state machines. Players
+          learn the pattern in a few tries and the enemy stops being a threat, and writing a good rule for
+          every situation takes a lot of work. Can an enemy that only knows what it hears and sees
+          <em>learn</em> a hunting strategy on its own, at least as good as a hand-written one?
+        </p>
+      </div></div></div>
+      <div class="col-md-6"><div class="card h-100"><div class="card-body">
+        <h3 class="h6">Why it matters</h3>
+        <p class="small mb-0">
+          Reinforcement learning lets an agent improve from rewards instead of instructions. Unity ML-Agents
+          trains it offline and runs the resulting network inside the game, so the course's techniques end up
+          in a real, playable product. The result can be measured (how often it catches a simulated player,
+          compared with two baselines) and explained (the game shows what the network considered at each
+          decision).
+        </p>
+      </div></div></div>
+    </div>
+  </section>
+
+  <!-- Objectives -->
+  <section id="objectives" class="mb-5">
+    <h2 class="h4 mb-3">Objectives</h2>
+    <div class="card mb-3"><div class="card-body">
+      <h3 class="h6">General objective</h3>
+      <p class="small mb-0">
+        Build a first-person horror game whose enemy NPC is a neural network trained with reinforcement
+        learning (PPO in Unity ML-Agents), and show with metrics and in-game evidence that it learned to hunt.
+      </p>
+    </div></div>
+    <div class="row g-3">
+      @for (o of objectives; track o.title; let i = $index) {
+        <div class="col-md-6 col-xl">
+          <div class="card h-100"><div class="card-body d-flex flex-column">
+            <div class="small text-info fw-semibold mb-1">Specific objective {{ i + 1 }}</div>
+            <p class="small mb-2">{{ o.title }}</p>
+            <a class="small mt-auto" [routerLink]="o.link">{{ o.linkText }} →</a>
+          </div></div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- The game today -->
+  <section id="game" class="mb-5">
+    <h2 class="h4 mb-3">The game</h2>
+    <div class="row g-3 mb-3">
+      <div class="col-lg-5"><div class="card h-100"><div class="card-body">
+        <p class="small">
+          You are the night guard of Bellwether's Winter Circus. Each night you power three sockets with cells
+          (one at a time), complete the night's other tasks and pull the lever of the exit. Pockets, the
+          circus's clown, hunts you through 13 rooms: you can hide in lockers, cabinets and under tables,
+          close doors behind you (he breaks them down) and crawl through the vents.
+        </p>
+        <p class="small">
+          The seven nights are the same for every player. What changes with skill is how dangerous he is:
+          a threat level per player sets his pace, speed and sight, never what he knows. After the story
+          come the <strong>encore</strong> (rounds until caught) and the <strong>show of the day</strong>
+          (the same night for everyone, from the date).
+        </p>
+        <p class="small mb-0">Keyboard and mouse or an Xbox controller, on the desktop or in the browser.</p>
+      </div></div></div>
+      <div class="col-lg-7"><div class="card h-100"><div class="card-body">
+        <h3 class="h6">Seven nights</h3>
+        <div class="table-responsive">
+          <table class="table table-sm small mb-0">
+            <thead><tr><th>Night</th><th>Objectives</th><th>What is new</th></tr></thead>
+            <tbody>
+              @for (n of nightRows(); track n.night) {
+                <tr><td>{{ n.night }}</td><td>{{ n.objectives }}</td><td class="text-muted">{{ n.other }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div></div></div>
+    </div>
+  </section>
+
+  <!-- Where the ML is -->
+  <section id="ml" class="mb-5">
+    <h2 class="h4 mb-3">Where is the machine learning?</h2>
+    <div class="row g-3">
+      <div class="col-md-6 col-lg-3">
+        <div class="card h-100"><div class="card-body">
+          <div class="fs-2" aria-hidden="true">🧠</div>
+          <h3 class="h6">His brain</h3>
+          <p class="small text-muted mb-2">A 100 → 256 → 256 → 17 network trained with PPO picks every move: where to go, which hiding spot to open and when to sense.</p>
+          <a routerLink="/ml/model" class="small">The model →</a>
+        </div></div>
       </div>
-    }
-  </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="card h-100"><div class="card-body">
+          <div class="fs-2" aria-hidden="true">📈</div>
+          <h3 class="h6">How it learned</h3>
+          <p class="small text-muted mb-2">19 versions, from v1 to v19: trained from scratch against a simulated survivor, then fine-tuned one change at a time.</p>
+          <a routerLink="/ml/training" class="small">Training →</a>
+        </div></div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="card h-100"><div class="card-body">
+          <div class="fs-2" aria-hidden="true">🎯</div>
+          <h3 class="h6">Proof it works</h3>
+          <p class="small text-muted mb-2">400 nights per survivor skill against a hand-written hunter and a random one, with 95% confidence intervals.</p>
+          <a routerLink="/ml/metrics" class="small">Metrics →</a>
+        </div></div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="card h-100"><div class="card-body">
+          <div class="fs-2" aria-hidden="true">👁️</div>
+          <h3 class="h6">You can see it think</h3>
+          <p class="small text-muted mb-2">In the game, Tab shows his probabilities; the end of each night replays his decisions.</p>
+          <a routerLink="/ml/evidence" class="small">Evidence →</a>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Results -->
+  <section id="results" class="mb-5">
+    <h2 class="h4 mb-3">Results</h2>
+    <div class="card"><div class="card-body">
+      <p class="small text-muted">
+        Share of nights in which each hunter catches the simulated survivor, at three skill levels
+        ({{ results()?.nights_per_run ?? 400 }} nights each, model {{ results()?.model ?? 'freddy_v19' }}).
+      </p>
+      @if (results()) {
+        <div class="table-responsive">
+          <table class="table table-sm mb-0 text-center align-middle">
+            <thead><tr><th class="text-start">Hunter</th>@for (s of survivors; track s) {<th>{{ s }} survivor</th>}</tr></thead>
+            <tbody>
+              @for (p of policies; track p.id) {
+                <tr [class.table-active]="p.id === 'trained'">
+                  <td class="text-start"><strong>{{ p.name }}</strong><span class="d-none d-md-block small text-muted">{{ p.detail }}</span></td>
+                  @for (s of survivors; track s) {
+                    <td [class.text-info]="p.id === 'trained'" [class.fw-bold]="p.id === 'trained'">{{ rate(p.id, s) | percent: '1.0-1' }}</td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <p class="small text-muted mt-2 mb-0">
+          The trained network matches the hand-written hunter against novice and normal survivors and beats
+          it against the expert, the one who reads the tracker and hides best. <a routerLink="/ml/metrics">Confidence intervals and more →</a>
+        </p>
+      } @else {
+        <p class="small text-muted mb-0">Loading the results…</p>
+      }
+    </div></div>
+  </section>
+
+  <!-- Methodology and schedule -->
+  <section id="method" class="mb-5">
+    <h2 class="h4 mb-3">Methodology and schedule</h2>
+    <p class="small text-muted">CDIO (Conceive, Design, Implement, Operate), the method the faculty suggests for technological projects, over the five weeks of the project.</p>
+    <div class="row g-3">
+      @for (step of method; track step.name) {
+        <div class="col-md-6 col-lg-3">
+          <div class="card h-100"><div class="card-body">
+            <div class="small text-info fw-semibold">{{ step.when }}</div>
+            <h3 class="h6">{{ step.name }}</h3>
+            <p class="small text-muted mb-0">{{ step.text }}</p>
+          </div></div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- Products -->
+  <section id="products" class="mb-5">
+    <h2 class="h4 mb-3">Products</h2>
+    <div class="row g-3">
+      @for (product of products; track product.name) {
+        <div class="col-sm-6 col-lg-4">
+          <div class="card h-100"><div class="card-body">
+            <h3 class="h6">{{ product.name }}</h3>
+            <p class="small text-muted mb-0">{{ product.text }}</p>
+          </div></div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- Screenshots -->
+  <section class="mb-5">
+    <h2 class="h4 mb-3">Screenshots</h2>
+    <div class="row g-3">
+      @for (shot of shots; track shot.file) {
+        <div class="col-sm-6 col-lg-4">
+          <figure class="mb-0">
+            <img class="img-fluid rounded border" [src]="'img/' + shot.file" [alt]="shot.caption" loading="lazy" width="1280" height="720">
+            <figcaption class="small text-muted mt-1">{{ shot.caption }}</figcaption>
+          </figure>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- References -->
+  <section class="mb-4">
+    <h2 class="h4 mb-3">References</h2>
+    <ul class="small text-muted">
+      <li>Juliani, A., et al. (2018). Unity: A general platform for intelligent agents. arXiv:1809.02627.</li>
+      <li>Schulman, J., Wolski, F., Dhariwal, P., Radford, A., &amp; Klimov, O. (2017). Proximal policy optimization algorithms. arXiv:1707.06347.</li>
+      <li>Sutton, R. S., &amp; Barto, A. G. (2018). <em>Reinforcement learning: An introduction</em> (2nd ed.). MIT Press.</li>
+    </ul>
+    <a class="small" routerLink="/credits">All credits and references →</a>
+  </section>
 </div>
