@@ -40,9 +40,10 @@ namespace NightShift.EditorTools
                     continue;
                 }
                 Texture2D albedo = Texture(path + "_albedo.jpg", TextureImporterType.Default, true);
-                // The relief reads at half the color's resolution in the web build.
+                // The relief reads at half the color's resolution in the web build, the mask (metal,
+                // occlusion, smoothness) at a quarter.
                 Texture2D normal = Texture(path + "_normal.jpg", TextureImporterType.NormalMap, false, 512);
-                Texture2D mask = Texture(path + "_mask.png", TextureImporterType.Default, false, 512);
+                Texture2D mask = Texture(path + "_mask.png", TextureImporterType.Default, false, 256);
                 float meters = sizes.TryGetValue(name, out float size) ? size : 2f;
                 materials.Add(Material(path + ".mat", name, albedo, normal, mask, meters));
             }

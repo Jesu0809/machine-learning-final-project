@@ -30,7 +30,7 @@ namespace NightShift.Game
         /// <summary>Graphics quality: shadow detail and the bounce light (High and Ultra only).</summary>
         public void SetQuality(GraphicsLevel level)
         {
-            beam.shadows = level == GraphicsLevel.Low ? LightShadows.None : LightShadows.Soft;
+            beam.shadows = level == GraphicsLevel.Low || WebPerformance.Active ? LightShadows.None : LightShadows.Soft;
             beam.shadowResolution = level == GraphicsLevel.Ultra ? UnityEngine.Rendering.LightShadowResolution.VeryHigh
                                   : level == GraphicsLevel.High ? UnityEngine.Rendering.LightShadowResolution.High
                                   : UnityEngine.Rendering.LightShadowResolution.Medium;

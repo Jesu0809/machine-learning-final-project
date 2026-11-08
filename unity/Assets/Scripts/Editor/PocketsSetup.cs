@@ -88,7 +88,8 @@ namespace NightShift.EditorTools
         public static Material ImportMaterial()
         {
             Texture(Folder + "/pockets_albedo.jpg", TextureImporterType.Default, true);
-            Texture(Folder + "/pockets_normal.jpg", TextureImporterType.NormalMap, false);
+            // His folds and stitches survive at 1K in the browser, where he is mostly seen in the dark.
+            Texture(Folder + "/pockets_normal.jpg", TextureImporterType.NormalMap, false, 1024);
             Texture(Folder + "/pockets_mask.png", TextureImporterType.Default, false, 1024);
             Texture(Folder + "/pockets_emission.jpg", TextureImporterType.Default, true, 1024);
             var material = AssetDatabase.LoadAssetAtPath<Material>(MaterialPath);

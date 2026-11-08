@@ -67,6 +67,7 @@ namespace NightShift.EditorTools
                 AssetDatabase.CreateAsset(assets, AssetsPath);
             }
             WebImport.Voices();
+            WebImport.Music();
             assets.FreddyPrefab = PocketsSetup.Build();
             assets.FreddyModel = FindModel();
             assets.Font = AssetDatabase.LoadAssetAtPath<Font>("Assets/Art/Fonts/VT323-Regular.ttf");
@@ -233,20 +234,22 @@ assets.Taunts = new NightCall[NightShift.Game.StoryData.Taunts.Length];
 
         /// <summary>
         /// A UI picture with transparency: no mipmaps, no compression artifacts on the thin lines. The
-        /// web build compresses it at high quality (no crunch) to a quarter of the size.
+        /// web build crunches it at a high quality, to about a tenth of the size.
         /// </summary>
         private static Texture2D UiTexture(string path)
         {
             if (AssetImporter.GetAtPath(path) is TextureImporter importer)
             {
                 TextureImporterPlatformSettings web = importer.GetPlatformTextureSettings("WebGL");
-                bool webChanged = !web.overridden || web.textureCompression != TextureImporterCompression.CompressedHQ || web.crunchedCompression;
+                bool webChanged = !web.overridden || web.textureCompression != TextureImporterCompression.Compressed
+                                  || !web.crunchedCompression || web.compressionQuality != 90;
                 if (webChanged)
                 {
                     web.overridden = true;
                     web.format = TextureImporterFormat.Automatic;
-                    web.textureCompression = TextureImporterCompression.CompressedHQ;
-                    web.crunchedCompression = false;
+                    web.textureCompression = TextureImporterCompression.Compressed;
+                    web.crunchedCompression = true;
+                    web.compressionQuality = 90;
                     importer.SetPlatformTextureSettings(web);
                 }
                 bool changed = webChanged || importer.mipmapEnabled || importer.textureCompression != TextureImporterCompression.Uncompressed
@@ -347,6 +350,9 @@ assets.Taunts = new NightCall[NightShift.Game.StoryData.Taunts.Length];
             PlayerSettings.WebGL.decompressionFallback = false;
             PlayerSettings.WebGL.dataCaching = true;
             PlayerSettings.WebGL.exceptionSupport = WebGLExceptionSupport.ExplicitlyThrownExceptionsOnly;
+            // The game needs a few hundred MB once loaded: start there instead of growing the heap
+            // (and copying it) many times while the circus is built.
+            PlayerSettings.WebGL.initialMemorySize = 256;
             NoSplashScreen();
             BuildReport report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
             {
