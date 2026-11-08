@@ -1,4 +1,5 @@
 import csv
+import hashlib
 import io
 import json
 import os
@@ -36,7 +37,7 @@ def _span(first, count):
 
 
 OBSERVATIONS = [
-    {"index": _span(0, R), "name": "Freddy's room", "encoding": "one-hot"},
+    {"index": _span(0, R), "name": "His own room", "encoding": "one-hot"},
     {"index": _span(freddy_brain.NOISE, R), "name": "Noise memory per room", "encoding": "heard level / 3, fades x0.8 per decision"},
     {"index": _span(freddy_brain.LAST_SEEN, R), "name": "Room where he last saw the player", "encoding": "one-hot (all 0 if never)"},
     {"index": _span(freddy_brain.SINCE_SEEN, 1), "name": "Time since he saw the player", "encoding": "decisions / 60"},
@@ -68,11 +69,20 @@ REWARDS = [
 ]
 
 NIGHTS = [
-    {"night": 1, "objectives": "Fuses, exit", "freddy": "A decision every 3.5 s", "other": "Phone call: the rules"},
-    {"night": 2, "objectives": "Fuses, breaker, exit", "freddy": "3.2 s, 7% faster", "other": "Fewer party horns"},
-    {"night": 3, "objectives": "Fuses, breaker, keycard, exit", "freddy": "2.9 s, 14% faster", "other": "30% of the lights dead"},
-    {"night": 4, "objectives": "Fuses, breaker, keycard, exit", "freddy": "2.6 s, 21% faster, sense every 20 decisions", "other": "Half the lights dead, tracker 18 m"},
-    {"night": 5, "objectives": "Fuses, breaker, keycard, tape, exit", "freddy": "2.3 s, 28% faster, sense every 16, awake from the start", "other": "Tracker 15 m"},
+    {"night": 1, "objectives": "3 power cells, exit lever", "freddy": "A decision every 3.5 s, sense every 30 decisions",
+     "other": "He explains the rules over the speakers"},
+    {"night": 2, "objectives": "Each cell in its own colored socket, exit", "freddy": "3.2 s",
+     "other": "3 rubber toys on the floor"},
+    {"night": 3, "objectives": "Cells, breaker, exit", "freddy": "2.9 s",
+     "other": "4 toys, a surprise box, the dummies turn, 30% of the lights dead"},
+    {"night": 4, "objectives": "Cells, breaker, keycard, exit", "freddy": "2.6 s, sense every 20",
+     "other": "5 toys, 2 boxes, half the lights dead, tracker 18 m"},
+    {"night": 5, "objectives": "Cells, breaker, keycard, exit", "freddy": "2.3 s, sense every 16",
+     "other": "The exit takes 45 s to open, with a siren; tracker 15 m"},
+    {"night": 6, "objectives": "Cells, breaker, keycard, exit", "freddy": "2.3 s, sense every 16",
+     "other": "3 boxes, 90% of the lights dead"},
+    {"night": 7, "objectives": "Cells, breaker, keycard, the tape, exit", "freddy": "2.3 s, awake from the start",
+     "other": "6 toys, a 60 s exit, the vents bolted shut"},
 ]
 
 
@@ -235,21 +245,42 @@ GZIP_CONTENT_TYPES = {
 }
 
 
+build_version = {"key": None, "value": "0"}
+
+
+def game_version():
+    """A fingerprint of the build's files, computed once per build: any change to any of them
+    gives new URLs, so the files themselves can be cached for good."""
+    folder = os.path.join(GAME_DIR, "Build")
+    if not os.path.isdir(folder):
+        return "0"
+    files = sorted(os.listdir(folder))
+    key = tuple((name, os.path.getsize(os.path.join(folder, name)), os.path.getmtime(os.path.join(folder, name))) for name in files)
+    if key != build_version["key"]:
+        digest = hashlib.sha1()
+        for name in files:
+            with open(os.path.join(folder, name), "rb") as handle:
+                for block in iter(lambda: handle.read(1 << 20), b""):
+                    digest.update(block)
+        build_version.update(key=key, value=digest.hexdigest()[:12])
+    return build_version["value"]
+
+
 @app.route("/api/game/status", methods=["GET"])
 def game_status():
     loader = os.path.join(GAME_DIR, "Build", "game.loader.js")
-    data = os.path.join(GAME_DIR, "Build", "game.data.gz")
     available = os.path.isfile(loader)
-    # The size of the build changes with every new build: the page adds it to the file URLs so the
-    # browser (and Unity's own cache of the data file) never keeps an old build.
-    version = str(os.path.getsize(data)) if os.path.isfile(data) else "0"
-    return jsonify({"available": available, "version": version})
+    # The page adds the version to the file URLs, so the browser (and Unity's own cache of the
+    # data file) never keeps an old build.
+    return jsonify({"available": available, "version": game_version()})
 
 
 @app.route("/game/<path:filename>")
 def game_files(filename):
     response = send_from_directory(GAME_DIR, filename)
-    response.headers["Cache-Control"] = "no-cache"
+    # Versioned build files never change under the same URL: the browser and the CDN may keep them.
+    versioned = filename.startswith("Build/") and request.args.get("v") == game_version()
+    response.headers["Cache-Control"] = "public, max-age=31536000, immutable" if versioned else "no-cache"
     for suffix, content_type in GZIP_CONTENT_TYPES.items():
         if filename.endswith(suffix):
             response.headers["Content-Encoding"] = "gzip"

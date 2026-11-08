@@ -1,4 +1,4 @@
-"""Freddy's trained brain, run on the server for the "Application" page.
+"""Pockets' trained brain (Freddy in the code), run on the server for the "Application" page.
 
 The weights are the same network the game uses (exported from the .onnx model by
 training/scripts/export_policy_weights.py). The observation vector is built exactly like
@@ -13,26 +13,27 @@ import numpy as np
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 WEIGHTS_FILE = os.path.join(DATA_DIR, "FreddyPolicy.bytes")
 
-# The map of HuntMap.cs: a staff wing (west) and a public wing (east), joined through the north
-# wing (Banquet Room and Veranda) and the service corridor from the Back Hall to the Main Hall.
+# The map of HuntMap.cs, with the circus's room names (HuntMap.Names): the backstage wing (west) and
+# the public wing (east), joined through the north wing (Ringside Lounge and Winter Garden) and the
+# corridor from the Backstage Hall to the Promenade. The code keeps the old room identifiers.
 ROOMS = [
-    "Office", "Parts & Service", "Restrooms", "Back Hall", "Storage", "Kitchen",
-    "Dining Hall", "Main Hall", "Party Room", "Arcade", "Exit Lobby", "Banquet Room", "Veranda",
+    "Watch Office", "Prop Workshop", "Dressing Rooms", "Backstage Hall", "Trunk Store", "Concessions",
+    "The Big Ring", "Promenade", "Birthday Tent", "The Midway", "Ticket Lobby", "Ringside Lounge", "Winter Garden",
 ]
 NEIGHBORS = [
-    [1, 3],              # Office
-    [0, 3],              # Parts & Service
-    [3],                 # Restrooms
-    [0, 1, 2, 5, 7],     # Back Hall
-    [5],                 # Storage
-    [3, 4, 11],          # Kitchen
-    [9],                 # Dining Hall
-    [8, 9, 3],           # Main Hall
-    [7, 10],             # Party Room
-    [6, 7, 12],          # Arcade
-    [8],                 # Exit Lobby
-    [5, 12],             # Banquet Room
-    [11, 9],             # Veranda
+    [1, 3],              # Watch Office
+    [0, 3],              # Prop Workshop
+    [3],                 # Dressing Rooms
+    [0, 1, 2, 5, 7],     # Backstage Hall
+    [5],                 # Trunk Store
+    [3, 4, 11],          # Concessions
+    [9],                 # The Big Ring
+    [8, 9, 3],           # Promenade
+    [7, 10],             # Birthday Tent
+    [6, 7, 12],          # The Midway
+    [8],                 # Ticket Lobby
+    [5, 12],             # Ringside Lounge
+    [11, 9],             # Winter Garden
 ]
 SPOT_NAMES = [
     ["locker", "table"], ["locker", "cabinet"], ["locker", "cabinet"], ["locker"],
@@ -45,7 +46,7 @@ ROOM_COUNT = len(ROOMS)
 MAX_SPOTS = 3
 ACTION_COUNT = ROOM_COUNT + MAX_SPOTS + 1
 SENSE = ROOM_COUNT + MAX_SPOTS
-FREDDY_START = 6  # asleep on the stage of the Dining Hall
+FREDDY_START = 6  # asleep in the Big Ring
 
 # Offsets of the observation vector (FreddyObservations.cs): 7 R + 6 + MAX_SPOTS values.
 R = ROOM_COUNT
