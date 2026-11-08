@@ -11,3 +11,9 @@ services:
         value: 3.11.9
       - key: NODE_VERSION
         value: 24.20.0
+      # Postgres for the players' saves (the free disk is erased on every deploy).
+      - key: DATABASE_URL
+        sync: false
+      # Lets tools/summarize_playlog.py download the anonymous saves.
+      - key: SAVES_EXPORT_TOKEN
+        generateValue: true

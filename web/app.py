@@ -2,6 +2,9 @@ import csv
 import io
 import json
 import os
+import re
+import secrets
+import time
 
 import matplotlib
 
@@ -10,6 +13,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 from flask import Flask, Response, jsonify, request, send_from_directory  # noqa: E402
 
 import freddy_brain  # noqa: E402
+import saves  # noqa: E402
 
 app = Flask(__name__)
 
@@ -252,6 +256,76 @@ def game_files(filename):
             response.headers["Content-Type"] = content_type
             break
     return response
+
+
+# ---------------------------------------------------------------- saves that follow the player
+
+MAX_SAVE_BYTES = 512 * 1024
+PLAYER_ID = re.compile(r"^[0-9a-f]{32}$")
+# Attempts per address per minute at guessing a link code.
+REDEEM_LIMIT = 10
+redeem_attempts = {}
+
+
+def valid_player(player):
+    return PLAYER_ID.match(player) is not None
+
+
+@app.route("/api/save/<player>", methods=["GET"])
+def save_get(player):
+    if not valid_player(player):
+        return jsonify({"error": "bad player"}), 400
+    body = saves.load(player)
+    if body is None:
+        return jsonify({"error": "no save"}), 404
+    return Response(body, mimetype="application/json")
+
+
+@app.route("/api/save/<player>", methods=["PUT"])
+def save_put(player):
+    if not valid_player(player):
+        return jsonify({"error": "bad player"}), 400
+    if (request.content_length or 0) > MAX_SAVE_BYTES:
+        return jsonify({"error": "too large"}), 413
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({"error": "not a save"}), 400
+    saves.store(player, json.dumps(data))
+    return jsonify({"ok": True})
+
+
+@app.route("/api/save/<player>/link", methods=["POST"])
+def save_link(player):
+    if not valid_player(player):
+        return jsonify({"error": "bad player"}), 400
+    return jsonify({"code": saves.new_code(player)})
+
+
+@app.route("/api/save/redeem", methods=["POST"])
+def save_redeem():
+    address = request.headers.get("X-Forwarded-For", request.remote_addr or "").split(",")[0]
+    minute = int(time.time() // 60)
+    key = (address, minute)
+    redeem_attempts[key] = redeem_attempts.get(key, 0) + 1
+    if len(redeem_attempts) > 10000:
+        redeem_attempts.clear()
+    if redeem_attempts[key] > REDEEM_LIMIT:
+        return jsonify({"error": "too many attempts"}), 429
+    data = request.get_json(silent=True) or {}
+    code = str(data.get("code", "")).strip().upper()
+    player = saves.redeem_code(code) if code else None
+    if player is None:
+        return jsonify({"error": "unknown code"}), 404
+    return jsonify({"player": player})
+
+
+@app.route("/api/save/export", methods=["GET"])
+def save_export():
+    """Every anonymous save, one JSON per line, for tools/summarize_playlog.py. Needs SAVES_EXPORT_TOKEN."""
+    token = os.environ.get("SAVES_EXPORT_TOKEN", "")
+    if not token or not secrets.compare_digest(request.headers.get("X-Export-Token", ""), token):
+        return jsonify({"error": "forbidden"}), 403
+    return Response("\n".join(saves.all_saves()) + "\n", mimetype="application/x-ndjson")
 
 
 # ---------------------------------------------------------------- the Angular app
