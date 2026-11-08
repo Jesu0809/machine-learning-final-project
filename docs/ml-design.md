@@ -15,7 +15,7 @@ the alien in *Alien: Isolation* (a "director" that decides and a body that execu
 | **Brain** | Decides *where to go* and *which hiding spot to search*, from what Freddy has heard and seen | PPO policy trained with ML-Agents, run in the game as an `.onnx` model |
 | **Body** | Walks to the chosen room, plays the animations, looks and listens in 3D | Unity NavMesh, Animator, raycasts (no learning) |
 
-The brain is trained on an abstract version of the pizzeria: a graph of 13 rooms with hiding spots.
+The brain is trained on an abstract version of the circus: a graph of 13 rooms with hiding spots.
 This makes training fast (millions of decisions in minutes) and the decisions readable for the
 report. In the 3D game the body turns each decision into movement and reports back what Freddy
 perceives.
@@ -335,7 +335,7 @@ better than random but far from perfect, which leaves room for the trained polic
 
 ### The building is not a grid
 
-The 3D pizzeria keeps exactly the connections of the training graph, but the rooms have different
+The 3D circus keeps exactly the connections of the training graph, but the rooms have different
 sizes and heights and are joined by corridors whose length matches their cost on the graph
 (`PizzeriaLayout.cs`): two 3 m wide halls, a Dining Hall with the show stage on its north wall, and
 two long corridors between the wings. The wings look different (grey-green staff rooms, red and
@@ -373,7 +373,7 @@ log), which led to the random exits. None of these were programmed.
 
 ### Nights and the phone call
 
-Night 1 opens with a phone call (as in the original games, voiced with a synthetic voice): while
+Night 1 opens with the clown over the speakers (voiced with a synthetic voice): while
 it plays Freddy sleeps and the building is free to explore, and the voice explains the rules and
 that Freddy is a trained neural network. Nights 2–5 use the same trained brain at a faster pace:
 one decision every 3.5 s on night 1 down to 2.3 s on night 5, the body 7% faster per night, fewer
@@ -448,6 +448,30 @@ length and searches per night.
   in.
 - A shaping bonus can become the goal (`freddy_v13`): past 1M steps the patrol bonus paid better
   than searching. The model kept is chosen by measured behavior, not by the reward curve.
+
+## Threat level (the 3D game only)
+
+The nights get harder for everyone, but people who know the game found it easy and new players
+did not. `ThreatLevel.cs` keeps a level per player, 0 to 1, starting at 0.35 (about the difficulty
+before it existed). An escape raises it, more if fast and unseen; being caught lowers it, more if
+little was done. It sets his decision pace, speed, sight range, sense cooldown, how far running is
+heard, how exactly a noise is placed and the duct wait. The objectives of a night are the same for
+everyone, because they are part of the story. It never tells his network where the player is, and training and
+evaluation stay at their defaults, so the results in `training-log.md` do not change. Against the
+bot, catch rates stay at 96–100 % at every level (the simulation has no walking speed or sight
+distance), so its effect has to be measured on people: each night goes into the player's save and a
+local `playlog.jsonl`, summarized by `tools/summarize_playlog.py`.
+
+## Seven nights, an encore and the show of the day (the 3D game only)
+
+The game's theme changed to Bellwether's Winter Circus and the hunter's name to Pockets the clown;
+the code, the model files and this document keep the name Freddy, and the map keeps its 13 rooms and
+their connections, so the trained brain did not change. `NightRules.cs` adds, per night and the same
+for everyone, rubber toys and surprise boxes (noises in the room, through the same hearing rule as
+any other noise), dead lights, a slow exit with a siren and bolted vents. Nights 6 and 7 keep the
+pace of night 5. Finishing the story opens the encore (rounds until caught, rising threat); the show
+of the day uses a seed from the date, so everyone gets the same night. What the clown says over the
+speakers comes from the player's history in the save and never reaches the network.
 
 ## References
 

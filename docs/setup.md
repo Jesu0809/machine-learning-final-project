@@ -180,7 +180,7 @@ Afterwards the `ml-agents` folder can be deleted; nothing from it goes into our 
 1. In Unity: **Night Shift → Create Game Scene**. It sets up the 3D render pipeline, Freddy
    (materials, animations, prefab), the trained model and the sounds, and creates
    `Assets/Scenes/Game.unity`. Run it again after pulling changes to Freddy or the models.
-2. Open `Assets/Scenes/Game.unity` and press **Play**. Everything (the pizzeria, the player,
+2. Open `Assets/Scenes/Game.unity` and press **Play**. Everything (the circus, the player,
    Freddy and the UI) is built by the `HuntDirector` when the scene starts.
 3. Controls: WASD, Shift run, Ctrl/C crouch, F flashlight, E use/hide/doors, G party horn, Space
    hold breath while hidden, Tab AI inspector, Esc pause. An Xbox (or any standard) controller
@@ -197,9 +197,11 @@ Google Chrome):
 
 | Script | Makes |
 |---|---|
-| `tools/generate_story_audio.py` | The intro voicemail and the five phone calls (macOS `say`), from `StoryData.cs` |
+| `tools/generate_story_audio.py` | The intro voicemail, the clown's seven speeches and his taunts (Kokoro or macOS `say`), from `StoryData.cs` |
+| `tools/generate_menu_music.py` | The home's music, from a public-domain recording of the circus march |
+| `tools/make_film.py` | A video from the game's film mode (`-capture folder -film`, in silence; `-mute` plays silently) |
 | `tools/generate_exterior_audio.py` | Rain, thunder, car engine and voicemail beep |
-| `tools/generate_exterior_art.py` | The neon signs on the front of the pizzeria |
+| `tools/generate_exterior_art.py` | The neon signs on the front of the circus |
 | `tools/generate_controls_diagram.py` | The keyboard and controller diagrams (game and website) |
 
 After regenerating, run **Night Shift → Update Game Assets** in Unity.
@@ -281,5 +283,9 @@ Render cannot run Unity, so the WebGL build is committed and Render only serves 
    - Instance type: Free
    - Environment variables: `PYTHON_VERSION` = `3.11.9`, `NODE_VERSION` = `24.20.0`
 4. Alternatively use **New → Blueprint** and set the Blueprint path to `web/render.yaml`.
-5. The free tier sleeps after inactivity, and the first request can take about a minute. Open the
+5. For the saves that follow the player between devices, create a free Postgres database (Neon or
+   Supabase; Render's free database expires) and set `DATABASE_URL` in the service. Without it the
+   saves live on the service's disk, which a deploy erases. `SAVES_EXPORT_TOKEN` protects
+   `GET /api/save/export` (the anonymous saves, for `tools/summarize_playlog.py`).
+6. The free tier sleeps after inactivity, and the first request can take about a minute. Open the
    site a few minutes before any demo.

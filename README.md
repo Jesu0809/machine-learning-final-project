@@ -1,31 +1,34 @@
 # Night Shift
 
-A first-person horror game in an abandoned pizzeria, in the style of *Alien: Isolation*. The player
+A first-person horror game in an abandoned winter circus, in the style of *Alien: Isolation*. The player
 carries three power cells to their sockets (and from night 3 resets breakers, swipes a keycard and
-opens a tape box), hides in lockers and escapes; **Freddy**, the NPC that hunts them, has a brain
+opens a tape box), hides in lockers and escapes; **Pockets the clown** (called Freddy in the code and the model files), the NPC that hunts them, has a brain
 trained with reinforcement learning using **Unity ML-Agents (PPO)**.
 
 Final project for the Machine Learning course, Universidad de Cundinamarca (Chía).
 
 ## How it works
 
-- **Freddy's brain (learned):** a PPO policy that decides where to go, when to stop and listen,
+- **Pockets' brain (learned):** a PPO policy that decides where to go, when to stop and listen,
   which hiding spot to search and when to use his "sense" (it finds afraid players), from what
-  Freddy heard and saw. It is trained on an abstract version of the pizzeria (a graph of 13 rooms
+  he heard and saw. It is trained on an abstract version of the circus (a graph of 13 rooms
   on one floor, in two wings) against a simulated survivor, and runs in the game as an `.onnx`
   model.
-- **Freddy's body (scripted):** walks to the chosen room, sees with a view cone, chases the player in
-  sight and plays the animations.
-- **Game:** Unity 6 (C#). Five nights in a pizzeria built in code from the same room graph the brain
-  was trained on. Ideas from *Alien: Isolation* (hiding, motion tracker, noisemakers), *Friday the
-  13th* (stamina, fear, sense, doors) and the original games (a phone call every night that tells
-  the story). A one-minute intro film (the guard drives to the pizzeria in the rain) opens the story.
-  Keyboard and mouse or an Xbox controller, also in the browser.
+- **Pockets' body (scripted):** walks to the chosen room, sees with a view cone, chases the player in
+  sight and plays the animations. He is sculpted from nothing by `tools/sculpt_pockets.py` and
+  rigged with Adobe Mixamo; the dummies and spare heads around the circus are a light version of the
+  same sculpt.
+- **Game:** Unity 6 (C#). Seven nights in a winter circus built in code from the same room graph the
+  brain was trained on. Every player gets the same objectives each night; skill only changes how
+  dangerous he is. Ideas from *Alien: Isolation* (hiding, motion tracker, noisemakers) and *Friday the
+  13th* (stamina, fear, sense, doors), with a phone call every night that tells the story. A one-minute
+  intro film (the guard drives to the circus in the rain) opens it. Keyboard and mouse or an Xbox
+  controller.
 - **The ML is visible:** an AI inspector (Tab) with the network's action probabilities, the route
   and view cone drawn in 3D, and an end-of-night replay of every decision.
 - **Evaluation:** the trained brain against a random and a hand-written hunter, against three
   survivor skills, with confidence intervals.
-- **Web:** Angular + Flask on Render: play the WebGL build, see which model drives Freddy, how it
+- **Web:** Angular + Flask on Render: play the WebGL build, see which model drives Pockets, how it
   was trained, the metrics, the evidence, and try the trained brain live.
 
 ## Versions
@@ -54,9 +57,10 @@ installed with `pip install -r requirements.txt` inside each folder.
 
 | Folder | Content |
 |---|---|
-| `unity/` | Unity project (scripts in `Assets/Scripts/`, Freddy in `Assets/Art/Freddy/`, trained models in `Assets/ML/Models/`) |
+| `unity/` | Unity project (scripts in `Assets/Scripts/`, Pockets in `Assets/Art/Pockets/`, trained models in `Assets/ML/Models/`) |
 | `training/` | PPO config, Python requirements, TensorBoard export and evaluation scripts |
 | `web/` | Flask API (`app.py`) + Angular app (`ml-frontend/`) deployed on Render; WebGL build in `web/game/` |
+| `tools/` | Scripts that make the game's assets: the sculpt of Pockets, his voice, posters, signs and downloads |
 | `docs/` | ML design, setup steps and training log |
 
 ## Getting started
@@ -79,17 +83,15 @@ Follow [docs/setup.md](docs/setup.md). It covers macOS and Windows step by step:
 
 ## Credits
 
-- This work is based on "[Freddy Fazbear](https://sketchfab.com/3d-models/freddy-fazbear-e8248c29265544e7b7e686b4c0c09f10)"
-  by 2012carlitos17, licensed under CC-BY-4.0. Rigged and animated with Adobe Mixamo.
-- The car, the wreck, the exit lever, the knife switch and the first-person arms are Sketchfab models
-  under CC BY 4.0 (the wreck CC BY-NC 4.0); authors and links in [docs/credits.md](docs/credits.md).
-- The story's voices were synthesized locally with Kokoro (Apache 2.0).
+- Pockets was sculpted for this project and rigged and animated with Adobe Mixamo.
+- The car, the wreck, the exit lever and the knife switch are Sketchfab models
+  under CC BY 4.0; authors and links in [docs/credits.md](docs/credits.md).
+- The story's voices were synthesized locally: Kokoro (Apache 2.0) for the people, Chatterbox and Dia
+  for Pockets.
 - Font: [VT323](https://fonts.google.com/specimen/VT323) by Peter Hull, SIL Open Font License
   (`unity/Assets/Art/Fonts/OFL.txt`).
 - Sounds from Pixabay (Pixabay Content License): "Metal Door Slam" by SoundReality and
   "Jump-Scare_2" by freesound_community. The other sounds were synthesized for this project.
-
-Fan work, non-commercial. Freddy Fazbear © Scott Cawthon. Not affiliated with the original games.
 
 ## Authors
 
