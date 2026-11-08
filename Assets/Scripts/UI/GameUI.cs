@@ -63,7 +63,14 @@ namespace NightShift.UI
         private Text senseText;
         private Image mapSensed;
         private Text titleCard;
-        private Button continueButton;
+        private Button playButton;
+        private Button newGameButton;
+        private GameObject modesPanel;
+        private readonly List<Button> menuRows = new List<Button>();
+        private Button encoreButton;
+        private Button dailyButton;
+        private GameObject linkPanel;
+        private Text linkStatus;
         private GameObject explainerCharts;
         private Text crouchHint;
         private Button againButton;
@@ -103,7 +110,7 @@ namespace NightShift.UI
 
         public static GameUI Create(HuntDirector director)
         {
-            UiKit.Font = director.Assets.Font != null ? director.Assets.Font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            UiKit.Font = director.Assets.MenuFont != null ? director.Assets.MenuFont : director.Assets.Font != null ? director.Assets.Font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             UiKit.EnsureEventSystem();
             var ui = new GameObject("UI").AddComponent<GameUI>();
             ui.transform.SetParent(director.transform, false);
@@ -137,10 +144,36 @@ namespace NightShift.UI
         {
             SetScreens(menu: true);
             menuInfo.SetActive(false);
-            int best = HuntDirector.BestNight;
-            continueButton.gameObject.SetActive(best > 1);
-            UiKit.SetButtonText(continueButton, "CONTINUE  (NIGHT " + best + ")");
+            RefreshMenu();
             RefreshSoundButtons();
+        }
+
+        /// <summary>The buttons that depend on the save, which may arrive from the server at any moment.</summary>
+        public void RefreshMenu()
+        {
+            int best = HuntDirector.BestNight;
+            UiKit.SetButtonText(playButton, best > 1 ? "CONTINUE  -  NIGHT " + best : "PLAY");
+            newGameButton.gameObject.SetActive(best > 1);
+            // The column: the big button, then the others one under the other with no holes.
+            const float left = 0.05f, right = 0.37f;
+            Place(playButton, left, right, 0.51f, 0.61f);
+            float top = 0.49f;
+            if (best > 1)
+            {
+                Place(newGameButton, left, right, top - 0.06f, top);
+                top -= 0.068f;
+            }
+            foreach (Button row in menuRows)
+            {
+                Place(row, left, right, top - 0.06f, top);
+                top -= 0.068f;
+            }
+            SaveData save = SaveGame.Data;
+            encoreButton.interactable = save.finishedStory;
+            UiKit.SetButtonText(encoreButton, !save.finishedStory ? "ENCORE  (FINISH THE STORY)"
+                : save.encoreBest > 0 ? "ENCORE  (BEST: " + save.encoreBest + " ROUNDS)" : "ENCORE");
+            bool playedToday = save.dailyDate == System.DateTime.UtcNow.ToString("yyyyMMdd") && save.dailyBest > 0f;
+            UiKit.SetButtonText(dailyButton, playedToday ? "SHOW OF THE DAY  (" + Clock(save.dailyBest) + ")" : "SHOW OF THE DAY");
         }
 
         public void ShowHud()
@@ -175,7 +208,9 @@ namespace NightShift.UI
                     endTitle.color = Palette.Accent;
                     break;
                 case HuntOutcome.Escaped:
-                    endTitle.text = "NIGHT " + director.Night + " SURVIVED";
+                    endTitle.text = director.Mode == ShowMode.Encore ? "ROUND " + director.EncoreRound + " SURVIVED"
+                        : director.Mode == ShowMode.Daily ? "OUT IN " + Clock(director.NightSeconds)
+                        : "NIGHT " + director.Night + " SURVIVED";
                     endTitle.color = new Color(0.45f, 0.95f, 0.5f);
                     break;
                 default:
@@ -184,22 +219,86 @@ namespace NightShift.UI
                     break;
             }
             endReason.text = director.EndReason;
-            bool next = outcome == HuntOutcome.Escaped && director.Night < HuntDirector.LastNight;
+            bool next = outcome == HuntOutcome.Escaped && (director.Mode == ShowMode.Encore
+                || (director.Mode == ShowMode.Story && director.Night < HuntDirector.LastNight));
             nextButton.gameObject.SetActive(next);
             againButton.gameObject.SetActive(!next);
             if (outcome == HuntOutcome.Escaped && director.Night >= HuntDirector.LastNight)
             {
-                endReason.text += "\nYou survived all five nights.";
+                endReason.text += "\nYou survived all seven nights.";
             }
             endBody.text =
                 "Time survived: " + FormatClock(director.NightSeconds) + "\n" +
                 "Objectives done: " + state.ObjectivesDone + " / " + state.ObjectivesTotal + "\n" +
-                "Noises Freddy heard: " + state.TimesHeard + "\n" +
+                "Noises he heard: " + state.TimesHeard + "\n" +
                 "Hiding spots he opened: " + state.Searches + "\n" +
                 "Times he used SENSE: " + state.SenseUses + " (found you " + state.SenseHits + ")\n" +
-                "Decisions his brain made: " + director.Decisions.Count + "\n\n" +
-                "<color=#8a9a8a>Freddy's brain: " + director.BrainDescription + "</color>";
+                "Decisions his brain made: " + director.Decisions.Count + "\n" +
+                (director.Mode == ShowMode.Story ? ThreatLine() + "\n\n" : "\n") +
+                "<color=#8a9a8a>His brain: " + director.BrainDescription + "</color>";
             ShowReplay();
+        }
+
+        /// <summary>The player's threat level after this night and which way it moved.</summary>
+        private static void Place(Button button, float left, float right, float bottom, float top)
+        {
+            var rect = (RectTransform)button.transform;
+            rect.anchorMin = new Vector2(left, bottom);
+            rect.anchorMax = new Vector2(right, top);
+        }
+
+        private static string Clock(float seconds) => Mathf.FloorToInt(seconds / 60f) + ":" + Mathf.FloorToInt(seconds % 60f).ToString("00");
+
+        /// <summary>
+        /// Playing on another device: nothing is needed on this one, the save follows the player's
+        /// id. On the web it is one click; between two installed games, a short code once.
+        /// </summary>
+        private void ShowLink()
+        {
+            ShowInfo("ANOTHER DEVICE", "");
+            if (linkPanel == null)
+            {
+                BuildLink();
+            }
+            linkPanel.SetActive(true);
+            linkStatus.text = "Your progress is saved by itself.\n\nTo continue on another computer, press <color=#ffc840>GET A CODE</color> here and type it there. " +
+                              "You only do this once on each device. With the web version, <color=#ffc840>OPEN ON THE WEB</color> continues right away.";
+        }
+
+        private void BuildLink()
+        {
+            linkPanel = UiKit.Area("Link", menuInfo.transform, new Vector2(0.05f, 0.11f), new Vector2(0.95f, 0.85f)).gameObject;
+            Transform l = linkPanel.transform;
+            linkStatus = UiKit.Label("Status", l, "", 30, Palette.Ink, TextAnchor.UpperLeft, new Vector2(0f, 0.55f), new Vector2(1f, 1f));
+            UiKit.Button("GetCode", l, "GET A CODE", 30, new Vector2(0f, 0.38f), new Vector2(0.46f, 0.5f), () =>
+            {
+                linkStatus.text = "Asking the server...";
+                director.Cloud?.RequestCode(code => linkStatus.text = code == null
+                    ? "No connection right now. Your progress is safe here; try again later."
+                    : "Your code: <size=64><color=#ffc840>" + code + "</color></size>\nType it on the other device within ten minutes.");
+            });
+            if (Application.platform != RuntimePlatform.WebGLPlayer)
+            {
+                UiKit.Button("OpenWeb", l, "OPEN ON THE WEB", 30, new Vector2(0.54f, 0.38f), new Vector2(1f, 0.5f), () => Application.OpenURL(CloudSave.WebLink));
+            }
+            InputField field = UiKit.Input("Code", l, "Type a code from your other device", 30, new Vector2(0f, 0.18f), new Vector2(0.62f, 0.32f));
+            UiKit.Button("UseCode", l, "USE THE CODE", 30, new Vector2(0.66f, 0.18f), new Vector2(1f, 0.32f), () =>
+            {
+                linkStatus.text = "Asking the server...";
+                director.Cloud?.RedeemCode(field.text, ok =>
+                {
+                    linkStatus.text = ok ? "Done. This device now continues your game." : "That code did not work. Codes last ten minutes and work once.";
+                    RefreshMenu();
+                });
+            });
+        }
+
+        private string ThreatLine()
+        {
+            int before = ThreatLevel.Display(director.ThreatBeforeNight);
+            int now = ThreatLevel.Display(HuntDirector.Threat);
+            string move = now > before ? " (he is taking you seriously)" : now < before ? " (he eases off)" : "";
+            return "Threat level: " + now + " / 10" + move;
         }
 
         /// <summary>The map of the night: Freddy's route (red), yours (green) and his decisions (gold).</summary>
@@ -241,7 +340,7 @@ namespace NightShift.UI
                 }
                 lines.Append('\n');
             }
-            endTimeline.text = director.Decisions.Count == 0 ? "Freddy never woke up." : lines.ToString();
+            endTimeline.text = director.Decisions.Count == 0 ? "He never woke up." : lines.ToString();
         }
 
         public void ToggleInspector()
@@ -448,41 +547,48 @@ namespace NightShift.UI
 
         // ------------------------------------------------------------------ menu
 
+        /// <summary>
+        /// The home: the name of the game, one big button to play, and only what a new player needs.
+        /// Everything else lives one click away (modes, settings), so nothing competes with PLAY.
+        /// </summary>
         private void BuildMenu(Transform root)
         {
             menu = UiKit.Area("Menu", root, Vector2.zero, Vector2.one).gameObject;
             Transform m = menu.transform;
             UiKit.Picture("Shade", m, Vector2.zero, Vector2.one, ProceduralTextures.Vignette(256, 1.3f), Color.white);
-            UiKit.Panel("Side", m, Vector2.zero, new Vector2(0.4f, 1f), new Color(0f, 0f, 0f, 0.72f));
+            UiKit.Panel("Side", m, Vector2.zero, new Vector2(0.42f, 1f), new Color(0f, 0f, 0f, 0.78f));
 
-            UiKit.Label("Title", m, "NIGHT SHIFT", 150, Palette.Ink, TextAnchor.LowerLeft, new Vector2(0.05f, 0.76f), new Vector2(0.6f, 0.93f));
-            UiKit.Label("Subtitle", m, "Freddy has learned to hunt. Power the sockets. Get out.", 36, Palette.Accent,
-                        TextAnchor.UpperLeft, new Vector2(0.05f, 0.69f), new Vector2(0.4f, 0.76f));
-
-            float top = 0.63f;
-            Button Add(string text, UnityEngine.Events.UnityAction action)
+            Texture2D title = BuildKit.SignTexture("menu_title");
+            if (title != null)
             {
-                Button button = UiKit.Button(text, m, text, 36, new Vector2(0.05f, top - 0.052f), new Vector2(0.3f, top), action);
-                top -= 0.06f;
-                return button;
+                UiKit.Picture("Title", m, new Vector2(0.015f, 0.63f), new Vector2(0.405f, 0.97f), title, Color.white).preserveAspect = true;
             }
-            UiKit.Tint(Add("NEW GAME  (STORY)", director.PlayStory), Palette.Accent * 0.8f + new Color(0f, 0f, 0f, 0.2f));
-            continueButton = Add("CONTINUE", () => director.StartNight(HuntDirector.BestNight));
-            Add("HOW FREDDY THINKS", () => ShowInfo("HOW FREDDY THINKS", ExplainerText()));
-            Add("CONTROLS", ShowControls);
-            Add("SETTINGS", ShowSettings);
-            Add("CREDITS", () => ShowInfo("CREDITS", CreditsText));
-            musicButton = Add("MUSIC", () => { SoundPrefs.MusicOn = !SoundPrefs.MusicOn; director.RefreshSound(); RefreshSoundButtons(); });
-            soundButton = Add("SOUND", () => { SoundPrefs.EffectsOn = !SoundPrefs.EffectsOn; director.RefreshSound(); RefreshSoundButtons(); });
+
+            playButton = UiKit.Button("Play", m, "PLAY", 56, Vector2.zero, Vector2.zero, () =>
+            {
+                if (HuntDirector.BestNight > 1)
+                {
+                    director.ContinueStory();
+                }
+                else
+                {
+                    director.PlayStory();
+                }
+            });
+            UiKit.Tint(playButton, new Color(0.62f, 0.1f, 0.1f, 1f));
+            newGameButton = UiKit.Button("NewGame", m, "NEW GAME", 32, Vector2.zero, Vector2.zero, director.PlayStory);
+            menuRows.Add(UiKit.Button("Modes", m, "GAME MODES", 32, Vector2.zero, Vector2.zero, ShowModes));
+            menuRows.Add(UiKit.Button("Settings", m, "SETTINGS", 32, Vector2.zero, Vector2.zero, ShowSettings));
+            menuRows.Add(UiKit.Button("Thinks", m, "HOW POCKETS THINKS", 32, Vector2.zero, Vector2.zero, () => ShowInfo("HOW POCKETS THINKS", ExplainerText())));
+            menuRows.Add(UiKit.Button("Credits", m, "CREDITS", 32, Vector2.zero, Vector2.zero, () => ShowInfo("CREDITS", CreditsText)));
+            if (CloudSave.Enabled)
+            {
+                menuRows.Add(UiKit.Button("Devices", m, "ANOTHER DEVICE", 32, Vector2.zero, Vector2.zero, ShowLink));
+            }
             if (Application.platform != RuntimePlatform.WebGLPlayer)
             {
-                Add("QUIT", Application.Quit);
+                menuRows.Add(UiKit.Button("Quit", m, "QUIT", 32, Vector2.zero, Vector2.zero, Application.Quit));
             }
-
-            UiKit.Label("Brain", m, "Freddy's brain: " + director.BrainDescription, 26, Palette.InkDim, TextAnchor.LowerLeft,
-                        new Vector2(0.05f, 0.04f), new Vector2(0.6f, 0.09f));
-            UiKit.Label("Fan", m, "Fan work, non-commercial. Freddy Fazbear © Scott Cawthon.", 22, Palette.InkDim, TextAnchor.LowerRight,
-                        new Vector2(0.5f, 0.02f), new Vector2(0.98f, 0.06f));
 
             menuInfo = UiKit.Panel("Info", m, new Vector2(0.42f, 0.1f), new Vector2(0.97f, 0.9f), Palette.Panel).gameObject;
             Transform info = menuInfo.transform;
@@ -490,14 +596,34 @@ namespace NightShift.UI
             menuInfoBody = UiKit.Label("Body", info, "", 29, Palette.Ink, TextAnchor.UpperLeft, new Vector2(0.05f, 0.1f), new Vector2(0.95f, 0.86f));
             UiKit.Button("Close", info, "CLOSE", 32, new Vector2(0.75f, 0.02f), new Vector2(0.95f, 0.09f), () => menuInfo.SetActive(false));
             BuildCharts(info);
+            modesPanel = UiKit.Area("Modes", info, new Vector2(0.05f, 0.11f), new Vector2(0.95f, 0.85f)).gameObject;
+            encoreButton = UiKit.Button("Encore", modesPanel.transform, "ENCORE", 40, new Vector2(0f, 0.72f), new Vector2(1f, 0.92f), director.StartEncore);
+            UiKit.Label("EncoreText", modesPanel.transform, "Round after round with everything at once, until he catches you. Opens when you finish the story.", 30, Palette.Ink, TextAnchor.UpperLeft, new Vector2(0f, 0.52f), new Vector2(1f, 0.7f));
+            dailyButton = UiKit.Button("Daily", modesPanel.transform, "SHOW OF THE DAY", 40, new Vector2(0f, 0.27f), new Vector2(1f, 0.47f), director.StartDaily);
+            UiKit.Label("DailyText", modesPanel.transform, "One night, the same for everyone today. How fast can you get out?", 30, Palette.Ink, TextAnchor.UpperLeft, new Vector2(0f, 0.07f), new Vector2(1f, 0.25f));
+            modesPanel.SetActive(false);
         }
+
+        private void ShowModes()
+        {
+            ShowInfo("GAME MODES", "");
+            modesPanel.SetActive(true);
+        }
+
+        /// <summary>Film tour: the modes screen.</summary>
+        public void ShowModesForFilm() => ShowModes();
 
         private void ShowInfo(string title, string body)
         {
             menuInfoTitle.text = title;
             menuInfoBody.text = body;
             menuInfo.SetActive(true);
-            bool charts = title == "HOW FREDDY THINKS";
+            modesPanel.SetActive(false);
+            if (linkPanel != null)
+            {
+                linkPanel.SetActive(false);
+            }
+            bool charts = title == "HOW POCKETS THINKS";
             explainerCharts.SetActive(charts);
             menuInfoBody.rectTransform.anchorMin = new Vector2(0.05f, charts ? 0.47f : 0.1f);
             menuInfoBody.fontSize = charts ? 24 : 29;
@@ -591,8 +717,8 @@ namespace NightShift.UI
         private string ExplainerText()
         {
             return
-                "Freddy is an NPC built with <color=#ffc840>Unity ML-Agents</color>. His <color=#ffc840>brain</color> is a neural network trained with " +
-                "reinforcement learning (PPO) in millions of simulated nights on this two-floor building. Every few seconds it picks one of " +
+                "Pockets is an NPC built with <color=#ffc840>Unity ML-Agents</color>. His <color=#ffc840>brain</color> is a neural network trained with " +
+                "reinforcement learning (PPO) in millions of simulated nights on this building. Every few seconds it picks one of " +
                 FreddyActions.Count + " actions: go to one of the " + HuntMap.RoomCount + " rooms, stay and listen, search a hiding spot, or " +
                 "<color=#cc66ff>SENSE</color> (find you if you are afraid; long recharge). Nobody told it when to use each one: it learned.\n" +
                 "It trained against survivors that escape through the <color=#ffc840>air ducts</color>, where it cannot follow.\n" +
@@ -603,16 +729,21 @@ namespace NightShift.UI
 
         private const string CreditsText =
             "Machine Learning final project\nUniversidad de Cundinamarca, Chía\n\nJesús Nuncira  ·  Miguel Moreno\n\n" +
-            "Freddy model: \"Freddy Fazbear\" by 2012carlitos17 (sketchfab.com), licensed under CC BY 4.0. " +
-            "Rigged and animated with Adobe Mixamo.\n\n" +
+            "Pockets sculpted for this game; rigged and animated with Adobe Mixamo.\n\n" +
+            "Models, CC BY 4.0 (sketchfab.com): \"Kiri '86\" by Daniel Zhabotinsky, \"Destroyed Car 03\" by Renafox, " +
+            "\"Industrial Electricity's Lever\" by Amine.Elouneg, " +
+            "\"Early 1900s Knife Switches Type C\" by Mad_Lobster_Workshop.\n\n" +
             "Font: VT323 by Peter Hull, SIL Open Font License.\n\n" +
-            "Built with Unity 6 and Unity ML-Agents.\n\n" +
-            "Fan work, non-commercial. Freddy Fazbear © Scott Cawthon. Not affiliated with the original games.";
+            "Built with Unity 6 and Unity ML-Agents.";
 
         private void RefreshSoundButtons()
         {
             string music = "MUSIC: " + (SoundPrefs.MusicOn ? "ON" : "OFF");
             string sound = "SOUND: " + (SoundPrefs.EffectsOn ? "ON" : "OFF");
+            if (musicButton == null)
+            {
+                return;
+            }
             UiKit.SetButtonText(musicButton, music);
             UiKit.SetButtonText(soundButton, sound);
             UiKit.SetButtonText(pauseMusic, music);
@@ -716,7 +847,7 @@ namespace NightShift.UI
         {
             PlayerController player = director.Player;
             clock.text = FormatHour(director.NightSeconds / director.NightLengthSeconds);
-            fuses.text = director.InCall ? "TONIGHT: listen to the call  (the office is locked until it ends)\n<color=#8a9a8a>(sit at the monitors; the objectives appear when it ends)</color>" : ObjectivesText();
+            fuses.text = director.InCall ? "TONIGHT: listen to him  (the office is locked until he stops)\n<color=#8a9a8a>(sit at the monitors; the objectives appear when it ends)</color>" : ObjectivesText();
 
             // While hidden the breath bar already says how to leave.
             // At a panel the hint goes to the bottom of the screen, out of the way of what is worked on.
@@ -732,10 +863,13 @@ namespace NightShift.UI
             HuntState hunt = director.State;
             float sinceStart = Time.time - director.NightStartedAt;
             float card = sinceStart < 1f ? sinceStart : sinceStart < 3.5f ? 1f : Mathf.Clamp01(1f - (sinceStart - 3.5f) / 1.2f);
-            string changes = StoryData.NightChanges[Mathf.Clamp(director.Night - 1, 0, StoryData.NightChanges.Length - 1)];
-            titleCard.text = card > 0f ? "NIGHT " + director.Night + "\n<size=48>12:00 AM</size>" + (changes.Length > 0 ? "\n<size=28><color=#d94a3a>" + changes + "</color></size>" : "") : "";
+            string changes = director.Mode == ShowMode.Encore ? StoryData.EncoreChanges
+                : director.Mode == ShowMode.Daily ? StoryData.DailyChanges
+                : StoryData.NightChanges[Mathf.Clamp(director.Night - 1, 0, StoryData.NightChanges.Length - 1)];
+            string heading = director.Mode == ShowMode.Encore ? "ENCORE " + director.EncoreRound : director.Mode == ShowMode.Daily ? "SHOW OF THE DAY" : "NIGHT " + director.Night;
+            titleCard.text = card > 0f ? heading + "\n<size=48>12:00 AM</size>" + (changes.Length > 0 ? "\n<size=28><color=#d94a3a>" + changes + "</color></size>" : "") : "";
             titleCard.color = new Color(Palette.Ink.r, Palette.Ink.g, Palette.Ink.b, card);
-            subtitle.text = director.InCall ? director.CallSubtitle + Controls.Localize("\n<size=20><color=#8a9a8a>[ENTER] skip the call</color></size>") : "";
+            subtitle.text = director.InCall ? director.CallSubtitle + Controls.Localize("\n<size=20><color=#8a9a8a>[ENTER] skip his speech</color></size>") : director.CallSubtitle;
             items.text = player.Lures > 0 ? Controls.Localize("PARTY HORNS: " + player.Lures + "   [G] throw to lure him") : "";
             float fear = director.InCall ? 0f : hunt.PlayerFear;
             fearMeter.rectTransform.anchorMax = new Vector2(0.02f + 0.15f * fear, 0.602f);
@@ -789,7 +923,7 @@ namespace NightShift.UI
         {
             inspector = UiKit.Panel("Inspector", root, new Vector2(0.655f, 0.05f), new Vector2(0.995f, 0.95f), Palette.Panel).gameObject;
             Transform i = inspector.transform;
-            UiKit.Label("Title", i, "FREDDY'S BRAIN", 44, Palette.Gold, TextAnchor.UpperLeft, new Vector2(0.04f, 0.935f), new Vector2(0.96f, 0.995f));
+            UiKit.Label("Title", i, "HIS BRAIN", 44, Palette.Gold, TextAnchor.UpperLeft, new Vector2(0.04f, 0.935f), new Vector2(0.96f, 0.995f));
             UiKit.Label("Sub", i, "Neural network trained with PPO (Unity ML-Agents). It only knows what it heard and saw.", 19, Palette.InkDim,
                         TextAnchor.UpperLeft, new Vector2(0.04f, 0.9f), new Vector2(0.96f, 0.94f));
 
@@ -798,7 +932,7 @@ namespace NightShift.UI
             mapPlayer = inspectorMap.Marker("You", new Color(0.5f, 1f, 0.6f, 0.9f), 12f);
             mapSensed = inspectorMap.Marker("Sensed", new Color(0.8f, 0.35f, 1f, 0.9f), 22f);
             mapFreddy = inspectorMap.Marker("Freddy", new Color(1f, 0.3f, 0.2f, 1f), 18f);
-            UiKit.Label("Legend", i, "<color=#ff5a4a>o</color> Freddy   <color=#80ff99>o</color> you (he cannot see this)   <color=#99ccff>o</color> where he last saw you\n" +
+            UiKit.Label("Legend", i, "<color=#ff5a4a>o</color> Pockets   <color=#80ff99>o</color> you (he cannot see this)   <color=#99ccff>o</color> where he last saw you\n" +
                                      "<color=#d94a3a>red rooms</color> = noise he remembers   <color=#5ad8ff>blue line</color> = his route   <color=#cc66ff>o</color> where SENSE found you",
                         17, Palette.InkDim, TextAnchor.UpperLeft, new Vector2(0.04f, 0.495f), new Vector2(0.96f, 0.55f));
 
@@ -981,7 +1115,7 @@ namespace NightShift.UI
         {
             (InputAction.Forward, "MOVE FORWARD"), (InputAction.Back, "MOVE BACK"), (InputAction.Left, "MOVE LEFT"), (InputAction.Right, "MOVE RIGHT"),
             (InputAction.Sprint, "SPRINT"), (InputAction.Crouch, "CROUCH"), (InputAction.Use, "USE / HIDE / DOORS"), (InputAction.Flashlight, "FLASHLIGHT"),
-            (InputAction.Throw, "THROW PARTY HORN"), (InputAction.HoldBreath, "HOLD BREATH"), (InputAction.Inspector, "AI INSPECTOR"), (InputAction.Skip, "SKIP CALL")
+            (InputAction.Throw, "THROW PARTY HORN"), (InputAction.HoldBreath, "HOLD BREATH"), (InputAction.Inspector, "AI INSPECTOR"), (InputAction.Skip, "SKIP SPEECH"), (InputAction.PeekLeft, "PEEK LEFT"), (InputAction.PeekRight, "PEEK RIGHT")
         };
 
         /// <summary>Look sensitivity, invert look and the keyboard keys (saved between sessions).</summary>
@@ -1003,6 +1137,10 @@ namespace NightShift.UI
             UiKit.Label("Title", t, "SETTINGS", 90, Palette.Ink, TextAnchor.LowerLeft, new Vector2(0.04f, 0.86f), new Vector2(0.5f, 0.97f));
             UiKit.Button("Close", t, "CLOSE", 30, new Vector2(0.86f, 0.885f), new Vector2(0.96f, 0.945f), () => { rebinding = null; settingsScreen.SetActive(false); });
             UiKit.Button("Reset", t, "RESET DEFAULTS", 30, new Vector2(0.66f, 0.885f), new Vector2(0.85f, 0.945f), () => { Controls.ResetSettings(); RefreshSettings(); });
+
+            UiKit.Button("Controls", t, "SEE THE CONTROLS", 30, new Vector2(0.44f, 0.885f), new Vector2(0.65f, 0.945f), ShowControls);
+            musicButton = UiKit.Button("Music", t, "MUSIC", 30, new Vector2(0.06f, 0.8f), new Vector2(0.25f, 0.86f), () => { SoundPrefs.MusicOn = !SoundPrefs.MusicOn; director.RefreshSound(); RefreshSoundButtons(); });
+            soundButton = UiKit.Button("Sound", t, "SOUND", 30, new Vector2(0.26f, 0.8f), new Vector2(0.45f, 0.86f), () => { SoundPrefs.EffectsOn = !SoundPrefs.EffectsOn; director.RefreshSound(); RefreshSoundButtons(); });
 
             // Left column: looking around.
             UiKit.Label("LookTitle", t, "LOOK", 40, Palette.Gold, TextAnchor.LowerLeft, new Vector2(0.06f, 0.74f), new Vector2(0.4f, 0.8f));
@@ -1144,8 +1282,8 @@ namespace NightShift.UI
             endReason = UiKit.Label("Reason", e, "", 34, Palette.Ink, TextAnchor.UpperLeft, new Vector2(0.05f, 0.62f), new Vector2(0.46f, 0.76f));
             endBody = UiKit.Label("Body", e, "", 28, Palette.InkDim, TextAnchor.UpperLeft, new Vector2(0.05f, 0.3f), new Vector2(0.46f, 0.6f));
 
-            UiKit.Label("ReplayTitle", e, "HOW FREDDY HUNTED YOU", 36, Palette.Gold, TextAnchor.LowerLeft, new Vector2(0.5f, 0.88f), new Vector2(0.97f, 0.94f));
-            UiKit.Label("ReplayLegend", e, "<color=#ff5a4a>o</color> Freddy's route   <color=#80ff99>o</color> your route   <color=#ffc840>o</color> a decision of his neural network",
+            UiKit.Label("ReplayTitle", e, "HOW HE HUNTED YOU", 36, Palette.Gold, TextAnchor.LowerLeft, new Vector2(0.5f, 0.88f), new Vector2(0.97f, 0.94f));
+            UiKit.Label("ReplayLegend", e, "<color=#ff5a4a>o</color> his route   <color=#80ff99>o</color> your route   <color=#ffc840>o</color> a decision of his neural network",
                         20, Palette.InkDim, TextAnchor.UpperLeft, new Vector2(0.5f, 0.84f), new Vector2(0.97f, 0.88f));
             endMap = MapView.Create("ReplayMap", e, new Vector2(0.5f, 0.38f), new Vector2(0.97f, 0.84f));
             endCatch = endMap.Marker("Caught", Color.white, 22f);

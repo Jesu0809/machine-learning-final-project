@@ -11,6 +11,38 @@
     "meters": 1.0,
     "source": "ph:red_brick_03"
   },
+  "canvas_birthday": {
+    "meters": 2.4,
+    "source": "ph:rough_linen"
+  },
+  "canvas_cream": {
+    "meters": 2.0,
+    "source": "ph:rough_linen"
+  },
+  "canvas_garden": {
+    "meters": 2.4,
+    "source": "ph:rough_linen"
+  },
+  "canvas_lounge": {
+    "meters": 2.4,
+    "source": "ph:rough_linen"
+  },
+  "canvas_midway": {
+    "meters": 2.4,
+    "source": "ph:rough_linen"
+  },
+  "canvas_navy": {
+    "meters": 2.0,
+    "source": "ph:rough_linen"
+  },
+  "canvas_red": {
+    "meters": 2.0,
+    "source": "ph:rough_linen"
+  },
+  "canvas_ring": {
+    "meters": 2.4,
+    "source": "ph:rough_linen"
+  },
   "ceiling_tiles": {
     "meters": 4.8,
     "source": "acg:OfficeCeiling006"
@@ -30,6 +62,22 @@
   "concrete_wall": {
     "meters": 2.0,
     "source": "ph:concrete_wall_006"
+  },
+  "decrepit_wallpaper": {
+    "meters": 2.5,
+    "source": "ph:decrepit_wallpaper"
+  },
+  "dirt_floor": {
+    "meters": 2.07,
+    "source": "ph:dirt_floor"
+  },
+  "dirty_carpet": {
+    "meters": 0.6,
+    "source": "ph:dirty_carpet"
+  },
+  "distressed_planks": {
+    "meters": 1.6,
+    "source": "ph:distressed_painted_planks"
   },
   "kitchen_floor": {
     "meters": 2.26,
@@ -59,13 +107,37 @@
     "meters": 2.5,
     "source": "ph:blue_metal_plate"
   },
+  "mossy_plaster": {
+    "meters": 1.8,
+    "source": "ph:worn_mossy_plasterwall"
+  },
+  "old_floor": {
+    "meters": 3.0,
+    "source": "ph:old_wood_floor"
+  },
   "party_wallpaper": {
     "meters": 2.0,
     "source": "acg:Wallpaper002C"
   },
+  "peeling_wall": {
+    "meters": 1.8,
+    "source": "ph:peeling_painted_wall"
+  },
+  "peeling_wood": {
+    "meters": 0.762,
+    "source": "ph:wood_peeling_paint_weathered"
+  },
+  "raked_dirt": {
+    "meters": 2.0,
+    "source": "ph:raked_dirt"
+  },
   "restroom_floor": {
     "meters": 1.9,
     "source": "ph:interior_tiles"
+  },
+  "rusty_paint": {
+    "meters": 2.2,
+    "source": "ph:rusty_painted_metal"
   },
   "sidewalk": {
     "meters": 3.0,
@@ -95,6 +167,10 @@
     "meters": 1.0,
     "source": "ph:velour_velvet"
   },
+  "weathered_siding": {
+    "meters": 1.57,
+    "source": "ph:weathered_plank_siding"
+  },
   "white_tiles": {
     "meters": 1.27,
     "source": "ph:long_white_tiles"
@@ -102,5 +178,9 @@
   "wood_planks": {
     "meters": 1.8,
     "source": "ph:weathered_brown_planks"
+  },
+  "worn_planks": {
+    "meters": 1.4,
+    "source": "ph:worn_planks"
   }
 }

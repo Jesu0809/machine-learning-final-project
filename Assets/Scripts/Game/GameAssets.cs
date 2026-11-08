@@ -25,6 +25,9 @@ namespace NightShift.Game
         [Tooltip("Weights of the same model, so the AI inspector can show its action probabilities.")]
         public TextAsset PolicyWeights;
 
+        [Tooltip("The clear typeface of the home and the settings.")]
+        public Font MenuFont;
+
         [Tooltip("Material templates the level copies, so builds keep the shader variants it needs.")]
         public Material[] MaterialTemplates;
 
@@ -85,8 +88,10 @@ namespace NightShift.Game
         [Tooltip("The breaker box's main knife switch: \"Base\" and \"Blade\" (pivot on the hinge, axis x).")]
         public GameObject KnifeSwitchModel;
 
-        [Tooltip("First-person arms, rigged.")]
-        public GameObject HandsModel;
+        [Tooltip("Pockets' sculpt, light and with the power off: the dummies and spare heads around the circus.")]
+        public Mesh PropHeadMesh;
+        public Mesh PropDummyMesh;
+        public Material PropMaterial;
 
         public AudioClip AmbientLoop;
         public AudioClip MenuMusic;
@@ -111,7 +116,25 @@ namespace NightShift.Game
         [Tooltip("Intro narration, one clip per line of StoryData.Intro.")]
         public AudioClip[] IntroLines;
 
-        [Tooltip("The phone call of each night, one clip per line of StoryData.Calls.")]
+        [Tooltip("His taunts during the night, in the order of StoryData.Taunts, one entry per kind.")]
+        public NightCall[] Taunts;
+
+        [Tooltip("Rubber toys squeaking, recordings in Assets/Audio/Clown/Squeak. Empty: synthesized.")]
+        public AudioClip[] ToySqueaks;
+
+        [Tooltip("A surprise box popping, recordings in Assets/Audio/Clown/Pop. Empty: synthesized.")]
+        public AudioClip[] SurprisePops;
+
+        [Tooltip("His shoes squeaking under the steps, recordings in Assets/Audio/Clown/Shoes. Empty: none.")]
+        public AudioClip[] ClownShoes;
+
+        [Tooltip("The little bells he wears, recordings in Assets/Audio/Clown/Bells. Empty: none.")]
+        public AudioClip[] ClownBells;
+
+        /// <summary>A music box, somewhere in the building, once a night.</summary>
+        public AudioClip MusicBox;
+
+        [Tooltip("What Pockets says over the speakers each night, one clip per line of StoryData.Calls.")]
         public NightCall[] Calls;
 
         public static GameAssets Load() => Resources.Load<GameAssets>("GameAssets");

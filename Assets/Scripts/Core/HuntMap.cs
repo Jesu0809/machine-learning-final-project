@@ -155,8 +155,8 @@ namespace NightShift.Hunt
 
         private static readonly string[] Names =
         {
-            "Office", "Parts & Service", "Restrooms", "Back Hall", "Storage", "Kitchen",
-            "Dining Hall", "Main Hall", "Party Room", "Arcade", "Exit Lobby", "Banquet Room", "Veranda"
+            "Watch Office", "Prop Workshop", "Dressing Rooms", "Backstage Hall", "Trunk Store", "Concessions",
+            "The Big Ring", "Promenade", "Birthday Tent", "The Midway", "Ticket Lobby", "Ringside Lounge", "Winter Garden"
         };
 
         private static readonly int[,] Distances = ComputeDistances();
@@ -222,6 +222,13 @@ namespace NightShift.Hunt
 
         /// <summary>Longest shortest path in the map, used to normalize distances.</summary>
         public static int Diameter { get; } = ComputeDiameter();
+
+        /// <summary>The room's name for the middle of a sentence: "the Kitchen", and "the Big Ring", not "the The Big Ring".</summary>
+        public static string WithThe(Room room)
+        {
+            string name = DisplayName(room);
+            return "the " + (name.StartsWith("The ") ? name.Substring(4) : name);
+        }
 
         public static string DisplayName(Room room) => Names[(int)room];
 

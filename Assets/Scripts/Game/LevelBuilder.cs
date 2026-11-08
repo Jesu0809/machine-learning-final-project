@@ -64,7 +64,7 @@ namespace NightShift.Game
         public static Level Build(Transform parent, GameAssets assets)
         {
             BuildKit.Init(assets);
-            var level = new Level { Root = new GameObject("Pizzeria").transform };
+            var level = new Level { Root = new GameObject("Circus").transform };
             level.Root.SetParent(parent, false);
             var random = new System.Random(1987);
             LevelProps.ExitSigns.Clear();
@@ -106,81 +106,45 @@ namespace NightShift.Game
 
         private static RoomStyle StyleOf(Room room)
         {
-            Material checkerFloor = BuildKit.Surface("floorChecker", () => ProceduralTextures.Tiles(new Color(0.82f, 0.8f, 0.74f), new Color(0.07f, 0.07f, 0.08f), 8, true, 0.35f), 0.45f);
-            Material redBand = BuildKit.Surface("wainscotRed", () => ProceduralTextures.Tiles(new Color(0.55f, 0.07f, 0.08f), new Color(0.08f, 0.08f, 0.09f), 8, true), 0.3f);
-            Material ceiling = BuildKit.Surface("ceiling", () => ProceduralTextures.CeilingTiles(), 0.05f);
-            Material officeFloor = BuildKit.Surface("officeFloor", () => ProceduralTextures.Tiles(new Color(0.45f, 0.43f, 0.38f), new Color(0.35f, 0.33f, 0.3f), 4, true, 0.4f), 0.3f);
-            Material officeBand = BuildKit.Surface("officeBand", () => ProceduralTextures.Grimy(new Color(0.25f, 0.28f, 0.3f)), 0.2f);
-            Material concrete = BuildKit.Surface("concrete", () => ProceduralTextures.Concrete(new Color(0.42f, 0.42f, 0.4f)), 0.1f);
-            Material concreteWall = BuildKit.Surface("concreteWall", () => ProceduralTextures.Concrete(new Color(0.36f, 0.37f, 0.38f)), 0.05f);
+            Color scarlet = new Color(0.46f, 0.05f, 0.06f);
+            Color cream = new Color(0.62f, 0.54f, 0.38f);
+            Color navy = new Color(0.06f, 0.09f, 0.24f);
+            Color mustard = new Color(0.56f, 0.38f, 0.1f);
+            // The scanned surfaces of Assets/Art/Surfaces; plain planks and stripes if they are missing.
+            Material Scan(string surface, Color tint, Color fallback) => BuildKit.Pbr(surface, tint) ?? BuildKit.Surface("circus:" + surface + ColorUtility.ToHtmlStringRGB(tint), () => ProceduralTextures.Planks(fallback), 0.2f);
+            Material Painted(string surface, Color tint, Color a, Color b, int count = 4) => BuildKit.Pbr(surface, tint) ?? BuildKit.Surface(surface, () => ProceduralTextures.Stripes(a, b, count), 0.08f);
+            Color brown = new Color(0.3f, 0.17f, 0.09f);
+            Material boards = Scan("worn_planks", new Color(0.72f, 0.6f, 0.5f), brown);
+            Material oldFloor = Scan("old_floor", new Color(0.72f, 0.62f, 0.54f), brown);
+            Material dirt = Scan("dirt_floor", new Color(0.72f, 0.62f, 0.52f), brown);
+            Material roof = Scan("weathered_siding", new Color(0.2f, 0.15f, 0.12f), new Color(0.1f, 0.07f, 0.05f));
+            Material darkBoards = Scan("distressed_planks", new Color(0.32f, 0.24f, 0.2f), new Color(0.18f, 0.11f, 0.07f));
+            Material navyBoards = Scan("distressed_planks", new Color(0.26f, 0.32f, 0.62f), navy);
             switch (room)
             {
-                case Room.Kitchen:
-                    Material white = BuildKit.Surface("kitchenTiles", () => ProceduralTextures.Tiles(new Color(0.85f, 0.86f, 0.84f), Color.white, 16, false, 0.45f), 0.6f);
-                    return new RoomStyle
-                    {
-                        Floor = BuildKit.Surface("kitchenFloor", () => ProceduralTextures.Tiles(new Color(0.6f, 0.1f, 0.1f), new Color(0.85f, 0.83f, 0.78f), 8, true, 0.5f), 0.4f),
-                        Wainscot = white, Wall = white, Ceiling = ceiling
-                    };
-                case Room.Restrooms:
-                    Material blue = BuildKit.Surface("restroomTiles", () => ProceduralTextures.Tiles(new Color(0.55f, 0.68f, 0.72f), new Color(0.8f, 0.84f, 0.84f), 16, false, 0.4f), 0.6f);
-                    return new RoomStyle
-                    {
-                        Floor = BuildKit.Surface("restroomFloor", () => ProceduralTextures.Tiles(new Color(0.75f, 0.76f, 0.74f), new Color(0.3f, 0.4f, 0.45f), 12, true, 0.5f), 0.5f),
-                        Wainscot = blue, Wall = BuildKit.Surface("restroomWall", () => ProceduralTextures.Grimy(new Color(0.62f, 0.66f, 0.64f), 0.8f), 0.2f), Ceiling = ceiling
-                    };
-                case Room.Storage:
-                    return new RoomStyle { Floor = concrete, Wainscot = concrete, Wall = concreteWall, Ceiling = concrete };
-                case Room.Parts:
-                    // Staff-only workroom: bare concrete, steel-grey walls.
-                    return new RoomStyle
-                    {
-                        Floor = concrete,
-                        Wainscot = BuildKit.Surface("workBand", () => ProceduralTextures.Grimy(new Color(0.3f, 0.32f, 0.3f), 1.2f), 0.25f, 0.2f),
-                        Wall = concreteWall,
-                        Ceiling = concrete
-                    };
+                case Room.DiningHall:
+                    return new RoomStyle { Floor = boards, Wainscot = navyBoards, Wall = Painted("canvas_ring", Color.white, scarlet, cream), Ceiling = roof };
+                case Room.PartyRoom:
+                    return new RoomStyle { Floor = oldFloor, Wainscot = darkBoards, Wall = Painted("canvas_birthday", Color.white, navy, cream), Ceiling = roof };
                 case Room.Arcade:
-                    return new RoomStyle
-                    {
-                        Floor = BuildKit.Surface("carpet", () => ProceduralTextures.Carpet(), 0.05f),
-                        Wainscot = BuildKit.Surface("arcadeBand", () => ProceduralTextures.Tiles(new Color(0.12f, 0.08f, 0.22f), new Color(0.05f, 0.05f, 0.08f), 8, true), 0.3f),
-                        Wall = BuildKit.Surface("arcadeWall", () => ProceduralTextures.Wallpaper(new Color(0.1f, 0.08f, 0.16f), new Color(0.2f, 0.12f, 0.32f)), 0.1f),
-                        Ceiling = ceiling
-                    };
+                    return new RoomStyle { Floor = dirt, Wainscot = darkBoards, Wall = Painted("canvas_midway", Color.white, navy, mustard, 3), Ceiling = roof };
+                case Room.Kitchen:
+                    return new RoomStyle { Floor = oldFloor, Wainscot = navyBoards, Wall = Scan("peeling_wood", new Color(0.86f, 0.66f, 0.42f), mustard), Ceiling = roof };
+                case Room.MainHall:
+                    return new RoomStyle { Floor = oldFloor, Wainscot = darkBoards, Wall = Scan("decrepit_wallpaper", new Color(0.86f, 0.36f, 0.32f), scarlet), Ceiling = roof };
+                case Room.ExitLobby:
+                    return new RoomStyle { Floor = Scan("dirty_carpet", new Color(0.5f, 0.28f, 0.42f), new Color(0.2f, 0.05f, 0.18f)), Wainscot = darkBoards, Wall = Scan("decrepit_wallpaper", new Color(0.56f, 0.32f, 0.52f), new Color(0.2f, 0.05f, 0.18f)), Ceiling = roof };
+                case Room.Restrooms:
+                    return new RoomStyle { Floor = boards, Wainscot = darkBoards, Wall = Scan("peeling_wall", new Color(0.72f, 0.6f, 0.62f), new Color(0.2f, 0.05f, 0.18f)), Ceiling = roof };
                 case Room.Banquet:
+                    return new RoomStyle { Floor = Scan("dirty_carpet", new Color(0.66f, 0.22f, 0.22f), scarlet), Wainscot = darkBoards, Wall = Painted("canvas_lounge", Color.white, new Color(0.25f, 0.05f, 0.08f), new Color(0.3f, 0.09f, 0.1f), 6), Ceiling = roof };
                 case Room.Veranda:
-                    // The north wing: dark wood floors and paneling under the party wallpaper.
-                    return new RoomStyle
-                    {
-                        Floor = BuildKit.Surface("banquetFloor", () => ProceduralTextures.Planks(new Color(0.3f, 0.19f, 0.11f)), 0.45f),
-                        Wainscot = BuildKit.Surface("banquetPanels", () => ProceduralTextures.Planks(new Color(0.22f, 0.13f, 0.08f)), 0.35f),
-                        Wall = BuildKit.Surface("banquetWall", () => ProceduralTextures.Wallpaper(new Color(0.34f, 0.3f, 0.26f), new Color(0.42f, 0.16f, 0.14f)), 0.1f),
-                        Ceiling = ceiling
-                    };
-                case Room.Office:
-                case Room.BackHall:
-                    // The staff wing: grey-green offices and halls, so it never looks like the restaurant.
-                    return new RoomStyle
-                    {
-                        Floor = officeFloor,
-                        Wainscot = officeBand,
-                        Wall = BuildKit.Surface("officeWall", () => ProceduralTextures.Wallpaper(new Color(0.42f, 0.42f, 0.36f), new Color(0.36f, 0.38f, 0.32f)), 0.1f),
-                        Ceiling = ceiling
-                    };
+                    return new RoomStyle { Floor = oldFloor, Wainscot = darkBoards, Wall = Scan("mossy_plaster", new Color(0.68f, 0.82f, 0.68f), new Color(0.1f, 0.2f, 0.13f)), Ceiling = roof };
                 default:
-                    // The public wing: checkered floor, red band, party wallpaper.
-                    return new RoomStyle
-                    {
-                        Floor = checkerFloor,
-                        Wainscot = redBand,
-                        Wall = BuildKit.Surface("wallpaper", () => ProceduralTextures.Wallpaper(new Color(0.45f, 0.4f, 0.32f), new Color(0.55f, 0.18f, 0.15f)), 0.1f),
-                        Ceiling = ceiling
-                    };
+                    // Backstage: bare boards, no paint for what the public never sees.
+                    return new RoomStyle { Floor = boards, Wainscot = darkBoards, Wall = Scan("weathered_siding", new Color(0.66f, 0.56f, 0.48f), brown), Ceiling = roof };
             }
         }
-
-        // ------------------------------------------------------------------ shell
 
         private static void BuildShell(Room room, Transform root, RoomStyle style)
         {
@@ -505,6 +469,8 @@ namespace NightShift.Game
             int rows = Mathf.Max(1, Mathf.RoundToInt(area.height / 7f));
             Color warm = room == HuntMap.Exit ? new Color(1f, 0.55f, 0.45f) : new Color(1f, 0.8f, 0.58f);
             bool shadows = room == Room.DiningHall || room == Room.Office || room == Room.Storage || room == Room.MainHall;
+            // The rooms the public was shown still have their chandeliers.
+            string fixture = room == Room.Banquet || room == Room.ExitLobby ? "Chandelier_01" : room == Room.MainHall || room == Room.Veranda ? "Chandelier_02" : null;
 
             for (int c = 0; c < columns; c++)
             {
@@ -512,9 +478,9 @@ namespace NightShift.Game
                 {
                     var position = new Vector3(area.xMin + area.width * (c + 0.5f) / columns, height, area.yMin + area.height * (r + 0.5f) / rows);
                     double roll = random.NextDouble();
-                    bool dead = roll < 0.28 && columns * rows > 1;   // more than a quarter of the bulbs are gone
+                    bool dead = roll < 0.18 && columns * rows > 1;   // more than a quarter of the bulbs are gone
                     float flicker = roll < 0.45 ? 0.6f : 0.15f;
-                    lamps.Add(Lamp(root, position, warm, dead, flicker, shadows && (c + r) % 2 == 0, hall ? 0.8f : 1f));
+                    lamps.Add(Lamp(root, position, warm, dead, flicker, shadows && (c + r) % 2 == 0, hall ? 0.8f : 1f, fixture));
                 }
             }
 
@@ -538,22 +504,34 @@ namespace NightShift.Game
         /// light, and (by graphics quality) the light it bounces back off the floor, a faint visible
         /// shaft and dust. The bounce and the shaft go out with the lamp when it flickers or dies.
         /// </summary>
-        private static FlickerLight Lamp(Transform root, Vector3 ceilingPoint, Color color, bool dead, float flickerChance, bool shadows, float strength)
+        private static FlickerLight Lamp(Transform root, Vector3 ceilingPoint, Color color, bool dead, float flickerChance, bool shadows, float strength, string chandelier = null)
         {
-            Material housing = BuildKit.Pbr("metal_worn", new Color(0.55f, 0.56f, 0.55f)) ?? BuildKit.Plain("lampHousing", new Color(0.3f, 0.3f, 0.3f), 0.5f, 0.6f);
-            BuildKit.Box("LampHousing", root, ceilingPoint - Vector3.up * 0.05f, new Vector3(1.3f, 0.1f, 0.42f), housing, 1f, false);
-            var fixture = BuildKit.Box("Lamp", root, ceilingPoint - Vector3.up * 0.11f, new Vector3(1.18f, 0.025f, 0.3f),
-                                       dead ? BuildKit.Plain("lampDead", new Color(0.3f, 0.3f, 0.28f), 0.5f) : BuildKit.Glow("lampOn", color, 2.2f), 1f, false);
+            // An old enamel shade on a cord, one bare bulb under it; or a chandelier, with the bulb in its heart.
+            Material enamel = BuildKit.Plain("lampEnamel", new Color(0.06f, 0.1f, 0.08f), 0.55f, 0.2f);
+            // A chandelier hangs close to the ceiling: its lowest arm must clear a tall player's head.
+            bool hasChandelier = chandelier != null && BuildKit.HasProp(chandelier);
+            float drop = hasChandelier ? 0.18f : 0.7f;
+            BuildKit.Cylinder("LampCord", root, ceilingPoint - Vector3.up * (drop * 0.5f), 0.012f, drop, BuildKit.Plain("clownBlack", new Color(0.02f, 0.02f, 0.02f), 0.5f));
+            if (hasChandelier)
+            {
+                BuildKit.Prop(chandelier, root, ceilingPoint - Vector3.up * drop, 0f, 0.8f, false);
+            }
+            else
+            {
+                BuildKit.Cone("LampShade", root, ceilingPoint - Vector3.up * (drop + 0.2f), 0.3f, 0.22f, enamel);
+            }
+            var fixture = BuildKit.Sphere("Lamp", root, ceilingPoint - Vector3.up * (hasChandelier ? 0.55f : drop + 0.2f), hasChandelier ? 0.08f : 0.11f,
+                                          dead ? BuildKit.Plain("lampDead", new Color(0.3f, 0.3f, 0.28f), 0.5f) : BuildKit.Glow("lampOn", color, 2.6f));
             var light = new GameObject("Light").AddComponent<Light>();
             light.transform.SetParent(root, false);
-            light.transform.localPosition = ceilingPoint - Vector3.up * 0.25f;
+            light.transform.localPosition = ceilingPoint - Vector3.up * 0.95f;
             light.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
             light.type = LightType.Spot;
             light.spotAngle = 150f;
             light.innerSpotAngle = 130f;
             light.cookie = LampCookie();
             light.range = ceilingPoint.y + 6f;
-            light.intensity = (dead ? 0f : 9f) * strength;
+            light.intensity = (dead ? 0f : 15f) * strength;
             light.color = color;
             light.shadows = shadows && !dead ? LightShadows.Soft : LightShadows.None;
             light.shadowStrength = 0.85f;
@@ -570,27 +548,13 @@ namespace NightShift.Game
                 // The floor under the lamp throws a soft light back up onto the walls and the ceiling.
                 var bounce = new GameObject("LampBounce").AddComponent<Light>();
                 bounce.transform.SetParent(extras.transform, false);
-                bounce.transform.localPosition = new Vector3(ceilingPoint.x, 0.5f, ceilingPoint.z);
+                bounce.transform.localPosition = new Vector3(ceilingPoint.x, 1.9f, ceilingPoint.z);
                 bounce.type = LightType.Point;
-                bounce.range = ceilingPoint.y + 3.5f;
-                bounce.intensity = 0.9f * strength;
+                bounce.range = ceilingPoint.y + 6f;
+                bounce.intensity = 3.4f * strength;
                 bounce.color = Color.Lerp(color, new Color(0.9f, 0.85f, 0.8f), 0.4f);
                 bounce.shadows = LightShadows.None;
                 GraphicsQuality.RegisterBounce(bounce);
-                // A faint shaft of light in the dusty air under the lamp, as long and narrow as the
-                // fixture, in two layers so its edges fade instead of ending in a hard line.
-                for (int layer = 0; layer < 2; layer++)
-                {
-                    var shaft = new GameObject("LightShaft");
-                    shaft.transform.SetParent(extras.transform, false);
-                    shaft.transform.localPosition = ceilingPoint - Vector3.up * 0.12f;
-                    shaft.AddComponent<MeshFilter>().sharedMesh = ShaftMesh(ceilingPoint.y - 0.6f, layer);
-                    var shaftRenderer = shaft.AddComponent<MeshRenderer>();
-                    float alpha = layer == 0 ? 0.022f : 0.012f;
-                    shaftRenderer.sharedMaterial = BuildKit.Additive("lampShaft" + layer, ShaftTexture(), new Color(color.r, color.g * 0.95f, color.b * 0.85f, alpha));
-                    shaftRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                    GraphicsQuality.RegisterShaft(shaftRenderer);
-                }
                 // Dust floating in the light under the lamp.
                 Dust(extras.transform, ceilingPoint - Vector3.up * (ceilingPoint.y * 0.5f), ceilingPoint.y);
             }
@@ -600,79 +564,6 @@ namespace NightShift.Game
         private static Texture2D lampCookie;
 
         private static Texture2D LampCookie() => lampCookie != null ? lampCookie : (lampCookie = ProceduralTextures.LampCookie());
-
-        private static readonly Mesh[] shaftMeshes = new Mesh[2];
-
-        /// <summary>
-        /// A rectangular frustum open at both ends, the shape of the fixture at the top and wider near
-        /// the floor; layer 1 is a little larger (the soft outer edge). v = 1 at the lamp.
-        /// </summary>
-        private static Mesh ShaftMesh(float length, int layer)
-        {
-            if (shaftMeshes[layer] != null)
-            {
-                return shaftMeshes[layer];
-            }
-            float grow = layer == 0 ? 1f : 1.35f;
-            var top = new Vector2(0.62f, 0.17f) * grow;
-            var bottom = new Vector2(1.5f, 0.85f) * grow;
-            Vector3[] topCorners =
-            {
-                new Vector3(-top.x, 0f, -top.y), new Vector3(top.x, 0f, -top.y), new Vector3(top.x, 0f, top.y), new Vector3(-top.x, 0f, top.y)
-            };
-            Vector3[] bottomCorners =
-            {
-                new Vector3(-bottom.x, -length, -bottom.y), new Vector3(bottom.x, -length, -bottom.y),
-                new Vector3(bottom.x, -length, bottom.y), new Vector3(-bottom.x, -length, bottom.y)
-            };
-            var vertices = new List<Vector3>();
-            var uvs = new List<Vector2>();
-            var triangles = new List<int>();
-            for (int side = 0; side < 4; side++)
-            {
-                int next = (side + 1) % 4;
-                int start = vertices.Count;
-                vertices.Add(topCorners[side]);
-                vertices.Add(topCorners[next]);
-                vertices.Add(bottomCorners[next]);
-                vertices.Add(bottomCorners[side]);
-                uvs.Add(new Vector2(0f, 1f));
-                uvs.Add(new Vector2(1f, 1f));
-                uvs.Add(new Vector2(1f, 0f));
-                uvs.Add(new Vector2(0f, 0f));
-                triangles.AddRange(new[] { start, start + 1, start + 2, start, start + 2, start + 3 });
-            }
-            var mesh = new Mesh { name = "LightShaft" + layer };
-            mesh.SetVertices(vertices);
-            mesh.SetUVs(0, uvs);
-            mesh.SetTriangles(triangles, 0);
-            mesh.RecalculateNormals();
-            mesh.RecalculateBounds();
-            shaftMeshes[layer] = mesh;
-            return mesh;
-        }
-
-        private static Texture2D shaftTexture;
-
-        private static Texture2D ShaftTexture()
-        {
-            if (shaftTexture != null)
-            {
-                return shaftTexture;
-            }
-            // Bright near the lamp (v = 1), fading to nothing at the floor.
-            shaftTexture = new Texture2D(4, 64, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
-            for (int y = 0; y < 64; y++)
-            {
-                float v = y / 63f;
-                for (int x = 0; x < 4; x++)
-                {
-                    shaftTexture.SetPixel(x, y, new Color(1f, 1f, 1f, v * v));
-                }
-            }
-            shaftTexture.Apply();
-            return shaftTexture;
-        }
 
         private static void Dust(Transform root, Vector3 center, float height)
         {
@@ -685,8 +576,8 @@ namespace NightShift.Game
             main.loop = true;
             main.startLifetime = 9f;
             main.startSpeed = 0.03f;
-            main.startSize = 0.012f;
-            main.startColor = new Color(1f, 0.9f, 0.7f, 0.25f);
+            main.startSize = 0.007f;
+            main.startColor = new Color(1f, 0.9f, 0.7f, 0.1f);
             main.maxParticles = 50;
             main.simulationSpace = ParticleSystemSimulationSpace.World;
             main.prewarm = true;
@@ -720,7 +611,9 @@ namespace NightShift.Game
             switch (kind)
             {
                 case SpotKind.Locker:
-                    Material locker = BuildKit.Surface("locker", () => ProceduralTextures.Grimy(new Color(0.2f, 0.3f, 0.34f), 1f), 0.4f, 0.5f);
+                    Material locker = BuildKit.Pbr("distressed_planks", new Color(0.78f, 0.16f, 0.14f)) ?? BuildKit.Surface("wardrobe", () => ProceduralTextures.Planks(new Color(0.34f, 0.05f, 0.05f)), 0.35f);
+                    Material trimGold = BuildKit.Plain("circusBrass", new Color(0.82f, 0.6f, 0.16f), 0.55f, 0.8f);
+                    BuildKit.Box("Crown", t, new Vector3(0f, 2.06f, 0f), new Vector3(1f, 0.1f, 0.68f), trimGold, 1f, false);
                     BuildKit.Box("Back", t, new Vector3(0f, 1.0f, -0.3f), new Vector3(0.9f, 2.0f, 0.05f), locker);
                     BuildKit.Box("Left", t, new Vector3(-0.43f, 1.0f, 0f), new Vector3(0.05f, 2.0f, 0.6f), locker);
                     BuildKit.Box("Right", t, new Vector3(0.43f, 1.0f, 0f), new Vector3(0.05f, 2.0f, 0.6f), locker);
@@ -738,12 +631,13 @@ namespace NightShift.Game
                         var piece = BuildKit.Box("Slat", door, new Vector3(0.43f, 1.33f + slat * 0.08f, 0f), new Vector3(0.66f, 0.018f, 0.045f), locker, 1f, false);
                         piece.transform.localRotation = Quaternion.Euler(-25f, 0f, 0f);
                     }
+                    BuildKit.Star("Star", door, new Vector3(0.43f, 0.72f, 0.03f), 0.2f, 0.09f, 0.015f, trimGold).transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
                     BuildKit.Box("Handle", door, new Vector3(0.78f, 1.0f, 0.04f), new Vector3(0.03f, 0.18f, 0.04f), BuildKit.Plain("chrome", new Color(0.7f, 0.7f, 0.72f), 0.8f, 1f), 1f, false);
                     // Eyes in the middle of the locker: the vents read as slits, and the flashlight can light the door as it shuts.
                     hide = new Vector3(0f, 1.6f, 0.02f);
                     break;
                 case SpotKind.Cabinet:
-                    Material wood = BuildKit.Surface("cabinetWood", () => ProceduralTextures.Planks(new Color(0.38f, 0.25f, 0.15f)), 0.3f);
+                    Material wood = BuildKit.Pbr("distressed_planks", new Color(0.22f, 0.3f, 0.72f)) ?? BuildKit.Surface("magicCabinet", () => ProceduralTextures.Planks(new Color(0.07f, 0.09f, 0.26f)), 0.35f);
                     BuildKit.Box("Base", t, new Vector3(0f, 0.08f, -0.05f), new Vector3(1.4f, 0.16f, 0.7f), wood);
                     BuildKit.Box("Top", t, new Vector3(0f, 0.92f, -0.05f), new Vector3(1.45f, 0.06f, 0.75f), wood);
                     BuildKit.Box("Back", t, new Vector3(0f, 0.5f, -0.38f), new Vector3(1.4f, 0.9f, 0.05f), wood);
@@ -753,23 +647,42 @@ namespace NightShift.Game
                     door.SetParent(t, false);
                     door.localPosition = new Vector3(-0.68f, 0f, 0.28f);
                     BuildKit.Box("Door", door, new Vector3(0.68f, 0.5f, 0f), new Vector3(1.34f, 0.78f, 0.04f), wood);
+                    BuildKit.Star("Star", door, new Vector3(0.68f, 0.5f, 0.03f), 0.2f, 0.09f, 0.015f, BuildKit.Plain("circusBrass", new Color(0.82f, 0.6f, 0.16f), 0.55f, 0.8f)).transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
                     hide = new Vector3(0f, 0.55f, 0.12f);
                     break;
                 default:
-                    Material cloth = BuildKit.Surface("tablecloth", () => ProceduralTextures.Tiles(new Color(0.7f, 0.1f, 0.12f), new Color(0.88f, 0.85f, 0.78f), 6, true, 0.4f), 0.05f);
+                    Material cloth = BuildKit.Pbr("canvas_ring", Color.white) ?? BuildKit.Surface("circusDrape", () => ProceduralTextures.Stripes(new Color(0.46f, 0.05f, 0.06f), new Color(0.62f, 0.54f, 0.38f), 6), 0.08f);
                     BuildKit.Box("Top", t, new Vector3(0f, 0.8f, 0f), new Vector3(1.6f, 0.06f, 1.1f), cloth);
                     BuildKit.Box("ClothBack", t, new Vector3(0f, 0.42f, -0.54f), new Vector3(1.6f, 0.76f, 0.02f), cloth);
                     BuildKit.Box("ClothLeft", t, new Vector3(-0.79f, 0.42f, 0f), new Vector3(0.02f, 0.76f, 1.1f), cloth);
                     BuildKit.Box("ClothRight", t, new Vector3(0.79f, 0.42f, 0f), new Vector3(0.02f, 0.76f, 1.1f), cloth);
+                    HideBox(t.Find("ClothBack"), t.Find("ClothLeft"), t.Find("ClothRight"));
+                    CircusSet.Drape("Skirt", t, new Vector3(0f, 0.8f, -0.56f), 0f, 1.62f, 0.78f, cloth, 7, 0.035f, index + 40);
+                    CircusSet.Drape("Skirt", t, new Vector3(-0.81f, 0.8f, 0f), 90f, 1.12f, 0.78f, cloth, 5, 0.035f, index + 50);
+                    CircusSet.Drape("Skirt", t, new Vector3(0.81f, 0.8f, 0f), 90f, 1.12f, 0.78f, cloth, 5, 0.035f, index + 60);
                     door = new GameObject("Hinge").transform;
                     door.SetParent(t, false);
                     door.localPosition = new Vector3(-0.79f, 0f, 0.54f);
                     BuildKit.Box("ClothFront", door, new Vector3(0.79f, 0.42f, 0f), new Vector3(1.58f, 0.76f, 0.02f), cloth);
-                    LevelProps.PartySetting(t, new Vector3(0f, 0.83f, 0f));
+                    HideBox(door.Find("ClothFront"));
+                    CircusSet.Drape("Skirt", door, new Vector3(0.79f, 0.8f, 0.02f), 0f, 1.62f, 0.78f, cloth, 7, 0.035f, index + 70);
+                    if (room == Room.PartyRoom)
+                    {
+                        LevelProps.PartySetting(t, new Vector3(0f, 0.83f, 0f));
+                    }
                     hide = new Vector3(0f, 0.45f, 0.3f);
                     break;
             }
             return HidingSpot.Attach(go, room, index, kind, door, hide, new Vector3(0f, 0f, 1.1f));
+        }
+
+        /// <summary>Keeps these boxes as colliders only: the cloth drawn over them is what you see.</summary>
+        private static void HideBox(params Transform[] boxes)
+        {
+            foreach (Transform box in boxes)
+            {
+                box.GetComponent<Renderer>().enabled = false;
+            }
         }
 
         private static CellPickup BuildCellShelf(Room room, Transform roomRoot)
@@ -961,7 +874,7 @@ namespace NightShift.Game
             Material brass = BuildKit.Plain("brass", new Color(0.62f, 0.48f, 0.24f), 0.75f, 1f);
             Texture2D drawnLogo = BuildKit.SignTexture("door_logo");
             Texture2D drawnClosed = BuildKit.SignTexture("closed_sign");
-            Material logo = BuildKit.Picture("doorLogo", drawnLogo != null ? drawnLogo : ProceduralTextures.Sign("FREDDY'S", new Color(1f, 0.85f, 0.4f), new Color(0.35f, 0.04f, 0.04f)), 0f);
+            Material logo = BuildKit.Picture("doorLogo", drawnLogo != null ? drawnLogo : ProceduralTextures.Sign("BELLWETHER'S", new Color(1f, 0.85f, 0.4f), new Color(0.35f, 0.04f, 0.04f)), 0f);
             Material closed = BuildKit.Picture("closedSign", drawnClosed != null ? drawnClosed : ProceduralTextures.Sign("CLOSED", new Color(0.8f, 0.05f, 0.05f), new Color(0.92f, 0.9f, 0.84f)), 0f);
             float leafWidth = PizzeriaLayout.DoorWidth * 0.5f;
             float height = PizzeriaLayout.DoorHeight;

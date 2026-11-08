@@ -51,8 +51,9 @@ namespace NightShift.EditorTools
                     importer.isReadable = false;
                     importer.SaveAndReimport();
                 }
-                Texture2D albedo = SurfaceImporter.Texture(path + "_albedo.jpg", TextureImporterType.Default, true);
-                Texture2D normal = SurfaceImporter.Texture(path + "_normal.jpg", TextureImporterType.NormalMap, false);
+                // Small objects: half a K is plenty in the web build (the desktop keeps 2K).
+                Texture2D albedo = SurfaceImporter.Texture(path + "_albedo.jpg", TextureImporterType.Default, true, 512);
+                Texture2D normal = SurfaceImporter.Texture(path + "_normal.jpg", TextureImporterType.NormalMap, false, 512);
                 Texture2D mask = SurfaceImporter.Texture(path + "_mask.png", TextureImporterType.Default, false, 512);
                 Material material = SurfaceImporter.Material(path + ".mat", name, albedo, normal, mask, 1f);
                 props.Add(new GameAssets.Prop

@@ -37,7 +37,6 @@ namespace NightShift.EditorTools
                 return;
             }
             SetUpRenderPipeline();
-            FreddySetup.Setup();
             UpdateGameAssets();
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -67,9 +66,11 @@ namespace NightShift.EditorTools
                 assets = ScriptableObject.CreateInstance<GameAssets>();
                 AssetDatabase.CreateAsset(assets, AssetsPath);
             }
-            assets.FreddyPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(FreddySetup.PrefabPath);
+            WebImport.Voices();
+            assets.FreddyPrefab = PocketsSetup.Build();
             assets.FreddyModel = FindModel();
             assets.Font = AssetDatabase.LoadAssetAtPath<Font>("Assets/Art/Fonts/VT323-Regular.ttf");
+            assets.MenuFont = AssetDatabase.LoadAssetAtPath<Font>("Assets/Art/Fonts/Oswald.ttf");
             assets.ControlsKeyboard = UiTexture("Assets/Art/UI/controls-keyboard.png");
             assets.ControlsGamepad = UiTexture("Assets/Art/UI/controls-gamepad.png");
             assets.SignMain = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Exterior/sign-main.png");
@@ -102,7 +103,7 @@ namespace NightShift.EditorTools
             assets.WreckModel = Model("car_wreck");
             assets.LeverModel = Model("exit_lever");
             assets.KnifeSwitchModel = Model("knife_switch");
-            assets.HandsModel = Model("fp_hands");
+            PocketsSetup.SetUpProps(assets);
             assets.AmbientOcclusion = RenderingSetup.Apply();
             assets.FreddySteps = Clips("Freddy/Steps");
             assets.FreddyServos = Clips("Freddy/Servo");
@@ -123,7 +124,17 @@ namespace NightShift.EditorTools
             {
                 assets.Calls[night] = new NightCall { Lines = StoryClips("night" + (night + 1) + "_") };
             }
-            EditorUtility.SetDirty(assets);
+assets.Taunts = new NightCall[NightShift.Game.StoryData.Taunts.Length];
+            for (int kind = 0; kind < assets.Taunts.Length; kind++)
+            {
+                assets.Taunts[kind] = new NightCall { Lines = StoryClips("taunt_" + NightShift.Game.StoryData.Taunts[kind].key + "_") };
+            }
+            assets.ToySqueaks = Clips("Clown/Squeak");
+            assets.SurprisePops = Clips("Clown/Pop");
+            assets.ClownShoes = Clips("Clown/Shoes");
+            assets.ClownBells = Clips("Clown/Bells");
+            assets.MusicBox = Clip("Clown/music_box");
+                        EditorUtility.SetDirty(assets);
             AssetDatabase.SaveAssets();
             Debug.Log("Game assets: model = " + (assets.FreddyModel != null ? assets.FreddyModel.name : "none (scripted Freddy)"));
         }
@@ -131,6 +142,7 @@ namespace NightShift.EditorTools
         /// <summary>A model prepared by tools/prepare_models.py (Assets/Art/Sketchfab), or null.</summary>
         private static GameObject Model(string name)
         {
+            WebImport.ModelTextures(name);
             var model = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Art/Sketchfab/" + name + ".glb");
             if (model == null)
             {
@@ -219,12 +231,25 @@ namespace NightShift.EditorTools
                 .ToArray();
         }
 
-        /// <summary>A UI picture with transparency: no mipmaps, no compression artifacts on the thin lines.</summary>
+        /// <summary>
+        /// A UI picture with transparency: no mipmaps, no compression artifacts on the thin lines. The
+        /// web build compresses it at high quality (no crunch) to a quarter of the size.
+        /// </summary>
         private static Texture2D UiTexture(string path)
         {
             if (AssetImporter.GetAtPath(path) is TextureImporter importer)
             {
-                bool changed = importer.mipmapEnabled || importer.textureCompression != TextureImporterCompression.Uncompressed
+                TextureImporterPlatformSettings web = importer.GetPlatformTextureSettings("WebGL");
+                bool webChanged = !web.overridden || web.textureCompression != TextureImporterCompression.CompressedHQ || web.crunchedCompression;
+                if (webChanged)
+                {
+                    web.overridden = true;
+                    web.format = TextureImporterFormat.Automatic;
+                    web.textureCompression = TextureImporterCompression.CompressedHQ;
+                    web.crunchedCompression = false;
+                    importer.SetPlatformTextureSettings(web);
+                }
+                bool changed = webChanged || importer.mipmapEnabled || importer.textureCompression != TextureImporterCompression.Uncompressed
                                || importer.npotScale != TextureImporterNPOTScale.None || !importer.alphaIsTransparency;
                 if (changed)
                 {
@@ -322,6 +347,7 @@ namespace NightShift.EditorTools
             PlayerSettings.WebGL.decompressionFallback = false;
             PlayerSettings.WebGL.dataCaching = true;
             PlayerSettings.WebGL.exceptionSupport = WebGLExceptionSupport.ExplicitlyThrownExceptionsOnly;
+            NoSplashScreen();
             BuildReport report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
             {
                 scenes = new[] { ScenePath },
@@ -336,6 +362,18 @@ namespace NightShift.EditorTools
                 Directory.Delete(Path.Combine(output, "TemplateData"), true);
             }
             Debug.Log("WebGL build: " + report.summary.result + " (" + (report.summary.totalSize / (1024 * 1024)) + " MB) at " + output);
+            bool fits = report.summary.result == BuildResult.Succeeded && WebImport.CheckSizes(output);
+            if (!fits && Application.isBatchMode)
+            {
+                EditorApplication.Exit(1);
+            }
+        }
+
+        /// <summary>No "Made with Unity" screen: optional for every license since Unity 6.</summary>
+        private static void NoSplashScreen()
+        {
+            PlayerSettings.SplashScreen.show = false;
+            PlayerSettings.SplashScreen.showUnityLogo = false;
         }
 
         /// <summary>Plays the game scene in the developer explore mode (see ExploreMode.cs).</summary>
@@ -369,6 +407,7 @@ namespace NightShift.EditorTools
             bool windows = Application.platform == RuntimePlatform.WindowsEditor;
             string folder = HuntTrainingMenu.BuildsFolder();
             string output = Path.Combine(folder, windows ? "NightShift/NightShift.exe" : "NightShift.app");
+            NoSplashScreen();
             BuildReport report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
             {
                 scenes = new[] { ScenePath },
@@ -377,6 +416,30 @@ namespace NightShift.EditorTools
                 options = BuildOptions.None
             });
             Debug.Log("Game build: " + report.summary.result + " at " + output);
+        }
+
+        /// <summary>The Windows player, built from any editor that has Windows Build Support installed (Unity Hub, Add modules).</summary>
+        [MenuItem("Night Shift/Build Game for Windows")]
+        public static void BuildWindows()
+        {
+            if (!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.Standalone, BuildTarget.StandaloneWindows64))
+            {
+                Debug.LogError("Windows Build Support is not installed: add it to this Unity version in Unity Hub.");
+                return;
+            }
+            if (!File.Exists(ScenePath))
+            {
+                CreateGameScene();
+            }
+            string output = Path.Combine(HuntTrainingMenu.BuildsFolder(), "NightShiftWindows/NightShift.exe");
+            BuildReport report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
+            {
+                scenes = new[] { ScenePath },
+                locationPathName = output,
+                target = BuildTarget.StandaloneWindows64,
+                options = BuildOptions.None
+            });
+            Debug.Log("Windows build: " + report.summary.result + " at " + output);
         }
     }
 }

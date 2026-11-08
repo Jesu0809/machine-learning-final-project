@@ -19,7 +19,9 @@ namespace NightShift.Game
         Throw,
         HoldBreath,
         Inspector,
-        Skip
+        Skip,
+        PeekLeft,
+        PeekRight
     }
 
     /// <summary>
@@ -52,7 +54,7 @@ namespace NightShift.Game
         {
             { InputAction.Forward, Key.W }, { InputAction.Back, Key.S }, { InputAction.Left, Key.A }, { InputAction.Right, Key.D },
             { InputAction.Sprint, Key.LeftShift }, { InputAction.Crouch, Key.C }, { InputAction.Use, Key.E },
-            { InputAction.Flashlight, Key.F }, { InputAction.Throw, Key.G }, { InputAction.HoldBreath, Key.Space },
+            { InputAction.Flashlight, Key.F }, { InputAction.Throw, Key.G }, { InputAction.HoldBreath, Key.Space }, { InputAction.PeekLeft, Key.Q }, { InputAction.PeekRight, Key.R },
             { InputAction.Inspector, Key.Tab }, { InputAction.Skip, Key.Enter }
         };
 
@@ -304,6 +306,10 @@ namespace NightShift.Game
         public static bool FlashlightPressed => Pressed(InputAction.Flashlight) || (Pad != null && Pad.buttonNorth.wasPressedThisFrame);
 
         public static bool ThrowPressed => Pressed(InputAction.Throw) || (Pad != null && Pad.rightShoulder.wasPressedThisFrame);
+
+        /// <summary>Leaning to look around a corner: -1 left, 1 right, 0 straight.</summary>
+        public static float Peek => (Held(InputAction.PeekRight) || (Pad != null && Pad.dpad.right.isPressed) ? 1f : 0f)
+                                  - (Held(InputAction.PeekLeft) || (Pad != null && Pad.dpad.left.isPressed) ? 1f : 0f);
 
         public static bool HoldBreath => Held(InputAction.HoldBreath) || (Pad != null && Pad.buttonWest.isPressed);
 

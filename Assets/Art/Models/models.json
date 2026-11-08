@@ -1,4 +1,12 @@
 {
+  "ArmChair_01": {
+    "meters": [
+      0.848,
+      0.766,
+      1.065
+    ],
+    "source": "polyhaven:ArmChair_01"
+  },
   "Barrel_02": {
     "meters": [
       0.488,
@@ -6,6 +14,30 @@
       0.88
     ],
     "source": "polyhaven:Barrel_02"
+  },
+  "Chandelier_01": {
+    "meters": [
+      0.746,
+      0.816,
+      0.798
+    ],
+    "source": "polyhaven:Chandelier_01"
+  },
+  "Chandelier_02": {
+    "meters": [
+      0.679,
+      0.619,
+      0.848
+    ],
+    "source": "polyhaven:Chandelier_02"
+  },
+  "Rockingchair_01": {
+    "meters": [
+      0.708,
+      0.833,
+      0.995
+    ],
+    "source": "polyhaven:Rockingchair_01"
   },
   "SchoolChair_01": {
     "meters": [
@@ -71,6 +103,30 @@
     ],
     "source": "polyhaven:electric_stove"
   },
+  "folding_wooden_stool": {
+    "meters": [
+      0.528,
+      0.547,
+      0.442
+    ],
+    "source": "polyhaven:folding_wooden_stool"
+  },
+  "gothic_statue": {
+    "meters": [
+      1.477,
+      1.564,
+      1.74
+    ],
+    "source": "polyhaven:gothic_statue"
+  },
+  "horse_head": {
+    "meters": [
+      0.215,
+      0.334,
+      0.419
+    ],
+    "source": "polyhaven:horse_head"
+  },
   "industrial_storage_cart": {
     "meters": [
       1.603,
@@ -78,6 +134,14 @@
       1.377
     ],
     "source": "polyhaven:industrial_storage_cart"
+  },
+  "marble_bust_01": {
+    "meters": [
+      0.272,
+      0.3,
+      0.515
+    ],
+    "source": "polyhaven:marble_bust_01"
   },
   "metal_office_desk": {
     "meters": [
@@ -135,6 +199,14 @@
     ],
     "source": "polyhaven:old_drill_press"
   },
+  "ornate_mirror_01": {
+    "meters": [
+      0.486,
+      0.026,
+      0.744
+    ],
+    "source": "polyhaven:ornate_mirror_01"
+  },
   "painted_wooden_bench": {
     "meters": [
       1.165,
@@ -142,6 +214,22 @@
       0.889
     ],
     "source": "polyhaven:painted_wooden_bench"
+  },
+  "painted_wooden_chair_01": {
+    "meters": [
+      0.432,
+      0.54,
+      0.956
+    ],
+    "source": "polyhaven:painted_wooden_chair_01"
+  },
+  "painted_wooden_sofa": {
+    "meters": [
+      2.452,
+      0.787,
+      1.281
+    ],
+    "source": "polyhaven:painted_wooden_sofa"
   },
   "plastic_broom": {
     "meters": [
@@ -207,6 +295,14 @@
     ],
     "source": "polyhaven:power_box_01"
   },
+  "round_wooden_table_01": {
+    "meters": [
+      1.399,
+      1.399,
+      1.005
+    ],
+    "source": "polyhaven:round_wooden_table_01"
+  },
   "security_camera_01": {
     "meters": [
       0.17,
@@ -214,6 +310,14 @@
       0.286
     ],
     "source": "polyhaven:security_camera_01"
+  },
+  "spinning_wheel_01": {
+    "meters": [
+      0.489,
+      1.025,
+      0.966
+    ],
+    "source": "polyhaven:spinning_wheel_01"
   },
   "steel_frame_shelves_01": {
     "meters": [
@@ -247,6 +351,14 @@
     ],
     "source": "polyhaven:tool_cart"
   },
+  "vintage_crutches_01": {
+    "meters": [
+      0.399,
+      0.217,
+      1.615
+    ],
+    "source": "polyhaven:vintage_crutches_01"
+  },
   "vintage_wooden_drawer_01": {
     "meters": [
       1.715,
@@ -262,5 +374,69 @@
       0.32
     ],
     "source": "polyhaven:wall_clock"
+  },
+  "wheelchair_01": {
+    "meters": [
+      0.824,
+      1.091,
+      1.104
+    ],
+    "source": "polyhaven:wheelchair_01"
+  },
+  "wine_barrel_01": {
+    "meters": [
+      0.742,
+      0.756,
+      0.871
+    ],
+    "source": "polyhaven:wine_barrel_01"
+  },
+  "wooden_bookshelf_worn": {
+    "meters": [
+      1.374,
+      0.581,
+      2.063
+    ],
+    "source": "polyhaven:wooden_bookshelf_worn"
+  },
+  "wooden_bucket_01": {
+    "meters": [
+      0.367,
+      0.342,
+      0.55
+    ],
+    "source": "polyhaven:wooden_bucket_01"
+  },
+  "wooden_crate_01": {
+    "meters": [
+      0.825,
+      0.409,
+      0.35
+    ],
+    "source": "polyhaven:wooden_crate_01"
+  },
+  "wooden_crate_02": {
+    "meters": [
+      1.166,
+      0.529,
+      0.464
+    ],
+    "source": "polyhaven:wooden_crate_02"
+  },
+  "wooden_ladder": {
+    "meters": [
+      0.959,
+      0.5,
+      1.335
+    ],
+    "source": "polyhaven:wooden_ladder"
+  },
+  "wooden_stool_01": {
+    "meters": [
+      0.425,
+      0.442,
+      0.437
+    ],
+    "source": "polyhaven:wooden_stool_01"
   }
 }

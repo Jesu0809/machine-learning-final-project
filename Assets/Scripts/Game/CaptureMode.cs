@@ -51,6 +51,11 @@ namespace NightShift.Game
                 yield return Showcase();
                 yield break;
             }
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-film") >= 0)
+            {
+                yield return FilmMode.Tour(director, folder);
+                yield break;
+            }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-itemtest") >= 0)
             {
                 yield return ItemTest();

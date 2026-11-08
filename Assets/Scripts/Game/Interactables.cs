@@ -234,7 +234,7 @@ namespace NightShift.Game
             {
                 return "No power to the exit yet. Still to do: " + Director.ObjectiveList.Missing();
             }
-            return "[E] Pull the lever (LOUD)";
+            return Director.Rules.ExitSeconds > 0f ? "[E] Pull the lever (the siren will go, and the door opens slowly)" : "[E] Pull the lever (LOUD)";
         }
 
         public void Use(PlayerController player)
@@ -270,6 +270,35 @@ namespace NightShift.Game
                 yield return null;
             }
             lever = 1f;
+            float slow = Director.Rules.ExitSeconds;
+            if (slow > 0f)
+            {
+                // The tired motor: the siren calls him while the door takes its time, and the
+                // player can wait hidden or stay at the door.
+                Director.UI.Toast("The door is opening: " + Mathf.CeilToInt(slow) + " seconds. Everyone can hear it.");
+                float nextSiren = 0f;
+                bool warned = false;
+                for (float t = 0f; t < slow; t += Time.deltaTime)
+                {
+                    if (Director.Phase != GamePhase.Playing && Director.Phase != GamePhase.Paused)
+                    {
+                        pulling = false;
+                        yield break;
+                    }
+                    SetLift(0.04f * t / slow);
+                    if (t >= nextSiren)
+                    {
+                        Director.OnExitSiren(this);
+                        nextSiren = t + 6f;
+                    }
+                    if (!warned && slow - t < 10f)
+                    {
+                        warned = true;
+                        Director.UI.Toast("10 seconds to the door.");
+                    }
+                    yield return null;
+                }
+            }
             Progress = 1f;
             pulling = false;
             parts.Sparks.transform.position = parts.Lever.position + parts.Root.transform.TransformDirection(new Vector3(0f, 0.05f, 0.08f));

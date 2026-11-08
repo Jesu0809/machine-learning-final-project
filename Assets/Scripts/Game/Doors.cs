@@ -184,7 +184,7 @@ namespace NightShift.Game
             }
             if (Locked)
             {
-                return "Locked from outside until the call ends.  Sit down and listen.";
+                return "Locked from outside until he stops talking.  Sit down and listen.";
             }
             return Closed ? "[E] Open the door" : "[E] Close the door  (he will have to break it down)";
         }

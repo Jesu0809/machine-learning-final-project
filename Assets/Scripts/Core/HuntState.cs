@@ -140,7 +140,7 @@ namespace NightShift.Hunt
     /// </summary>
     public class HuntState
     {
-        private readonly Random random;
+        private Random random;
 
         public HuntSettings Settings { get; }
 
@@ -208,7 +208,7 @@ namespace NightShift.Hunt
 
         public bool NeedsBreaker => Night >= 3;
         public bool NeedsCard => Night >= 4;
-        public bool NeedsTape => Night >= 5;
+        public bool NeedsTape => Night >= Settings.TapeNight;
 
         /// <summary>Objectives of tonight: one per cell, the breaker, taking and swiping the card, the tape.</summary>
         public int ObjectivesTotal => Settings.CellCount + (NeedsBreaker ? 1 : 0) + (NeedsCard ? 2 : 0) + (NeedsTape ? 1 : 0);
@@ -325,6 +325,9 @@ namespace NightShift.Hunt
                 || (room == HuntMap.TapeRoom && NeedsTape && !TapeTaken);
         }
 
+        /// <summary>From here on the night comes out the same for everyone with this seed (the show of the day).</summary>
+        public void Reseed(int seed) => random = new Random(seed);
+
         /// <summary>Starts a new night: its objectives, and the cells in random rooms.</summary>
         public void Reset()
         {
@@ -345,7 +348,7 @@ namespace NightShift.Hunt
             FreddyTravelLeft = 0;
             FreddyCameFrom = HuntMap.FreddyStart;
             ExitProgress = 0;
-            Night = Settings.RandomNight ? random.Next(1, 6) : Math.Max(1, Math.Min(5, Settings.Night));
+            Night = Settings.RandomNight ? random.Next(1, 6) : Math.Max(1, Math.Min(7, Settings.Night));
             CarriedCell = -1;
             CellsInserted = 0;
             BreakerProgress = KeypadProgress = 0;

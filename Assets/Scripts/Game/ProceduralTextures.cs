@@ -217,6 +217,27 @@ namespace NightShift.Game
         }
 
         /// <summary>Dark arcade carpet with neon confetti shapes.</summary>
+        /// <summary>Wide painted or canvas stripes, faded and stained: the walls of a circus.</summary>
+        public static Surface Stripes(Color first, Color second, int stripes = 4)
+        {
+            var color = new Color[Size * Size];
+            var height = new float[Size * Size];
+            int width = Size / (stripes * 2);
+            for (int y = 0; y < Size; y++)
+            {
+                for (int x = 0; x < Size; x++)
+                {
+                    Color c = (x / width) % 2 == 0 ? first : second;
+                    float stain = Mathf.Clamp01(Fbm(x, y, 0.015f) - 0.3f) * 1.3f;
+                    float weave = Mathf.PerlinNoise(x * 0.6f, y * 0.6f) * 0.08f;
+                    c = Color.Lerp(c, new Color(0.14f, 0.1f, 0.06f), stain * 0.55f) * (0.92f + weave);
+                    color[y * Size + x] = c;
+                    height[y * Size + x] = 0.6f + weave + (x % width < 2 ? -0.2f : 0f);
+                }
+            }
+            return Build(color, height, 1f);
+        }
+
         public static Surface Carpet()
         {
             var color = new Color[Size * Size];
@@ -457,8 +478,8 @@ namespace NightShift.Game
         /// <summary>A far building's front at night: dark walls and a grid of windows, a few lit.</summary>
         public static Texture2D CityWindows()
         {
-            const int width = 128;
-            const int height = 128;
+            const int width = 512;
+            const int height = 512;
             var texture = New(width, height, TextureWrapMode.Repeat);
             var pixels = new Color[width * height];
             for (int y = 0; y < height; y++)
@@ -469,9 +490,11 @@ namespace NightShift.Game
                     int floor = y / 16;
                     bool window = x % 16 >= 4 && x % 16 < 12 && y % 16 >= 5 && y % 16 < 13;
                     float lit = Hash(column * 7 + 3, floor * 13 + 1);
-                    Color wall = new Color(0.03f, 0.03f, 0.035f);
-                    Color glass = lit > 0.9f ? new Color(1f, 0.78f, 0.45f) * (0.5f + lit * 0.4f)
-                                : lit > 0.87f ? new Color(0.5f, 0.65f, 0.9f) * 0.5f
+                    // Walls just lighter than the sky, so the blocks read as shapes in the night.
+                    Color wall = new Color(0.04f, 0.045f, 0.06f);
+                    // Most of the town is asleep.
+                    Color glass = lit > 0.955f ? new Color(1f, 0.74f, 0.42f) * (0.35f + lit * 0.4f)
+                                : lit > 0.94f ? new Color(0.5f, 0.65f, 0.9f) * 0.4f
                                 : new Color(0.012f, 0.014f, 0.02f);
                     pixels[y * width + x] = window ? glass : wall;
                 }

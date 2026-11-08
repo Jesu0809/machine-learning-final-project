@@ -40,7 +40,8 @@ namespace NightShift.EditorTools
                     continue;
                 }
                 Texture2D albedo = Texture(path + "_albedo.jpg", TextureImporterType.Default, true);
-                Texture2D normal = Texture(path + "_normal.jpg", TextureImporterType.NormalMap, false);
+                // The relief reads at half the color's resolution in the web build.
+                Texture2D normal = Texture(path + "_normal.jpg", TextureImporterType.NormalMap, false, 512);
                 Texture2D mask = Texture(path + "_mask.png", TextureImporterType.Default, false, 512);
                 float meters = sizes.TryGetValue(name, out float size) ? size : 2f;
                 materials.Add(Material(path + ".mat", name, albedo, normal, mask, meters));
@@ -83,7 +84,11 @@ namespace NightShift.EditorTools
             var importer = (TextureImporter)AssetImporter.GetAtPath(path);
             if (importer != null)
             {
-                bool changed = importer.textureType != type || importer.sRGBTexture != srgb || importer.maxTextureSize != 2048;
+                bool changed = importer.textureType != type || importer.sRGBTexture != srgb || importer.maxTextureSize != 2048
+                               || importer.npotScale != TextureImporterNPOTScale.ToNearest;
+                // Some scans are a few pixels off square (2048 x 2052): rounded to a power of two, or they
+                // could not be block-compressed and would be stored uncompressed.
+                importer.npotScale = TextureImporterNPOTScale.ToNearest;
                 importer.textureType = type;
                 importer.sRGBTexture = srgb;
                 importer.maxTextureSize = 2048;

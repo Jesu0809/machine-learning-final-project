@@ -37,6 +37,9 @@ namespace NightShift.Hunt
         /// </summary>
         public int Night = 1;
 
+        /// <summary>The first night that asks for the tape: 5 in training and evaluation, the last night in the game.</summary>
+        public int TapeNight = 5;
+
         /// <summary>True in training and evaluation: every hunt plays a random night (1–5).</summary>
         public bool RandomNight = true;
 

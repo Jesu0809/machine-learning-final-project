@@ -502,7 +502,27 @@ namespace NightShift.Game
         }
 
         /// <summary>Seconds before another vent can be entered after coming out of one (HuntSettings.DuctCooldownActions in the simulation).</summary>
-        public const float DuctCooldownSeconds = 25f;
+        public float DuctCooldownSeconds { get; set; } = 25f;
+
+        private const float PeekDistance = 0.42f;
+        private const float PeekRoll = 9f;
+        private float peek;
+
+        /// <summary>Leans the head out, stopping short of whatever is at that side so the view never enters a wall.</summary>
+        private void UpdatePeek()
+        {
+            float wanted = Controllable && !Moving ? Controls.Peek : 0f;
+            if (wanted != 0f)
+            {
+                Vector3 from = transform.position + Vector3.up * head.localPosition.y;
+                Vector3 side = transform.right * wanted;
+                if (Physics.SphereCast(from, 0.12f, side, out RaycastHit hit, PeekDistance + 0.1f, ~0, QueryTriggerInteraction.Ignore))
+                {
+                    wanted *= Mathf.Clamp01((hit.distance - 0.1f) / PeekDistance);
+                }
+            }
+            peek = Mathf.MoveTowards(peek, wanted, Time.deltaTime * 4f);
+        }
 
         /// <summary>When the player may crawl into a vent again.</summary>
         public float DuctReadyAt { get; private set; }
@@ -942,8 +962,9 @@ namespace NightShift.Game
                 return;
             }
             float bob = Moving ? Mathf.Sin(bobPhase) * (Running ? 0.05f : 0.025f) : 0f;
-            head.localPosition = Vector3.Lerp(head.localPosition, new Vector3(0f, eye + bob + BreathRise(), 0f), Time.deltaTime * 12f);
-            head.rotation = Quaternion.Euler(pitch, yaw, 0f) * BreathSway() * JoltShake();
+            UpdatePeek();
+            head.localPosition = Vector3.Lerp(head.localPosition, new Vector3(peek * PeekDistance, eye + bob + BreathRise(), 0f), Time.deltaTime * 12f);
+            head.rotation = Quaternion.Euler(pitch, yaw, peek * -PeekRoll) * BreathSway() * JoltShake();
         }
 
         /// <summary>

@@ -69,7 +69,7 @@ namespace NightShift.Game
         {
             director.BeginExplore();
             roomIndex = (int)PizzeriaLayout.RoomAt(director.Player.transform.position);
-            Show("Explore mode: Freddy is asleep, nothing can end the night");
+            Show("Explore mode: he is asleep, nothing can end the night");
         }
 
         private void OnDestroy() => Active = false;
