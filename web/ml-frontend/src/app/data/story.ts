@@ -3,79 +3,101 @@
 
 export const INTRO_CARDS: string[] = [
   "1987",
-  "Freddy's Family Pizzeria closes its doors\nafter a series of... incidents.",
+  "Bellwether's Winter Circus closes its doors\nafter one last show.",
   "Thirty-eight years later."
 ];
 
 export const INTRO: string[] = [
   "You have one new message.",
-  "Hey, it's me, from the agency. Just checking you found the place. Freddy's. The old pizzeria on Route Nine.",
-  "It closed back in eighty-seven, after the... incidents. Some robotics company bought it. Nightshift Labs.",
-  "They threw everything out except the bear. And they gave him a new brain. A neural network, trained on thousands of fake nights.",
+  "Hey, it's me, from the agency. Just checking you found the place. Bellwether's. The old winter circus on Route Nine.",
+  "It closed back in eighty-seven, after the last show. Some robotics company bought it. Nightshift Labs.",
+  "They threw out everything except the clown. And they gave him a new brain. A neural network, trained on thousands of fake nights.",
   "Now they want a real night. A real guard. That's you.",
-  "Midnight to six. Easy money. And hey, if the bear moves... that's normal. Probably. Okay. Bye."
+  "Midnight to six. Easy money. And hey, if the clown moves... that's normal. Probably. Okay. Bye."
 ];
 
 export const CALLS: string[][] = [
   [
-    "Hello? Hello, hello! Uh, welcome to your first night at the pizzeria. They asked me to walk you through it, since the last guy... well. Let's not get into that.",
-    "So. The power is out. There are sockets all over the building, but the wiring is so old that only three lines work, and never the same three. Your list tells you which ones are live tonight. Find the power cells, carry them one at a time, and plug one into each live socket. Then pull the lever at the exit. Some nights it is the front doors, some nights the loading door in the storage. Your list tells you that too.",
-    "Now, about Freddy. Management installed a new brain in him. A neural network. They trained it on thousands of nights against people like you. It does not follow a script. It learned.",
-    "It cannot see through walls, but it listens. Running, grabbing a cell, plugging it in, that lever. All loud. Walk when you can, and crouch when you really need to be quiet.",
-    "And you have to listen too. There is no tracker in this place. His steps are heavy, something loose rattles inside him, his motors whir, and when he stands still his frame creaks. Wear headphones. If it sounds muffled, he is behind a wall. If it sounds dull and far, he is behind you.",
-    "If he gets close, hide. Lockers, cabinets, under the tables. And if he opens your locker, hold your breath with the space bar. Not for too long.",
-    "Oh, and the air vents. There are grates all over the building, in the floor and in the walls. Crawl in and you come out in another room. He is too big for them, so in there he cannot reach you.",
-    "Sprinting will not save you for long, you will run out of breath. And every socket you power makes him angrier. Faster.",
-    "One more thing. If you panic, he can sense it. The engineers added that. He decides on his own when to use it. So, stay calm.",
-    "If you want to see what it is thinking, press TAB. They left their debug screen in. It shows what he heard, where he is going, and how sure the network is about every move. Use that.",
-    "He is asleep on the stage right now. Look around while I am talking. When I hang up... he wakes up. Okay. Good luck. Talk to you tomorrow. Hopefully."
+    "Hello. Hello hello hello. HELLO! Ladies and gentlemen and boys and girls and... and you! You, in the little office! Hee hee hee hee! Welcome to the show! I am Pockets! I am the clown, I am the clown, I am the CLOWN! (Shhh. Do not clap. I hear everything.)",
+    "The rules! They make me say the rules. Ha ha! Listen, listen. The lights are dead. Three sockets still work, three, never the same three, your list knows which. Find the power cells. Carry them one, at, a, time. Plug one into each live socket. Then the lever at the exit! Some nights the front doors, some nights the loading door in the trunk store. Your list knows. Your list knows everything. (I like your list.)",
+    "They opened my head, you know. Hee hee! They put a new brain in. A neural network! It practiced on thousands of nights, thousands, thousands, against people just like you. Nobody wrote me a script. I learned my act all by myself. AREN'T YOU PROUD?",
+    "I cannot see through walls. Boo hoo! But I listen. (I listen.) Running, grabbing a cell, plugging it in, that big loud lever. All LOUD. Walk when you can. Crouch when you must. Ha ha ha ha!",
+    "And you! You listen too! There is no tracker here. My feet are heavy, my motors whir, and when I stand very, very still... I creak. Wear your headphones, it is only polite. Muffled means a wall between us. Dull and far means... (I am behind you.) Hee hee hee.",
+    "When I come close, hide! Lockers, cabinets, under the tables, oh I love this game. And when I open your little door, you hold your breath with the space bar. Not too long! Nobody likes a blue face. MINE IS WHITE! Ha ha ha ha ha!",
+    "The vents go room to room, in the walls, in the floor. I do not fit. I DO NOT FIT! I tried. I tried so many times. (How rude.)",
+    "Sprinting will not save you, your little lungs give up. And every socket you power makes me faster. Faster, faster, FASTER! I do love an audience!",
+    "One more thing. One more, one more. When you panic, I can feel it. Here. (Right here.) They added that. And I decide when to use it. Hee hee hee hee.",
+    "Press TAB to see my thoughts! They left the panel open! What good is a magic trick if nobody sees the rabbit scream? Ha ha!",
+    "I am asleep in the ring right now. Sleeping. Look around while I talk. Because when I stop talking... (when I stop talking...) I WAKE UP! Places, everybody! Places! Ha ha ha ha ha ha!"
   ],
   [
-    "Hey! You made it. Wow. Okay. Management is... thrilled. They want more data.",
-    "So tonight is a little different. The cells are colored now. Yellow, blue and green. Each one only fits the live socket of its color. Your list shows which room each color goes to.",
-    "I looked at last night's logs. Here is the thing: Freddy does not remember you. The network is frozen, it cannot learn during the night.",
-    "But it was trained against thousands of guards. It knows what people do. People hide when they hear him. People run straight for the exit.",
-    "So, do something people do not do. Throw one of those party horns. It cannot tell a horn from a person. To the network, a noise is a noise.",
-    "And he is a little faster tonight. They tuned him. Okay. I will let you go."
+    "You came back. You came BACK! Nobody comes back! Hee hee hee! Oh, they are thrilled. They want more data. (So do I.)",
+    "Colors tonight! Pretty colors! Yellow, blue and green. Each cell fits only the live socket of its color. Your list says which room. Do not mix them, do not mix them, I hate it when they mix.",
+    "I left you toys on the floor! Little rubber ones! Step on one and it goes squeak, and I come RUNNING! Crouch and it stays quiet. Comedy is all about timing. Ha ha ha!",
+    "My network is frozen, you know. It cannot learn while we play. But I keep everything in my pockets. (How you run. Where you hide. What you smell like.) Hee hee.",
+    "Those party horns around the building? Throw one! I cannot tell a horn from a person. A noise is a noise is a noise is a noise. Go on, fool me! The children always did. (Always.)",
+    "And I am faster tonight. They tuned me. They tuned me like a piano. Curtain!"
   ],
   [
-    "Night three. Okay. The breakers in the storage keep tripping. You have to flip them back up by hand, one by one, then push the main handle up. Every click is loud. Sorry.",
-    "And some of the lights are dying. Nobody wants to pay for bulbs in a building that is officially closed.",
-    "I found the old training notes. Early on, Freddy was useless. He walked in circles. He opened empty lockers all night. The reward was negative.",
-    "It took about a million steps before he started checking the rooms next to where he heard you. Three million before he learned when to use his sense.",
-    "The reward curve... it just goes up. It never goes back down. I do not like that. Anyway. Keep moving."
+    "Night three! Three three three! The breakers in the trunk store keep tripping. Flip them up by hand, one by one, then push the main handle. Every click is loud. THANK YOU! THANK YOU! You are too kind!",
+    "Some of the lights are dying. Nobody pays for bulbs in a building that is officially closed. (I ate some of them.) Hee hee hee.",
+    "And gifts! I left you gifts! Boxes with a little crank. Walk past one and up comes the surprise, and everybody hears it. Crouch past them. Or do not. I LOVE SURPRISES!",
+    "Have you met the dummies? My old partners. They look at you when you are not looking. (That part is just for fun.) Mostly. Ha ha ha.",
+    "Do you know what I was like at first? I walked in circles. Circles, circles, circles! I opened empty lockers all night and they gave me a negative reward! Negative! A million steps to check the room next to a noise. Three million to learn when to feel your fear.",
+    "The reward curve only goes up. It never comes back down. Up and up and up. Ha ha ha ha ha! Why are you not laughing? KEEP MOVING!"
   ],
   [
-    "Hey. Night four. Security wants the keycard swiped tonight. It is on a pedestal in the veranda, you cannot miss it. Swipe it through the reader in the office. Slow and steady, that reader is picky.",
-    "I need to tell you something else, and I need you to keep working while I do.",
-    "The guard before you. Management said he quit. I found his name today. It was in the training data.",
-    "They did not just simulate guards. They recorded the real ones. Every night he worked here became more practice for Freddy.",
-    "The lights are worse tonight, and the rain on the roof is louder. Listen hard for him. And Freddy senses fear more often now. They changed the settings after your last night.",
-    "I think they are going to do the same with you. Every night you survive... teaches him something. Be careful what you teach him."
+    "Night four! Security wants the keycard swiped. It sits on a pedestal in the winter garden. Swipe it through the reader in the watch office. Slow and steady. That reader has no sense of humor. (I tried.)",
+    "Let me tell you a story while you work. The guard before you. Management said he quit. Hee hee.",
+    "He did not quit! HE DID NOT QUIT! He is in my act now! Every night he worked here went into my training. Every corner he hid in. (Every time he held his breath.)",
+    "The rain is loud tonight, and the lights are worse. Listen hard. I feel fear more often now. They changed my settings. They changed my settings after your last night, and it tickles. Ha ha ha!",
+    "Every night you survive teaches me something. (Be careful what you teach me.)"
   ],
   [
-    "This is the last night. Tomorrow they retrain Freddy with everything you did this week. Every hiding spot. Every horn. Every route.",
-    "There is a tape. The recordings. All of them. It is locked in a box on the ticket booth counter. Press the numbers one to nine, in order. Take it with you. If anyone sees it, this place closes for good.",
-    "Cells, breakers, keycard, tape, then the lever. He will be fast tonight. Faster than you have seen. And he is awake already. I am sorry.",
-    "If he catches you... well. At least he will have learned from the best. Go. Go now."
+    "Night five! A change to the program! The exit motor is tired. Pull the lever and the door takes its time. Most of a minute, with the siren going, and every eye on you, every eye! Hide if you must. But be there when it opens. Hee hee hee!",
+    "Do you know why they closed this place? August of eighty-seven. A boy called Tommy. His eighth birthday. Right here. (Somebody filmed it.)",
+    "I was on the stage. I turned my head and looked at the camera. That is all. That is all! I was not built to turn my head. I had no brain back then, no brain at all. So who turned it? WHO TURNED IT? Ha ha ha ha!",
+    "The tape stops there. They locked the doors and left me in the ring for thirty-eight years. Thirty-eight years. That is a long pause. (Even for me.)",
+    "Places."
+  ],
+  [
+    "Night six! No more lights! The breakers are fine, I simply prefer it this way. Use your flashlight if you are brave. I do like a spotlight on my stars. Hee hee hee hee!",
+    "Hey, it's me, from the agency. Just checking you found the place.",
+    "Good, is it not? IS IT NOT GOOD? Ha ha ha! There is no agency! There never was! They needed guards, so I made the calls. I learned that voice from guard number two. (He does not need it anymore.)",
+    "Everybody I ever hunted is still in here. Everybody. I can do all of them. One day I will do you. (I already have your footsteps.)",
+    "Tomorrow is the last show. Get some rest. In a locker, perhaps! HA HA HA HA HA!"
+  ],
+  [
+    "This is it. This is it this is it this is it! The last show! After tonight they retrain me with all of it. Every hiding spot, every horn, every route. Hee hee hee hee!",
+    "There is a tape. All the recordings, every guard, and that birthday. It is locked in a box on the ticket booth counter. Press the numbers one to nine, in order. Take it out with you and this place closes for good. (Please do not.)",
+    "I bolted the vents! Nothing personal! Cells, breakers, keycard, tape, then the lever. And I am awake. I AM AWAKE ALREADY!",
+    "If I catch you, at least I will have learned from the best. Ladies and gentlemen... boys and girls... (the finale.) HA HA HA HA HA HA!"
   ]
 ];
 
 export const NOTES: string[] = [
   "TRAINING LOG 0001\nReward per night: -0.46.\nSubject walks in circles and opens empty lockers. The survivor escapes almost every time.\nManagement unimpressed.",
-  "TRAINING LOG 0214\nSubject has started standing in the dining hall.\nFrom there every room is two moves away and he hears more of the building.\nNobody taught him this.",
+  "PROGRAM - THE LAST SHOW\nPockets the Clown, a mechanical marvel!\nHe does not speak. He does not turn his head.\nHe is only a machine. Do not be afraid, children.",
+  "TRAINING LOG 0214\nSubject has started standing in the big ring.\nFrom there every room is two moves away and he hears more of the building.\nNobody taught him this.",
+  "MEMO - WARDROBE\nWhoever keeps filling the clown's pockets: stop.\nToday it was a child's shoe, a ticket stub and a guard's name tag.\nThey are sewn shut. How is it getting in there?",
   "TRAINING LOG 1000\nOne million steps. Subject now searches the rooms next to where he heard a noise.\nSurvivors who hide as soon as he comes near are found in under a minute.",
   "MEMO - ENGINEERING\nThe network only sees what it hears and what it saw. It never knows where the guard really is.\nIt cannot tell a noise from the guard. Do NOT tell the guards about the party horns.",
   "TRAINING LOG 3000\nThree million steps. Catch rate against a hand-written hunter: 66%. Against our network: 99%.\nIt uses its sense about once per night and finds the guard 80% of the time. It waits until they are afraid.",
   "MEMO - SECURITY\nThe debug screen (TAB) shows the network's probabilities for every move.\nRemove it before the public launch. It shows exactly how he thinks.",
   "HANDWRITTEN NOTE\nIf you are reading this, crouch and turn your flashlight off. In the dark he only sees you up close.\nHe hears running. He hears fear. - R.",
-  "PERSONNEL FILE (TORN)\nNight guard #4. Status: ...ed into training set.\nNights recorded: 5. Escapes: 0."
+  "PERSONNEL FILE (TORN)\nNight guard #4. Status: ...ed into training set.\nNights recorded: 7. Escapes: 0.",
+  "MEMO - AUDIO\nWe never gave the unit a voice. We removed the show tapes in 2024.\nWho is on the speakers at night? Security says the amplifiers are unplugged.",
+  "HANDWRITTEN NOTE\nI called the agency to quit. The number is not in service.\nIt has not been in service since 1987. Then who hired me? - R.",
+  "TRAINING LOG 19000\nversion 19. Catch rate 97.8% against the expert survivor. He no longer camps a locker he has checked.\nHe follows every sighting to the end.\nWe do not know how to make him stop improving.",
+  "CHILD'S BIRTHDAY CARD\nTo Tommy, 8 today!\nHave fun at the circus and say hi to the clown.\nHe always looks at you, doesn't he? Love, Mom."
 ];
 
 export const NIGHT_CHANGES: string[] = [
   "",
-  "Freddy is faster  ·  each cell fits only the socket of its color",
-  "Freddy is faster  ·  lights are failing  ·  reset the breakers by hand",
-  "Freddy senses more often  ·  the rain is louder: listen hard  ·  swipe the keycard",
-  "Freddy is awake from the start  ·  open the tape box  ·  get out"
+  "He is faster  ·  each cell fits only the socket of its color  ·  rubber toys on the floor",
+  "He is faster  ·  lights are failing  ·  reset the breakers by hand  ·  surprise boxes  ·  the dummies watch",
+  "He senses more often  ·  the rain is louder: listen hard  ·  swipe the keycard",
+  "He is faster  ·  the exit opens slowly, with a siren",
+  "Almost no lights  ·  no more calls from the agency",
+  "He is awake from the start  ·  the vents are bolted  ·  open the tape box  ·  get out"
 ];
