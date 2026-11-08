@@ -16,7 +16,7 @@ export class Home {
   protected readonly shots = [
     { file: 'intro-sign.jpg', caption: 'The intro: the guard arrives at the closed circus in the rain' },
     { file: 'intro-arrive.jpg', caption: 'The front doors of the old circus, after a voicemail tells the story of his new brain' },
-    { file: 'menu.jpg', caption: 'Freddy asleep on the show stage' },
+    { file: 'menu.jpg', caption: 'The menu: Pockets waits on the show stage' },
     { file: 'call.jpg', caption: 'Night 1: the clown explains the rules while you explore' },
     { file: 'inspector.jpg', caption: 'AI inspector (Tab): what the network knows and how sure it is' },
     { file: 'replay.jpg', caption: 'End of the night: how his brain hunted you, decision by decision' },
