@@ -1,7 +1,7 @@
 <div class="py-5" [class.container]="!wide()" [class.container-fluid]="wide()" [class.px-lg-5]="wide()">
   <div class="mb-4">
     <h1>Play Night Shift</h1>
-    <p class="lead">Five nights, one phone call per night, and an animatronic whose brain is a trained neural network.</p>
+    <p class="lead">Seven nights, a clown on the speakers, and a brain is a trained neural network.</p>
   </div>
 
   @if (available() === false) {
@@ -27,7 +27,7 @@
             <div class="progress w-100" role="progressbar" aria-label="Loading game">
               <div class="progress-bar bg-danger" [style.width.%]="progress()"></div>
             </div>
-            <p class="small text-muted mt-2 mb-0">Unlocking the pizzeria… {{ progress() }}%</p>
+            <p class="small text-muted mt-2 mb-0">Unlocking the circus… {{ progress() }}%</p>
           }
         </div>
       }
@@ -54,7 +54,7 @@
   <div class="card"><div class="card-body">
     <h2 class="h5">Tips</h2>
     <ul class="small mb-0">
-      <li>The objectives appear when the call ends: use the call to learn the building.</li>
+      <li>The objectives appear when he stops talking: use that time to learn the building.</li>
       <li>Doors can be closed behind you (the dim lamp over them turns red); he has to break them down.</li>
       <li>His brain cannot see through walls. It hears running, fuses, the breaker and the exit panel.</li>
       <li>Crouched in the dark with the flashlight off, he only sees you up close.</li>
