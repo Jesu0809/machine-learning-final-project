@@ -66,6 +66,27 @@ SURFACES = {
     "metal_worn": ("ph", "blue_metal_plate", None, "grey"),
     "metal_rusty": ("ph", "rusty_metal_02", None, None),
     "metal_galvanized": ("ph", "corrugated_iron_02", None, None),
+    # The circus: worn canvas with painted stripes, peeling paint, dirt and old carpet
+    "canvas_ring": ("ph", "rough_linen", 2.4, "canvas_ring"),
+    "canvas_midway": ("ph", "rough_linen", 2.4, "canvas_midway"),
+    "canvas_birthday": ("ph", "rough_linen", 2.4, "canvas_birthday"),
+    "canvas_lounge": ("ph", "rough_linen", 2.4, "canvas_lounge"),
+    "canvas_garden": ("ph", "rough_linen", 2.4, "canvas_garden"),
+    "canvas_red": ("ph", "rough_linen", 2.0, "canvas_red"),
+    "canvas_cream": ("ph", "rough_linen", 2.0, "canvas_cream"),
+    "canvas_navy": ("ph", "rough_linen", 2.0, "canvas_navy"),
+    "peeling_wall": ("ph", "peeling_painted_wall", None, None),
+    "decrepit_wallpaper": ("ph", "decrepit_wallpaper", None, None),
+    "peeling_wood": ("ph", "wood_peeling_paint_weathered", None, None),
+    "distressed_planks": ("ph", "distressed_painted_planks", None, None),
+    "weathered_siding": ("ph", "weathered_plank_siding", None, None),
+    "old_floor": ("ph", "old_wood_floor", None, None),
+    "worn_planks": ("ph", "worn_planks", None, None),
+    "dirty_carpet": ("ph", "dirty_carpet", None, None),
+    "dirt_floor": ("ph", "dirt_floor", None, None),
+    "raked_dirt": ("ph", "raked_dirt", None, None),
+    "mossy_plaster": ("ph", "worn_mossy_plasterwall", None, None),
+    "rusty_paint": ("ph", "rusty_painted_metal", None, None),
     # Outside
     "bricks": ("ph", "red_brick_03", None, None),
     "asphalt": ("ph", "asphalt_02", None, None),
@@ -222,7 +243,58 @@ def grey(surface):
     surface["albedo"] = to_image(np.repeat(np.clip(lum * 1.1, 0, 1), 3, axis=2))
 
 
-RECIPES = {"red_band": red_band, "wallpaper": wallpaper, "arcade_carpet": arcade_carpet,
+def periodic_noise(shape, rng, scale_y, scale_x):
+    """Noise that tiles, 0 to 1: scale is the size of its blobs as a fraction of the texture."""
+    h, w = shape
+    fy = np.fft.fftfreq(h)[:, None]
+    fx = np.fft.rfftfreq(w)[None, :]
+    falloff = np.exp(-((fy * scale_y * h) ** 2 + (fx * scale_x * w) ** 2))
+    field = np.fft.irfft2(np.fft.rfft2(rng.normal(size=shape)) * falloff, s=shape)
+    field = (field - field.min()) / (field.max() - field.min())
+    return field.astype(np.float32)
+
+
+def canvas(first, second=None, stripes=8, seed=1):
+    """Fabric that hung in a closed tent for forty years: painted, faded, water-marked and mildewed."""
+    first = np.array(first, dtype=np.float32) / 255.0
+    second = first if second is None else np.array(second, dtype=np.float32) / 255.0
+
+    def recipe(surface):
+        h, w = surface["albedo"].size[1], surface["albedo"].size[0]
+        rng = np.random.default_rng(seed)
+        weave = luminance(surface["albedo"])
+        weave = weave / max(float(weave.mean()), 0.01)
+        x = np.arange(w, dtype=np.float32)[None, :] / w
+        # Hand-sewn panels: the edge between two stripes wanders and is not quite sharp.
+        drift = (periodic_noise((h, w), rng, 0.08, 0.5) - 0.5) * 0.012
+        phase = ((x + drift) * stripes) % 1.0
+        mix = np.clip((np.abs(phase - 0.5) - 0.25) / 0.004, 0, 1)[..., None]
+        color = first * (1 - mix) + second * mix
+        # Sun and damp ate the dye in patches.
+        grey = color.mean(axis=2, keepdims=True)
+        fade = periodic_noise((h, w), rng, 0.5, 0.5)[..., None]
+        color = color + (grey * np.array([1.05, 0.98, 0.84]) - color) * np.clip(fade * 1.3 - 0.25, 0, 0.75)
+        # Water marks running down, grime in large clouds, mildew in specks.
+        drips = np.clip(periodic_noise((h, w), rng, 0.2, 0.007) * 2.6 - 1.45, 0, 1)[..., None]
+        clouds = np.clip(periodic_noise((h, w), rng, 0.4, 0.4) * 2.0 - 0.8, 0, 1)[..., None]
+        specks = np.clip(periodic_noise((h, w), rng, 0.0035, 0.0035) * 7.0 - 4.2, 0, 1)[..., None]
+        patches = np.clip(periodic_noise((h, w), rng, 0.6, 0.6) * 3.0 - 1.4, 0, 1)[..., None]
+        color = color * (1 - drips * 0.5) * (1 - clouds * 0.38)
+        color = color * (1 - specks * patches * 0.82)
+        surface["albedo"] = to_image(color * np.clip(weave[..., None], 0.62, 1.25))
+        surface["rough"] = np.clip(surface["rough"] * 0.35 + 0.62, 0, 1)
+    return recipe
+
+
+RECIPES = {"canvas_ring": canvas((150, 22, 26), (196, 170, 122), 8, 11),
+           "canvas_midway": canvas((30, 44, 96), (182, 128, 38), 6, 12),
+           "canvas_birthday": canvas((34, 44, 104), (190, 170, 128), 8, 13),
+           "canvas_lounge": canvas((74, 14, 24), (98, 26, 34), 10, 14),
+           "canvas_garden": canvas((34, 66, 44), (58, 88, 58), 10, 15),
+           "canvas_red": canvas((150, 22, 26), seed=16),
+           "canvas_cream": canvas((196, 170, 122), seed=17),
+           "canvas_navy": canvas((28, 38, 92), seed=18),
+           "red_band": red_band, "wallpaper": wallpaper, "arcade_carpet": arcade_carpet,
            "tablecloth": tablecloth, "grey": grey}
 
 

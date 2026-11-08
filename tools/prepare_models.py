@@ -5,13 +5,15 @@ handle welded into one mesh with its base. This rewrites each one as a clean .gl
 with glTFast (com.unity.cloud.gltfast): meters, +Y up, the front facing +Z, standing on y = 0, and
 every moving part as its own node whose origin is its pivot:
 
-    car_wagon      the guard's 1984 station wagon. Wheels and steering wheel pivot on their centers.
-    car_wreck      a rusted sedan for the back lot (its ground plane is dropped).
+    car_wagon      the guard's 1986 sedan, without badges. Wheels and steering wheel pivot on their centers.
+    car_wreck      a destroyed sedan for the back lot.
     exit_lever     the exit panel's lever, laid flat on the panel face: "Base" and "Handle" (hub axis = x).
     knife_switch   the breaker box's main switch, closed: "Base" and "Blade" (hinge axis = x).
-    fp_hands       first-person arms, rigged; copied as they are.
 
-Textures are scaled down (the game is also built for the web) and JPEG-encoded unless they need alpha.
+Textures are scaled down and JPEG-encoded unless they need alpha, and written as files next to the
+model (Textures/<model>/NN_<role>.jpg, role = color, normal, data or emission) that the .glb points
+to: glTFast then uses Unity's own texture assets, which the project compresses (GameSceneMenu.Model),
+instead of embedding them uncompressed in the build.
 
 Requirements: Python 3 with numpy and pillow.
 Usage (from the repository root):
@@ -242,9 +244,11 @@ def quaternion(matrix):
 class Writer:
     """Builds a new glTF binary from parts, keeping the source's materials and (shrunk) textures."""
 
-    def __init__(self, source, max_texture):
+    def __init__(self, source, max_texture, texture_dir, texture_uri):
         self.source = source
         self.max_texture = max_texture
+        self.texture_dir = texture_dir
+        self.texture_uri = texture_uri
         self.bin = bytearray()
         self.json = {"asset": {"version": "2.0", "generator": "Night Shift prepare_models.py"},
                      "scene": 0, "scenes": [{"nodes": [0]}], "nodes": [], "meshes": [], "accessors": [], "bufferViews": []}
@@ -296,23 +300,25 @@ class Writer:
                 self.json[key] = json.loads(json.dumps(source[key]))
         if "extensionsUsed" in source:
             self.json["extensionsUsed"] = list(source["extensionsUsed"])
+        roles = image_roles(source)
+        if self.texture_dir.exists():
+            shutil.rmtree(self.texture_dir)
         images = []
-        for image in source.get("images", []):
+        for index, image in enumerate(source.get("images", [])):
             data = self.source.view_bytes(image["bufferView"])
             picture = Image.open(io.BytesIO(data))
             picture.load()
             if max(picture.size) > self.max_texture:
                 scale = self.max_texture / max(picture.size)
                 picture = picture.resize((max(1, round(picture.width * scale)), max(1, round(picture.height * scale))), Image.LANCZOS)
-            out = io.BytesIO()
             has_alpha = picture.mode in ("RGBA", "LA") and np.asarray(picture.getchannel("A")).min() < 250
+            name = f"{index:02d}_{roles.get(index, 'color')}.{'png' if has_alpha else 'jpg'}"
+            self.texture_dir.mkdir(parents=True, exist_ok=True)
             if has_alpha:
-                picture.save(out, "PNG", optimize=True)
-                mime = "image/png"
+                picture.save(self.texture_dir / name, "PNG", optimize=True)
             else:
-                picture.convert("RGB").save(out, "JPEG", quality=88)
-                mime = "image/jpeg"
-            images.append({"bufferView": self.view(out.getvalue()), "mimeType": mime})
+                picture.convert("RGB").save(self.texture_dir / name, "JPEG", quality=88)
+            images.append({"uri": f"{self.texture_uri}/{name}"})
         if images:
             self.json["images"] = images
 
@@ -328,8 +334,34 @@ class Writer:
             f.write(struct.pack("<II", len(self.bin), 0x004E4942) + bytes(self.bin))
 
 
+def image_roles(gltf):
+    """What each image is used for: color, normal, data (metal, roughness, occlusion) or emission."""
+    textures = gltf.get("textures", [])
+    rank = {"normal": 3, "color": 2, "emission": 1, "data": 0}
+    roles = {}
+
+    def mark(info, role):
+        if not info or info.get("index") is None or info["index"] >= len(textures):
+            return
+        source = textures[info["index"]].get("source")
+        if source is not None and rank[role] >= rank.get(roles.get(source), -1):
+            roles[source] = role
+
+    for material in gltf.get("materials", []):
+        pbr = material.get("pbrMetallicRoughness", {})
+        mark(pbr.get("baseColorTexture"), "color")
+        mark(pbr.get("metallicRoughnessTexture"), "data")
+        mark(material.get("normalTexture"), "normal")
+        mark(material.get("occlusionTexture"), "data")
+        mark(material.get("emissiveTexture"), "emission")
+        gloss = material.get("extensions", {}).get("KHR_materials_pbrSpecularGlossiness", {})
+        mark(gloss.get("diffuseTexture"), "color")
+        mark(gloss.get("specularGlossinessTexture"), "data")
+    return roles
+
+
 def write(source, parts, root_name, path, max_texture=MAX_TEXTURE):
-    writer = Writer(source, max_texture)
+    writer = Writer(source, max_texture, path.parent / "Textures" / root_name, f"Textures/{root_name}")
     writer.copy_materials()
     writer.add(parts, root_name)
     writer.save(path)
@@ -352,7 +384,7 @@ def ground(parts, center_on=None):
 
 def car_wagon(source):
     glb = Glb(source)
-    parts = parts_of(glb)
+    parts = parts_of(glb, skip=("Body_Badges",))
     # Turn it so the front (the headlights) faces +z.
     lights = [p for p in parts if "Headlights" in p.name]
     low, high = bounds(parts)
@@ -375,16 +407,17 @@ def car_wagon(source):
     up = np.cross(column, side)
     set_pivot(steering, center, np.c_[side, up, column])
     seat_side = "left (Unity -x)" if center[0] > 0 else "right (Unity +x)"
-    print(f"  wagon: turned {angle:.0f} degrees; steering wheel at {np.round(center, 2)} (glTF), driver on the {seat_side}")
+    print(f"  car: turned {angle:.0f} degrees; steering wheel at {np.round(center, 2)} (glTF), driver on the {seat_side}")
     return glb, parts
 
 
 def car_wreck(source):
     glb = Glb(source)
-    parts = parts_of(glb, skip=("Plane001",))
+    parts = parts_of(glb)
     low, high = bounds(parts)
     length = (high - low)[[0, 2]].max()
-    transform(parts, np.eye(3) * (4.9 / length))
+    # A full-size sedan that lost its front: it is 5 m long without the crushed end.
+    transform(parts, np.eye(3) * (5.0 / length))
     ground(parts)
     return glb, parts
 
@@ -464,12 +497,11 @@ def knife_switch(source):
 
 
 SPECS = {
-    "car_wagon": ("fairheaven_sw_84_-_low_poly_model.glb", car_wagon, 2048),
-    "car_wreck": ("old_rusty_car.glb", car_wreck, 1024),
+    "car_wagon": ("kiri_86_-_low_poly_model.glb", car_wagon, 2048),
+    "car_wreck": ("destroyed_car_03__backrooms_car_gameready_ver.glb", car_wreck, 1024),
     "exit_lever": ("industrial_electricitys_lever.glb", exit_lever, 1024),
     "knife_switch": ("early_1900s_knife_switches_type_c.glb", knife_switch, 1024),
 }
-HANDS = ("first_person_hands_rigged.glb", "fp_hands")
 
 
 def main():
@@ -483,8 +515,6 @@ def main():
     for name, (file, prepare, max_texture) in SPECS.items():
         glb, parts = prepare(source / file)
         write(glb, parts, name, out / f"{name}.glb", max_texture)
-    shutil.copyfile(source / HANDS[0], out / f"{HANDS[1]}.glb")
-    print(f"{HANDS[1]}.glb: copied")
 
 
 if __name__ == "__main__":

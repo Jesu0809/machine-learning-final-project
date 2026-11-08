@@ -1,23 +1,24 @@
-"""Draw the neon signs of the pizzeria's front (seen in the intro cinematic) as PNGs.
+"""Draw the neon signs of the circus front (seen in the intro cinematic) as PNGs.
 
 Written as HTML with CSS glows and rendered with headless Google Chrome. The dark parts of each
 image are the sign board; the bright parts become the emission (neon) in the game.
 
 Usage (from the repository root):
-    python tools/generate_exterior_art.py
+    python tools/generate_exterior_art.py [unity project folder]
 """
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT = ROOT / "unity" / "Assets" / "Art" / "Exterior"
+OUTPUT = Path(sys.argv[1] if len(sys.argv) > 1 else ROOT / "unity") / "Assets" / "Art" / "Exterior"
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
 MAIN_SIGN = """
 <div class="board">
-  <div class="script">Freddy Fazbear's</div>
-  <div class="block">P<span class="dead">I</span>ZZA</div>
+  <div class="script">Bellwether's</div>
+  <div class="block">CIR<span class="dead">C</span>US</div>
 </div>
 <style>
   body { margin: 0; background: #07060a; }
@@ -34,32 +35,30 @@ MAIN_SIGN = """
 
 POLE_SIGN = """
 <div class="board">
-  <div class="name">FREDDY'S</div>
+  <div class="name">BELLWETHER'S</div>
   <svg width="460" height="400" viewBox="0 0 460 400">
     <defs><filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="9" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter></defs>
-    <g fill="none" stroke="#ff9a3c" stroke-width="13" stroke-linecap="round" filter="url(#glow)">
-      <circle cx="105" cy="95" r="55"/><circle cx="355" cy="95" r="55"/>
-      <circle cx="230" cy="215" r="150"/>
-      <ellipse cx="230" cy="275" rx="70" ry="52"/>
+    <g fill="none" stroke="#fff1d6" stroke-width="12" filter="url(#glow)"><ellipse cx="230" cy="240" rx="120" ry="130"/></g>
+    <g fill="none" stroke="#3ca8ff" stroke-width="16" stroke-linecap="round" filter="url(#glow)">
+      <path d="M 112 170 q -60 -10 -62 50 q -2 50 40 58"/><path d="M 348 170 q 60 -10 62 50 q 2 50 -40 58"/>
+    </g>
+    <g fill="none" stroke="#ff4a3c" stroke-width="12" filter="url(#glow)">
+      <path d="M 170 118 L 230 8 L 290 118 Z"/><circle cx="230" cy="248" r="24"/><path d="M 140 285 Q 230 365 320 285" stroke-linecap="round"/>
     </g>
     <g fill="#fff1d6" filter="url(#glow)">
-      <circle cx="175" cy="190" r="16"/><circle cx="285" cy="190" r="16"/>
-      <ellipse cx="230" cy="255" rx="26" ry="18"/>
-    </g>
-    <g fill="none" stroke="#ffd23c" stroke-width="10" filter="url(#glow)">
-      <path d="M 150 95 L 310 95 L 290 40 L 170 40 Z"/>
+      <path d="M 180 180 l 16 32 l -16 32 l -16 -32 Z"/><path d="M 280 180 l 16 32 l -16 32 l -16 -32 Z"/>
     </g>
   </svg>
-  <div class="line">FAMILY PIZZERIA</div>
+  <div class="line">WINTER CIRCUS</div>
   <div class="closed">CLOSED</div>
 </div>
 <style>
   body { margin: 0; background: #07060a; }
   .board { width: 1024px; height: 1024px; box-sizing: border-box; border: 12px solid #1d1a22; background: #0a080d;
            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
-  .name { font-family: 'Futura', sans-serif; font-weight: 800; font-size: 120px; color: #ffe9b0;
+  .name { font-family: 'Futura', sans-serif; font-weight: 800; font-size: 96px; color: #ffe9b0;
           text-shadow: 0 0 8px #fff, 0 0 24px #ffb000, 0 0 60px #c87800; }
   .line { font-family: 'DIN Condensed', 'Futura', sans-serif; font-size: 96px; letter-spacing: 8px; color: #bfe8ff;
           text-shadow: 0 0 8px #fff, 0 0 24px #2aa8ff, 0 0 60px #0060c0; }

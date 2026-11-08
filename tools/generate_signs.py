@@ -1,4 +1,4 @@
-"""Draw the signs and posters of the pizzeria with real typefaces and icons.
+"""Draw the signs and posters of the winter circus with real typefaces and icons.
 
 The game used to write every sign in a 5x7 pixel font. This tool draws them as textures instead,
 with free fonts (Google Fonts: Oswald, Bebas Neue, Bungee, Luckiest Guy, Special Elite, Permanent
@@ -8,9 +8,9 @@ Marker) and Material Symbols icons, into Assets/Art/Signs/ of the Unity project:
                          colors of that room's wing (public: red and gold, staff: slate and white)
     exit_left/right.png  green EXIT box with the running man and an arrow toward the door
     exit_door.png        red EXIT lightbox over the doors out of the building
-    title_<key>.png      the big wall signs (SHOWTIME, PARTY ROOM, SECURITY, ...)
+    title_<key>.png      the big wall signs (SHOWTIME, BIRTHDAY TENT, WATCH OFFICE, ...)
     map_<where>.png      a "YOU ARE HERE" directory of the building, drawn from PizzeriaLayout.cs
-    poster_<n>.png       aged posters of the restaurant
+    poster_<n>.png       aged posters of the circus
     label_<item>.png     the objective items: the breaker's warning plate, the staff keycard
                          and the label of the security tape
     breaker_*.png        the breaker panel's dead front with its circuit labels, and the
@@ -44,6 +44,7 @@ GOOGLE = "https://raw.githubusercontent.com/google/fonts/main/"
 ICONS = "https://raw.githubusercontent.com/google/material-design-icons/master/variablefont/"
 FONTS = {
     "oswald": GOOGLE + "ofl/oswald/Oswald%5Bwght%5D.ttf",
+    "rye": GOOGLE + "ofl/rye/Rye-Regular.ttf",
     "bebas": GOOGLE + "ofl/bebasneue/BebasNeue-Regular.ttf",
     "bungee": GOOGLE + "ofl/bungee/Bungee-Regular.ttf",
     "luckiest": GOOGLE + "apache/luckiestguy/LuckiestGuy-Regular.ttf",
@@ -55,19 +56,19 @@ FONTS = {
 }
 CODEPOINTS = ICONS + "MaterialSymbolsOutlined%5BFILL,GRAD,opsz,wght%5D.codepoints"
 
-ROOMS = ["Office", "Parts & Service", "Restrooms", "Back Hall", "Storage", "Kitchen",
-         "Dining Hall", "Main Hall", "Party Room", "Arcade", "Exit Lobby", "Banquet Room", "Veranda"]
+ROOMS = ["Watch Office", "Prop Workshop", "Dressing Rooms", "Backstage Hall", "Trunk Store", "Concessions",
+         "The Big Ring", "Promenade", "Birthday Tent", "The Midway", "Ticket Lobby", "Ringside Lounge", "Winter Garden"]
 # The power sockets and the color of the cell each takes (yellow, blue, green).
 # Rooms with a power socket on a wall (HuntMap.SocketCandidates); three of them are live each night,
 # at random, so the maps mark them all in the same grey and the player's list names tonight's.
-SOCKETS = {room: (150, 150, 150) for room in ["Parts & Service", "Kitchen", "Restrooms", "Banquet Room", "Veranda",
-                                              "Party Room", "Dining Hall", "Arcade"]}
-STAFF_WING = {"Office", "Parts & Service", "Restrooms", "Back Hall", "Storage", "Kitchen"}
+SOCKETS = {room: (150, 150, 150) for room in ["Prop Workshop", "Concessions", "Dressing Rooms", "Ringside Lounge", "Winter Garden",
+                                              "Birthday Tent", "The Big Ring", "The Midway"]}
+STAFF_WING = {"Watch Office", "Prop Workshop", "Dressing Rooms", "Backstage Hall", "Trunk Store", "Concessions"}
 ROOM_ICONS = {
-    "Office": "security", "Parts & Service": "build", "Restrooms": "wc", "Back Hall": "meeting_room",
-    "Storage": "inventory_2", "Kitchen": "restaurant", "Dining Hall": "local_pizza", "Main Hall": "storefront",
-    "Party Room": "celebration", "Arcade": "sports_esports", "Exit Lobby": "door_open",
-    "Banquet Room": "table_restaurant", "Veranda": "deck",
+    "Watch Office": "security", "Prop Workshop": "build", "Dressing Rooms": "checkroom", "Backstage Hall": "meeting_room",
+    "Trunk Store": "inventory_2", "Concessions": "fastfood", "The Big Ring": "theater_comedy", "Promenade": "storefront",
+    "Birthday Tent": "celebration", "The Midway": "sports_esports", "Ticket Lobby": "confirmation_number",
+    "Ringside Lounge": "table_restaurant", "Winter Garden": "park",
 }
 
 GOLD = (236, 190, 86)
@@ -229,60 +230,59 @@ def door_plate(room):
         d.line([0, y, w, y], fill=tuple(int(c * k) for c in bg))
     d.rectangle([10, 10, w - 11, h - 11], outline=fg, width=6)
     d.rectangle([24, 24, w - 25, h - 25], outline=tuple(int(c * 0.6) for c in fg), width=2)
-    glyph, ifont = icon(ROOM_ICONS[room], 150)
-    d.text((70, h / 2), glyph, font=ifont, fill=fg, anchor="lm")
     name = room.upper()
-    f = fit_font(d, name, "oswald", w - 330, 150, weight=650, spacing=6)
-    draw_text(d, (240 + (w - 270) / 2, h / 2 + 4), name, f, CREAM if public else WHITE, spacing=6)
+    f = fit_font(d, name, "rye", w - 150, 160)
+    draw_text(d, (w / 2, h / 2 + 6), name, f, GOLD if public else CREAM)
     screws(d, w, h, 46, 8)
     return grime(img, 0.35, seed(room))
 
 
+def painted_arrow(d, x, y, size, left, fill):
+    side = -1 if left else 1
+    d.polygon([(x - side * size, y - size * 0.22), (x, y - size * 0.22), (x, y - size * 0.6), (x + side * size, y),
+               (x, y + size * 0.6), (x, y + size * 0.22), (x - side * size, y + size * 0.22)], fill=fill)
+
+
 def exit_box(arrow_left):
+    """A hand-painted board: green so it can be found at a glance, with a pointing arrow."""
     w, h = 768, 320
-    img = Image.new("RGB", (w, h), EXIT_GREEN)
+    img = Image.new("RGB", (w, h), (12, 70, 40))
     d = ImageDraw.Draw(img)
-    d.rectangle([14, 14, w - 15, h - 15], outline=(220, 255, 230), width=8)
-    run, ifont = icon("directions_run", 200)
-    arrow, afont = icon("arrow_back" if arrow_left else "arrow_forward", 170)
-    # The word sits between the arrow (170 px) and the running man (200 px).
-    f = fit_font(d, "EXIT", "bebas", w - 440, 230, spacing=8)
+    d.rectangle([14, 14, w - 15, h - 15], outline=GOLD, width=8)
+    f = fit_font(d, "WAY OUT", "rye", w - 330, 200)
     if arrow_left:
-        d.text((40, h / 2), arrow, font=afont, fill=WHITE, anchor="lm")
-        draw_text(d, (40 + 170 + (w - 450) / 2, h / 2 + 8), "EXIT", f, WHITE, spacing=8)
-        d.text((w - 30, h / 2), run, font=ifont, fill=WHITE, anchor="rm")
+        painted_arrow(d, 150, h / 2, 90, True, CREAM)
+        draw_text(d, (w / 2 + 110, h / 2 + 6), "WAY OUT", f, CREAM)
     else:
-        d.text((30, h / 2), run, font=ifont, fill=WHITE, anchor="lm")
-        draw_text(d, (30 + 200 + (w - 450) / 2, h / 2 + 8), "EXIT", f, WHITE, spacing=8)
-        d.text((w - 40, h / 2), arrow, font=afont, fill=WHITE, anchor="rm")
-    return img
+        painted_arrow(d, w - 150, h / 2, 90, False, CREAM)
+        draw_text(d, (w / 2 - 110, h / 2 + 6), "WAY OUT", f, CREAM)
+    return grime(img, 0.3, 411 + int(arrow_left))
 
 
 def exit_door():
     w, h = 768, 256
-    img = Image.new("RGB", (w, h), (90, 6, 6))
+    img = Image.new("RGB", (w, h), (12, 70, 40))
     d = ImageDraw.Draw(img)
-    d.rectangle([12, 12, w - 13, h - 13], outline=(255, 210, 200), width=6)
-    run, ifont = icon("directions_run", 170)
-    d.text((50, h / 2), run, font=ifont, fill=(255, 235, 230), anchor="lm")
-    draw_text(d, (w / 2 + 60, h / 2 + 8), "EXIT", font("bebas", 200), (255, 235, 230), spacing=12)
-    return img
+    d.rectangle([12, 12, w - 13, h - 13], outline=GOLD, width=6)
+    draw_text(d, (w / 2, h / 2 + 8), "WAY OUT", fit_font(d, "WAY OUT", "rye", w - 120, 170), CREAM)
+    return grime(img, 0.3, 413)
 
 
-def neon_title(text, colors, width=1536, height=384, font_name="bungee"):
-    """A lightbox / neon sign: bright letters with a colored glow on a dark backing."""
-    img = Image.new("RGB", (width, height), (14, 8, 16))
+def neon_title(text, colors, width=1536, height=384, font_name="rye"):
+    """A hand-painted circus board: gold letters with a shadow on old red, a row of bulbs around it."""
+    img = Image.new("RGB", (width, height), (82, 12, 14))
     d = ImageDraw.Draw(img)
-    d.rounded_rectangle([8, 8, width - 9, height - 9], radius=28, outline=colors[1], width=6)
-    letters = Image.new("RGB", (width, height), (0, 0, 0))
-    ld = ImageDraw.Draw(letters)
-    f = fit_font(ld, text, font_name, width - 140, height - 120)
-    draw_text(ld, (width / 2, height / 2), text, f, colors[0])
-    glow = glow_layer(letters, colors[1], 18)
-    img = ImageChops.add(img, glow)
-    img = ImageChops.add(img, ImageChops.multiply(glow, Image.new("RGB", img.size, (120, 120, 120))))
-    img.paste(letters, (0, 0), letters.convert("L").point(lambda v: 255 if v > 20 else 0))
-    return grime(img, 0.2, seed(text))
+    for y in range(height):
+        k = 1.0 - 0.3 * abs(y / height - 0.45)
+        d.line([0, y, width, y], fill=(int(82 * k), int(12 * k), int(14 * k)))
+    d.rectangle([10, 10, width - 11, height - 11], outline=GOLD, width=8)
+    for x in range(40, width - 20, 64):
+        for y in (30, height - 30):
+            d.ellipse([x - 9, y - 9, x + 9, y + 9], fill=(255, 226, 150))
+    f = fit_font(d, text, font_name, width - 170, height - 130)
+    draw_text(d, (width / 2 + 6, height / 2 + 8), text, f, (30, 8, 8))
+    draw_text(d, (width / 2, height / 2), text, f, GOLD)
+    return grime(img, 0.3, seed(text))
 
 
 def staff_title(text, plate=(196, 192, 176), ink=(32, 34, 34), width=1280, height=320):
@@ -314,7 +314,7 @@ def directory(project, here, title):
     img = Image.new("RGB", (w, h), (222, 214, 192))
     d = ImageDraw.Draw(img)
     d.rectangle([0, 0, w - 1, 150], fill=RED)
-    draw_text(d, (w / 2, 76), "FREDDY FAZBEAR'S PIZZA  -  DIRECTORY", font("oswald", 74, 700), CREAM, spacing=4)
+    draw_text(d, (w / 2, 76), "BELLWETHER'S WINTER CIRCUS  -  DIRECTORY", font("oswald", 74, 700), CREAM, spacing=4)
     xs = [r[0] for r in rooms] + [r[0] + r[2] for r in rooms]
     zs = [r[1] for r in rooms] + [r[1] + r[3] for r in rooms]
     min_x, max_x, min_z, max_z = min(xs) - 2, max(xs) + 2, min(zs) - 2, max(zs) + 2
@@ -376,32 +376,35 @@ def directory(project, here, title):
             cx, cy = b[0] - 30, b[1] - 30
             d.ellipse([cx - 24, cy - 24, cx + 24, cy + 24], fill=SOCKETS[ROOMS[i]], outline=(30, 30, 30), width=4)
             draw_text(d, (cx, cy), glyph, icon_font, (25, 25, 25))
-    legend = "RED: RESTAURANT    GREY-GREEN: STAFF ONLY    GREEN: WAY OUT    PLUGS: SOCKETS (LIVE ONES: YOUR LIST)"
+    legend = "RED: CIRCUS    GREY-GREEN: STAFF ONLY    GREEN: WAY OUT    PLUGS: SOCKETS (LIVE ONES: YOUR LIST)"
     draw_text(d, (w / 2, h - 50), legend, font("oswald", 32, 500), (60, 50, 44))
     return grime(img, 0.45, seed(title))
 
 
 # ---------------------------------------------------------------- posters
 
-def bear(d, cx, cy, s, color=(122, 72, 40)):
-    """A cartoon of Freddy for the posters: ears, head, muzzle, eyes, top hat, bow tie."""
-    dark = tuple(int(c * 0.6) for c in color)
-    light = (214, 170, 120)
+def clown(d, cx, cy, s, skin=(238, 232, 220), hair=(52, 92, 170)):
+    """Pockets on the posters: white face, tufts of blue hair, diamond eyes, red nose, a wide stitched smile."""
+    dark = (30, 22, 24)
     for side in (-1, 1):
-        d.ellipse([cx + side * 0.62 * s - 0.24 * s, cy - 0.78 * s, cx + side * 0.62 * s + 0.24 * s, cy - 0.3 * s], fill=color, outline=dark, width=4)
-        d.ellipse([cx + side * 0.62 * s - 0.12 * s, cy - 0.66 * s, cx + side * 0.62 * s + 0.12 * s, cy - 0.42 * s], fill=dark)
-    d.ellipse([cx - 0.75 * s, cy - 0.65 * s, cx + 0.75 * s, cy + 0.6 * s], fill=color, outline=dark, width=5)
-    d.ellipse([cx - 0.42 * s, cy - 0.05 * s, cx + 0.42 * s, cy + 0.5 * s], fill=light)
-    d.ellipse([cx - 0.1 * s, cy, cx + 0.1 * s, cy + 0.14 * s], fill=(30, 20, 18))
-    d.arc([cx - 0.28 * s, cy + 0.06 * s, cx + 0.28 * s, cy + 0.42 * s], 20, 160, fill=(30, 20, 18), width=6)
+        for k in range(3):
+            x = cx + side * (0.72 + k * 0.16) * s
+            y = cy - (0.34 - k * 0.2) * s
+            d.ellipse([x - 0.22 * s, y - 0.22 * s, x + 0.22 * s, y + 0.22 * s], fill=hair)
+    d.ellipse([cx - 0.75 * s, cy - 0.8 * s, cx + 0.75 * s, cy + 0.72 * s], fill=skin, outline=dark, width=5)
+    d.polygon([(cx - 0.3 * s, cy - 1.3 * s), (cx + 0.3 * s, cy - 1.3 * s), (cx + 0.42 * s, cy - 0.72 * s), (cx - 0.42 * s, cy - 0.72 * s)], fill=(150, 24, 30))
+    d.ellipse([cx - 0.1 * s, cy - 1.44 * s, cx + 0.1 * s, cy - 1.24 * s], fill=(245, 205, 70))
     for side in (-1, 1):
-        ex = cx + side * 0.3 * s
-        d.ellipse([ex - 0.15 * s, cy - 0.33 * s, ex + 0.15 * s, cy - 0.05 * s], fill=(250, 250, 245), outline=dark, width=3)
-        d.ellipse([ex - 0.06 * s, cy - 0.24 * s, ex + 0.06 * s, cy - 0.11 * s], fill=(40, 90, 160))
-    d.rectangle([cx - 0.28 * s, cy - 1.12 * s, cx + 0.28 * s, cy - 0.62 * s], fill=(20, 18, 20))
-    d.rectangle([cx - 0.42 * s, cy - 0.68 * s, cx + 0.42 * s, cy - 0.58 * s], fill=(20, 18, 20))
-    d.polygon([(cx, cy + 0.66 * s), (cx - 0.3 * s, cy + 0.52 * s), (cx - 0.3 * s, cy + 0.8 * s)], fill=(20, 18, 20))
-    d.polygon([(cx, cy + 0.66 * s), (cx + 0.3 * s, cy + 0.52 * s), (cx + 0.3 * s, cy + 0.8 * s)], fill=(20, 18, 20))
+        ex = cx + side * 0.32 * s
+        ey = cy - 0.24 * s
+        d.polygon([(ex, ey - 0.3 * s), (ex + 0.15 * s, ey), (ex, ey + 0.3 * s), (ex - 0.15 * s, ey)], fill=dark)
+        d.ellipse([ex - 0.045 * s, ey - 0.045 * s, ex + 0.045 * s, ey + 0.045 * s], fill=(240, 240, 235))
+    d.ellipse([cx - 0.15 * s, cy - 0.12 * s, cx + 0.15 * s, cy + 0.18 * s], fill=(205, 30, 36), outline=dark, width=3)
+    d.arc([cx - 0.56 * s, cy - 0.18 * s, cx + 0.56 * s, cy + 0.58 * s], 12, 168, fill=(170, 24, 30), width=max(6, int(0.1 * s)))
+    for k in range(-3, 4):
+        x = cx + k * 0.13 * s
+        y = cy + 0.34 * s + (0.1 * s) * (1 - (k / 3.5) ** 2)
+        d.line([x, y - 0.05 * s, x, y + 0.05 * s], fill=dark, width=3)
 
 
 def paper(img, seed, stains=1.0):
@@ -442,9 +445,9 @@ def poster_celebrate():
         x, y = rng.uniform(0, w), rng.uniform(0, h)
         c = [(250, 210, 50), (240, 70, 90), (90, 220, 120), (250, 250, 250)][rng.integers(4)]
         d.rectangle([x, y, x + 10, y + 18], fill=c)
-    bear(d, w / 2, h * 0.52, 250)
-    draw_text(d, (w / 2, 110), "CELEBRATE!", font("luckiest", 130), (250, 220, 60))
-    draw_text(d, (w / 2, h - 90), "FREDDY FAZBEAR'S PIZZA", font("oswald", 62, 700), WHITE, spacing=3)
+    clown(d, w / 2, h * 0.56, 250)
+    draw_text(d, (w / 2, 110), "THE LAST SHOW!", font("luckiest", 92), (250, 220, 60))
+    draw_text(d, (w / 2, h - 90), "POCKETS THE CLOWN", font("oswald", 62, 700), WHITE, spacing=3)
     return paper(img, 11)
 
 
@@ -452,19 +455,17 @@ def poster_lets_eat():
     w, h = 768, 1024
     img = Image.new("RGB", (w, h), (196, 40, 32))
     d = ImageDraw.Draw(img)
-    cx, cy, r = w / 2, h * 0.5, 250
-    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(214, 150, 60))
-    d.ellipse([cx - r + 26, cy - r + 26, cx + r - 26, cy + r - 26], fill=(236, 190, 70))
+    cx, top, bottom = w / 2, h * 0.42, h * 0.84
     rng = np.random.default_rng(5)
-    for _ in range(22):
-        a, rr = rng.uniform(0, math.tau), rng.uniform(30, r - 60)
-        x, y = cx + math.cos(a) * rr, cy + math.sin(a) * rr
-        d.ellipse([x - 22, y - 22, x + 22, y + 22], fill=(170, 30, 30))
-    for k in range(4):
-        a = k * math.pi / 4
-        d.line([cx - math.cos(a) * r, cy - math.sin(a) * r, cx + math.cos(a) * r, cy + math.sin(a) * r], fill=(180, 120, 50), width=5)
-    draw_text(d, (w / 2, 120), "LET'S EAT!!!", font("luckiest", 120), (255, 240, 200))
-    draw_text(d, (w / 2, h - 90), "FAMILY PIZZA  -  $4.99", font("oswald", 60, 700), (255, 240, 200), spacing=2)
+    for _ in range(90):
+        x, y, r = cx + rng.normal(0, 95), top + rng.normal(-15, 55), rng.uniform(20, 38)
+        d.ellipse([x - r, y - r, x + r, y + r], fill=(250, 232, 170), outline=(214, 170, 80), width=3)
+    for k in range(7):
+        x0 = cx - 180 + k * 360 / 7
+        x1 = cx - 130 + k * 260 / 7
+        d.polygon([(x0, top), (x0 + 360 / 7, top), (x1 + 260 / 7, bottom), (x1, bottom)], fill=(240, 236, 224) if k % 2 else (200, 26, 30))
+    draw_text(d, (w / 2, 120), "HOT POPCORN!", font("luckiest", 104), (255, 240, 200))
+    draw_text(d, (w / 2, h - 90), "ONE BAG  -  25 CENTS", font("oswald", 60, 700), (255, 240, 200), spacing=2)
     return paper(img, 12)
 
 
@@ -474,8 +475,8 @@ def poster_rules():
     d = ImageDraw.Draw(img)
     d.rectangle([0, 0, w, 170], fill=(30, 30, 34))
     draw_text(d, (w / 2, 88), "SAFETY RULES", font("oswald", 100, 700), (250, 210, 60), spacing=4)
-    rules = ["1. NO RUNNING IN THE", "    DINING AREA.", "2. STAY WITH YOUR PARTY.", "3. DO NOT TOUCH THE", "    PERFORMERS.",
-             "4. THE BAND RESTS AFTER", "    MIDNIGHT. LET IT REST.", "5. REPORT ANYTHING THAT", "    MOVES ON ITS OWN."]
+    rules = ["1. NO RUNNING UNDER", "    THE BIG TOP.", "2. STAY IN YOUR SEAT.", "3. DO NOT TOUCH THE", "    PERFORMERS.",
+             "4. THE CLOWN RESTS AFTER", "    MIDNIGHT. LET HIM REST.", "5. REPORT ANYTHING THAT", "    MOVES ON ITS OWN."]
     f = font("typewriter", 46)
     y = 220
     for line in rules:
@@ -506,22 +507,55 @@ def poster_employee():
     w, h = 768, 1024
     img = Image.new("RGB", (w, h), (24, 60, 110))
     d = ImageDraw.Draw(img)
-    draw_text(d, (w / 2, 110), "EMPLOYEE", font("bungee", 104), (250, 220, 70))
+    draw_text(d, (w / 2, 110), "PERFORMER", font("bungee", 96), (250, 220, 70))
     draw_text(d, (w / 2, 220), "OF THE MONTH", font("bungee", 70), (250, 220, 70))
     d.rectangle([164, 300, w - 164, 760], fill=(220, 214, 200), outline=(250, 220, 70), width=10)
-    bear(d, w / 2, 540, 150, color=(90, 60, 40))
+    clown(d, w / 2, 560, 130)
     d.line([190, 330, w - 190, 730], fill=(20, 20, 20), width=10)
     d.line([w - 190, 330, 190, 730], fill=(20, 20, 20), width=10)
     draw_text(d, (w / 2, 850), "JEREMY F.", font("marker", 80), WHITE)
     return paper(img, 15)
 
 
+def circus_bill(title, lines, ground, ink, seed_number):
+    """An old letterpress bill for one of the acts."""
+    w, h = 768, 1024
+    img = Image.new("RGB", (w, h), ground)
+    d = ImageDraw.Draw(img)
+    d.rectangle([24, 24, w - 25, h - 25], outline=ink, width=8)
+    d.rectangle([40, 40, w - 41, h - 41], outline=ink, width=2)
+    draw_text(d, (w / 2, 110), "BELLWETHER'S", font("rye", 62), ink)
+    d.line([90, 165, w - 90, 165], fill=ink, width=4)
+    y = 300
+    for line in title:
+        draw_text(d, (w / 2, y), line, fit_font(d, line, "rye", w - 130, 170), ink)
+        y += 170
+    y += 40
+    for line in lines:
+        draw_text(d, (w / 2, y), line, font("typewriter", 42), ink)
+        y += 60
+    draw_text(d, (w / 2, h - 90), "EVERY NIGHT AT EIGHT", font("oswald", 44, 600), ink, spacing=4)
+    return paper(img, seed_number)
+
+
+def poster_flying():
+    return circus_bill(["THE FLYING", "ZAMBELLIS"], ["No net. No fear.", "No second show."], (214, 196, 150), (120, 18, 20), 16)
+
+
+def poster_strongman():
+    return circus_bill(["IRON", "OTTO"], ["Bends steel.", "Lifts a horse.", "Do not shake his hand."], (32, 48, 92), (236, 206, 120), 17)
+
+
+def poster_tamer():
+    return circus_bill(["MADAME", "FORTUNA"], ["She knows your name.", "She knows how you end."], (88, 16, 22), (240, 214, 150), 18)
+
+
 # ---------------------------------------------------------------- arcade cabinets
 
 GAMES = [
-    ("FAZ-MAN", (255, 220, 40), (30, 60, 220)),
+    ("PIE MAZE", (255, 220, 40), (30, 60, 220)),
     ("STAR BLASTER", (80, 255, 240), (200, 40, 255)),
-    ("PIZZA RUN", (255, 120, 40), (240, 30, 60)),
+    ("CIRCUS RUN", (255, 120, 40), (240, 30, 60)),
     ("GHOST MAZE", (120, 255, 120), (30, 180, 90)),
 ]
 
@@ -748,8 +782,8 @@ def label_keycard():
     img = Image.new("RGB", (w, h), (232, 234, 236))
     d = ImageDraw.Draw(img)
     d.rectangle([0, 0, w, 120], fill=(30, 70, 150))
-    draw_text(d, (w / 2 + 58, 62), "FAZBEAR ENTERTAINMENT", font("oswald", 42, 700), WHITE, spacing=2)
-    bear(d, 70, 70, 44, color=(150, 100, 60))
+    draw_text(d, (w / 2 + 58, 62), "BELLWETHER CIRCUS CO.", font("oswald", 42, 700), WHITE, spacing=2)
+    clown(d, 70, 78, 36)
     d.rectangle([40, 160, 200, 350], fill=(190, 196, 204), outline=(120, 126, 134), width=3)
     glyph, f = icon("person", 150)
     draw_text(d, (120, 258), glyph, f, (120, 126, 134))
@@ -790,7 +824,7 @@ def breaker_deadfront():
     d = ImageDraw.Draw(img)
     d.rectangle([14, 14, w - 15, h - 15], outline=(60, 62, 64), width=4)
     draw_text(d, (w / 2, 52), "PANEL B   120/240 V", font("oswald", 34, 600), (30, 32, 34), spacing=3)
-    draw_text(d, (w / 2, 88), "FAZ-ELECTRIC  LOAD CENTER", font("oswald", 20, 500), (40, 42, 44), spacing=2)
+    draw_text(d, (w / 2, 88), "BELLWETHER  LOAD CENTER", font("oswald", 20, 500), (40, 42, 44), spacing=2)
     for i in range(6):
         # Odd circuits down the left column, even down the right, as on a real panel.
         number = 2 * i + 1 if i < 3 else 2 * (i - 3) + 2
@@ -818,7 +852,7 @@ def breaker_module():
     draw_text(d, (w / 2, 30), "ON", font("oswald", 26, 700), (200, 200, 190), spacing=2)
     draw_text(d, (w / 2, h - 28), "OFF", font("oswald", 26, 700), (200, 200, 190), spacing=2)
     draw_text(d, (46, h / 2), "20", font("oswald", 40, 700), (215, 215, 205))
-    draw_text(d, (w - 50, h / 2), "FAZ", font("oswald", 22, 500), (150, 150, 145), spacing=2)
+    draw_text(d, (w - 50, h / 2), "BCC", font("oswald", 22, 500), (150, 150, 145), spacing=2)
     d.rectangle([w / 2 - 30, 52, w / 2 + 30, h - 52], fill=(10, 10, 12))
     return grime(img, 0.2, 302)
 
@@ -857,7 +891,7 @@ def cctv_overlay(room, number):
     draw_text(d, (40, 96), room.upper(), font("oswald", 26, 500), white, spacing=2, anchor_center=False)
     d.ellipse([w - 128, 42, w - 106, 64], fill=(230, 30, 30, 240))
     draw_text(d, (w - 96, 54), "REC", font("oswald", 28, 600), white, spacing=2, anchor_center=False)
-    draw_text(d, (40, h - 52), "FAZBEAR SECURITY   11-12-87", font("oswald", 22, 500), white, spacing=2, anchor_center=False)
+    draw_text(d, (40, h - 52), "CIRCUS SECURITY   11-12-87", font("oswald", 22, 500), white, spacing=2, anchor_center=False)
     # Darker corners, like the edge of a picture tube.
     yy, xx = np.mgrid[0:h, 0:w]
     r = np.sqrt(((xx - w / 2) / (w / 2)) ** 2 + ((yy - h / 2) / (h / 2)) ** 2)
@@ -910,21 +944,18 @@ def scribble(layer, cx, cy, rx, ry, color, seed, density=7):
     crayon(layer, pts, color, 5, seed)
 
 
-def kid_bear(layer, cx, cy, s, seed, eyes=(40, 40, 40), body=True):
-    brown = (120, 70, 35)
-    scribble(layer, cx, cy, s * 0.55, s * 0.5, (150, 95, 50), seed)
-    crayon(layer, circle_points(cx, cy, s * 0.55, s * 0.5), brown, 6, seed + 1, True)
+def kid_clown(layer, cx, cy, s, seed, eyes=(40, 40, 40), body=True):
+    scribble(layer, cx, cy, s * 0.5, s * 0.5, (245, 240, 225), seed)
+    crayon(layer, circle_points(cx, cy, s * 0.55, s * 0.5), (60, 60, 60), 6, seed + 1, True)
     for side in (-1, 1):
-        crayon(layer, circle_points(cx + side * s * 0.45, cy - s * 0.48, s * 0.15, s * 0.15), brown, 6, seed + 2 + side, True)
+        scribble(layer, cx + side * s * 0.62, cy - s * 0.25, s * 0.2, s * 0.22, (60, 100, 210), seed + 2 + side)
         crayon(layer, circle_points(cx + side * s * 0.2, cy - s * 0.1, s * 0.08, s * 0.08), eyes, 7, seed + 4 + side, True)
-    crayon(layer, [(cx - s * 0.2, cy + s * 0.18), (cx, cy + s * 0.28), (cx + s * 0.2, cy + s * 0.18)], (30, 20, 20), 6, seed + 6)
-    hat = [(cx - s * 0.18, cy - s * 0.48), (cx - s * 0.18, cy - s * 0.85), (cx + s * 0.18, cy - s * 0.85), (cx + s * 0.18, cy - s * 0.48)]
-    scribble(layer, cx, cy - s * 0.66, s * 0.17, s * 0.17, (20, 20, 20), seed + 7, 5)
-    crayon(layer, hat, (20, 20, 20), 6, seed + 8)
-    crayon(layer, [(cx - s * 0.35, cy - s * 0.48), (cx + s * 0.35, cy - s * 0.48)], (20, 20, 20), 7, seed + 9)
+    scribble(layer, cx, cy + s * 0.04, s * 0.09, s * 0.09, (220, 40, 40), seed + 6, 5)
+    crayon(layer, [(cx - s * 0.32, cy + s * 0.18), (cx, cy + s * 0.34), (cx + s * 0.32, cy + s * 0.18)], (200, 30, 40), 7, seed + 7)
+    crayon(layer, [(cx - s * 0.25, cy - s * 0.46), (cx, cy - s * 0.95), (cx + s * 0.25, cy - s * 0.46)], (200, 30, 40), 7, seed + 8, True)
     if body:
-        crayon(layer, circle_points(cx, cy + s * 1.15, s * 0.45, s * 0.62), brown, 6, seed + 10, True)
-        crayon(layer, [(cx - s * 0.12, cy + s * 0.55), (cx + s * 0.12, cy + s * 0.65), (cx + s * 0.12, cy + s * 0.5), (cx - s * 0.12, cy + s * 0.6), (cx - s * 0.12, cy + s * 0.5)], (20, 20, 20), 6, seed + 11)
+        crayon(layer, circle_points(cx, cy + s * 1.15, s * 0.45, s * 0.62), (200, 60, 60), 6, seed + 10, True)
+        crayon(layer, circle_points(cx + s * 0.2, cy + s * 1.25, s * 0.13, s * 0.13), (60, 60, 60), 5, seed + 11, True)
 
 
 def stick_kid(layer, cx, cy, s, color, seed, sad=False):
@@ -962,36 +993,32 @@ def drawing(index):
     layer = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     if index == 0:
         sun(layer, 120, 110, 55, seed)
-        kid_bear(layer, 560, 330, 220, seed + 20)
+        kid_clown(layer, 560, 330, 220, seed + 20)
         stick_kid(layer, 250, 380, 190, (230, 60, 60), seed + 40)
         crayon(layer, [(250 + 60, 440), (330, 200)], (60, 60, 60), 3, seed + 50)
         scribble(layer, 335, 160, 45, 55, (230, 40, 60), seed + 51)
         kid_text(layer, (w / 2, 690), "HAPPY BIRTHDAY!!", (40, 90, 200), 84, seed + 60, 2)
     elif index == 1:
-        tri = [(300, 150), (760, 260), (380, 640)]
-        scribble(layer, 480, 360, 170, 200, (250, 200, 50), seed)
-        crayon(layer, tri, (200, 120, 30), 8, seed + 1, True)
-        crayon(layer, [(300, 150), (760, 260)], (170, 90, 30), 18, seed + 2)
-        for k, (x, y) in enumerate([(420, 300), (540, 330), (450, 450), (600, 280)]):
-            scribble(layer, x, y, 32, 30, (200, 30, 30), seed + 10 + k, 5)
-        kid_text(layer, (w / 2, 700), "I LOVE PIZZA", (220, 60, 40), 90, seed + 20, -3)
+        # The big top, red and white, with a flag.
+        crayon(layer, [(180, 620), (180, 340), (512, 130), (844, 340), (844, 620)], (200, 40, 40), 8, seed, True)
+        for k in range(6):
+            x = 230 + k * 110
+            scribble(layer, x, 470, 34, 150, (230, 60, 60) if k % 2 else (250, 240, 220), seed + 2 + k, 5)
+        crayon(layer, [(512, 130), (512, 40), (590, 70), (512, 92)], (40, 90, 200), 6, seed + 12)
+        kid_text(layer, (w / 2, 700), "THE BIG TOP", (220, 60, 40), 90, seed + 20, -3)
     elif index == 2:
         crayon(layer, [(60, 520), (964, 520)], (120, 60, 30), 10, seed)
         scribble(layer, 512, 600, 450, 70, (140, 80, 40), seed + 1, 9)
-        kid_bear(layer, 512, 270, 170, seed + 10)
-        crayon(layer, circle_points(250, 300, 80, 95), (130, 70, 200), 6, seed + 20, True)
-        scribble(layer, 250, 300, 80, 95, (160, 110, 230), seed + 21)
-        crayon(layer, [(215, 215), (200, 90), (235, 210)], (130, 70, 200), 6, seed + 22)
-        crayon(layer, [(285, 215), (300, 90), (265, 210)], (130, 70, 200), 6, seed + 23)
-        crayon(layer, circle_points(780, 300, 85, 90), (230, 180, 20), 6, seed + 30, True)
-        scribble(layer, 780, 300, 85, 90, (250, 215, 60), seed + 31)
-        crayon(layer, [(760, 330), (820, 345), (760, 360)], (240, 120, 20), 6, seed + 32, True)
+        kid_clown(layer, 512, 270, 170, seed + 10)
+        for k, (x, color) in enumerate([(200, (130, 70, 200)), (310, (230, 180, 20)), (720, (60, 160, 90)), (830, (220, 60, 60))]):
+            scribble(layer, x, 250, 60, 75, color, seed + 20 + k)
+            crayon(layer, [(x, 325), (x + 10, 500)], (70, 70, 70), 3, seed + 30 + k)
         kid_text(layer, (w / 2, 700), "BEST DAY EVER", (40, 140, 60), 84, seed + 40, 1)
     elif index == 3:
         # The one nobody took down.
         for k in range(14):
             crayon(layer, [(40 + k * 70, 40), (90 + k * 70, 730)], (25, 25, 30), 7, seed + k)
-        kid_bear(layer, 640, 300, 200, seed + 30, eyes=(0, 0, 0))
+        kid_clown(layer, 640, 300, 200, seed + 30, eyes=(0, 0, 0))
         scribble(layer, 600, 290, 22, 22, (0, 0, 0), seed + 33, 4)
         scribble(layer, 680, 290, 22, 22, (0, 0, 0), seed + 34, 4)
         stick_kid(layer, 230, 380, 170, (70, 90, 200), seed + 40, sad=True)
@@ -1012,10 +1039,10 @@ def drawing(index):
         kid_text(layer, (w / 2, 700), "MY PARTY", (200, 60, 140), 96, seed + 60, 2)
     else:
         sun(layer, w - 120, 110, 50, seed)
-        kid_bear(layer, 380, 330, 210, seed + 10)
+        kid_clown(layer, 380, 330, 210, seed + 10)
         stick_kid(layer, 700, 330, 200, (240, 120, 40), seed + 30)
         crayon(layer, [(470, 420), (610, 420)], (230, 60, 60), 6, seed + 40)
-        kid_text(layer, (w / 2, 690), "THANK YOU FREDDY", (60, 100, 210), 80, seed + 50, -1)
+        kid_text(layer, (w / 2, 690), "THANK YOU POCKETS", (60, 100, 210), 80, seed + 50, -1)
     # Signed, like they all are.
     names = ["Emma, 6", "Lucas", "Mia 7", "", "Sofia, 5", "Noah"]
     if names[index]:
@@ -1033,8 +1060,8 @@ def door_logo():
     img = Image.new("RGB", (w, h), (90, 10, 12))
     d = ImageDraw.Draw(img)
     d.rectangle([6, 6, w - 7, h - 7], outline=GOLD, width=5)
-    bear(d, 110, 112, 62, color=(150, 95, 50))
-    draw_text(d, (w / 2 + 70, h / 2 + 4), "FREDDY FAZBEAR'S", fit_font(d, "FREDDY FAZBEAR'S", "luckiest", 760, 120), GOLD)
+    clown(d, 110, 124, 56)
+    draw_text(d, (w / 2 + 70, h / 2 + 4), "BELLWETHER'S CIRCUS", fit_font(d, "BELLWETHER'S CIRCUS", "luckiest", 760, 120), GOLD)
     return grime(img, 0.25, 305)
 
 
@@ -1071,16 +1098,16 @@ def chain_link():
 
 # ---------------------------------------------------------------- party things
 
-def pizza_box_top():
-    """The lid of a take-away box: white board, red print, a grease stain."""
+def snack_box_top():
+    """The lid of a concessions carton: white board, red print, a butter stain."""
     w = h = 512
     img = Image.new("RGB", (w, h), (232, 226, 210))
     d = ImageDraw.Draw(img)
     d.rectangle([14, 14, w - 15, h - 15], outline=(170, 30, 30), width=8)
     d.ellipse([w / 2 - 120, 70, w / 2 + 120, 310], outline=(170, 30, 30), width=8)
-    bear(d, w / 2, 200, 78, color=(170, 30, 30))
-    draw_text(d, (w / 2, 360), "FREDDY FAZBEAR'S", font("luckiest", 54), (170, 30, 30))
-    draw_text(d, (w / 2, 420), "HOT  &  FRESH  PIZZA", font("oswald", 36, 600), (60, 60, 60), spacing=3)
+    clown(d, w / 2, 210, 74)
+    draw_text(d, (w / 2, 360), "BELLWETHER'S", font("luckiest", 54), (170, 30, 30))
+    draw_text(d, (w / 2, 420), "HOT  BUTTERED  POPCORN", font("oswald", 36, 600), (60, 60, 60), spacing=3)
     arr = np.asarray(img, dtype=np.float32)
     yy, xx = np.mgrid[0:h, 0:w]
     stain = np.exp(-(((xx - 380) / 70.0) ** 2 + ((yy - 120) / 55.0) ** 2)) * 0.35
@@ -1514,6 +1541,20 @@ def vhs_static():
     return Image.fromarray(value.astype(np.uint8)).convert("RGB")
 
 
+def menu_title():
+    """The name of the game on the home screen: an old circus bill, on transparency."""
+    w, h = 1400, 520
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    draw_text(d, (w / 2, 60), "BELLWETHER'S WINTER CIRCUS PRESENTS", font("oswald", 44, 500), CREAM, spacing=8)
+    big = font("rye", 172)
+    for dx, dy, color in [(10, 12, (30, 4, 6, 255)), (0, 0, GOLD + (255,))]:
+        draw_text(d, (w / 2 + dx, 235 + dy), "NIGHT SHIFT", big, color)
+    d.line([240, 400, w - 240, 400], fill=GOLD + (255,), width=4)
+    draw_text(d, (w / 2, 455), "THE CLOWN IS LEARNING HOW YOU HIDE", font("oswald", 44, 500), (230, 90, 70, 255), spacing=6)
+    return img
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--project", default=str(ROOT / "unity"), help="Unity project folder")
@@ -1538,18 +1579,21 @@ def main():
     save("exit_right", exit_box(False))
     save("exit_door", exit_door())
     public = {"showtime": ("SHOWTIME", ((255, 230, 120), (255, 120, 40))),
-              "lets_party": ("LET'S PARTY!", ((255, 220, 90), (240, 40, 90))),
+              "step_right_up": ("STEP RIGHT UP!", ((255, 220, 90), (240, 40, 90))),
               "welcome": ("WELCOME", ((255, 230, 140), (255, 90, 40))),
-              "party_room": ("PARTY ROOM", ((255, 220, 90), (240, 40, 140))),
+              "birthday_tent": ("BIRTHDAY TENT", ((255, 220, 90), (240, 40, 140))),
               "prizes": ("PRIZES", ((170, 255, 255), (40, 200, 255))),
               "happy_birthday": ("HAPPY BIRTHDAY", ((180, 240, 255), (60, 120, 255))),
-              "arcade": ("ARCADE", ((255, 170, 255), (190, 40, 255))),
+              "midway": ("THE MIDWAY", ((255, 170, 255), (190, 40, 255))),
               "tickets": ("TICKETS", ((255, 235, 150), (255, 140, 30))),
-              "banquet_room": ("BANQUET ROOM", ((255, 230, 170), (230, 120, 40))),
-              "veranda": ("VERANDA", ((190, 255, 210), (40, 200, 120)))}
+              "ringside_lounge": ("RINGSIDE LOUNGE", ((255, 230, 170), (230, 120, 40))),
+              "winter_garden": ("WINTER GARDEN", ((190, 255, 210), (40, 200, 120))),
+              "high_striker": ("TEST YOUR STRENGTH", ((255, 225, 120), (240, 60, 40))),
+              "ring_toss": ("RING TOSS", ((180, 255, 200), (40, 190, 120))),
+              "popcorn": ("POPCORN", ((255, 235, 170), (240, 80, 40)))}
     for key, (text, colors) in public.items():
         save("title_" + key, neon_title(text, colors))
-    staff = {"security": "SECURITY", "parts_service": "PARTS & SERVICE", "storage": "STORAGE",
+    staff = {"watch_office": "WATCH OFFICE", "prop_workshop": "PROP WORKSHOP", "trunk_store": "TRUNK STORE",
              "staff_only": "STAFF ONLY", "out_of_order": "OUT OF ORDER"}
     for key, text in staff.items():
         plate = (210, 60, 50) if key == "out_of_order" else (196, 192, 176)
@@ -1571,7 +1615,8 @@ def main():
         save(f"arcade_marquee_{i}", marquee(i))
         save(f"arcade_screen_{i}", screen(i))
         save(f"arcade_side_{i}", side_art(i))
-    for i, make in enumerate([poster_celebrate, poster_lets_eat, poster_rules, poster_help_wanted, poster_employee]):
+    # The other posters come from real lithographs: tools/generate_posters.py.
+    for i, make in [(2, poster_rules)]:
         save(f"poster_{i}", make())
     save("label_danger", label_danger())
     save("label_keycard", label_keycard())
@@ -1582,7 +1627,7 @@ def main():
     save("sky_night", night_sky())
     for i in range(3):
         save(f"window_night_{i}", window_night(i))
-    save("pizza_box_top", pizza_box_top())
+    save("snack_box_top", snack_box_top())
     save_rgba("decal_paper_plate", paper_plate())
     save_rgba("decal_lost_found", lost_and_found())
     for i in range(3):
@@ -1591,6 +1636,7 @@ def main():
         save("lcd_" + name, lcd(text, color))
     for n in range(1, 10):
         save(f"key_{n}", keypad_key(n))
+    save_rgba("menu_title", menu_title())
     save("door_logo", door_logo())
     save("closed_sign", closed_sign())
     save("breaker_deadfront", breaker_deadfront())
@@ -1611,12 +1657,12 @@ def main():
     save_rgba("vhs_osd_party", vhs_osd("TOMMY 8TH", "SP", "AUG 08 1987", "8:14 PM", play=True))
     save_rgba("glass_drops", glass_drops())
     save("screen_voicemail", phone_voicemail())
-    save_rgba("vhs_osd_1987", vhs_osd("GRAND OPENING", "SP", "JUN 12 1987", "7:42 PM", play=True))
-    save_rgba("vhs_osd_sim", vhs_osd("CAM 06  DINING HALL", "SIM 0001", "NIGHTSHIFT LABS", "REWARD -0.46", play=True))
+    save_rgba("vhs_osd_1987", vhs_osd("OPENING NIGHT", "SP", "JUN 12 1987", "7:42 PM", play=True))
+    save_rgba("vhs_osd_sim", vhs_osd("CAM 06  THE BIG RING", "SIM 0001", "NIGHTSHIFT LABS", "REWARD -0.46", play=True))
     save_rgba("vhs_osd_guard4", vhs_osd("CAM 01  OFFICE", "NIGHT 5", "GUARD #4", "03:12:44 AM", rec=True))
     save_rgba("vhs_osd_guard5", vhs_osd("LIVE", "", "GUARD #5", "--:--", rec=True))
     save("vhs_blue_play", vhs_blue([]))
-    save("vhs_blue_end", vhs_blue(["GUARD #5", "NIGHTS RECORDED: 5", "ADDED TO TRAINING SET", "", "FREDDY_V19  TRAINING", "#87"], play=False))
+    save("vhs_blue_end", vhs_blue(["GUARD #5", "NIGHTS RECORDED: 7", "ADDED TO TRAINING SET", "", "POCKETS_V19  TRAINING", "#87"], play=False))
     save_rgba("glass_vhs_scanlines", vhs_scanlines())
     save("vhs_static", vhs_static())
     (out / "signs.json").write_text(json.dumps(made, indent=2, sort_keys=True) + "\n")

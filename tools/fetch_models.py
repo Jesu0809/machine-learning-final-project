@@ -42,6 +42,12 @@ MODELS = [
     "boombox",
     # Power
     "power_box_01",
+    # The circus: old furniture and everything a closed show left behind
+    "Chandelier_01", "Chandelier_02", "Rockingchair_01", "wooden_stool_01",
+    "folding_wooden_stool", "painted_wooden_chair_01", "round_wooden_table_01", "painted_wooden_sofa",
+    "ArmChair_01", "ornate_mirror_01", "horse_head", "gothic_statue", "marble_bust_01",
+    "wooden_crate_01", "wooden_crate_02", "wine_barrel_01", "wooden_bucket_01", "wooden_ladder",
+    "vintage_crutches_01", "wheelchair_01", "wooden_bookshelf_worn", "spinning_wheel_01",
 ]
 
 
