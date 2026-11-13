@@ -27,6 +27,9 @@ namespace NightShift.Evaluation
         [SerializeField] private ModelAsset model;
         [SerializeField] private int nightsPerRun = 400;
         [SerializeField] private string resultsPath = "";
+        /// <summary>First seed of the parallel nights (-seedbase). The default 1000 is the evaluation
+        /// used while choosing versions; a held-out test passes seeds no run has seen.</summary>
+        [SerializeField] private int seedBase = 1000;
 
         private readonly List<string> runs = new List<string>();
 
@@ -51,6 +54,10 @@ namespace NightShift.Evaluation
                 else if (args[i] == "-results")
                 {
                     resultsPath = args[i + 1];
+                }
+                else if (args[i] == "-seedbase")
+                {
+                    seedBase = int.Parse(args[i + 1], CultureInfo.InvariantCulture);
                 }
             }
             if (string.IsNullOrEmpty(resultsPath))
@@ -94,7 +101,7 @@ namespace NightShift.Evaluation
             var slots = new Slot[ParallelNights];
             for (int i = 0; i < slots.Length; i++)
             {
-                slots[i] = new Slot(this, policyName, preset, settings, 1000 + i * 7919);
+                slots[i] = new Slot(this, policyName, preset, settings, seedBase + i * 7919);
             }
 
             var stats = new Stats();
@@ -135,6 +142,7 @@ namespace NightShift.Evaluation
             json.Append("  \"generated_at\": \"").Append(DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)).Append("\",\n");
             json.Append("  \"model\": \"").Append(model != null ? model.name : "").Append("\",\n");
             json.Append("  \"nights_per_run\": ").Append(nightsPerRun).Append(",\n");
+            json.Append("  \"seed_base\": ").Append(seedBase).Append(",\n");
             json.Append("  \"runs\": [\n    ").Append(string.Join(",\n    ", runs)).Append("\n  ]\n}\n");
             Directory.CreateDirectory(Path.GetDirectoryName(resultsPath));
             File.WriteAllText(resultsPath, json.ToString());
