@@ -71,3 +71,4 @@ web/ml-frontend/.angular/
 # Fonts downloaded by tools/generate_signs.py
 tools/.font-cache/
 web/data/saves.sqlite3
+web/data/system.sqlite3

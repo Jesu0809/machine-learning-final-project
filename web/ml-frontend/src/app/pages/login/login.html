@@ -1,0 +1,45 @@
+<div class="container py-5" style="max-width: 460px">
+  <h1 class="h3 mb-2">{{ mode === 'login' ? 'Sign in to the studio' : 'Create a playtester account' }}</h1>
+  <p class="text-muted mb-4">
+    @if (mode === 'login') {
+      The playtest studio records your nights, your reports about Pockets and the model's reviews.
+    } @else {
+      New accounts are playtesters. An administrator can make you a designer.
+    }
+  </p>
+
+  <form class="card" (ngSubmit)="submit()" autocomplete="on">
+    <div class="card-body">
+      @if (error()) {
+        <div class="alert alert-danger py-2" role="alert">{{ error() }}</div>
+      }
+      <label class="form-label" for="username">Username</label>
+      <input id="username" name="username" class="form-control mb-3" required minlength="3" maxlength="32"
+             [autocomplete]="mode === 'login' ? 'username' : 'username'" [(ngModel)]="username">
+
+      <label class="form-label" for="password">Password</label>
+      <input id="password" name="password" type="password" class="form-control mb-1" required minlength="8"
+             [autocomplete]="mode === 'login' ? 'current-password' : 'new-password'" [(ngModel)]="password">
+      @if (mode === 'register') {
+        <p class="small text-muted mb-3">At least 8 characters, with a letter and a number.</p>
+        <label class="form-label" for="confirm">Repeat the password</label>
+        <input id="confirm" name="confirm" type="password" class="form-control mb-3" required autocomplete="new-password" [(ngModel)]="confirm">
+      } @else {
+        <div class="mb-3"></div>
+      }
+
+      <button type="submit" class="btn btn-primary w-100" [disabled]="busy()">
+        {{ busy() ? 'One moment…' : (mode === 'login' ? 'Sign in' : 'Create account') }}
+      </button>
+    </div>
+  </form>
+
+  <p class="small text-center mt-3">
+    @if (mode === 'login') {
+      No account? <a routerLink="/register">Create one</a>
+    } @else {
+      Already registered? <a routerLink="/login">Sign in</a>
+    }
+  </p>
+  <p class="small text-muted text-center">Five wrong passwords lock the account for five minutes.</p>
+</div>

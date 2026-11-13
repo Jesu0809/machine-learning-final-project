@@ -2,6 +2,12 @@
   <div class="mb-4">
     <h1>Play Night Shift</h1>
     <p class="lead">Seven nights, and a clown on the speakers whose brain is a trained neural network.</p>
+    @if (account(); as name) {
+      <p class="small text-info">Playing as <strong>{{ name }}</strong>: every night you finish is recorded in your
+        <a routerLink="/studio/playtests">playtests</a>.</p>
+    } @else {
+      <p class="small text-muted"><a routerLink="/login" [queryParams]="{ next: '/play' }">Sign in</a> to record your nights as playtests.</p>
+    }
   </div>
 
   @if (available() === false) {

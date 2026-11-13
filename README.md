@@ -30,6 +30,37 @@ Final project for the Machine Learning course, Universidad de Cundinamarca (Chí
   survivor skills, with confidence intervals.
 - **Web:** Angular + Flask on Render: play the WebGL build, see which model drives Pockets, how it
   was trained, the metrics, the evidence, and try the trained brain live.
+- **CRISP-ML documentation** (`/crisp-ml`): the six phases of the project with their decisions,
+  figures (PCA of the inputs, reward vs catch rate across versions) and results.
+- **Playtest studio** (`/studio`, the web information system): accounts and roles (playtester,
+  designer, admin), playtests imported from the game, behaviour reports that the trained network
+  reviews on the server before a designer decides, an inference history, indicators, a CSV report and
+  monitoring (errors, response times, input drift, real outcomes) with a simulated logging test.
+
+Published at https://night-shift-ebov.onrender.com.
+
+## Running the website locally
+
+```bash
+cd web
+pip install -r requirements.txt
+cd ml-frontend && npm install && npm run build && cd ..
+ADMIN_USERNAME=admin ADMIN_PASSWORD=change-me1 flask --app app run
+python tests/test_studio.py          # 44 end-to-end checks of the API, on throwaway SQLite files
+```
+
+Without `DATABASE_URL` the site uses SQLite files in `web/data/` (git-ignored); every table is
+created on start. Configuration on the host (never committed):
+
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL` | PostgreSQL connection string (Render) |
+| `SECRET_KEY` | Signs the session cookie (if missing, one is derived from `DATABASE_URL`) |
+| `ADMIN_USERNAME`, `ADMIN_PASSWORD` | The first administrator, created on start if missing |
+| `SAVES_EXPORT_TOKEN` | Lets `tools/summarize_playlog.py` download the anonymous saves |
+
+The technical manual, user manual, training guide and support procedures are published under
+`/docs/` on the site.
 
 ## Versions
 

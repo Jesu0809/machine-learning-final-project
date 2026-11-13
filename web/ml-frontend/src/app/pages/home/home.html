@@ -12,8 +12,8 @@
         </p>
         <div class="d-flex flex-wrap gap-2">
           <a class="btn btn-primary btn-lg" routerLink="/play">Play in the browser</a>
-          <a class="btn btn-outline-primary btn-lg" routerLink="/ml/model">How his brain works</a>
-          <a class="btn btn-outline-secondary btn-lg" routerLink="/ml/application">Try the brain</a>
+          <a class="btn btn-outline-primary btn-lg" routerLink="/crisp-ml">CRISP-ML phases</a>
+          <a class="btn btn-outline-info btn-lg" routerLink="/studio">Playtest studio</a>
         </div>
       </div>
       <div class="col-lg-6">
@@ -25,15 +25,37 @@
 
 <div class="container">
   <nav class="home-index d-flex flex-wrap gap-2 mb-5" aria-label="On this page">
-    <a class="btn btn-sm btn-outline-secondary" href="#project" (click)="jump($event, 'project')">The project</a>
-    <a class="btn btn-sm btn-outline-secondary" href="#problem" (click)="jump($event, 'problem')">Problem</a>
+    <a class="btn btn-sm btn-outline-secondary" href="#project" (click)="jump($event, 'project')">Project title</a>
+    <a class="btn btn-sm btn-outline-secondary" href="#problem" (click)="jump($event, 'problem')">Problem and justification</a>
     <a class="btn btn-sm btn-outline-secondary" href="#objectives" (click)="jump($event, 'objectives')">Objectives</a>
-    <a class="btn btn-sm btn-outline-secondary" href="#game" (click)="jump($event, 'game')">The game</a>
-    <a class="btn btn-sm btn-outline-secondary" href="#ml" (click)="jump($event, 'ml')">Machine learning</a>
+    <a class="btn btn-sm btn-outline-secondary" href="#framework" (click)="jump($event, 'framework')">Reference framework</a>
+    <a class="btn btn-sm btn-outline-secondary" href="#method" (click)="jump($event, 'method')">Methodology and schedule</a>
     <a class="btn btn-sm btn-outline-secondary" href="#results" (click)="jump($event, 'results')">Results</a>
-    <a class="btn btn-sm btn-outline-secondary" href="#method" (click)="jump($event, 'method')">Methodology</a>
-    <a class="btn btn-sm btn-outline-secondary" href="#products" (click)="jump($event, 'products')">Products</a>
+    <a class="btn btn-sm btn-outline-secondary" href="#resources" (click)="jump($event, 'resources')">Report, repository, video</a>
+    <a class="btn btn-sm btn-outline-secondary" href="#references" (click)="jump($event, 'references')">References</a>
   </nav>
+
+  <!-- Deliverables hub -->
+  <section id="resources" class="mb-5">
+    <h2 class="h4 mb-3">Project resources</h2>
+    <div class="row g-3">
+      @for (r of resources; track r.label) {
+        <div class="col-sm-6 col-lg-4">
+          <div class="card h-100"><div class="card-body d-flex flex-column">
+            <h3 class="h6 mb-1">{{ r.label }}</h3>
+            <p class="small text-muted mb-2">{{ r.text }}</p>
+            @if (!r.url) {
+              <span class="badge text-bg-secondary align-self-start mt-auto">Published with the final delivery</span>
+            } @else if (r.url.startsWith('/')) {
+              <a class="small mt-auto" [routerLink]="r.url">Open →</a>
+            } @else {
+              <a class="small mt-auto" [href]="r.url" target="_blank" rel="noopener">Open ↗</a>
+            }
+          </div></div>
+        </div>
+      }
+    </div>
+  </section>
 
   <!-- General data -->
   <section id="project" class="mb-5">
@@ -41,7 +63,7 @@
     <div class="card"><div class="card-body">
       <dl class="row mb-0 small">
         <dt class="col-sm-4 col-lg-3">Title</dt>
-        <dd class="col-sm-8 col-lg-9">Night Shift: a horror game whose enemy is a reinforcement learning agent</dd>
+        <dd class="col-sm-8 col-lg-9"><strong>Night Shift: a reinforcement learning enemy for a horror game, and a playtest studio that reviews its behaviour with the trained model</strong></dd>
         <dt class="col-sm-4 col-lg-3">Program</dt>
         <dd class="col-sm-8 col-lg-9">Systems Engineering, Faculty of Engineering</dd>
         <dt class="col-sm-4 col-lg-3">University</dt>
@@ -51,7 +73,12 @@
         <dt class="col-sm-4 col-lg-3">Project type</dt>
         <dd class="col-sm-8 col-lg-9">Technological project (software and a trained model), research line "Learning, knowledge, technologies, communication and digitalization"</dd>
         <dt class="col-sm-4 col-lg-3">Team</dt>
-        <dd class="col-sm-8 col-lg-9">Jesús David Nuncira Ortiz &middot; Miguel Moreno Arenas</dd>
+        <dd class="col-sm-8 col-lg-9">
+          <strong>Jesús David Nuncira Ortiz</strong>, machine learning and web development: the simulation, the training and
+          evaluation of the network, the website and the playtest studio.<br>
+          <strong>Miguel Moreno Arenas</strong>, game features development: the game repository, the 13-room map the network
+          was trained on, and gameplay mechanics such as doors and sprint.
+        </dd>
       </dl>
     </div></div>
   </section>
@@ -60,23 +87,37 @@
   <section id="problem" class="mb-5">
     <h2 class="h4 mb-3">Problem and justification</h2>
     <div class="row g-3">
-      <div class="col-md-6"><div class="card h-100"><div class="card-body">
-        <h3 class="h6">The problem</h3>
-        <p class="small mb-0">
-          The enemies of most games follow rules written by hand: patrols, timers and state machines. Players
-          learn the pattern in a few tries and the enemy stops being a threat, and writing a good rule for
-          every situation takes a lot of work. Can an enemy that only knows what it hears and sees
-          <em>learn</em> a hunting strategy on its own, at least as good as a hand-written one?
+      <div class="col-lg-6"><div class="card h-100"><div class="card-body small">
+        <h3 class="h6">The problem and its context</h3>
+        <p>
+          The enemies of most games are written by hand as finite-state machines, behaviour trees or planners
+          (Millington, 2019; Orkin, 2006; Isla, 2005). Their rules are fixed, so players learn the pattern in a few
+          tries and the enemy stops being a threat; and every new room or rule needs more hand-written cases.
+        </p>
+        <p>
+          <strong>Who is affected:</strong> players of horror and stealth games, whose tension depends on an enemy they
+          cannot predict, and small teams like ours, who cannot afford to hand-tune behaviour for every situation.
+        </p>
+        <p class="mb-0">
+          <strong>Evidence:</strong> in our own simulation the hand-written hunter, with the same senses as the
+          network, catches the expert survivor in 91.5% of the nights; and every playtest found situations the rules
+          did not cover (walking past a noise next door, camping a door). <strong>Consequences:</strong> a predictable
+          enemy, a flat experience and growing development cost.
         </p>
       </div></div></div>
-      <div class="col-md-6"><div class="card h-100"><div class="card-body">
-        <h3 class="h6">Why it matters</h3>
-        <p class="small mb-0">
-          Reinforcement learning lets an agent improve from rewards instead of instructions. Unity ML-Agents
-          trains it offline and runs the resulting network inside the game, so the course's techniques end up
-          in a real, playable product. The result can be measured (how often it catches a simulated player,
-          compared with two baselines) and explained (the game shows what the network considered at each
-          decision).
+      <div class="col-lg-6"><div class="card h-100"><div class="card-body small">
+        <h3 class="h6">Justification and contribution</h3>
+        <p>
+          Reinforcement learning lets an agent improve from rewards instead of instructions (Sutton &amp; Barto, 2018), and
+          learned agents have shown strategies their designers did not program, from hide-and-seek (Baker et al., 2020)
+          to complex video games (Berner et al., 2019; Vinyals et al., 2019). Unity ML-Agents (Juliani et al., 2018)
+          brings it into a game engine, as the course requires.
+        </p>
+        <p class="mb-0">
+          <strong>How the intelligent system helps:</strong> Pockets’ trained network decides every move from what he
+          hears and sees, catches the expert survivor in 97.8% of the nights (+6.3 points over the hand-written hunter)
+          and never cheats. The playtest studio closes the loop: it records real nights and uses the same network to tell
+          learned decisions from bugs when a player reports strange behaviour.
         </p>
       </div></div></div>
     </div>
@@ -88,8 +129,10 @@
     <div class="card mb-3"><div class="card-body">
       <h3 class="h6">General objective</h3>
       <p class="small mb-0">
-        Build a first-person horror game whose enemy NPC is a neural network trained with reinforcement
-        learning (PPO in Unity ML-Agents), and show with metrics and in-game evidence that it learned to hunt.
+        Develop a first-person horror game whose enemy is a neural network trained with reinforcement learning
+        (PPO in Unity ML-Agents) that hunts the player using only what it perceives, and integrate that model into a
+        web information system where playtests are managed and the model supports the decision of whether a reported
+        behaviour is learned or a bug.
       </p>
     </div></div>
     <div class="row g-3">
@@ -99,6 +142,26 @@
             <div class="small text-info fw-semibold mb-1">Specific objective {{ i + 1 }}</div>
             <p class="small mb-2">{{ o.title }}</p>
             <a class="small mt-auto" [routerLink]="o.link">{{ o.linkText }} →</a>
+          </div></div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- Reference framework -->
+  <section id="framework" class="mb-5">
+    <h2 class="h4 mb-3">Reference framework</h2>
+    <div class="row g-3">
+      @for (group of framework; track group.title) {
+        <div class="col-lg-6">
+          <div class="card h-100"><div class="card-body">
+            <h3 class="h6 text-info">{{ group.title }}</h3>
+            @for (item of group.items; track item.name) {
+              <div class="small mb-3">
+                <strong>{{ item.name }}.</strong> {{ item.text }}
+                <div class="text-muted"><em>In this project:</em> {{ item.relation }}</div>
+              </div>
+            }
           </div></div>
         </div>
       }
@@ -215,18 +278,35 @@
 
   <!-- Methodology and schedule -->
   <section id="method" class="mb-5">
-    <h2 class="h4 mb-3">Methodology and schedule</h2>
-    <p class="small text-muted">CDIO (Conceive, Design, Implement, Operate), the method the faculty suggests for technological projects, over the five weeks of the project.</p>
-    <div class="row g-3">
+    <h2 class="h4 mb-3">Methodology and development schedule</h2>
+    <p class="small">
+      The machine learning work followed the six phases of CRISP-ML(Q) (Studer et al., 2021); each phase has its own page with the
+      decisions, figures and results. The web information system was developed on top of it as the seventh block of work.
+    </p>
+    <div class="row g-3 mb-4">
       @for (step of method; track step.name) {
-        <div class="col-md-6 col-lg-3">
-          <div class="card h-100"><div class="card-body">
+        <div class="col-md-6 col-xl-4">
+          <a class="card h-100 text-decoration-none" [routerLink]="step.link"><div class="card-body">
             <div class="small text-info fw-semibold">{{ step.when }}</div>
             <h3 class="h6">{{ step.name }}</h3>
             <p class="small text-muted mb-0">{{ step.text }}</p>
-          </div></div>
+          </div></a>
         </div>
       }
+    </div>
+
+    <h3 class="h5">Schedule: planned and actual</h3>
+    <p class="small text-muted">Planned dates come from the 5-week plan of the project brief, counted from the start of development on
+      10 October 2026; actual dates come from the repository history.</p>
+    <div class="table-responsive">
+      <table class="table table-sm small align-top">
+        <thead><tr><th>Activity</th><th>Responsible</th><th>Planned</th><th>Actual</th><th>Deliverable</th></tr></thead>
+        <tbody>
+          @for (row of schedule; track row.activity) {
+            <tr><td>{{ row.activity }}</td><td>{{ row.who }}</td><td>{{ row.planned }}</td><td>{{ row.actual }}</td><td>{{ row.deliverable }}</td></tr>
+          }
+        </tbody>
+      </table>
     </div>
   </section>
 
@@ -261,13 +341,12 @@
   </section>
 
   <!-- References -->
-  <section class="mb-4">
-    <h2 class="h4 mb-3">References</h2>
-    <ul class="small text-muted">
-      <li>Juliani, A., et al. (2018). Unity: A general platform for intelligent agents. arXiv:1809.02627.</li>
-      <li>Schulman, J., Wolski, F., Dhariwal, P., Radford, A., &amp; Klimov, O. (2017). Proximal policy optimization algorithms. arXiv:1707.06347.</li>
-      <li>Sutton, R. S., &amp; Barto, A. G. (2018). <em>Reinforcement learning: An introduction</em> (2nd ed.). MIT Press.</li>
+  <section id="references" class="mb-4">
+    <h2 class="h4 mb-3">Bibliographic references</h2>
+    <p class="small text-muted">APA 7th edition.</p>
+    <ul class="small references">
+      @for (ref of references; track ref) { <li class="mb-1">{{ ref }}</li> }
     </ul>
-    <a class="small" routerLink="/credits">All credits and references →</a>
+    <a class="small" routerLink="/credits">Third-party assets and credits →</a>
   </section>
 </div>

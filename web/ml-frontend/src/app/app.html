@@ -20,6 +20,19 @@
 
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            CRISP-ML
+          </a>
+          <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-lg-end">
+            <li><a class="dropdown-item" routerLink="/crisp-ml" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">The six phases</a></li>
+            <li><hr class="dropdown-divider"></li>
+            @for (p of phases; track p.slug) {
+              <li><a class="dropdown-item ps-4" [routerLink]="['/crisp-ml', p.slug]" routerLinkActive="active">{{ p.number }}. {{ p.title }}</a></li>
+            }
+          </ul>
+        </li>
+
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             Machine Learning
           </a>
           <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-lg-end">
@@ -36,12 +49,27 @@
           </ul>
         </li>
 
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/story" routerLinkActive="active">Story</a>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Documentation
+          </a>
+          <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-lg-end">
+            <li><a class="dropdown-item" routerLink="/docs/user-manual" routerLinkActive="active">User manual</a></li>
+            <li><a class="dropdown-item" routerLink="/docs/technical-manual" routerLinkActive="active">Technical manual</a></li>
+            <li><a class="dropdown-item" routerLink="/docs/training-guide" routerLinkActive="active">Training guide</a></li>
+            <li><a class="dropdown-item" routerLink="/docs/support" routerLinkActive="active">Support and feedback</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" routerLink="/story" routerLinkActive="active">Story</a></li>
+            <li><a class="dropdown-item" routerLink="/credits" routerLinkActive="active">Credits</a></li>
+          </ul>
         </li>
 
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/credits" routerLinkActive="active">Credits</a>
+        <li class="nav-item ms-lg-2">
+          @if (auth.user(); as u) {
+            <a class="btn btn-sm btn-outline-info mt-1" routerLink="/studio">Studio · {{ u.username }}</a>
+          } @else {
+            <a class="btn btn-sm btn-outline-info mt-1" routerLink="/login">Studio sign in</a>
+          }
         </li>
       </ul>
     </div>

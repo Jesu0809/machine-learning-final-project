@@ -11,12 +11,85 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
-from flask import Flask, Response, jsonify, request, send_from_directory  # noqa: E402
+from datetime import timedelta  # noqa: E402
 
+from flask import Flask, Response, g, jsonify, request, send_from_directory  # noqa: E402
+from werkzeug.exceptions import HTTPException  # noqa: E402
+
+import auth  # noqa: E402
+import db  # noqa: E402
 import freddy_brain  # noqa: E402
 import saves  # noqa: E402
+import studio  # noqa: E402
 
 app = Flask(__name__)
+
+
+def _secret_key():
+    """SECRET_KEY from the host; without it, one derived from the (secret) database address, and in
+    local development a random key per run (sessions then end when the server restarts)."""
+    if os.environ.get("SECRET_KEY"):
+        return os.environ["SECRET_KEY"]
+    if db.DATABASE_URL:
+        return hashlib.sha256(("night-shift-session:" + db.DATABASE_URL).encode()).hexdigest()
+    return secrets.token_hex(32)
+
+
+app.config.update(
+    SECRET_KEY=_secret_key(),
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=bool(os.environ.get("RENDER")),
+    PERMANENT_SESSION_LIFETIME=timedelta(days=7),
+)
+app.register_blueprint(auth.blueprint)
+app.register_blueprint(studio.blueprint)
+app.teardown_appcontext(db.close_connection)
+
+with app.app_context():
+    try:
+        db.ensure_schema()
+        auth.bootstrap_admin()
+    finally:
+        db.close_connection()
+
+
+@app.before_request
+def start_timer():
+    g.started = time.perf_counter()
+    # Changes through the API must come as JSON: a plain cross-site form cannot send that.
+    if request.path.startswith(("/api/auth/", "/api/studio/")) and request.method in ("POST", "PUT", "DELETE"):
+        if request.content_length and not request.is_json:
+            return jsonify({"error": "Send JSON."}), 415
+
+
+@app.after_request
+def log_request(response):
+    """Every API call is logged with its status and response time (the monitoring page reads them)."""
+    if request.path.startswith("/api/") and request.path != "/api/game/status":
+        try:
+            user = auth.current_user()
+            latency = (time.perf_counter() - g.get("started", time.perf_counter())) * 1000
+            db.run("INSERT INTO request_log (at, method, path, status, latency_ms, user_id) VALUES (?, ?, ?, ?, ?, ?)",
+                   (int(time.time()), request.method, request.path[:200], response.status_code, round(latency, 2),
+                    user["id"] if user else None))
+        except Exception:  # noqa: BLE001 - logging must never break a response
+            pass
+    return response
+
+
+@app.errorhandler(Exception)
+def unexpected_error(error):
+    if isinstance(error, HTTPException):
+        return error
+    try:
+        user = auth.current_user()
+        db.run("INSERT INTO error_log (at, path, message, user_id) VALUES (?, ?, ?, ?)",
+               (int(time.time()), request.path[:200], (type(error).__name__ + ": " + str(error))[:1000], user["id"] if user else None))
+    except Exception:  # noqa: BLE001
+        pass
+    app.logger.exception("Unexpected error")
+    return jsonify({"error": "Something went wrong on the server. It was logged."}), 500
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
@@ -151,9 +224,18 @@ def brain_decide():
     except (TypeError, ValueError):
         return jsonify({"error": f"freddy_room must be a room index 0-{freddy_brain.ROOM_COUNT - 1}."}), 400
     try:
-        return jsonify(freddy_brain.decide(state))
+        situation = studio.clean_situation(dict(state, freddy_room=room))
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 400
+    try:
+        decision = freddy_brain.decide(situation)
     except RuntimeError as error:
         return jsonify({"error": str(error)}), 500
+    # The public demo is part of the inference history too (anonymous unless signed in).
+    user = auth.current_user()
+    studio.infer(situation, user_id=user["id"] if user else None)
+    decision["model_version"] = studio.MODEL_VERSION
+    return jsonify(decision)
 
 
 # ---------------------------------------------------------------- training and evaluation
@@ -231,6 +313,91 @@ def sense_plot():
     axes.set_ylabel("Senses that found the player (%)")
     axes.set_title("When to use SENSE: learned vs hand-written (measured on freddy_v3)")
     styled_legend(axes)
+    return png(figure)
+
+
+@app.route("/api/plots/versions")
+def versions_plot():
+    """Final training reward against the evaluated catch rate (Expert) for every version: a higher
+    reward does not always mean a better hunter (v13 is the clearest case)."""
+    runs_ = load_json("runs.json")["runs"]
+    figure, axes = dark_figure(9, 4.2)
+    names = [r["id"].replace("freddy_", "") for r in runs_]
+    x = list(range(len(runs_)))
+    axes.plot(x, [r["reward_end"] for r in runs_], color="#f2a33a", marker="o", label="Final mean reward (training)")
+    axes.set_ylabel("Mean reward per night", color="#f2a33a")
+    second = axes.twinx()
+    expert = [(i, r["catch_rate"]["Expert"] * 100) for i, r in enumerate(runs_) if r.get("catch_rate")]
+    second.plot([i for i, _ in expert], [v for _, v in expert], color=ACCENT, marker="s", linewidth=2, label="Catch rate vs Expert (evaluation)")
+    second.set_ylabel("Catch rate vs Expert (%)", color=ACCENT)
+    second.tick_params(colors="#e6d6da")
+    second.set_ylim(50, 102)
+    axes.set_xticks(x)
+    axes.set_xticklabels(names, fontsize=8)
+    axes.set_title("Training reward vs evaluated catch rate, v1-v19 (versions without a mark were not evaluated)")
+    lines = axes.get_legend_handles_labels()
+    lines2 = second.get_legend_handles_labels()
+    legend = axes.legend(lines[0] + lines2[0], lines[1] + lines2[1], facecolor="#1b1117", edgecolor="#5a3a44", loc="lower right")
+    for text in legend.get_texts():
+        text.set_color("#e6d6da")
+    return png(figure)
+
+
+@app.route("/api/plots/pca")
+def pca_plot():
+    """PCA of the network's 100 inputs over 2,000 synthetic situations (seeded), coloured by the
+    kind of action the trained network chooses. It shows how much of the input space a few
+    directions explain and which situations lead to which decisions."""
+    import random as random_module
+
+    import numpy as np
+
+    rng = random_module.Random(2026)
+    vectors, kinds = [], []
+    for _ in range(2000):
+        situation = studio._random_situation(rng)
+        decision = freddy_brain.decide(situation)
+        vectors.append(freddy_brain.observations(situation))
+        index = decision["chosen"]["index"]
+        if index == freddy_brain.SENSE:
+            kinds.append("Sense")
+        elif index >= freddy_brain.ROOM_COUNT:
+            kinds.append("Search a spot")
+        elif index == situation["freddy_room"]:
+            kinds.append("Stay and listen")
+        else:
+            kinds.append("Move to a room")
+    data = np.array(vectors)
+    centered = data - data.mean(axis=0)
+    # Accelerate's matmul raises spurious floating point warnings on macOS; the result is exact.
+    with np.errstate(all="ignore"):
+        _, singular, components = np.linalg.svd(centered, full_matrices=False)
+        variance = singular ** 2 / (singular ** 2).sum()
+        projected = centered @ components[:2].T
+    figure, (left, right) = plt.subplots(1, 2, figsize=(11, 4.4), gridspec_kw={"width_ratios": [1.4, 1]})
+    figure.patch.set_facecolor("#140c12")
+    colors = {"Move to a room": "#4aa3df", "Stay and listen": "#7b8399", "Search a spot": "#f2a33a", "Sense": ACCENT}
+    for axes in (left, right):
+        axes.set_facecolor("#1b1117")
+        for spine in axes.spines.values():
+            spine.set_color("#5a3a44")
+        axes.tick_params(colors="#e6d6da")
+        axes.grid(alpha=0.15)
+    for kind, color in colors.items():
+        points = projected[[k == kind for k in kinds]]
+        left.scatter(points[:, 0], points[:, 1], s=7, alpha=0.6, color=color, label=f"{kind} ({len(points)})")
+    left.set_xlabel(f"PC1 ({variance[0]:.1%} of the variance)", color="#e6d6da")
+    left.set_ylabel(f"PC2 ({variance[1]:.1%})", color="#e6d6da")
+    left.set_title("Inputs projected on 2 principal components", color="#ffffff")
+    styled_legend(left)
+    cumulative = np.cumsum(variance)[:30] * 100
+    right.plot(range(1, 31), cumulative, color=ACCENT, marker="o", markersize=3)
+    right.axhline(90, color="#7b8399", linestyle="--", linewidth=1)
+    needed = int(np.searchsorted(np.cumsum(variance), 0.9)) + 1
+    right.set_title(f"Cumulative variance: {needed} components reach 90%", color="#ffffff")
+    right.set_xlabel("Number of components", color="#e6d6da")
+    right.set_ylabel("Variance explained (%)", color="#e6d6da")
+    figure.tight_layout()
     return png(figure)
 
 
@@ -322,7 +489,9 @@ def save_put(player):
     if not isinstance(data, dict):
         return jsonify({"error": "not a save"}), 400
     saves.store(player, json.dumps(data))
-    return jsonify({"ok": True})
+    # A save of a playtester's account brings its finished nights into the studio.
+    imported = studio.import_save(player, data)
+    return jsonify({"ok": True, "imported": imported})
 
 
 @app.route("/api/save/<player>/link", methods=["POST"])

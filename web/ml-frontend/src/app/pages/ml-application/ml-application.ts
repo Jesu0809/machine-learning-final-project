@@ -5,10 +5,11 @@ import { RouterLink } from '@angular/router';
 import { BrainService } from '../../services/brain.service';
 import { BrainDecision, BrainState, ModelInfo } from '../../models/brain.model';
 
-// Rooms of the map (HuntMap.cs): 0 Office, 1 Parts & Service, 2 Restrooms, 3 Back Hall, 4 Storage,
-// 5 Kitchen, 6 Dining Hall (stage), 7 Main Hall, 8 Party Room, 9 Arcade, 10 Exit Lobby.
-const ROOM_COUNT = 11;
-const ALL_BUT_STAGE = [0, 1, 2, 3, 4, 5, 7, 8, 9, 10];
+// Rooms of the map (web/freddy_brain.py ROOMS): 0 Watch Office, 1 Prop Workshop, 2 Dressing Rooms,
+// 3 Backstage Hall, 4 Trunk Store, 5 Concessions, 6 The Big Ring, 7 Promenade, 8 Birthday Tent,
+// 9 The Midway, 10 Ticket Lobby, 11 Ringside Lounge, 12 Winter Garden.
+const ROOM_COUNT = 13;
+const ALL_BUT_STAGE = [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12];
 
 interface Preset {
   label: string;

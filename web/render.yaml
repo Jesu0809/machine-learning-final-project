@@ -17,3 +17,11 @@ services:
       # Lets tools/summarize_playlog.py download the anonymous saves.
       - key: SAVES_EXPORT_TOKEN
         generateValue: true
+      # Signs the studio's session cookie.
+      - key: SECRET_KEY
+        generateValue: true
+      # The first administrator of the playtest studio, created on start if missing.
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false

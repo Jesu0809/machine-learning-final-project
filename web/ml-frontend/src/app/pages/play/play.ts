@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, ElementRef, inject, OnDestroy, signal, ViewChild } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 import { ResultsService } from '../../services/results.service';
 
 interface UnityInstance {
@@ -22,7 +23,13 @@ declare function createUnityInstance(
 })
 export class Play implements AfterViewInit, OnDestroy {
   private readonly resultsService = inject(ResultsService);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   @ViewChild('canvas') private canvas?: ElementRef<HTMLCanvasElement>;
+
+  /** The studio account the nights are recorded for, if any. */
+  protected readonly account = signal<string | null>(null);
 
   protected readonly available = signal<boolean | null>(null);
   protected readonly progress = signal(0);
@@ -42,11 +49,23 @@ export class Play implements AfterViewInit, OnDestroy {
         this.available.set(status.available);
         this.version = status.version ?? '0';
         if (status.available) {
-          setTimeout(() => this.load());
+          this.linkAccount().then(() => setTimeout(() => this.load()));
         }
       },
       error: () => this.available.set(false),
     });
+  }
+
+  /**
+   * A signed-in playtester plays with the save of their account: the game reads the player id
+   * from the address (?p=), and the server files every night they finish under their playtests.
+   */
+  private async linkAccount(): Promise<void> {
+    const user = await this.auth.load();
+    if (user && this.route.snapshot.queryParamMap.get('p') !== user.player_id) {
+      await this.router.navigate([], { relativeTo: this.route, queryParams: { p: user.player_id }, replaceUrl: true });
+    }
+    this.account.set(user?.username ?? null);
   }
 
   /**

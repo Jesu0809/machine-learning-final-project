@@ -1,0 +1,120 @@
+<div class="container py-5">
+  <app-studio-nav />
+
+  @if (denied) {
+    <div class="alert alert-warning">That page needs the <strong>{{ denied }}</strong> role. Your account cannot open it.</div>
+  }
+  @if (error()) {
+    <div class="alert alert-danger">{{ error() }}</div>
+  }
+
+  @if (data(); as d) {
+    <h1 class="h3 mb-1">Hello, {{ d.user.username }}</h1>
+    <p class="text-muted mb-4">
+      You are a <strong>{{ d.user.role }}</strong>. Model in service: <code>{{ d.model_version }}</code>.
+    </p>
+
+    <div class="row g-3 mb-4">
+      <div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body">
+        <div class="small text-muted">My playtests</div>
+        <div class="display-6">{{ d.mine.playtests }}</div>
+        <div class="small">caught in {{ d.mine.caught }}</div>
+      </div></div></div>
+      <div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body">
+        <div class="small text-muted">My reports</div>
+        <div class="display-6">{{ d.mine.tickets }}</div>
+        <div class="small">{{ d.mine.open_tickets }} waiting for a decision</div>
+      </div></div></div>
+      <div class="col-lg-6"><div class="card h-100 border-info"><div class="card-body">
+        <div class="small text-muted mb-1">What to do next</div>
+        <ol class="small mb-2 ps-3">
+          <li><a routerLink="/play" [queryParams]="{ p: d.user.player_id }">Play the game with your account</a>: every night you finish is recorded here.</li>
+          <li>If Pockets does something strange, <a routerLink="/studio/reports/new">report it</a> with the situation he was in.</li>
+          @if (auth.can('designer')) {
+            <li>Designers: review the <a routerLink="/studio/reports" [queryParams]="{ status: 'open' }">open reports</a> with the model and decide.</li>
+          }
+        </ol>
+      </div></div></div>
+    </div>
+
+    @if (d.studio; as s) {
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h2 class="h4 mb-0">Studio indicators</h2>
+        <div class="d-flex gap-2 align-items-center">
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox" id="sim" [checked]="simulated" (change)="toggleSimulated()">
+            <label class="form-check-label small" for="sim">Include simulated data</label>
+          </div>
+          <a class="btn btn-sm btn-outline-secondary" href="/api/studio/reports/playtests.csv">Download playtests (CSV)</a>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body">
+          <div class="small text-muted">Playtests recorded</div><div class="display-6">{{ s.playtests }}</div>
+          <div class="small">real catch rate {{ s.catch_rate === null ? '—' : (s.catch_rate | percent: '1.0-1') }}</div>
+        </div></div></div>
+        <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body">
+          <div class="small text-muted">Reports in the queue</div><div class="display-6">{{ d.queue }}</div>
+          <div class="small">of {{ s.tickets }} in total</div>
+        </div></div></div>
+        <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body">
+          <div class="small text-muted">Designer agrees with the model</div>
+          <div class="display-6">{{ s.agreement === null ? '—' : (s.agreement | percent: '1.0-0') }}</div>
+          <div class="small">over {{ s.decided_with_model }} decided behaviour reports</div>
+        </div></div></div>
+        <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body">
+          <div class="small text-muted">Model inferences</div><div class="display-6">{{ s.inferences }}</div>
+          <div class="small">{{ s.users }} accounts</div>
+        </div></div></div>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-lg-7"><div class="card h-100"><div class="card-body">
+          <h3 class="h6">Real players by night: how often Pockets catches them</h3>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-2">
+              <thead><tr><th>Night</th><th>Plays</th><th>Caught</th><th style="min-width: 140px">Catch rate</th><th>Avg. time</th></tr></thead>
+              <tbody>
+                @for (n of s.by_night; track n.night) {
+                  <tr>
+                    <td>{{ n.night }}</td><td>{{ n.plays }}</td><td>{{ n.caught }}</td>
+                    <td>
+                      @if (n.catch_rate !== null) {
+                        <div class="progress" style="height: 8px" role="progressbar" [attr.aria-label]="'Night ' + n.night">
+                          <div class="progress-bar bg-danger" [style.width.%]="n.catch_rate * 100"></div>
+                        </div>
+                        <span class="small">{{ n.catch_rate | percent: '1.0-0' }}</span>
+                      } @else { <span class="small text-muted">no plays</span> }
+                    </td>
+                    <td class="small">{{ n.avg_seconds === null ? '—' : (n.avg_seconds | number: '1.0-0') + ' s' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <p class="small text-muted mb-0">In evaluation the model caught simulated survivors 97.8–100% of the time; real players
+            get an adaptive threat level, so a lower real rate is expected. The monitoring page alerts outside 40–95%.</p>
+        </div></div></div>
+        <div class="col-lg-5"><div class="card h-100"><div class="card-body">
+          <h3 class="h6">Behaviour reports</h3>
+          <table class="table table-sm mb-3">
+            <tbody>
+              <tr><td>Open (waiting for the model review)</td><td class="text-end">{{ s.tickets_by_status.open }}</td></tr>
+              <tr><td>Reviewed by the model, waiting for a designer</td><td class="text-end">{{ s.tickets_by_status.reviewed }}</td></tr>
+              <tr><td>Expected behaviour (closed)</td><td class="text-end">{{ s.tickets_by_status.expected }}</td></tr>
+              <tr><td>Confirmed bugs to fix</td><td class="text-end">{{ s.tickets_by_status.bug }}</td></tr>
+              <tr><td>Resolved bugs</td><td class="text-end">{{ s.tickets_by_status.resolved }}</td></tr>
+            </tbody>
+          </table>
+          <h3 class="h6">What the model said</h3>
+          <p class="small mb-0">
+            Expected: {{ s.ai_verdicts['expected'] }} · Unlikely: {{ s.ai_verdicts['unlikely'] }} · Impossible: {{ s.ai_verdicts['impossible'] }}
+          </p>
+        </div></div></div>
+      </div>
+    }
+  } @else if (!error()) {
+    <p class="text-muted">Loading…</p>
+  }
+</div>

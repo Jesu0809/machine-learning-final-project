@@ -1,0 +1,154 @@
+<div class="container py-5">
+  <app-studio-nav />
+  <a class="small" routerLink="/studio/reports">← All reports</a>
+  @if (error()) { <div class="alert alert-danger py-2 mt-3">{{ error() }}</div> }
+
+  @if (ticket(); as t) {
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mt-2 mb-3">
+      <div>
+        <h1 class="h3 mb-1">#{{ t.id }} {{ t.title }}</h1>
+        <div class="small text-muted">
+          {{ t.kind }} report by {{ t.reporter }} · {{ t.created_at * 1000 | date: 'yyyy-MM-dd HH:mm' }}
+          @if (t.night) { · night {{ t.night }} }
+          @if (t.playtest_id) { · <a routerLink="/studio/playtests">playtest #{{ t.playtest_id }}</a> }
+          @if (t.simulated) { <span class="badge text-bg-warning ms-1">SIMULATED</span> }
+        </div>
+      </div>
+      <span class="badge fs-6 text-wrap text-start" [class.text-bg-info]="t.status === 'open' || t.status === 'reviewed'"
+            [class.text-bg-success]="t.status === 'expected' || t.status === 'resolved'" [class.text-bg-danger]="t.status === 'bug'">{{ labels[t.status] }}</span>
+    </div>
+
+    <!-- The workflow, step by step -->
+    <ol class="list-group list-group-horizontal-md list-group-numbered small mb-4">
+      <li class="list-group-item flex-fill" [class.active]="t.status === 'open'">Reported</li>
+      @if (t.kind === 'behaviour') { <li class="list-group-item flex-fill" [class.active]="t.status === 'reviewed'">Model review</li> }
+      <li class="list-group-item flex-fill" [class.active]="t.status === 'expected' || t.status === 'bug'">Designer decision</li>
+      <li class="list-group-item flex-fill" [class.active]="t.status === 'resolved'">Fixed (bugs only)</li>
+    </ol>
+
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card mb-3"><div class="card-body">
+          <h2 class="h6">What happened</h2>
+          <p class="mb-0" style="white-space: pre-wrap">{{ t.description }}</p>
+        </div></div>
+        @if (t.situation; as s) {
+          <div class="card mb-3"><div class="card-body small">
+            <h2 class="h6">What Pockets knew</h2>
+            <ul class="mb-2">
+              <li>He was in <strong>{{ roomName(s.freddy_room) }}</strong>, {{ (s.night_progress * 100) | number: '1.0-0' }}% into the night.</li>
+              <li>He had heard: {{ noiseText(t) }}.</li>
+              <li>Last sighting: {{ s.last_seen_room !== null && s.last_seen_room !== undefined ? roomName(s.last_seen_room) + ', ' + s.seconds_since_seen + ' s before' : 'none' }}.</li>
+              <li>{{ s.sees_player ? 'He could see the player.' : 'He could not see the player.' }} Sense {{ s.sense_ready ? 'charged' : 'recharging' }}.</li>
+              <li>Rooms not checked for a long time: {{ s.rooms_not_checked.length }}.</li>
+            </ul>
+            <p class="mb-0">What he did: <strong>{{ t.observed_label }}</strong></p>
+          </div></div>
+        }
+        @if (isMine(t) && t.status === 'open') {
+          <div class="d-flex gap-2 mb-3">
+            <a class="btn btn-outline-secondary btn-sm" [routerLink]="['/studio/reports', t.id, 'edit']">Edit</a>
+            <button type="button" class="btn btn-outline-danger btn-sm" (click)="remove()">Delete</button>
+          </div>
+        } @else if (auth.can('admin')) {
+          <button type="button" class="btn btn-outline-danger btn-sm mb-3" (click)="remove()">Delete (admin)</button>
+        }
+      </div>
+
+      <div class="col-lg-7">
+        @if (t.kind === 'behaviour') {
+          <div class="card mb-3" [class.border-info]="t.inference"><div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+              <h2 class="h6 mb-0">Model review</h2>
+              @if (auth.can('designer') && (t.status === 'open' || t.status === 'reviewed')) {
+                <button type="button" class="btn btn-info btn-sm" [disabled]="busy()" (click)="review()">
+                  {{ t.inference ? 'Run the review again' : 'Ask the trained network' }}
+                </button>
+              }
+            </div>
+            @if (t.inference; as i) {
+              <p class="small text-muted mt-2">{{ i.model_version }} · {{ i.created_at * 1000 | date: 'yyyy-MM-dd HH:mm' }} ·
+                {{ i.latency_ms | number: '1.1-1' }} ms on the server</p>
+              <div class="p-3 rounded mb-3 border" [class.border-success]="t.ai_verdict === 'expected'" [class.border-danger]="t.ai_verdict !== 'expected'">
+                <div class="small text-muted">Verdict</div>
+                <div class="h5 mb-1">{{ verdicts[t.ai_verdict ?? ''] }}</div>
+                <div class="small">
+                  The network gives <strong>{{ t.observed_label }}</strong> a probability of
+                  <strong>{{ (i.observed_probability ?? 0) | percent: '1.1-1' }}</strong>
+                  (threshold for "would do this": 15%).
+                  @if (t.ai_verdict === 'expected') {
+                    The move is a learned decision, so the report most likely describes the brain working as trained.
+                    <strong>Suggestion: close as expected behaviour</strong> and explain it to the playtester.
+                  } @else if (t.ai_verdict === 'unlikely') {
+                    The brain would rarely choose it, so something outside the network (the scripted body, the level or the input the game built) may be wrong.
+                    <strong>Suggestion: treat it as a bug</strong> and check the play log.
+                  } @else {
+                    The brain cannot even choose this move from that room, so it did not come from the network.
+                    <strong>Suggestion: treat it as a bug</strong> in the body or the level.
+                  }
+                </div>
+              </div>
+              <h3 class="h6">What the network would do there</h3>
+              @for (a of i.result; track a.index) {
+                <div class="mb-2">
+                  <div class="d-flex justify-content-between small">
+                    <span>{{ a.name }} @if (a.index === t.observed_action) { <span class="badge text-bg-warning">what he did</span> }</span>
+                    <span>{{ a.probability | percent: '1.1-1' }}</span>
+                  </div>
+                  <div class="progress" style="height: 8px" role="progressbar" [attr.aria-label]="a.name">
+                    <div class="progress-bar" [class.bg-warning]="a.index === t.observed_action" [style.width.%]="a.probability * 100"></div>
+                  </div>
+                </div>
+              }
+              <p class="small text-muted mb-0">Limits: the situation is the playtester's recollection, not the game's exact state, and 15% is a
+                design threshold, not a certainty. The designer always has the last word.</p>
+            } @else {
+              <p class="small text-muted mt-2 mb-0">Not reviewed yet. A designer runs the trained network on this situation.</p>
+            }
+          </div></div>
+        }
+
+        @if (auth.can('designer') && ((t.kind === 'behaviour' && t.status === 'reviewed') || (t.kind !== 'behaviour' && t.status === 'open'))) {
+          <form class="card mb-3" (ngSubmit)="decide()"><div class="card-body">
+            <h2 class="h6">Designer decision</h2>
+            <div class="d-flex flex-wrap gap-3 mb-2">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="decision" id="d-exp" value="expected" [(ngModel)]="decision">
+                <label class="form-check-label" for="d-exp">Expected behaviour (close and explain)</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="decision" id="d-bug" value="bug" [(ngModel)]="decision">
+                <label class="form-check-label" for="d-bug">Bug (send to fix)</label>
+              </div>
+            </div>
+            @if (t.suggestion && decision !== t.suggestion) {
+              <p class="small text-warning">You are overriding the model's suggestion; say why in the note.</p>
+            }
+            <textarea class="form-control mb-2" name="note" rows="2" required minlength="5" maxlength="1000" placeholder="Why (the playtester sees this)" [(ngModel)]="note"></textarea>
+            <button type="submit" class="btn btn-primary btn-sm" [disabled]="busy()">Save decision</button>
+          </div></form>
+        }
+
+        @if (t.decision) {
+          <div class="card mb-3"><div class="card-body small">
+            <h2 class="h6">Decision</h2>
+            <p class="mb-1"><strong>{{ t.decision === 'expected' ? 'Expected behaviour' : 'Bug' }}</strong> — {{ t.designer }}
+              @if (t.suggestion) { ({{ t.decision === t.suggestion ? 'agreed with the model' : 'overrode the model' }}) }</p>
+            <p class="mb-0" style="white-space: pre-wrap">{{ t.decision_note }}</p>
+            @if (t.resolution_note) { <p class="mt-2 mb-0"><strong>Fixed:</strong> {{ t.resolution_note }}</p> }
+          </div></div>
+        }
+
+        @if (auth.can('designer') && t.status === 'bug') {
+          <form class="card" (ngSubmit)="resolve()"><div class="card-body">
+            <h2 class="h6">Mark as fixed</h2>
+            <textarea class="form-control mb-2" name="resolution" rows="2" required minlength="5" placeholder="What changed and in which build" [(ngModel)]="resolution"></textarea>
+            <button type="submit" class="btn btn-success btn-sm" [disabled]="busy()">Resolve</button>
+          </div></form>
+        }
+      </div>
+    </div>
+  } @else if (!error()) {
+    <p class="text-muted mt-3">Loading…</p>
+  }
+</div>
