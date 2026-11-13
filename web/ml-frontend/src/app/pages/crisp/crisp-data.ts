@@ -214,7 +214,31 @@ export const PHASES: Phase[] = [
         bullets: [
           'The first two components explain only 7.1% and 5.1% of the variance, and 46 components are needed to reach 90%: the inputs are mostly independent one-hot blocks, with little redundancy to remove.',
           'The four kinds of decision (move, stay, search, sense) overlap in the PC1–PC2 plane: no low-dimensional linear projection separates them, which supports a non-linear model (the two Swish layers of 256 units).',
-          'Decision: keep all 100 inputs. Each block has a meaning the AI inspector shows to the player, and a 100-input layer costs nothing at inference time. PCA is used as analysis, not as preprocessing.',
+          'PC1 is a readable direction: its largest loadings are the “room not checked for a long time” inputs, so it measures how much of the circus Pockets has left unvisited. PC2 is dominated by the route features toward the Backstage Hall.',
+        ],
+        links: [{ label: 'Full analysis in Google Colab (PCA, t-SNE and the effect on the model)', url: 'https://colab.research.google.com/github/Jesu0809/machine-learning-final-project/blob/main/training/notebooks/dimensionality_reduction.ipynb' }],
+      },
+      {
+        heading: 't-SNE: the neighbourhoods of the input space',
+        image: { src: 'img/tsne.jpg', alt: 't-SNE maps of 2,000 situations at three perplexities', caption: 't-SNE of 2,000 situations at perplexities 5, 30 and 50, coloured by the network’s decision (notebook training/notebooks/dimensionality_reduction.ipynb).' },
+        bullets: [
+          't-SNE preserves neighbourhoods much better than a 2-D PCA: trustworthiness 0.956–0.971 against 0.703 for PCA, measured with 10 neighbours.',
+          'The maps show 13 islands, one per room Pockets can be in: his own room is the strongest input. Every kind of decision appears in many islands, so a decision is not one region of the input space but depends on the room plus the clues.',
+        ],
+      },
+      {
+        heading: 'How the reduction affects the model',
+        image: { src: 'img/pca-effect.jpg', alt: 'Decisions kept by the network and surrogate accuracy against the number of components', caption: 'Test split (900 situations). PCA and the surrogate classifier are fitted on the training split only.' },
+        table: {
+          head: ['Components kept (k)', '2', '10', '20', '46', '60', '80', '100'],
+          rows: [
+            ['Real network: decisions kept on reconstructed inputs', '56.3%', '67.2%', '79.6%', '89.7%', '93.0%', '99.8%', '100%'],
+            ['Logistic regression on k components (accuracy)', '74.9%', '76.6%', '78.4%', '86.0%', '87.8%', '88.1%', '88.1%'],
+          ],
+          note: 'Majority baseline (“always move”): 74.9%. Compressing the inputs to the 46 components that hold 90% of the variance still changes one decision in ten; the network uses fine, non-linear detail.',
+        },
+        bullets: [
+          'Decision: keep all 100 inputs. Each block has a meaning the AI inspector shows to the player, and a 100-input layer costs nothing at inference time. PCA and t-SNE are used for analysis and monitoring, not as preprocessing.',
         ],
       },
       {
