@@ -17,8 +17,12 @@ namespace NightShift.Game
         /// <summary>The deployed site. The web build talks to whatever site it was loaded from.</summary>
         public const string DesktopServer = "https://night-shift.onrender.com";
 
-        /// <summary>Off until the database exists (docs/setup.md, section 9): the save stays on this device.</summary>
-        public const bool Enabled = false;
+        /// <summary>
+        /// On in the browser build, served by the site that stores the saves: a signed-in playtester
+        /// opens the game with their account's id in the address, and each night they finish reaches
+        /// the playtest studio. The desktop build keeps its save on the device.
+        /// </summary>
+        public static bool Enabled => Application.platform == RuntimePlatform.WebGLPlayer;
 
         private const string IdKey = "NightShift.PlayerId";
 
