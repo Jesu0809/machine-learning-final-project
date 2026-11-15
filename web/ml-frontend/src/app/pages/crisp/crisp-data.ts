@@ -392,7 +392,7 @@ export const PHASES: Phase[] = [
         ],
         callout: {
           tone: 'success',
-          text: 'Review record: Juan Pablo, Sebastián Quintero and Jeison Arboleda played the game and reviewed the project throughout the semester (August to November 2026). Their verdict was very positive: the game and the hunter feel convincing and threatening. Their suggestion was an online mode for several players; we recorded it as future work, because the network was trained to hunt a single survivor and would need new inputs and a new training run.',
+          text: 'Review record: Juan Pablo Lugo, Sebastián Quintero and Jeison Arboleda played the game and reviewed the project throughout the semester (August to November 2026). Their verdict was very positive: the game and the hunter feel convincing and threatening. Their suggestion was an online mode for several players; we recorded it as future work, because the network was trained to hunt a single survivor and would need new inputs and a new training run.',
         },
       },
       {
