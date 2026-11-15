@@ -391,8 +391,8 @@ export const PHASES: Phase[] = [
           'Playtests with players of horror games found what the metrics hid: Pockets walking back and forth while the player made noise next door (led to v10), pacing on the only crossing (v11–v12), and standing beside a locker the guard was holding their breath in (v17–v19).',
         ],
         callout: {
-          tone: 'warning',
-          text: 'Expert review record: [name and role of the reviewer], [date], [their feedback on whether the hunter feels fair and threatening], [what we changed or decided because of it].',
+          tone: 'success',
+          text: 'Review record: Juan Pablo, Sebastián Quintero and Jeison Arboleda played the game and reviewed the project throughout the semester (August to November 2026). Their verdict was very positive: the game and the hunter feel convincing and threatening. Their suggestion was an online mode for several players; we recorded it as future work, because the network was trained to hunt a single survivor and would need new inputs and a new training run.',
         },
       },
       {
