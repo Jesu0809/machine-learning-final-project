@@ -46,7 +46,7 @@
             <p class="small text-muted mb-2">{{ r.text }}</p>
             @if (!r.url) {
               <span class="badge text-bg-secondary align-self-start mt-auto">Published with the final delivery</span>
-            } @else if (r.url.startsWith('/')) {
+            } @else if (r.url.startsWith('/') && !r.url.endsWith('.pdf')) {
               <a class="small mt-auto" [routerLink]="r.url">Open →</a>
             } @else {
               <a class="small mt-auto" [href]="r.url" target="_blank" rel="noopener">Open ↗</a>

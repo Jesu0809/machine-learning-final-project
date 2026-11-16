@@ -133,12 +133,12 @@ export class Home {
   ];
 
   protected readonly resources = [
-    { label: 'Technical report (PDF)', text: 'The consolidated report of the three activities.', url: '' },
+    { label: 'Technical report (PDF)', text: 'The consolidated report of the three activities.', url: '/files/Night_Shift_Final_Report.pdf' },
     { label: 'CRISP-ML evidence', text: 'The six phases with decisions, figures and results.', url: '/crisp-ml' },
     { label: 'Source code repository', text: 'Game, training, evaluation, website and README.', url: 'https://github.com/Jesu0809/machine-learning-final-project' },
     { label: 'Intelligent system', text: 'The playtest studio: accounts, roles, playtests, reports reviewed by the model.', url: '/studio' },
     { label: 'User documentation', text: 'User manual, technical manual, training guide and support.', url: '/docs/user-manual' },
-    { label: 'Presentation video', text: 'The 20-minute presentation in English.', url: '' },
+    { label: 'Presentation video', text: 'The 20-minute presentation in English.', url: 'https://mailunicundiedu-my.sharepoint.com/:v:/g/personal/jnuncira_ucundinamarca_edu_co/IQDogMtytNIETpGCEJMN7Kz8AZhRGm78hCuFHyHoKoy-otU' },
   ];
 
   protected readonly products = [
